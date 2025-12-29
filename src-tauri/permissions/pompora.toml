@@ -1,0 +1,155 @@
+[[permission]]
+identifier = "allow-settings-get"
+description = "Allows reading application settings."
+commands.allow = ["settings_get"]
+
+[[permission]]
+identifier = "allow-settings-set"
+description = "Allows writing application settings."
+commands.allow = ["settings_set"]
+
+[[permission]]
+identifier = "allow-provider-key-status"
+description = "Allows checking whether an AI provider key is configured."
+commands.allow = ["provider_key_status"]
+
+[[permission]]
+identifier = "allow-provider-key-set"
+description = "Allows storing an AI provider key (never returned to the UI)."
+commands.allow = ["provider_key_set"]
+
+[[permission]]
+identifier = "allow-provider-key-clear"
+description = "Allows removing an AI provider key."
+commands.allow = ["provider_key_clear"]
+
+[[permission]]
+identifier = "allow-workspace-get"
+description = "Allows reading workspace state (current root and recent workspaces)."
+commands.allow = ["workspace_get"]
+
+[[permission]]
+identifier = "allow-workspace-set"
+description = "Allows setting the current workspace root (must be a directory)."
+commands.allow = ["workspace_set"]
+
+[[permission]]
+identifier = "allow-workspace-pick-folder"
+description = "Allows opening a native folder picker dialog to choose a workspace."
+commands.allow = ["workspace_pick_folder"]
+
+[[permission]]
+identifier = "allow-workspace-pick-file"
+description = "Allows opening a native file picker dialog to choose a file."
+commands.allow = ["workspace_pick_file"]
+
+[[permission]]
+identifier = "allow-workspace-list-dir"
+description = "Allows listing directory contents within the current workspace."
+commands.allow = ["workspace_list_dir"]
+
+[[permission]]
+identifier = "allow-workspace-list-files"
+description = "Allows listing workspace files recursively (for Quick Open)."
+commands.allow = ["workspace_list_files"]
+
+[[permission]]
+identifier = "allow-workspace-read-file"
+description = "Allows reading a file within the current workspace."
+commands.allow = ["workspace_read_file"]
+
+[[permission]]
+identifier = "allow-workspace-write-file"
+description = "Allows writing a file within the current workspace."
+commands.allow = ["workspace_write_file"]
+
+[[permission]]
+identifier = "allow-workspace-create-dir"
+description = "Allows creating a directory within the current workspace."
+commands.allow = ["workspace_create_dir"]
+
+[[permission]]
+identifier = "allow-workspace-delete"
+description = "Allows deleting a file or directory within the current workspace."
+commands.allow = ["workspace_delete"]
+
+[[permission]]
+identifier = "allow-workspace-rename"
+description = "Allows renaming/moving a file or directory within the current workspace."
+commands.allow = ["workspace_rename"]
+
+[[permission]]
+identifier = "allow-workspace-search"
+description = "Allows searching text in files within the current workspace."
+commands.allow = ["workspace_search"]
+
+[[permission]]
+identifier = "allow-ai-run-action"
+description = "Allows running AI actions (Explain/Fix/Refactor) in the Rust backend using securely stored provider keys."
+commands.allow = ["ai_run_action"]
+
+[[permission]]
+identifier = "allow-ai-chat"
+description = "Allows running AI chat in the Rust backend using securely stored provider keys."
+commands.allow = ["ai_chat"]
+
+[[permission]]
+identifier = "allow-ai-chat-with-model"
+description = "Allows running AI chat with an explicit model override (used for OpenRouter model selection)."
+commands.allow = ["ai_chat_with_model"]
+
+[[permission]]
+identifier = "allow-openrouter-list-models"
+description = "Allows listing OpenRouter models (used for the free model picker UI)."
+commands.allow = ["openrouter_list_models"]
+
+[[permission]]
+identifier = "allow-terminal-start"
+description = "Allows starting a PTY-backed terminal session."
+commands.allow = ["terminal_start"]
+
+[[permission]]
+identifier = "allow-terminal-write"
+description = "Allows writing input to the active terminal session."
+commands.allow = ["terminal_write"]
+
+[[permission]]
+identifier = "allow-terminal-resize"
+description = "Allows resizing the active terminal session."
+commands.allow = ["terminal_resize"]
+
+[[permission]]
+identifier = "allow-terminal-kill"
+description = "Allows terminating the active terminal session."
+commands.allow = ["terminal_kill"]
+
+[[set]]
+identifier = "pompora-default"
+description = "Default Pompora application command set."
+permissions = [
+  "allow-settings-get",
+  "allow-settings-set",
+  "allow-provider-key-status",
+  "allow-provider-key-set",
+  "allow-provider-key-clear",
+  "allow-workspace-get",
+  "allow-workspace-set",
+  "allow-workspace-pick-folder",
+  "allow-workspace-pick-file",
+  "allow-workspace-list-dir",
+  "allow-workspace-list-files",
+  "allow-workspace-read-file",
+  "allow-workspace-write-file",
+  "allow-workspace-create-dir",
+  "allow-workspace-delete",
+  "allow-workspace-rename",
+  "allow-workspace-search",
+  "allow-ai-run-action",
+  "allow-ai-chat",
+  "allow-ai-chat-with-model",
+  "allow-openrouter-list-models",
+  "allow-terminal-start",
+  "allow-terminal-write",
+  "allow-terminal-resize",
+  "allow-terminal-kill"
+]

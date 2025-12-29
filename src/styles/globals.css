@@ -1,0 +1,228 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+
+  --p-bg: 12 12 12;
+  --p-panel: 18 18 18;
+  --p-panel2: 24 24 24;
+  --p-text: 244 244 245;
+  --p-muted: 161 161 170;
+  --p-border: 54 54 54;
+  --p-accent: 30 144 255;
+  --p-accent2: 96 214 170;
+  --p-danger: 244 98 98;
+}
+
+.xterm,
+.xterm-viewport,
+.xterm-screen {
+  overscroll-behavior: contain;
+}
+
+.xterm-viewport {
+  scrollbar-gutter: stable;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --p-bg: 248 250 252;
+  --p-panel: 255 255 255;
+  --p-panel2: 241 245 249;
+  --p-text: 16 22 32;
+  --p-muted: 90 102 120;
+  --p-border: 226 232 240;
+  --p-accent: 37 99 235;
+  --p-accent2: 5 150 105;
+  --p-danger: 220 38 38;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: rgb(var(--p-bg));
+  color: rgb(var(--p-text));
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
+    "Segoe UI Emoji";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+:focus-visible {
+  outline: none;
+}
+
+@layer components {
+  .ws-card {
+    @apply rounded-xl border border-border bg-panel;
+  }
+
+  .ws-card-inset {
+    @apply rounded-xl border border-border bg-bg;
+  }
+
+  .ws-panel2 {
+    background: rgb(var(--p-panel2));
+  }
+
+  .ws-chip {
+    @apply inline-flex items-center gap-1 rounded-md border border-border bg-bg px-2 py-0.5 text-[11px] text-muted;
+  }
+
+  .ws-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50;
+  }
+
+.ws-change-bar {
+  @apply bg-[rgb(var(--p-panel2))] backdrop-blur-sm border border-gray-700 rounded-lg shadow-lg;
+}
+
+  .ws-btn-secondary {
+    @apply border border-border bg-panel text-text;
+  }
+
+  .ws-btn-primary {
+    @apply border border-border bg-panel text-text hover:border-accent;
+  }
+
+  .ws-btn-danger {
+    @apply border border-border bg-bg text-danger hover:bg-panel;
+  }
+
+  .ws-input {
+    @apply w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm text-text outline-none placeholder:text-muted;
+  }
+
+  .ws-icon-btn {
+    @apply inline-flex items-center justify-center rounded-md p-1 text-muted hover:bg-bg hover:text-text;
+  }
+
+  .ws-msg {
+    @apply rounded-xl px-3 py-2 text-sm text-text;
+  }
+
+  .ws-msg-user {
+    background: rgb(var(--p-panel2));
+  }
+
+  .ws-msg-assistant {
+    background: rgb(var(--p-panel));
+  }
+
+  .ws-msg-anim {
+    animation: wsFadeUp 160ms ease-out;
+  }
+
+  .ws-thinking-dots {
+    display: inline-flex;
+    gap: 3px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .ws-thinking-dots span {
+    width: 3px;
+    height: 3px;
+    border-radius: 9999px;
+    background: rgb(var(--p-muted));
+    opacity: 0.25;
+    animation: wsDot 900ms infinite;
+  }
+
+  .ws-thinking-dots span:nth-child(2) {
+    animation-delay: 150ms;
+  }
+
+  .ws-thinking-dots span:nth-child(3) {
+    animation-delay: 300ms;
+  }
+
+  .ws-thinking-dots span:nth-child(4) {
+    animation-delay: 450ms;
+  }
+
+  .ws-thinking-dots span:nth-child(5) {
+    animation-delay: 600ms;
+  }
+
+  .ws-thinking-dots span:nth-child(6) {
+    animation-delay: 750ms;
+  }
+
+  .ws-thinking {
+    @apply w-fit text-xs text-muted;
+  }
+
+  .ws-msg-meta {
+    @apply ws-chip w-fit;
+  }
+
+  .ws-diff {
+    @apply ws-card-inset overflow-hidden;
+  }
+
+  .ws-diff-header {
+    @apply flex items-center justify-between gap-2 border-b border-border px-3 py-2;
+  }
+
+  .ws-diff-body {
+    @apply max-h-64 overflow-auto font-mono text-[11px] leading-5;
+  }
+
+  .ws-diff-row {
+    @apply grid grid-cols-[52px_52px_1fr] gap-2 px-3 whitespace-pre;
+  }
+
+  .ws-step-pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-border bg-bg px-2 py-1 text-[11px] text-muted;
+    animation: wsFadeUp 140ms ease-out;
+  }
+
+  .ws-step-dot {
+    @apply h-2 w-2 shrink-0 rounded-full bg-accent;
+    box-shadow: 0 0 0 6px rgba(112, 163, 255, 0.08);
+  }
+
+  .ws-agent-step {
+    @apply inline-flex max-w-[92%] items-center gap-2 rounded-lg border border-border bg-bg px-3 py-2 text-[12px] text-muted;
+    animation: wsFadeUp 160ms ease-out;
+  }
+
+  .ws-agent-dot {
+    @apply h-2 w-2 shrink-0 rounded-full bg-accent;
+    box-shadow: 0 0 0 8px rgba(112, 163, 255, 0.08);
+  }
+}
+
+@keyframes wsFadeUp {
+  from {
+    transform: translateY(4px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes wsDot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}

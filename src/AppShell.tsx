@@ -1,0 +1,5958 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Editor, { DiffEditor } from "@monaco-editor/react";
+import type { editor as MonacoEditorNS } from "monaco-editor";
+import { listen } from "@tauri-apps/api/event";
+import { Terminal as XTermTerminal } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  RotateCw,
+  FileCode,
+  FileJson,
+  FileText,
+  Folder,
+  FolderOpen,
+  GitBranch,
+  Plus,
+  Search,
+  Settings as SettingsIcon,
+  Terminal,
+  ArrowUp,
+  ThumbsDown,
+  ThumbsUp,
+  X,
+} from "lucide-react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import {
+  providerKeyClear,
+  providerKeySet,
+  providerKeyStatus,
+  debugGeminiEndToEnd,
+  aiChat,
+  settingsGet,
+  settingsSet,
+  workspaceGet,
+  workspaceListDir,
+  workspaceListFiles,
+  workspaceReadFile,
+  workspaceWriteFile,
+  workspaceCreateDir,
+  workspaceDelete,
+  workspaceRename,
+  workspaceSearch,
+  workspacePickFile,
+  workspacePickFolder,
+  workspaceSet,
+  terminalStart,
+  terminalWrite,
+  terminalResize,
+  terminalKill,
+} from "./lib/tauri";
+import type { AiChatMessage, AiEditOp } from "./lib/tauri";
+import type { AppSettings, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
+
+type ActivityId = "explorer" | "search" | "scm";
+
+type ChatSession = {
+  id: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  messages: ChatUiMessage[];
+  draft: string;
+  changeSet: ChangeSet | null;
+};
+
+type Command = {
+  id: string;
+  label: string;
+  shortcut?: string;
+  run: () => void;
+};
+
+type AppNotification = {
+  id: string;
+  title: string;
+  message: string;
+  kind: "error" | "info";
+};
+
+type ChatUiMessage = {
+  role: "user" | "assistant" | "meta";
+  content: string;
+  id?: string;
+  rating?: "up" | "down" | null;
+  kind?: "run_request";
+  run?: {
+    cmd: string;
+    status: "pending" | "running" | "done" | "canceled";
+    remaining: string[];
+    error?: string | null;
+    tail?: string[] | null;
+    autoFixRequested?: boolean;
+  };
+};
+
+type TerminalCapture = {
+  id: string;
+  startedAt: number;
+  lastDataAt: number;
+  lastFlushAt: number;
+  buffer: string;
+  emitted: number;
+  maxEmitted: number;
+  emit: (line: string) => void;
+};
+
+function clamp(n: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, n));
+}
+
+function formatRelTime(ts: number): string {
+  const d = Math.max(0, Date.now() - ts);
+  const s = Math.floor(d / 1000);
+  if (s < 60) return "now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const days = Math.floor(h / 24);
+  if (days < 7) return `${days}d`;
+  const w = Math.floor(days / 7);
+  if (w < 4) return `${w}w`;
+  const mo = Math.floor(days / 30);
+  if (mo < 12) return `${mo}mo`;
+  const y = Math.floor(days / 365);
+  return `${y}y`;
+}
+
+function deriveChatTitleFromPrompt(prompt: string): string {
+  const line = prompt.split("\n")[0]?.trim() ?? "";
+  const cleaned = line.replace(/\s+/g, " ").replace(/[\[\]{}<>`]/g, "").trim();
+  if (!cleaned) return "Chat";
+  return cleaned.length > 34 ? `${cleaned.slice(0, 34).trim()}…` : cleaned;
+}
+
+type ChangeFile = {
+  kind: "write" | "delete" | "rename";
+  path: string;
+  before: string | null;
+  after: string | null;
+};
+
+type ChangeSet = {
+  id: string;
+  edits: AiEditOp[];
+  files: ChangeFile[];
+  stats: { files: number; added: number; removed: number };
+  applied: boolean;
+};
+
+function isUserOrAssistantMessage(m: ChatUiMessage): m is { role: "user" | "assistant"; content: string } {
+  return m.role === "user" || m.role === "assistant";
+}
+
+function looksLikeCodeDump(s: string): boolean {
+  const t = s.trim();
+  if (!t) return false;
+  // Heuristics: big blocks, common code markers.
+  if (t.length > 800) return true;
+  if (t.includes("<!DOCTYPE html") || t.includes("<html") || t.includes("</div>") || t.includes("function ")) return true;
+  if (t.includes("```")) return true;
+  if (t.startsWith("{") && t.includes("\"edits\"")) return true;
+  return false;
+}
+
+function extractFileRefs(text: string): string[] {
+  const out: string[] = [];
+  const re = /(^|[\s"'`(\[])([A-Za-z0-9_./-]+\.[A-Za-z0-9]{1,8})(?=$|[\s"'`),.:;!?\]])/g;
+  const seen = new Set<string>();
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    const raw = (m[2] ?? "").trim();
+    if (!raw) continue;
+    if (raw.includes("://")) continue;
+    const p = raw.replace(/^\.\//, "");
+    if (!p.includes(".")) continue;
+    if (p.length > 140) continue;
+    if (seen.has(p)) continue;
+    seen.add(p);
+    out.push(p);
+  }
+  return out;
+}
+
+function isLikelyDangerousCommand(cmd: string): boolean {
+  const c = cmd.trim().toLowerCase();
+  if (!c) return false;
+  if (/\brm\b/.test(c) && /\s-\w*r\w*f\b/.test(c)) return true;
+  if (/\bmkfs\b/.test(c)) return true;
+  if (/\bdd\b/.test(c) && /\bif=\b/.test(c)) return true;
+  if (/\bshutdown\b|\breboot\b|\bpoweroff\b/.test(c)) return true;
+  if (c.includes(":(){") && c.includes("};:")) return true;
+  return false;
+}
+
+function splitLines(s: string): string[] {
+  // Keep trailing empty line behavior stable.
+  return s.replace(/\r\n/g, "\n").split("\n");
+}
+
+function stripAnsiForLog(s: string): string {
+  return s
+    .replace(/\x1b\[[0-9;?]*[ -/]*[@-~]/g, "")
+    .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, "")
+    .replace(/\r/g, "");
+}
+
+type UnifiedDiffHunkLine = { kind: "ctx" | "add" | "del"; text: string };
+type UnifiedDiffHunk = {
+  oldStart: number;
+  oldCount: number;
+  newStart: number;
+  newCount: number;
+  lines: UnifiedDiffHunkLine[];
+};
+
+function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
+  const lines = splitLines(patchText);
+  const hunks: UnifiedDiffHunk[] = [];
+  let i = 0;
+
+  const parseRange = (s: string): { start: number; count: number } => {
+    const m = s.match(/^(\d+)(?:,(\d+))?$/);
+    if (!m) return { start: 0, count: 0 };
+    return { start: Number(m[1]), count: m[2] ? Number(m[2]) : 1 };
+  };
+
+  while (i < lines.length) {
+    const line = lines[i]!;
+    const m = line.match(/^@@\s+-(\d+(?:,\d+)?)\s+\+(\d+(?:,\d+)?)\s+@@/);
+    if (!m) {
+      i++;
+      continue;
+    }
+
+    const oldR = parseRange(m[1]!);
+    const newR = parseRange(m[2]!);
+    const hunk: UnifiedDiffHunk = {
+      oldStart: oldR.start,
+      oldCount: oldR.count,
+      newStart: newR.start,
+      newCount: newR.count,
+      lines: [],
+    };
+    i++;
+
+    while (i < lines.length) {
+      const l = lines[i]!;
+      if (l.startsWith("@@ ")) break;
+      if (l.startsWith("--- ") || l.startsWith("+++ ") || l.startsWith("diff ")) {
+        i++;
+        continue;
+      }
+
+      const prefix = l[0];
+      const text = l.slice(1);
+      if (prefix === " ") hunk.lines.push({ kind: "ctx", text });
+      else if (prefix === "+") hunk.lines.push({ kind: "add", text });
+      else if (prefix === "-") hunk.lines.push({ kind: "del", text });
+      else if (l === "\\ No newline at end of file") {
+        // ignore
+      } else {
+        // treat unknown as context to be conservative
+        hunk.lines.push({ kind: "ctx", text: l });
+      }
+      i++;
+    }
+
+    hunks.push(hunk);
+  }
+
+  return hunks;
+}
+
+function findSequenceStart(hay: string[], seq: string[], minIndex: number, preferredIndex: number): number | null {
+  if (!seq.length) return Math.max(minIndex, Math.min(preferredIndex, hay.length));
+  const maxStart = hay.length - seq.length;
+  if (minIndex > maxStart) return null;
+  let best: number | null = null;
+  let bestDist = Infinity;
+  for (let i = minIndex; i <= maxStart; i++) {
+    let ok = true;
+    for (let j = 0; j < seq.length; j++) {
+      if (hay[i + j] !== seq[j]) {
+        ok = false;
+        break;
+      }
+    }
+    if (!ok) continue;
+    const dist = Math.abs(i - preferredIndex);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = i;
+      if (dist === 0) break;
+    }
+  }
+  return best;
+}
+
+function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; text: string } | { ok: false; error: string } {
+  const hunks = parseUnifiedDiff(patchText);
+  if (!hunks.length) return { ok: false, error: "Patch has no hunks" };
+
+  const a = splitLines(before);
+  const out: string[] = [];
+  let ai = 0;
+
+  for (const h of hunks) {
+    const preferredIdx = Math.max(0, h.oldStart - 1);
+
+    const oldSeq = h.lines
+      .filter((x) => x.kind === "ctx" || x.kind === "del")
+      .map((x) => x.text);
+
+    const foundIdx = findSequenceStart(a, oldSeq, ai, preferredIdx);
+    if (foundIdx === null) {
+      return { ok: false, error: `Failed to locate hunk context in file (starting near line ${preferredIdx + 1}).` };
+    }
+
+    if (foundIdx < ai) return { ok: false, error: "Patch hunk overlaps previous hunk" };
+    out.push(...a.slice(ai, foundIdx));
+    ai = foundIdx;
+
+    for (const hl of h.lines) {
+      if (hl.kind === "ctx") {
+        if (a[ai] !== hl.text) {
+          return {
+            ok: false,
+            error: `Context mismatch at line ${ai + 1}: expected '${hl.text}', got '${a[ai] ?? "<eof>"}'`,
+          };
+        }
+        out.push(a[ai]!);
+        ai++;
+      } else if (hl.kind === "del") {
+        if (a[ai] !== hl.text) {
+          return {
+            ok: false,
+            error: `Delete mismatch at line ${ai + 1}: expected '${hl.text}', got '${a[ai] ?? "<eof>"}'`,
+          };
+        }
+        ai++;
+      } else if (hl.kind === "add") {
+        out.push(hl.text);
+      }
+    }
+  }
+
+  out.push(...a.slice(ai));
+  return { ok: true, text: out.join("\n") };
+}
+
+function normalizeGitPath(p: string): string {
+  const t = p.trim();
+  if (t === "/dev/null") return t;
+  if (t.startsWith("a/")) return t.slice(2);
+  if (t.startsWith("b/")) return t.slice(2);
+  return t;
+}
+
+function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
+  const lines = splitLines(diffText);
+  const blocks: string[][] = [];
+  let cur: string[] = [];
+
+  for (const l of lines) {
+    if (l.startsWith("diff --git ")) {
+      if (cur.length) blocks.push(cur);
+      cur = [l];
+      continue;
+    }
+    if (!cur.length) continue;
+    cur.push(l);
+  }
+  if (cur.length) blocks.push(cur);
+
+  const edits: AiEditOp[] = [];
+
+  for (const b of blocks) {
+    const blockText = b.join("\n");
+    let renameFrom: string | null = null;
+    let renameTo: string | null = null;
+    let oldPath: string | null = null;
+    let newPath: string | null = null;
+
+    for (const l of b) {
+      if (l.startsWith("rename from ")) renameFrom = normalizeGitPath(l.slice("rename from ".length));
+      if (l.startsWith("rename to ")) renameTo = normalizeGitPath(l.slice("rename to ".length));
+      if (l.startsWith("--- ")) oldPath = normalizeGitPath(l.slice(4));
+      if (l.startsWith("+++ ")) newPath = normalizeGitPath(l.slice(4));
+    }
+
+    const isDelete = newPath === "/dev/null" || b.some((x) => x.startsWith("deleted file mode"));
+    const isNew = oldPath === "/dev/null" || b.some((x) => x.startsWith("new file mode"));
+
+    if (renameFrom && renameTo) {
+      edits.push({ op: "rename", from: renameFrom, to: renameTo });
+      // If there are hunks, apply them after the rename.
+      if (blockText.includes("@@ ")) {
+        edits.push({ op: "patch", path: renameTo, content: blockText });
+      }
+      continue;
+    }
+
+    const path = (newPath && newPath !== "/dev/null" ? newPath : oldPath && oldPath !== "/dev/null" ? oldPath : null) ?? null;
+    if (!path) continue;
+
+    if (isDelete) {
+      edits.push({ op: "delete", path });
+      continue;
+    }
+
+    // new/modified file
+    if (blockText.includes("@@ ")) {
+      edits.push({ op: "patch", path, content: blockText });
+    } else if (isNew) {
+      // git diff for new empty file can have no hunks; treat as create empty
+      edits.push({ op: "write", path, content: "" });
+    }
+  }
+
+  return edits;
+}
+
+function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { edits: AiEditOp[]; didSanitize: boolean } {
+  const sanitizePath = (raw: string, workspaceRoot?: string | null): string => {
+    let p = String(raw ?? "").trim();
+    if (!p) return p;
+
+    p = p.replace(/\\/g, "/");
+    while (p.startsWith("./")) p = p.slice(2);
+
+    const root = (workspaceRoot ?? "").replace(/\\/g, "/").replace(/\/$/, "");
+    if (root && (p === root || p.startsWith(root + "/"))) {
+      p = p.slice(root.length);
+      if (p.startsWith("/")) p = p.slice(1);
+    }
+
+    // If the path is still absolute or contains traversal, collapse it to a safe filename.
+    const looksAbsolute = p.startsWith("/") || /^[A-Za-z]:\//.test(p);
+    if (looksAbsolute || p.includes("..")) {
+      p = basename(p);
+    }
+
+    if (p.startsWith("/")) p = p.slice(1);
+    return p;
+  };
+
+  let didSanitize = false;
+
+  const sanitizeOne = (e: AiEditOp): AiEditOp => {
+    const op = (e.op || "").toLowerCase();
+    if (op === "rename") {
+      const fromRaw = typeof e.from === "string" ? e.from : "";
+      const toRaw = typeof e.to === "string" ? e.to : "";
+      const from = typeof e.from === "string" ? sanitizePath(e.from, workspaceRoot) : e.from;
+      const to = typeof e.to === "string" ? sanitizePath(e.to, workspaceRoot) : e.to;
+      if (fromRaw && from && fromRaw !== from) didSanitize = true;
+      if (toRaw && to && toRaw !== to) didSanitize = true;
+      return { ...e, from, to };
+    }
+
+    if (typeof e.path === "string") {
+      const raw = e.path;
+      const path = sanitizePath(raw, workspaceRoot);
+      if (raw !== path) didSanitize = true;
+      return { ...e, path };
+    }
+
+    return e;
+  };
+
+  const out: AiEditOp[] = [];
+  for (const e of edits) {
+    const op = (e.op || "").toLowerCase();
+    if (op === "patch") {
+      const patchText = String(e.content ?? "");
+      const hasGitDiff = patchText.includes("diff --git ") && patchText.includes("@@ ");
+      const missingPath = !e.path || !String(e.path).trim();
+      if (missingPath && hasGitDiff) {
+        for (const x of splitMultiFileGitDiffToEdits(patchText)) out.push(sanitizeOne(x));
+        continue;
+      }
+      // If user/AI provides a path but the patch is multi-file, split anyway.
+      if (hasGitDiff && patchText.includes("\ndiff --git ")) {
+        for (const x of splitMultiFileGitDiffToEdits(patchText)) out.push(sanitizeOne(x));
+        continue;
+      }
+    }
+    out.push(sanitizeOne(e));
+  }
+  return { edits: out, didSanitize };
+}
+
+type LineOp = { type: "ctx" | "add" | "del"; line: string };
+
+// Minimal Myers diff for line arrays.
+function diffLines(before: string, after: string): LineOp[] {
+  const a = splitLines(before);
+  const b = splitLines(after);
+  const n = a.length;
+  const m = b.length;
+  const max = n + m;
+  const v = new Map<number, number>();
+  v.set(1, 0);
+  const trace: Map<number, number>[] = [];
+
+  for (let d = 0; d <= max; d++) {
+    const v2 = new Map<number, number>();
+    for (let k = -d; k <= d; k += 2) {
+      let x: number;
+      if (k === -d || (k !== d && (v.get(k - 1) ?? 0) < (v.get(k + 1) ?? 0))) {
+        x = v.get(k + 1) ?? 0;
+      } else {
+        x = (v.get(k - 1) ?? 0) + 1;
+      }
+      let y = x - k;
+      while (x < n && y < m && a[x] === b[y]) {
+        x++;
+        y++;
+      }
+      v2.set(k, x);
+      if (x >= n && y >= m) {
+        trace.push(v2);
+        // backtrack
+        const ops: LineOp[] = [];
+        let x2 = n;
+        let y2 = m;
+        for (let d2 = trace.length - 1; d2 >= 0; d2--) {
+          const vv = trace[d2]!;
+          const k2 = x2 - y2;
+          let prevK: number;
+          if (k2 === -(d2) || (k2 !== d2 && (vv.get(k2 - 1) ?? 0) < (vv.get(k2 + 1) ?? 0))) {
+            prevK = k2 + 1;
+          } else {
+            prevK = k2 - 1;
+          }
+          const prevX = vv.get(prevK) ?? 0;
+          const prevY = prevX - prevK;
+
+          while (x2 > prevX && y2 > prevY) {
+            ops.push({ type: "ctx", line: a[x2 - 1]! });
+            x2--;
+            y2--;
+          }
+
+          if (d2 === 0) break;
+
+          if (x2 === prevX) {
+            // insertion
+            ops.push({ type: "add", line: b[y2 - 1]! });
+            y2--;
+          } else {
+            // deletion
+            ops.push({ type: "del", line: a[x2 - 1]! });
+            x2--;
+          }
+        }
+
+        ops.reverse();
+        return ops;
+      }
+    }
+    trace.push(v2);
+    v.clear();
+    for (const [k, val] of v2.entries()) v.set(k, val);
+  }
+
+  return [];
+}
+
+function computeStats(files: ChangeFile[]): { files: number; added: number; removed: number } {
+  let added = 0;
+  let removed = 0;
+  for (const f of files) {
+    const before = f.before ?? "";
+    const after = f.after ?? "";
+    const ops = diffLines(before, after);
+    for (const op of ops) {
+      if (op.type === "add") added++;
+      if (op.type === "del") removed++;
+    }
+  }
+  return { files: files.length, added, removed };
+}
+
+function tryParseEditsFromAssistantOutput(raw: string): { message: string; edits: AiEditOp[] } | null {
+  const t = raw.trim();
+  if (!t) return null;
+
+  const tryParse = (s: string) => {
+    try {
+      return JSON.parse(s) as unknown;
+    } catch {
+      return null;
+    }
+  };
+
+  const direct = tryParse(t);
+  const parsed = direct ?? (() => {
+    // Extract first JSON object substring (handles braces inside strings).
+    let depth = 0;
+    let start = -1;
+    let inStr = false;
+    let escape = false;
+    for (let i = 0; i < t.length; i++) {
+      const ch = t[i]!;
+      if (inStr) {
+        if (escape) {
+          escape = false;
+          continue;
+        }
+        if (ch === "\\") {
+          escape = true;
+          continue;
+        }
+        if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"') {
+        inStr = true;
+        continue;
+      }
+      if (ch === "{") {
+        if (depth === 0) start = i;
+        depth++;
+        continue;
+      }
+      if (ch === "}") {
+        depth--;
+        if (depth === 0 && start >= 0) {
+          return tryParse(t.slice(start, i + 1));
+        }
+      }
+    }
+    return null;
+  })();
+
+  const extractEditsArray = (text: string): AiEditOp[] | null => {
+    const idx = text.indexOf('"edits"');
+    if (idx < 0) return null;
+    const after = text.slice(idx);
+    const arrStart = after.indexOf('[');
+    if (arrStart < 0) return null;
+
+    const s = after.slice(arrStart);
+    let depth = 0;
+    let inStr = false;
+    let escape = false;
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i]!;
+      if (inStr) {
+        if (escape) {
+          escape = false;
+          continue;
+        }
+        if (ch === "\\") {
+          escape = true;
+          continue;
+        }
+        if (ch === '"') inStr = false;
+        continue;
+      }
+      if (ch === '"') {
+        inStr = true;
+        continue;
+      }
+      if (ch === '[') {
+        depth++;
+        continue;
+      }
+      if (ch === ']') {
+        depth--;
+        if (depth === 0) {
+          const arrText = s.slice(0, i + 1);
+          const parsedArr = tryParse(arrText);
+          if (Array.isArray(parsedArr)) return parsedArr as AiEditOp[];
+          return null;
+        }
+      }
+    }
+    return null;
+  };
+
+  if (parsed && typeof parsed === "object") {
+    const obj = parsed as {
+      edits?: unknown;
+      assistant_message?: unknown;
+      summary?: unknown;
+    };
+    if (Array.isArray(obj.edits)) {
+      const edits = obj.edits as AiEditOp[];
+      const msg =
+        (typeof obj.assistant_message === "string" ? obj.assistant_message : null) ??
+        (typeof obj.summary === "string" ? obj.summary : null) ??
+        "Proposed changes are ready.";
+      return { message: String(msg).trim(), edits };
+    }
+  }
+
+  // If the full JSON object is malformed/truncated, try extracting just the edits array.
+  const fallbackEdits = extractEditsArray(t);
+  if (fallbackEdits && fallbackEdits.length) {
+    return { message: "Proposed changes are ready.", edits: fallbackEdits };
+  }
+
+  return null;
+}
+
+function MenuSep() {
+  return <div className="my-1 h-px bg-border" />;
+}
+
+function MenuCheck(props: { checked?: boolean }) {
+  return props.checked ? <span className="text-[11px] text-muted">✓</span> : null;
+}
+
+function MenuItem(props: {
+  label: string;
+  shortcut?: string;
+  right?: React.ReactNode;
+  onClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs text-text hover:bg-bg"
+      onClick={props.onClick}
+      onMouseEnter={props.onMouseEnter}
+      onMouseLeave={props.onMouseLeave}
+    >
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="truncate">{props.label}</span>
+      </span>
+      <span className="flex items-center gap-2 text-[11px] text-muted">
+        {props.shortcut ? <span className="whitespace-nowrap">{props.shortcut}</span> : null}
+        {props.right ?? null}
+      </span>
+    </button>
+  );
+}
+
+function basename(p: string) {
+  const norm = p.replace(/\\/g, "/");
+  const parts = norm.split("/").filter(Boolean);
+  return parts[parts.length - 1] ?? p;
+}
+
+function dirname(p: string) {
+  const norm = p.replace(/\\/g, "/");
+  const idx = norm.lastIndexOf("/");
+  if (idx <= 0) return "/";
+  return norm.slice(0, idx);
+}
+
+function detectLanguage(path: string): string {
+  const lower = path.toLowerCase();
+  const ext = lower.includes(".") ? lower.split(".").pop() ?? "" : "";
+  if (ext === "ts") return "typescript";
+  if (ext === "tsx") return "typescript";
+  if (ext === "js") return "javascript";
+  if (ext === "jsx") return "javascript";
+  if (ext === "json") return "json";
+  if (ext === "css") return "css";
+  if (ext === "html") return "html";
+  if (ext === "md") return "markdown";
+  if (ext === "rs") return "rust";
+  if (ext === "toml") return "toml";
+  if (ext === "yaml" || ext === "yml") return "yaml";
+  return "plaintext";
+}
+
+function fileIconFor(path: string) {
+  const lower = path.toLowerCase();
+  if (lower.endsWith(".json")) return FileJson;
+  if (lower.endsWith(".ts") || lower.endsWith(".tsx") || lower.endsWith(".js") || lower.endsWith(".jsx")) {
+    return FileCode;
+  }
+  return FileText;
+}
+
+export default function AppShell() {
+  const CHAT_STORAGE_KEY = "pompora.chat_sessions.v1";
+  const RUN_POLICY_KEY = "pompora.terminal_run_policy.v1";
+  const [activity, setActivity] = useState<ActivityId>("explorer");
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [paletteQuery, setPaletteQuery] = useState("");
+  const [paletteIndex, setPaletteIndex] = useState(0);
+
+  const [isQuickOpenOpen, setIsQuickOpenOpen] = useState(false);
+  const [quickOpenQuery, setQuickOpenQuery] = useState("");
+  const [quickOpenIndex, setQuickOpenIndex] = useState(0);
+  const [fileIndexRoot, setFileIndexRoot] = useState<string | null>(null);
+  const [fileIndex, setFileIndex] = useState<string[]>([]);
+  const [isFileIndexLoading, setIsFileIndexLoading] = useState(false);
+
+  const [isGoToLineOpen, setIsGoToLineOpen] = useState(false);
+  const [goToLineValue, setGoToLineValue] = useState("");
+
+  const [runPolicy, setRunPolicy] = useState<"ask" | "always">(() => {
+    try {
+      const raw = window.localStorage.getItem(RUN_POLICY_KEY);
+      return raw === "always" ? "always" : "ask";
+    } catch {
+      return "ask";
+    }
+  });
+  const [runMenuOpenId, setRunMenuOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(RUN_POLICY_KEY, runPolicy);
+    } catch {
+    }
+  }, [RUN_POLICY_KEY, runPolicy]);
+
+  useEffect(() => {
+    if (!runMenuOpenId) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      if (!t.closest("[data-run-menu-root]")) setRunMenuOpenId(null);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [runMenuOpenId]);
+
+  const [settings, setSettingsState] = useState<AppSettings>({
+    theme: "dark",
+    offline_mode: false,
+    active_provider: null,
+    workspace_root: null,
+    recent_workspaces: [],
+  });
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isTogglingOffline, setIsTogglingOffline] = useState(false);
+
+  const [workspace, setWorkspaceState] = useState<WorkspaceInfo>({ root: null, recent: [] });
+
+  const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
+  const [isFileMenuRecentOpen, setIsFileMenuRecentOpen] = useState(false);
+  const [isEditMenuOpen, setIsEditMenuOpen] = useState(false);
+  const [isSelectionMenuOpen, setIsSelectionMenuOpen] = useState(false);
+  const [isViewMenuOpen, setIsViewMenuOpen] = useState(false);
+  const [isRunMenuOpen, setIsRunMenuOpen] = useState(false);
+  const [isTerminalMenuOpen, setIsTerminalMenuOpen] = useState(false);
+
+  const [viewMenuSub, setViewMenuSub] = useState<null | "appearance" | "editorLayout">(null);
+  const [viewAppearanceSub, setViewAppearanceSub] = useState<
+    | null
+    | "activityBarPosition"
+    | "secondaryActivityBarPosition"
+    | "panelPosition"
+    | "alignPanel"
+    | "tabBar"
+    | "editorActionsPosition"
+  >(null);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [recentFiles, setRecentFiles] = useState<string[]>([]);
+  const [untitledCounter, setUntitledCounter] = useState(1);
+  const [explorer, setExplorer] = useState<Record<string, DirEntryInfo[]>>({});
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+
+  const [tabs, setTabs] = useState<EditorTab[]>([]);
+  const [activeTabPath, setActiveTabPath] = useState<string | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Array<{ path: string; line: number; text: string }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [pendingReveal, setPendingReveal] = useState<{ path: string; line: number } | null>(null);
+
+  const [keyStatus, setKeyStatus] = useState<KeyStatus | null>(null);
+  const [apiKeyDraft, setApiKeyDraft] = useState("");
+  const [encryptionPasswordDraft, setEncryptionPasswordDraft] = useState("");
+  const [secretsError, setSecretsError] = useState<string | null>(null);
+  const [providerKeyStatuses, setProviderKeyStatuses] = useState<Record<string, KeyStatus | null>>({});
+  const [isKeyOperationInProgress, setIsKeyOperationInProgress] = useState(false);
+  const [showKeySaved, setShowKeySaved] = useState(false);
+  const [showKeyCleared, setShowKeyCleared] = useState(false);
+  const [debugResult, setDebugResult] = useState<string | null>(null);
+
+  const initialChatIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  const [chatHistoryQuery, setChatHistoryQuery] = useState("");
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>(() => {
+    try {
+      const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as unknown;
+        if (Array.isArray(parsed)) {
+          const now = Date.now();
+          const restored = parsed
+            .filter((x: any) => x && typeof x.id === "string")
+            .map((x: any) => ({
+              id: String(x.id),
+              title: typeof x.title === "string" ? x.title : "Chat",
+              createdAt: typeof x.createdAt === "number" ? x.createdAt : now,
+              updatedAt: typeof x.updatedAt === "number" ? x.updatedAt : now,
+              messages: Array.isArray(x.messages) ? (x.messages as ChatUiMessage[]) : ([] as ChatUiMessage[]),
+              draft: typeof x.draft === "string" ? x.draft : "",
+              changeSet: (x.changeSet as ChangeSet | null) ?? null,
+            }))
+            .slice(0, 200);
+
+          if (restored.length) return restored;
+        }
+      }
+    } catch {
+    }
+    const now = Date.now();
+    return [
+      {
+        id: initialChatIdRef.current,
+        title: "Chat 1",
+        createdAt: now,
+        updatedAt: now,
+        messages: [],
+        draft: "",
+        changeSet: null,
+      },
+    ];
+  });
+  const [activeChatId, setActiveChatId] = useState<string>(() => chatSessions[0]?.id ?? initialChatIdRef.current);
+
+  const [chatBusy, setChatBusy] = useState(false);
+  const [chatApplying, setChatApplying] = useState(false);
+  const [isChatDockOpen, setIsChatDockOpen] = useState(true);
+  const [chatDockWidth, setChatDockWidth] = useState(340);
+  const [explorerWidth, setExplorerWidth] = useState(300);
+  const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [terminalHeight, setTerminalHeight] = useState(240);
+  const [panelTab, setPanelTab] = useState<"problems" | "output" | "debug" | "terminal" | "ports">("terminal");
+  const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
+  const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
+
+  const hasChatHistory = useMemo(() => {
+    return chatSessions.some((s) => s.messages.some((m) => m.role === "user"));
+  }, [chatSessions]);
+
+  const didBootstrapFreshChatRef = useRef(false);
+  useEffect(() => {
+    if (didBootstrapFreshChatRef.current) return;
+    didBootstrapFreshChatRef.current = true;
+
+    // Always start on a fresh empty chat on app launch.
+    const now = Date.now();
+    const id = `${now}-${Math.random().toString(16).slice(2)}`;
+    setChatSessions((prev) => [...prev, { id, title: "Chat", createdAt: now, updatedAt: now, messages: [], draft: "", changeSet: null }]);
+    setActiveChatId(id);
+  }, []);
+
+  useEffect(() => {
+    if (!chatSessions.length) return;
+    if (chatSessions.some((s) => s.id === activeChatId)) return;
+    setActiveChatId(chatSessions[0]!.id);
+  }, [activeChatId, chatSessions]);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      try {
+        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatSessions));
+      } catch {
+      }
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [chatSessions]);
+
+  const [notifications] = useState<AppNotification[]>([]);
+
+  const activeChat = useMemo<ChatSession>(() => {
+    const found = chatSessions.find((s) => s.id === activeChatId);
+    return found ?? chatSessions[0]!;
+  }, [activeChatId, chatSessions]);
+
+  const chatMessagesRef = useRef<ChatUiMessage[]>([]);
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const chatComposerRef = useRef<HTMLTextAreaElement | null>(null);
+  const chatStreamTimerRef = useRef<number | null>(null);
+  const chatResizeStateRef = useRef<{ startX: number; startW: number } | null>(null);
+  const explorerResizeStateRef = useRef<{ startX: number; startW: number } | null>(null);
+  const terminalResizeStateRef = useRef<{ startY: number; startH: number } | null>(null);
+  const notifyRef = useRef<((n: Omit<AppNotification, "id">) => void) | null>(null);
+  const sendChatRef = useRef<(() => Promise<void>) | null>(null);
+  const refreshDirRef = useRef<((relDir?: string) => Promise<void>) | null>(null);
+  const metaQueueRef = useRef<string[]>([]);
+  const metaFlushTimerRef = useRef<number | null>(null);
+  const lastQueuedMetaRef = useRef<string>("");
+
+  const termIdRef = useRef<string | null>(null);
+  const termRef = useRef<XTermTerminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+  const termHostRef = useRef<HTMLDivElement | null>(null);
+  const termUnlistenRef = useRef<(() => void) | null>(null);
+  const termCaptureRef = useRef<TerminalCapture | null>(null);
+  const termInitPromiseRef = useRef<Promise<void> | null>(null);
+  const termCwdRef = useRef<string | null>(null);
+
+  const mainGridTemplateColumns = useMemo(() => {
+    const cols: string[] = ["52px", `minmax(220px, ${explorerWidth}px)`, "minmax(520px, 1fr)"];
+    if (isChatDockOpen) cols.push(`minmax(280px, ${chatDockWidth}px)`);
+    return cols.join(" ");
+  }, [chatDockWidth, explorerWidth, isChatDockOpen]);
+
+  const nextChatTitle = useMemo(() => {
+    const nums = chatSessions
+      .map((s) => {
+        const m = s.title.match(/\bChat\s+(\d+)\b/i);
+        return m ? Number(m[1]) : null;
+      })
+      .filter((n): n is number => typeof n === "number" && Number.isFinite(n));
+    const max = nums.length ? Math.max(...nums) : 0;
+    return `Chat ${max + 1}`;
+  }, [chatSessions]);
+
+  const setActiveChatTitle = useCallback(
+    (title: string) => {
+      setChatSessions((prev) =>
+        prev.map((s) => (s.id === activeChatId ? { ...s, title, updatedAt: Date.now() } : s))
+      );
+    },
+    [activeChatId]
+  );
+
+  const setActiveChatDraft = useCallback(
+    (draft: string) => {
+      setChatSessions((prev) => prev.map((s) => (s.id === activeChatId ? { ...s, draft } : s)));
+    },
+    [activeChatId]
+  );
+
+  const setActiveChatMessages = useCallback(
+    (messages: ChatUiMessage[] | ((prev: ChatUiMessage[]) => ChatUiMessage[])) => {
+      setChatSessions((prev) =>
+        prev.map((s) => {
+          if (s.id !== activeChatId) return s;
+          const nextMsgs = typeof messages === "function" ? messages(s.messages) : messages;
+          return { ...s, messages: nextMsgs, updatedAt: Date.now() };
+        })
+      );
+    },
+    [activeChatId]
+  );
+
+  const enqueueMetaLine = useCallback(
+    (raw: string) => {
+      const line = raw.trim();
+      if (!line) return;
+
+      // Avoid obvious duplicates (prompt echoes, repeated spinner lines, etc.)
+      if (lastQueuedMetaRef.current === line) return;
+      lastQueuedMetaRef.current = line;
+
+      metaQueueRef.current.push(line);
+      if (metaFlushTimerRef.current) return;
+
+      metaFlushTimerRef.current = window.setInterval(() => {
+        const next = metaQueueRef.current.shift();
+        if (!next) {
+          if (metaFlushTimerRef.current) window.clearInterval(metaFlushTimerRef.current);
+          metaFlushTimerRef.current = null;
+          return;
+        }
+        setActiveChatMessages((prev) => [...prev, { role: "meta", content: next }]);
+      }, 120);
+    },
+    [setActiveChatMessages]
+  );
+
+  const askAiToFixRunError = useCallback(
+    async (messageId: string) => {
+      const current = (chatMessagesRef.current ?? []).find((m) => m.id === messageId);
+      if (!current?.run) return;
+      const cmd = current.run.cmd;
+      const tail = Array.isArray(current.run.tail) ? current.run.tail.join("\n") : "";
+      const err = (current.run.error ?? "").trim();
+
+      const prompt =
+        `The following terminal command failed:\n\n${cmd}\n\n` +
+        (err ? `Error summary:\n${err}\n\n` : "") +
+        (tail ? `Terminal output (tail):\n${tail}\n\n` : "") +
+        "Fix the issue and propose the minimal next terminal commands to resolve it. Return JSON edits.";
+
+      setActiveChatDraft(prompt);
+      window.setTimeout(() => {
+        void sendChatRef.current?.();
+      }, 0);
+    },
+    [setActiveChatDraft]
+  );
+
+  const setActiveChatChangeSet = useCallback(
+    (changeSet: ChangeSet | null) => {
+      setChatSessions((prev) => prev.map((s) => (s.id === activeChatId ? { ...s, changeSet, updatedAt: Date.now() } : s)));
+    },
+    [activeChatId]
+  );
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (chatResizeStateRef.current) {
+        const { startX, startW } = chatResizeStateRef.current;
+        const max = Math.max(280, Math.min(620, Math.floor(window.innerWidth * 0.6)));
+        const next = clamp(startW + (startX - e.clientX), 280, max);
+        setChatDockWidth(next);
+      }
+      if (explorerResizeStateRef.current) {
+        const { startX, startW } = explorerResizeStateRef.current;
+        const max = Math.max(280, Math.min(520, Math.floor(window.innerWidth * 0.45)));
+        const next = clamp(startW + (e.clientX - startX), 220, max);
+        setExplorerWidth(next);
+      }
+      if (terminalResizeStateRef.current) {
+        const { startY, startH } = terminalResizeStateRef.current;
+        const max = Math.max(160, Math.min(520, Math.floor(window.innerHeight * 0.7)));
+        const next = clamp(startH + (startY - e.clientY), 160, max);
+        setTerminalHeight(next);
+      }
+    };
+    const onUp = () => {
+      chatResizeStateRef.current = null;
+      explorerResizeStateRef.current = null;
+      terminalResizeStateRef.current = null;
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, []);
+
+  const ensureTerminal = useCallback(async () => {
+    if (termRef.current && termIdRef.current) return;
+    if (termInitPromiseRef.current) return termInitPromiseRef.current;
+
+    const p = (async () => {
+      const host = termHostRef.current;
+      if (!host) return;
+
+      host.innerHTML = "";
+
+      const t = new XTermTerminal({
+        fontSize: 12,
+        fontFamily:
+          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+        cursorBlink: true,
+        cursorStyle: "bar",
+        cursorWidth: 2,
+        lineHeight: 1.15,
+        scrollback: 8000,
+        convertEol: true,
+        theme: {
+          background: "rgb(12, 12, 12)",
+          foreground: "rgb(244, 244, 245)",
+          cursor: "rgb(244, 244, 245)",
+          selectionBackground: "rgba(112, 163, 255, 0.25)",
+        },
+      });
+      const fit = new FitAddon();
+      t.loadAddon(fit);
+      t.open(host);
+      fit.fit();
+
+      termRef.current = t;
+      fitAddonRef.current = fit;
+
+      if (termUnlistenRef.current) {
+        try {
+          termUnlistenRef.current();
+        } catch {
+        }
+        termUnlistenRef.current = null;
+      }
+
+      const { cols, rows } = t;
+      const cwd = workspace.root ?? settings.workspace_root ?? null;
+      const id = await terminalStart({ cols, rows, cwd });
+      termIdRef.current = id;
+      termCwdRef.current = cwd;
+
+      t.onData((data: string) => {
+        const tid = termIdRef.current;
+        if (!tid) return;
+        void terminalWrite({ id: tid, data });
+      });
+
+      termUnlistenRef.current = await listen<{ id: string; data: string }>("terminal:data", (ev) => {
+        const tid = termIdRef.current;
+        if (!tid) return;
+        if (ev.payload.id !== tid) return;
+        termRef.current?.write(ev.payload.data);
+
+        const cap = termCaptureRef.current;
+        if (!cap) return;
+        if (cap.id !== tid) return;
+
+        const now = Date.now();
+        cap.lastDataAt = now;
+        cap.buffer += ev.payload.data;
+
+        // Flush at most every 220ms to avoid chat spam.
+        if (now - cap.lastFlushAt < 220) return;
+        cap.lastFlushAt = now;
+
+        const parts = cap.buffer.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+        cap.buffer = parts.pop() ?? "";
+
+        for (const raw of parts) {
+          if (cap.emitted >= cap.maxEmitted) break;
+          const line = stripAnsiForLog(raw).trimEnd();
+          if (!line.trim()) continue;
+          cap.emitted += 1;
+          cap.emit(line);
+        }
+
+        // Don't clear capture here; runTerminalCommand will clear it after the command becomes idle.
+      });
+    })();
+
+    termInitPromiseRef.current = p
+      .catch((e) => {
+        try {
+          termRef.current?.dispose();
+        } catch {
+        }
+        termRef.current = null;
+        fitAddonRef.current = null;
+        termIdRef.current = null;
+        const host = termHostRef.current;
+        if (host) host.innerHTML = "";
+        throw e;
+      })
+      .finally(() => {
+        termInitPromiseRef.current = null;
+      });
+
+    return termInitPromiseRef.current;
+  }, [settings.workspace_root, workspace.root]);
+
+  const resizeTerminal = useCallback(() => {
+    const t = termRef.current;
+    const id = termIdRef.current;
+    const fit = fitAddonRef.current;
+    if (!t || !id || !fit) return;
+    fit.fit();
+    void terminalResize({ id, cols: t.cols, rows: t.rows });
+  }, []);
+
+  useEffect(() => {
+    if (!isTerminalOpen) return;
+    if (panelTab !== "terminal") return;
+    void ensureTerminal();
+    const host = termHostRef.current;
+    if (!host) return;
+    const ro = new ResizeObserver(() => resizeTerminal());
+    ro.observe(host);
+    return () => ro.disconnect();
+  }, [ensureTerminal, isTerminalOpen, panelTab, resizeTerminal, terminalHeight]);
+
+  const closeTerminal = useCallback(async () => {
+    setIsTerminalOpen(false);
+    const id = termIdRef.current;
+    termIdRef.current = null;
+
+    termCwdRef.current = null;
+
+    termInitPromiseRef.current = null;
+
+    termCaptureRef.current = null;
+
+    if (termUnlistenRef.current) {
+      try {
+        termUnlistenRef.current();
+      } catch {
+      }
+      termUnlistenRef.current = null;
+    }
+
+    try {
+      if (id) await terminalKill({ id });
+    } catch {
+    }
+    try {
+      termRef.current?.dispose();
+    } catch {
+    }
+    termRef.current = null;
+    fitAddonRef.current = null;
+
+    const host = termHostRef.current;
+    if (host) host.innerHTML = "";
+  }, []);
+
+  const toggleTerminal = useCallback(() => {
+    if (isTerminalOpen) {
+      void closeTerminal();
+      return;
+    }
+
+    setPanelTab("terminal");
+    setIsTerminalOpen(true);
+    window.setTimeout(() => {
+      void ensureTerminal().then(() => {
+        resizeTerminal();
+        termRef.current?.focus();
+      });
+    }, 0);
+  }, [closeTerminal, ensureTerminal, isTerminalOpen, resizeTerminal]);
+
+  const runTerminalCommand = useCallback(
+    async (cmd: string, onStep?: (msg: string) => void) => {
+      const c = cmd.trim();
+      if (!c) return;
+
+      if (isLikelyDangerousCommand(c)) {
+        const ok = window.confirm(`The app is about to run a potentially dangerous command:\n\n${c}\n\nRun anyway?`);
+        if (!ok) return;
+      }
+
+      setPanelTab("terminal");
+      setIsTerminalOpen(true);
+
+      const desiredCwd = workspace.root ?? settings.workspace_root ?? null;
+      if (termIdRef.current && termCwdRef.current && desiredCwd && termCwdRef.current !== desiredCwd) {
+        await closeTerminal();
+        setPanelTab("terminal");
+        setIsTerminalOpen(true);
+      }
+
+      // Wait for terminal host to mount before starting the PTY.
+      for (let i = 0; i < 30; i++) {
+        if (termHostRef.current) break;
+        await new Promise<void>((r) => window.setTimeout(r, 50));
+      }
+
+      await ensureTerminal();
+      resizeTerminal();
+
+      window.setTimeout(() => {
+        try {
+          termRef.current?.focus();
+        } catch {
+        }
+      }, 0);
+
+      const tid = termIdRef.current;
+      if (!tid) throw new Error("Terminal not available");
+
+      onStep?.(`run ${c}`);
+
+      termCaptureRef.current = {
+        id: tid,
+        startedAt: Date.now(),
+        lastDataAt: Date.now(),
+        lastFlushAt: 0,
+        buffer: "",
+        emitted: 0,
+        maxEmitted: 28,
+        emit: (line) => onStep?.(`terminal ${line}`),
+      };
+
+      await terminalWrite({ id: tid, data: c + "\r" });
+
+      // Wait for terminal to go idle before returning so Explorer refresh happens after file changes land.
+      const startedAt = Date.now();
+      const maxWaitMs = 15000;
+      const idleMs = 650;
+      const minRunMs = 350;
+      await new Promise<void>((resolve) => {
+        const timer = window.setInterval(() => {
+          const now = Date.now();
+          if (now - startedAt > maxWaitMs) {
+            window.clearInterval(timer);
+            termCaptureRef.current = null;
+            resolve();
+            return;
+          }
+          const cap = termCaptureRef.current;
+          if (!cap || cap.id !== tid) {
+            if (now - startedAt >= minRunMs) {
+              window.clearInterval(timer);
+              termCaptureRef.current = null;
+              resolve();
+            }
+            return;
+          }
+          if (now - startedAt < minRunMs) return;
+          if (now - cap.lastDataAt >= idleMs) {
+            window.clearInterval(timer);
+            termCaptureRef.current = null;
+            resolve();
+          }
+        }, 120);
+      });
+    },
+    [closeTerminal, ensureTerminal, resizeTerminal, settings.workspace_root, workspace.root]
+  );
+
+  const refreshWorkspaceAfterRun = useCallback(async () => {
+    setFileIndexRoot(null);
+    setFileIndex([]);
+    await refreshDirRef.current?.(undefined);
+    const dirs = Array.from(expandedDirs);
+    for (const d of dirs) await refreshDirRef.current?.(d);
+  }, [expandedDirs]);
+
+  const pushRunRequest = useCallback(
+    (cmd: string, remaining: string[]) => {
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setActiveChatMessages((prev) => [
+        ...prev,
+        {
+          id,
+          role: "assistant",
+          content: "",
+          kind: "run_request",
+          run: { cmd, status: "pending", remaining, error: null, tail: null, autoFixRequested: false },
+        },
+      ]);
+    },
+    [setActiveChatMessages]
+  );
+
+  const runFromRunCard = useCallback(
+    async (messageId: string, mode: "once" | "always") => {
+      if (mode === "always") setRunPolicy("always");
+
+      const current = (chatMessagesRef.current ?? []).find((m) => m.id === messageId);
+      if (!current?.run || current.kind !== "run_request") return;
+
+      const cmd = current.run.cmd;
+      const remaining = Array.isArray(current.run.remaining) ? current.run.remaining : [];
+
+      setActiveChatMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, status: "running" } : m.run } : m))
+      );
+
+      const tail: string[] = [];
+
+      const pushStep = (msg: string) => {
+        const t = msg.trim();
+        if (!t) return;
+        if (t.startsWith("terminal ")) {
+          const clean = stripAnsiForLog(t.slice("terminal ".length));
+          if (!clean.trim()) return;
+          // Basic filtering of spinners / noisy progress glyphs.
+          if (/^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]+$/.test(clean.trim())) return;
+          enqueueMetaLine(clean);
+          tail.push(clean);
+          if (tail.length > 80) tail.splice(0, tail.length - 80);
+          return;
+        }
+      };
+
+      try {
+        await runTerminalCommand(cmd, pushStep);
+        await refreshWorkspaceAfterRun();
+
+        const joined = tail.join("\n");
+        const looksFailed =
+          /\bnpm\s+err!/i.test(joined) ||
+          /\berror\s+enoent\b/i.test(joined) ||
+          /\bcommand failed\b/i.test(joined) ||
+          /\b(exit code|code)\b\s*[:=]?\s*[1-9]/i.test(joined);
+
+        setActiveChatMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, status: "done" } : m.run } : m))
+        );
+
+        if (looksFailed) {
+          const err = tail.slice(-20).join("\n");
+          setActiveChatMessages((prev) =>
+            prev.map((m) =>
+              m.id === messageId
+                ? {
+                    ...m,
+                    run: m.run
+                      ? {
+                          ...m.run,
+                          error: err || "Command appears to have failed.",
+                          tail: tail.slice(-80),
+                        }
+                      : m.run,
+                  }
+                : m
+            )
+          );
+
+          setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Run failed. Click Fix to ask AI to resolve it." }]);
+
+          const currentAfter = (chatMessagesRef.current ?? []).find((m) => m.id === messageId);
+          const already = Boolean(currentAfter?.run?.autoFixRequested);
+          if (!already) {
+            setActiveChatMessages((prev) =>
+              prev.map((m) =>
+                m.id === messageId
+                  ? {
+                      ...m,
+                      run: m.run ? { ...m.run, autoFixRequested: true } : m.run,
+                    }
+                  : m
+              )
+            );
+            window.setTimeout(() => {
+              void askAiToFixRunError(messageId);
+            }, 250);
+          }
+        } else {
+          setActiveChatMessages((prev) =>
+            prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, tail: tail.slice(-80) } : m.run } : m))
+          );
+        }
+      } catch (e) {
+        enqueueMetaLine(`Command failed: ${String(e)}`);
+        setActiveChatMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, status: "canceled" } : m.run } : m))
+        );
+        return;
+      }
+
+      const auto = mode === "always" || runPolicy === "always";
+      if (remaining.length) {
+        const next = remaining[0]!;
+        const rest = remaining.slice(1);
+        if (auto) {
+          // Auto-queue next as another card so user sees each command, but execute immediately.
+          pushRunRequest(next, rest);
+          window.setTimeout(() => {
+            const last = (chatMessagesRef.current ?? []).slice().reverse().find((m) => m.kind === "run_request" && m.run?.cmd === next);
+            if (last?.id) void runFromRunCard(last.id, "once");
+          }, 0);
+        } else {
+          pushRunRequest(next, rest);
+        }
+      }
+    },
+    [enqueueMetaLine, pushRunRequest, refreshWorkspaceAfterRun, runPolicy, runTerminalCommand, setActiveChatMessages]
+  );
+
+  const cancelRunCard = useCallback(
+    (messageId: string) => {
+      setActiveChatMessages((prev) =>
+        prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, status: "canceled", remaining: [] } : m.run } : m))
+      );
+    },
+    [setActiveChatMessages]
+  );
+
+  const applyAiEditsNow = useCallback(
+    async (
+      edits: AiEditOp[],
+      onStep?: (msg: string) => void,
+      opts?: { pace?: boolean; previewFile?: (path: string) => Promise<void> }
+    ) => {
+      if (!edits.length) return;
+      if (!workspace.root) throw new Error("No workspace is open");
+
+      const queuedRuns: string[] = [];
+
+      const wait = async (ms: number) => {
+        if (!ms) return;
+        await new Promise<void>((r) => window.setTimeout(r, ms));
+      };
+
+      const revealMsForText = (text: string) => {
+        const segs = text.match(/\S+\s*/g);
+        const n = segs ? segs.length : Math.max(1, Math.ceil(text.length / 6));
+        const step = text.length > 20000 ? 18 : 10;
+        const ticks = Math.ceil(n / step);
+        return clamp(ticks * 28, 240, 2400);
+      };
+
+      const overwrites = edits.filter((e) => {
+        const op = (e.op || "").toLowerCase();
+        return (op === "write" || op === "patch") && typeof e.path === "string";
+      });
+      if (overwrites.length) {
+        const dirtyConflicts = overwrites
+          .map((w) => w.path!)
+          .filter((p) => tabs.some((t) => t.path === p && t.isDirty));
+        if (dirtyConflicts.length) {
+          const ok = window.confirm(
+            `The following files have unsaved changes and will be overwritten by AI edits:\n\n${dirtyConflicts.join(
+              "\n"
+            )}\n\nApply anyway?`
+          );
+          if (!ok) throw new Error("Canceled due to unsaved changes");
+        }
+      }
+
+      const refreshTargets = new Set<string>();
+      const queuedRunSet = new Set<string>();
+      for (const e of edits) {
+        const op = (e.op || "").toLowerCase();
+
+        if (op === "write") {
+          const p = e.path?.trim();
+          if (!p) throw new Error("AI edit op 'write' missing path");
+          onStep?.(`editing ${p}`);
+          if (opts?.previewFile) await opts.previewFile(p);
+          if (opts?.pace) await wait(revealMsForText(String(e.content ?? "")));
+          let existing: string | null = null;
+          try {
+            existing = await workspaceReadFile(p);
+          } catch {
+            existing = null;
+          }
+          if (existing && existing.length > 2000) {
+            const nextLen = (e.content ?? "").length;
+            if (nextLen < existing.length * 0.3) {
+              throw new Error(`Refused to overwrite ${p} with a much shorter file to avoid destructive loss.`);
+            }
+          }
+          await workspaceWriteFile(p, e.content ?? "");
+          const parent = p.includes("/") ? p.split("/").slice(0, -1).join("/") : "";
+          refreshTargets.add(parent);
+          setFileIndexRoot(null);
+          setFileIndex([]);
+          setTabs((prev) => prev.map((t) => (t.path === p ? { ...t, content: e.content ?? "", isDirty: false } : t)));
+          onStep?.(`write ${p}`);
+          if (opts?.pace) await wait(120);
+        } else if (op === "patch") {
+          const p = e.path?.trim();
+          if (!p) throw new Error("AI edit op 'patch' missing path");
+          const patchText = String(e.content ?? "");
+          let beforeResolved = "";
+          try {
+            const r = await workspaceReadFile(p);
+            beforeResolved = typeof r === "string" ? r : (r as { content?: string }).content ?? "";
+          } catch {
+            beforeResolved = "";
+          }
+
+          const res = applyUnifiedDiffToText(beforeResolved, patchText);
+          if (!res.ok) throw new Error(`Failed to apply patch to ${p}: ${res.error}`);
+          onStep?.(`editing ${p}`);
+          if (opts?.previewFile) await opts.previewFile(p);
+          if (opts?.pace) await wait(revealMsForText(res.text));
+          await workspaceWriteFile(p, res.text);
+          const parent = p.includes("/") ? p.split("/").slice(0, -1).join("/") : "";
+          refreshTargets.add(parent);
+          setFileIndexRoot(null);
+          setFileIndex([]);
+          setTabs((prev) => prev.map((t) => (t.path === p ? { ...t, content: res.text, isDirty: false } : t)));
+          onStep?.(`patch ${p}`);
+          if (opts?.pace) await wait(120);
+        } else if (op === "delete") {
+          const p = e.path?.trim();
+          if (!p) throw new Error("AI edit op 'delete' missing path");
+          await workspaceDelete(p);
+          const parent = p.includes("/") ? p.split("/").slice(0, -1).join("/") : "";
+          refreshTargets.add(parent);
+          setFileIndexRoot(null);
+          setFileIndex([]);
+          setTabs((prev) => prev.filter((t) => t.path !== p));
+          if (activeTabPath === p) setActiveTabPath(null);
+          onStep?.(`delete ${p}`);
+          if (opts?.pace) await wait(160);
+        } else if (op === "rename") {
+          const from = e.from?.trim();
+          const to = e.to?.trim();
+          if (!from || !to) throw new Error("AI edit op 'rename' missing from/to");
+          await workspaceRename(from, to);
+          const fromParent = from.includes("/") ? from.split("/").slice(0, -1).join("/") : "";
+          const toParent = to.includes("/") ? to.split("/").slice(0, -1).join("/") : "";
+          refreshTargets.add(fromParent);
+          refreshTargets.add(toParent);
+          setFileIndexRoot(null);
+          setFileIndex([]);
+          setTabs((prev) => prev.map((t) => (t.path === from ? { ...t, path: to, name: basename(to), language: detectLanguage(to) } : t)));
+          if (activeTabPath === from) setActiveTabPath(to);
+          onStep?.(`rename ${from} → ${to}`);
+          if (opts?.pace) await wait(160);
+        } else if (op === "run") {
+          const cmd = String(e.content ?? "").trim();
+          if (!cmd) throw new Error("AI edit op 'run' missing command in content");
+          if (!queuedRunSet.has(cmd)) {
+            queuedRunSet.add(cmd);
+            queuedRuns.push(cmd);
+          }
+        } else {
+          throw new Error(`Unsupported AI edit op: ${e.op}`);
+        }
+      }
+
+      await refreshDirRef.current?.(undefined);
+      for (const dir of refreshTargets) await refreshDirRef.current?.(dir || undefined);
+
+      if (queuedRuns.length) {
+        if (runPolicy === "always") {
+          // Still show per-command cards, but auto-run them.
+          pushRunRequest(queuedRuns[0]!, queuedRuns.slice(1));
+          window.setTimeout(() => {
+            const last = (chatMessagesRef.current ?? []).slice().reverse().find((m) => m.kind === "run_request" && m.run?.cmd === queuedRuns[0]);
+            if (last?.id) void runFromRunCard(last.id, "once");
+          }, 0);
+        } else {
+          pushRunRequest(queuedRuns[0]!, queuedRuns.slice(1));
+        }
+      }
+    },
+    [activeTabPath, pushRunRequest, runFromRunCard, runPolicy, tabs, workspace.root]
+  );
+
+  const buildChangeSet = useCallback(
+    async (edits: AiEditOp[]): Promise<ChangeSet> => {
+      const files: ChangeFile[] = [];
+      const seen = new Set<string>();
+
+      const readBefore = async (p: string): Promise<string | null> => {
+        const open = tabs.find((t) => t.path === p);
+        if (open) return open.content;
+        try {
+          const r = await workspaceReadFile(p);
+          return typeof r === "string" ? r : (r as { content?: string }).content ?? "";
+        } catch {
+          return null;
+        }
+      };
+
+      for (const e of edits) {
+        const op = (e.op || "").toLowerCase();
+
+        if (op === "run") {
+          continue;
+        }
+
+        if (op === "write") {
+          const p = e.path?.trim();
+          if (!p) continue;
+          if (seen.has(`w:${p}`)) continue;
+          seen.add(`w:${p}`);
+          const before = await readBefore(p);
+          const after = typeof e.content === "string" ? e.content : "";
+          files.push({ kind: "write", path: p, before, after });
+        } else if (op === "patch") {
+          const p = e.path?.trim();
+          if (!p) continue;
+          if (seen.has(`p:${p}`)) continue;
+          seen.add(`p:${p}`);
+          const before = (await readBefore(p)) ?? "";
+          const patchText = String(e.content ?? "");
+          const res = applyUnifiedDiffToText(before, patchText);
+          if (!res.ok) throw new Error(`Failed to build changeset patch for ${p}: ${res.error}`);
+          files.push({ kind: "write", path: p, before, after: res.text });
+        } else if (op === "delete") {
+          const p = e.path?.trim();
+          if (!p) continue;
+          if (seen.has(`d:${p}`)) continue;
+          seen.add(`d:${p}`);
+          const before = await readBefore(p);
+          files.push({ kind: "delete", path: p, before, after: null });
+        } else if (op === "rename") {
+          const from = e.from?.trim();
+          const to = e.to?.trim();
+          if (!from || !to) continue;
+          if (seen.has(`r:${from}->${to}`)) continue;
+          seen.add(`r:${from}->${to}`);
+          const before = await readBefore(from);
+          const after = before;
+          files.push({ kind: "rename", path: `${from} → ${to}`, before, after });
+        }
+      }
+
+      const stats = computeStats(files);
+      return {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        edits,
+        files,
+        stats,
+        applied: true,
+      };
+    },
+    [tabs]
+  );
+
+  const notify = useCallback(
+    (n: Omit<AppNotification, "id">) => {
+      if (n.kind !== "error") return;
+      const line = `${n.title}: ${n.message}`.trim();
+      if (!line) return;
+      setActiveChatMessages((prev) => [...prev, { role: "meta", content: line }]);
+    },
+    [setActiveChatMessages]
+  );
+
+  useEffect(() => {
+    notifyRef.current = notify;
+  }, [notify]);
+
+  const friendlyAiError = useCallback((raw: string): { title: string; message: string } => {
+    const msg = raw.trim();
+
+    if (msg.includes("Insufficient Balance") || msg.includes("status 402") || msg.includes("Payment Required")) {
+      return {
+        title: "DeepSeek: Payment required",
+        message:
+          "Your DeepSeek API key has insufficient balance. Add credits / enable billing in DeepSeek or switch to another provider.",
+      };
+    }
+
+    const m = msg.match(/status\s+(\d+)/i);
+    const status = m ? Number(m[1]) : null;
+    if (status === 401 || status === 403) {
+      return {
+        title: "AI: Authorization failed",
+        message: "Your API key is invalid or missing permissions. Re-check the key for the selected provider.",
+      };
+    }
+    if (status === 429) {
+      return { title: "AI: Rate limited", message: "You are being rate limited. Wait a bit and try again." };
+    }
+
+    return { title: "AI request failed", message: msg };
+  }, []);
+
+  const [explorerMenu, setExplorerMenu] = useState<{
+    x: number;
+    y: number;
+    path: string;
+    isDir: boolean;
+  } | null>(null);
+
+  const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null);
+  const cursorListenerDisposeRef = useRef<{ dispose: () => void } | null>(null);
+  const [cursorPos, setCursorPos] = useState<{ line: number; col: number } | null>(null);
+  const activeTab = useMemo(
+    () => (activeTabPath ? tabs.find((t) => t.path === activeTabPath) ?? null : null),
+    [activeTabPath, tabs]
+  );
+
+  const activeTabChangeFile = useMemo(() => {
+    if (!activeTab) return null;
+    const cs = activeChat.changeSet;
+    if (!cs) return null;
+    const f = cs.files.find((x) => x.kind === "write" && x.path === activeTab.path);
+    return f ?? null;
+  }, [activeChat.changeSet, activeTab]);
+
+  const [typedEditorText, setTypedEditorText] = useState<string | null>(null);
+  const editorTypingTimerRef = useRef<number | null>(null);
+  const lastEditorTypingKeyRef = useRef<string>("");
+
+  useEffect(() => {
+    return () => {
+      if (editorTypingTimerRef.current) window.clearInterval(editorTypingTimerRef.current);
+      editorTypingTimerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const csId = activeChat.changeSet?.id ?? "";
+    const p = activeTab?.path ?? "";
+    const full = typeof activeTabChangeFile?.after === "string" ? activeTabChangeFile.after : null;
+
+    if (!csId || !p || full === null) {
+      setTypedEditorText(null);
+      lastEditorTypingKeyRef.current = "";
+      if (editorTypingTimerRef.current) window.clearInterval(editorTypingTimerRef.current);
+      editorTypingTimerRef.current = null;
+      return;
+    }
+
+    const key = `${csId}:${p}:${full.length}:${full.slice(0, 32)}`;
+    if (lastEditorTypingKeyRef.current === key) return;
+    lastEditorTypingKeyRef.current = key;
+
+    if (full.length < 140) {
+      setTypedEditorText(null);
+      if (editorTypingTimerRef.current) window.clearInterval(editorTypingTimerRef.current);
+      editorTypingTimerRef.current = null;
+      return;
+    }
+
+    if (editorTypingTimerRef.current) window.clearInterval(editorTypingTimerRef.current);
+    editorTypingTimerRef.current = null;
+
+    setTypedEditorText("");
+
+    const segments = full.match(/\S+\s*/g) ?? [full];
+    const step = full.length > 20000 ? 18 : 10;
+    let i = 0;
+
+    editorTypingTimerRef.current = window.setInterval(() => {
+      i = Math.min(segments.length, i + step);
+      setTypedEditorText(segments.slice(0, i).join(""));
+      if (i >= segments.length) {
+        if (editorTypingTimerRef.current) window.clearInterval(editorTypingTimerRef.current);
+        editorTypingTimerRef.current = null;
+      }
+    }, 28);
+  }, [activeChat.changeSet?.id, activeTab?.path, activeTabChangeFile?.after]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("pompora.recentFiles");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setRecentFiles(parsed.filter((x) => typeof x === "string").slice(0, 20));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const rememberRecentFile = useCallback((absPath: string) => {
+    const norm = absPath.replace(/\\/g, "/");
+    setRecentFiles((prev) => {
+      const next = [norm, ...prev.filter((p) => p !== norm)].slice(0, 20);
+      try {
+        window.localStorage.setItem("pompora.recentFiles", JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
+
+  const newUntitledFile = useCallback(() => {
+    const n = untitledCounter;
+    setUntitledCounter((x) => x + 1);
+    const path = `untitled:${Date.now()}:${n}`;
+    const tab: EditorTab = {
+      path,
+      name: `Untitled-${n}`,
+      language: "plaintext",
+      content: "",
+      isDirty: true,
+    };
+    setTabs((prev) => [...prev, tab]);
+    setActiveTabPath(path);
+  }, [untitledCounter]);
+
+  const openNewWindow = useCallback(() => {
+    try {
+      const label = `main-${Date.now()}`;
+      // In dev, this will load the devUrl; in production it loads the bundled index.
+      new WebviewWindow(label, { title: "Pompora", width: 1280, height: 800 });
+    } catch (e) {
+      console.error("New window failed", e);
+      window.alert(`Failed to open new window: ${String(e)}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (settings.theme === "light") root.setAttribute("data-theme", "light");
+    else root.removeAttribute("data-theme");
+  }, [settings.theme]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([settingsGet(), workspaceGet()])
+      .then(([s, w]) => {
+        if (cancelled) return;
+        const migratedProvider = s.active_provider === "openrouter" ? "openai" : s.active_provider;
+        setSettingsState((prev) => ({
+          ...prev,
+          ...s,
+          workspace_root: s.workspace_root ?? null,
+          recent_workspaces: s.recent_workspaces ?? [],
+          active_provider: migratedProvider ?? null,
+        }));
+        setWorkspaceState(w);
+      })
+      .catch(() => {
+        if (cancelled) return;
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsSettingsLoaded(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSecretsError(null);
+    setKeyStatus(null);
+
+    if (!isSettingsLoaded) return;
+    if (!settings.active_provider) return;
+
+    providerKeyStatus(settings.active_provider)
+      .then((v) => {
+        if (cancelled) return;
+        setKeyStatus(v);
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return;
+        setSecretsError(String(e));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSettingsLoaded, settings.active_provider]);
+
+  // Additional effect to refresh key status when showKeySaved is true
+  useEffect(() => {
+    if (showKeySaved && settings.active_provider) {
+      providerKeyStatus(settings.active_provider)
+        .then((v) => {
+          setKeyStatus(v);
+        })
+        .catch((e: unknown) => {
+          setSecretsError(String(e));
+        });
+    }
+  }, [showKeySaved, settings.active_provider]);
+
+  const providerChoices = useMemo(
+    () =>
+      [
+        { id: "openai", label: "GPT-4o mini", api: true },
+        { id: "anthropic", label: "Claude 3.5 Sonnet", api: true },
+        { id: "gemini", label: "Gemini Flash", api: true },
+        { id: "deepseek", label: "DeepSeek Chat", api: true },
+        { id: "groq", label: "Groq Llama", api: true },
+        { id: "ollama", label: "Ollama", api: false },
+        { id: "lmstudio", label: "LM Studio", api: false },
+        { id: "custom", label: "Custom", api: true },
+      ] as const,
+    []
+  );
+
+  const providerLabel = useMemo(() => {
+    const p = settings.active_provider;
+    if (!p) return "Not configured";
+    const found = providerChoices.find((x) => x.id === p);
+    return found?.label ?? p;
+  }, [providerChoices, settings.active_provider]);
+
+  const providerNeedsKey = useMemo(() => {
+    const p = settings.active_provider;
+    if (!p) return true;
+    // Local providers that don't need API keys
+    return !["ollama", "lmstudio"].includes(p);
+  }, [settings.active_provider]);
+
+  const refreshProviderKeyStatuses = useCallback(async () => {
+    const targets = providerChoices.filter((p) => p.api).map((p) => p.id);
+    if (!targets.length) return;
+
+    const out: Record<string, KeyStatus | null> = {};
+    await Promise.all(
+      targets.map(async (id) => {
+        try {
+          out[id] = await providerKeyStatus(id);
+        } catch {
+          out[id] = null;
+        }
+      })
+    );
+    setProviderKeyStatuses(out);
+  }, [providerChoices]);
+
+  const chatContextUsage = useMemo(() => {
+    return { used: 0, total: 0, pct: 0 };
+  }, []);
+
+  const SETTINGS_TAB_PATH = "pompora:settings";
+
+  const openSettingsTab = useCallback(() => {
+    setTabs((prev) => {
+      if (prev.some((t) => t.path === SETTINGS_TAB_PATH)) return prev;
+      return [...prev, { path: SETTINGS_TAB_PATH, name: "Settings", language: "plaintext", content: "", isDirty: false }];
+    });
+    setActiveTabPath(SETTINGS_TAB_PATH);
+  }, []);
+
+  const [wsTooltip, setWsTooltip] = useState<{
+    text: string;
+    x: number;
+    y: number;
+    align: "tl" | "tr";
+    placement: "above" | "below";
+  } | null>(null);
+
+  const showTooltipForEl = useCallback((el: HTMLElement, text: string, align: "tl" | "tr" = "tr") => {
+    const r = el.getBoundingClientRect();
+    const pad = 10;
+    const safeAlign: "tl" | "tr" = align === "tr" && r.right < 280 ? "tl" : align;
+
+    const placement: "above" | "below" = r.top < 44 ? "below" : "above";
+
+    // Anchor near the hovered element but keep the tooltip fully in-viewport.
+    const anchorX = safeAlign === "tr" ? r.right : r.left;
+    const anchorY = placement === "above" ? r.top : r.bottom;
+    const x = Math.min(window.innerWidth - pad, Math.max(pad, anchorX));
+    const y = Math.min(window.innerHeight - pad, Math.max(pad, anchorY));
+    setWsTooltip({ text, x, y, align: safeAlign, placement });
+  }, []);
+
+  const hideTooltip = useCallback(() => setWsTooltip(null), []);
+
+  useEffect(() => {
+    if (!isModelPickerOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      if (!t.closest("[data-model-picker-root]")) setIsModelPickerOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [isModelPickerOpen]);
+
+  // Effect to clear error when changing providers
+  useEffect(() => {
+    setSecretsError(null);
+  }, [settings.active_provider]);
+
+  const workspaceLabel = useMemo(() => {
+    const root = workspace.root ?? settings.workspace_root;
+    if (!root) return "No folder";
+    return basename(root);
+  }, [settings.workspace_root, workspace.root]);
+
+  const workspacePathLabel = useMemo(() => {
+    const root = workspace.root ?? settings.workspace_root;
+    return root ?? "";
+  }, [settings.workspace_root, workspace.root]);
+
+  const canUseAi = useMemo(() => {
+    if (settings.offline_mode) return false;
+    if (!settings.active_provider) return false;
+    if (!providerNeedsKey) return true;
+    return keyStatus?.is_configured === true;
+  }, [keyStatus?.is_configured, providerNeedsKey, settings.active_provider, settings.offline_mode]);
+
+  const refreshDir = useCallback(async (relDir?: string) => {
+    const key = relDir ?? "";
+    const entries = await workspaceListDir(relDir);
+    setExplorer((prev) => ({ ...prev, [key]: entries }));
+  }, []);
+
+  useEffect(() => {
+    refreshDirRef.current = refreshDir;
+  }, [refreshDir]);
+
+  const getEntry = useCallback(
+    (path: string): DirEntryInfo | null => {
+      const parent = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
+      const list = explorer[parent];
+      if (!list) return null;
+      return list.find((e) => e.path === path) ?? null;
+    },
+    [explorer]
+  );
+
+  const baseDirForCreate = useCallback(
+    (selected: string | null): string => {
+      if (!selected) return "";
+      const info = getEntry(selected);
+      if (info?.is_dir) return selected;
+      return selected.includes("/") ? selected.split("/").slice(0, -1).join("/") : "";
+    },
+    [getEntry]
+  );
+
+  const refreshRoot = useCallback(async () => {
+    setExplorer({});
+    setExpandedDirs(new Set());
+    setSelectedPath(null);
+    if (!workspace.root) return;
+    await refreshDir(undefined);
+  }, [refreshDir, workspace.root]);
+
+  const addFolderToWorkspace = useCallback(async () => {
+    const folder = await workspacePickFolder();
+    if (!folder) return;
+    // Multi-root workspaces are not implemented yet; mimic VS Code by switching to the picked folder.
+    window.alert("Multi-root workspace is not implemented yet. Opening the selected folder instead.");
+    const w = await workspaceSet(folder);
+    setWorkspaceState(w);
+    setSettingsState((s) => ({
+      ...s,
+      workspace_root: w.root,
+      recent_workspaces: w.recent,
+    }));
+    setTabs([]);
+    setActiveTabPath(null);
+    await refreshRoot();
+  }, [refreshRoot]);
+
+  useEffect(() => {
+    void refreshRoot();
+  }, [refreshRoot]);
+
+  useEffect(() => {
+    // Clear cached file index when workspace root changes.
+    setFileIndexRoot(null);
+    setFileIndex([]);
+  }, [workspace.root]);
+
+  useEffect(() => {
+    chatMessagesRef.current = activeChat.messages;
+  }, [activeChat.messages]);
+
+  useEffect(() => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [activeChat.messages.length, chatBusy]);
+
+  useEffect(() => {
+    return () => {
+      if (chatStreamTimerRef.current) window.clearInterval(chatStreamTimerRef.current);
+    };
+  }, []);
+
+  const setMessageRating = useCallback(
+    (index: number, rating: "up" | "down") => {
+      setActiveChatMessages((prev) => {
+        const next = prev.slice();
+        const m = next[index];
+        if (!m || m.role !== "assistant") return prev;
+        const nextRating = m.rating === rating ? null : rating;
+        next[index] = { ...m, rating: nextRating };
+        return next;
+      });
+    },
+    [setActiveChatMessages]
+  );
+
+  const startStreamingToMessageId = useCallback(
+    (id: string, fullText: string) => {
+      if (chatStreamTimerRef.current) window.clearInterval(chatStreamTimerRef.current);
+
+      const parts = fullText.match(/\S+\s*/g) ?? [fullText];
+      const step = fullText.length > 2400 ? 6 : fullText.length > 900 ? 4 : 2;
+      const tick = fullText.length > 2400 ? 36 : 30;
+      let i = 0;
+      let last = "";
+
+      chatStreamTimerRef.current = window.setInterval(() => {
+        i = Math.min(parts.length, i + step);
+        const nextText = parts.slice(0, i).join("");
+        if (nextText !== last) {
+          last = nextText;
+          setActiveChatMessages((prev) => prev.map((m) => (m.id === id ? { ...m, content: nextText } : m)));
+        }
+        if (i >= parts.length) {
+          if (chatStreamTimerRef.current) window.clearInterval(chatStreamTimerRef.current);
+          chatStreamTimerRef.current = null;
+        }
+      }, tick);
+    },
+    [setActiveChatMessages]
+  );
+
+  useEffect(() => {
+    if (!isChatDockOpen) return;
+    const t = window.setTimeout(() => chatComposerRef.current?.focus(), 0);
+    return () => window.clearTimeout(t);
+  }, [activeChatId, isChatDockOpen]);
+
+  const openFolder = useCallback(async () => {
+    try {
+      const folder = await workspacePickFolder();
+      if (!folder) {
+        window.alert("No folder was selected.");
+        return;
+      }
+
+      const w = await workspaceSet(folder);
+      setWorkspaceState(w);
+      setSettingsState((s) => ({
+        ...s,
+        workspace_root: w.root,
+        recent_workspaces: w.recent,
+      }));
+      setTabs([]);
+      setActiveTabPath(null);
+      await refreshRoot();
+    } catch (e) {
+      console.error("Open folder failed", e);
+      window.alert(`Failed to open folder: ${String(e)}`);
+    }
+  }, [refreshRoot]);
+
+  const openRecent = useCallback(
+    async (root: string) => {
+      const w = await workspaceSet(root);
+      setWorkspaceState(w);
+      setSettingsState((s) => ({
+        ...s,
+        workspace_root: w.root,
+        recent_workspaces: w.recent,
+      }));
+      setTabs([]);
+      setActiveTabPath(null);
+      await refreshRoot();
+    },
+    [refreshRoot]
+  );
+
+  const openFile = useCallback(
+    async (relPath: string) => {
+      const existing = tabs.find((t) => t.path === relPath);
+      if (existing) {
+        setActiveTabPath(relPath);
+        return;
+      }
+
+      let content = "";
+      try {
+        content = await workspaceReadFile(relPath);
+      } catch {
+        content = "";
+      }
+      const tab: EditorTab = {
+        path: relPath,
+        name: basename(relPath),
+        language: detectLanguage(relPath),
+        content,
+        isDirty: false,
+      };
+
+      setTabs((prev) => [...prev, tab]);
+      setActiveTabPath(relPath);
+
+      if (workspace.root) {
+        const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${relPath}`;
+        rememberRecentFile(abs);
+      }
+    },
+    [rememberRecentFile, tabs, workspace.root]
+  );
+
+  const changeWriteFiles = useMemo(() => {
+    const cs = activeChat.changeSet;
+    if (!cs) return [] as ChangeFile[];
+    return cs.files.filter((f) => f.kind === "write" && typeof f.path === "string");
+  }, [activeChat.changeSet]);
+
+  const [selectedChangePath, setSelectedChangePath] = useState<string | null>(null);
+
+  const [isChangeSummaryOpen, setIsChangeSummaryOpen] = useState(false);
+  const lastChangeSetIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const id = activeChat.changeSet?.id ?? null;
+    if (id !== lastChangeSetIdRef.current) {
+      lastChangeSetIdRef.current = id;
+      setIsChangeSummaryOpen(false);
+    }
+  }, [activeChat.changeSet?.id]);
+
+  useEffect(() => {
+    if (!activeChat.changeSet) {
+      setSelectedChangePath(null);
+      return;
+    }
+    if (!changeWriteFiles.length) return;
+    const exists = selectedChangePath && changeWriteFiles.some((f) => f.path === selectedChangePath);
+    if (exists) return;
+    const first = changeWriteFiles[0]!.path;
+    setSelectedChangePath(first);
+    void openFile(first);
+  }, [activeChat.changeSet, changeWriteFiles, openFile, selectedChangePath]);
+
+  const acceptAllChanges = useCallback(() => {
+    if (!activeChat.changeSet) return;
+    setActiveChatChangeSet(null);
+    setSelectedChangePath(null);
+    setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Accepted all changes." }]);
+  }, [activeChat.changeSet, setActiveChatChangeSet, setActiveChatMessages]);
+
+  const rejectAllChanges = useCallback(async () => {
+    const chatChangeSet = activeChat.changeSet;
+    if (!chatChangeSet) return;
+    if (!workspace.root) {
+      notifyRef.current?.({ kind: "error", title: "No workspace", message: "Open a folder first." });
+      return;
+    }
+
+    setChatApplying(true);
+    try {
+      // Revert in reverse order to minimize conflicts.
+      const reverse: AiEditOp[] = [];
+      for (let i = chatChangeSet.files.length - 1; i >= 0; i--) {
+        const f = chatChangeSet.files[i]!;
+        if (f.kind === "write") {
+          if (f.before === null) {
+            reverse.push({ op: "delete", path: f.path });
+          } else {
+            reverse.push({ op: "write", path: f.path, content: f.before });
+          }
+        } else if (f.kind === "delete") {
+          if (f.before !== null) reverse.push({ op: "write", path: f.path, content: f.before });
+        } else if (f.kind === "rename") {
+          const parts = f.path.split(" → ");
+          if (parts.length === 2) {
+            reverse.push({ op: "rename", from: parts[1]!, to: parts[0]! });
+          }
+        }
+      }
+
+      await applyAiEditsNow(reverse);
+      setActiveChatChangeSet(null);
+      setSelectedChangePath(null);
+      setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Reverted all changes." }]);
+    } catch (e) {
+      notifyRef.current?.({ kind: "error", title: "Revert failed", message: String(e) });
+    } finally {
+      setChatApplying(false);
+    }
+  }, [activeChat.changeSet, applyAiEditsNow, setActiveChatChangeSet, setActiveChatMessages, workspace.root]);
+
+  const acceptFileChange = useCallback(
+    (path: string) => {
+      const cs = activeChat.changeSet;
+      if (!cs) return;
+      const nextFiles = cs.files.filter((f) => !(f.kind === "write" && f.path === path));
+      if (!nextFiles.length) {
+        setActiveChatChangeSet(null);
+        setSelectedChangePath(null);
+        return;
+      }
+      const next = { ...cs, files: nextFiles, stats: computeStats(nextFiles) };
+      setActiveChatChangeSet(next);
+      if (!nextFiles.some((f) => f.kind === "write" && f.path === selectedChangePath)) {
+        const first = nextFiles.find((f) => f.kind === "write") as ChangeFile | undefined;
+        if (first?.kind === "write") {
+          setSelectedChangePath(first.path);
+          void openFile(first.path);
+        }
+      }
+    },
+    [activeChat.changeSet, openFile, selectedChangePath, setActiveChatChangeSet]
+  );
+
+  const rejectFileChange = useCallback(
+    async (path: string) => {
+      const cs = activeChat.changeSet;
+      if (!cs) return;
+      const f = cs.files.find((x) => x.kind === "write" && x.path === path);
+      if (!f || f.kind !== "write") return;
+      if (!workspace.root) {
+        notifyRef.current?.({ kind: "error", title: "No workspace", message: "Open a folder first." });
+        return;
+      }
+
+      setChatApplying(true);
+      try {
+        if (f.before === null) {
+          await workspaceDelete(path);
+          setTabs((prev) => prev.filter((t) => t.path !== path));
+          if (activeTabPath === path) setActiveTabPath(null);
+        } else {
+          await workspaceWriteFile(path, f.before);
+          setTabs((prev) => prev.map((t) => (t.path === path ? { ...t, content: f.before ?? "", isDirty: false } : t)));
+        }
+
+        const nextFiles = cs.files.filter((x) => !(x.kind === "write" && x.path === path));
+        if (!nextFiles.length) {
+          setActiveChatChangeSet(null);
+          setSelectedChangePath(null);
+          return;
+        }
+        const next = { ...cs, files: nextFiles, stats: computeStats(nextFiles) };
+        setActiveChatChangeSet(next);
+        if (!nextFiles.some((x) => x.kind === "write" && x.path === selectedChangePath)) {
+          const first = nextFiles.find((x) => x.kind === "write") as ChangeFile | undefined;
+          if (first?.kind === "write") {
+            setSelectedChangePath(first.path);
+            void openFile(first.path);
+          }
+        }
+      } catch (e) {
+        notifyRef.current?.({ kind: "error", title: "Reject failed", message: String(e) });
+      } finally {
+        setChatApplying(false);
+      }
+    },
+    [activeChat.changeSet, activeTabPath, openFile, selectedChangePath, setActiveChatChangeSet, workspace.root]
+  );
+
+  const ensureFileIndex = useCallback(async () => {
+    if (!workspace.root) return;
+    if (isFileIndexLoading) return;
+    if (fileIndexRoot === workspace.root && fileIndex.length) return;
+
+    setIsFileIndexLoading(true);
+    try {
+      const files = await workspaceListFiles(20000);
+      setFileIndex(files);
+      setFileIndexRoot(workspace.root);
+    } finally {
+      setIsFileIndexLoading(false);
+    }
+  }, [fileIndex.length, fileIndexRoot, isFileIndexLoading, workspace.root]);
+
+  const openQuickOpen = useCallback(async () => {
+    if (!workspace.root) {
+      await openFolder();
+      return;
+    }
+    setIsQuickOpenOpen(true);
+    setQuickOpenQuery("");
+    setQuickOpenIndex(0);
+    void ensureFileIndex();
+  }, [ensureFileIndex, openFolder, workspace.root]);
+
+  const openStandaloneFile = useCallback(async () => {
+    try {
+      const file = await workspacePickFile();
+      if (!file) {
+        window.alert("No file was selected.");
+        return;
+      }
+
+      // Ensure we have a workspace root that can read files via backend (backend only reads *relative* paths).
+      const root = dirname(file);
+      const w = await workspaceSet(root);
+      setWorkspaceState(w);
+      setSettingsState((s) => ({
+        ...s,
+        workspace_root: w.root,
+        recent_workspaces: w.recent,
+      }));
+
+      setTabs([]);
+      setActiveTabPath(null);
+      await refreshRoot();
+
+      // Since workspace root is the file's parent directory, rel path is just the basename.
+      await openFile(basename(file));
+      rememberRecentFile(file);
+    } catch (e) {
+      console.error("Open file failed", e);
+      window.alert(`Failed to open file: ${String(e)}`);
+    }
+  }, [openFile, refreshRoot, rememberRecentFile]);
+
+  useEffect(() => {
+    if (!autoSaveEnabled) return;
+    if (!activeTab) return;
+    if (!activeTab.isDirty) return;
+    if (activeTab.path.startsWith("untitled:")) return;
+
+    const t = window.setTimeout(() => {
+      void (async () => {
+        try {
+          await workspaceWriteFile(activeTab.path, activeTab.content);
+          setTabs((prev) => prev.map((x) => (x.path === activeTab.path ? { ...x, isDirty: false } : x)));
+        } catch (e) {
+          console.error("Auto save failed", e);
+        }
+      })();
+    }, 600);
+
+    return () => window.clearTimeout(t);
+  }, [activeTab, autoSaveEnabled]);
+
+  const goToLine = useCallback(
+    (lineNumber: number) => {
+      if (!activeTab) return;
+      const ed = editorRef.current;
+      if (ed) {
+        const model = ed.getModel();
+        const line = model ? Math.max(1, Math.min(lineNumber, model.getLineCount())) : Math.max(1, lineNumber);
+        ed.revealLineInCenter(line);
+        ed.setPosition({ lineNumber: line, column: 1 });
+        ed.focus();
+        return;
+      }
+      setPendingReveal({ path: activeTab.path, line: Math.max(1, lineNumber) });
+    },
+    [activeTab]
+  );
+
+  const openGoToLine = useCallback(() => {
+    if (!activeTab) return;
+    setIsGoToLineOpen(true);
+    setGoToLineValue("");
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (!pendingReveal) return;
+    if (!activeTab) return;
+    if (activeTab.path !== pendingReveal.path) return;
+    const ed = editorRef.current;
+    if (!ed) return;
+
+    const model = ed.getModel();
+    if (!model) return;
+    const line = Math.max(1, Math.min(pendingReveal.line, model.getLineCount()));
+    ed.revealLineInCenter(line);
+    ed.setPosition({ lineNumber: line, column: 1 });
+    ed.focus();
+    setPendingReveal(null);
+  }, [activeTab, pendingReveal]);
+
+  const createNewFile = useCallback(async () => {
+    if (!workspace.root) {
+      await openFolder();
+      return;
+    }
+    const base = baseDirForCreate(selectedPath);
+    const name = window.prompt("New file name");
+    if (!name) return;
+    const rel = base ? `${base}/${name}` : name;
+    await workspaceWriteFile(rel, "");
+    await refreshDir(base || undefined);
+    setSelectedPath(rel);
+    await openFile(rel);
+  }, [baseDirForCreate, openFile, openFolder, refreshDir, selectedPath, workspace.root]);
+
+  const createNewFolder = useCallback(async () => {
+    if (!workspace.root) {
+      await openFolder();
+      return;
+    }
+    const base = baseDirForCreate(selectedPath);
+    const name = window.prompt("New folder name");
+    if (!name) return;
+    const rel = base ? `${base}/${name}` : name;
+    await workspaceCreateDir(rel);
+    await refreshDir(base || undefined);
+    setSelectedPath(rel);
+  }, [baseDirForCreate, openFolder, refreshDir, selectedPath, workspace.root]);
+
+  const renameSelected = useCallback(async () => {
+    if (!selectedPath) return;
+    const currentName = basename(selectedPath);
+    const nextName = window.prompt("Rename to", currentName);
+    if (!nextName || nextName === currentName) return;
+    const parent = selectedPath.includes("/") ? selectedPath.split("/").slice(0, -1).join("/") : "";
+    const toRel = parent ? `${parent}/${nextName}` : nextName;
+    const fromRel = selectedPath;
+
+    await workspaceRename(fromRel, toRel);
+
+    setTabs((prev) =>
+      prev.map((t) => {
+        if (t.path === fromRel) {
+          return { ...t, path: toRel, name: basename(toRel) };
+        }
+        const prefix = fromRel.endsWith("/") ? fromRel : `${fromRel}/`;
+        if (t.path.startsWith(prefix)) {
+          const rest = t.path.slice(prefix.length);
+          const nextPath = `${toRel}/${rest}`;
+          return { ...t, path: nextPath, name: basename(nextPath) };
+        }
+        return t;
+      })
+    );
+
+    setActiveTabPath((prev) => {
+      if (!prev) return prev;
+      if (prev === fromRel) return toRel;
+      const prefix = fromRel.endsWith("/") ? fromRel : `${fromRel}/`;
+      if (prev.startsWith(prefix)) {
+        const rest = prev.slice(prefix.length);
+        return `${toRel}/${rest}`;
+      }
+      return prev;
+    });
+
+    setSelectedPath(toRel);
+    await refreshRoot();
+  }, [refreshRoot, selectedPath]);
+
+  const deleteSelected = useCallback(async () => {
+    if (!selectedPath) return;
+    const ok = window.confirm(`Delete '${basename(selectedPath)}'?`);
+    if (!ok) return;
+    const target = selectedPath;
+    await workspaceDelete(target);
+
+    setTabs((prev) =>
+      prev.filter((t) => {
+        if (t.path === target) return false;
+        const prefix = target.endsWith("/") ? target : `${target}/`;
+        return !t.path.startsWith(prefix);
+      })
+    );
+    setActiveTabPath((prev) => {
+      if (!prev) return prev;
+      if (prev === target) return null;
+      const prefix = target.endsWith("/") ? target : `${target}/`;
+      if (prev.startsWith(prefix)) return null;
+      return prev;
+    });
+
+    setSelectedPath(null);
+    await refreshRoot();
+  }, [refreshRoot, selectedPath]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+    if (!workspace.root) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    const t = window.setTimeout(() => {
+      workspaceSearch(q, 200)
+        .then((res) => {
+          if (cancelled) return;
+          setSearchResults(res);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setSearchResults([]);
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setIsSearching(false);
+        });
+    }, 180);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [searchQuery, workspace.root]);
+
+  const closeTab = useCallback(
+    (path: string) => {
+      let nextActive: string | null = activeTabPath;
+      setTabs((prev) => {
+        const tab = prev.find((t) => t.path === path);
+        if (tab?.isDirty) {
+          const ok = window.confirm(`Close \'${tab.name}\' without saving?`);
+          if (!ok) return prev;
+        }
+        const remaining = prev.filter((t) => t.path !== path);
+        if (activeTabPath === path) {
+          nextActive = remaining.length ? remaining[remaining.length - 1]!.path : null;
+        }
+        return remaining;
+      });
+
+      setActiveTabPath(nextActive);
+    },
+    [activeTabPath]
+  );
+
+  const saveActiveFile = useCallback(async () => {
+    if (!activeTab) return;
+    if (activeTab.path.startsWith("untitled:")) {
+      if (!workspace.root) {
+        await openFolder();
+        if (!workspace.root) return;
+      }
+      const name = window.prompt("Save As (relative path)", activeTab.name);
+      if (!name) return;
+      const rel = name.trim().replace(/\\/g, "/");
+      if (!rel) return;
+      await workspaceWriteFile(rel, activeTab.content);
+      setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, path: rel, name: basename(rel), language: detectLanguage(rel), isDirty: false } : t)));
+      setActiveTabPath(rel);
+      return;
+    }
+    await workspaceWriteFile(activeTab.path, activeTab.content);
+    setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, isDirty: false } : t)));
+    await refreshDir(activeTab.path.includes("/") ? activeTab.path.split("/").slice(0, -1).join("/") : undefined);
+  }, [activeTab, openFolder, refreshDir, workspace.root]);
+
+  const saveAll = useCallback(async () => {
+    const dirty = tabs.filter((t) => t.isDirty);
+    for (const t of dirty) {
+      if (t.path.startsWith("untitled:")) {
+        setActiveTabPath(t.path);
+        const name = window.prompt("Save As (relative path)", t.name);
+        if (!name) continue;
+        const rel = name.trim().replace(/\\/g, "/");
+        if (!rel) continue;
+        await workspaceWriteFile(rel, t.content);
+        setTabs((prev) =>
+          prev.map((x) => (x.path === t.path ? { ...x, path: rel, name: basename(rel), language: detectLanguage(rel), isDirty: false } : x))
+        );
+        setActiveTabPath(rel);
+        continue;
+      }
+      await workspaceWriteFile(t.path, t.content);
+      setTabs((prev) => prev.map((x) => (x.path === t.path ? { ...x, isDirty: false } : x)));
+    }
+  }, [tabs]);
+
+  const saveAs = useCallback(async () => {
+    if (!activeTab) return;
+    if (!workspace.root) {
+      await openFolder();
+      if (!workspace.root) return;
+    }
+    const name = window.prompt("Save As (relative path)", activeTab.name);
+    if (!name) return;
+    const rel = name.trim().replace(/\\/g, "/");
+    if (!rel) return;
+    await workspaceWriteFile(rel, activeTab.content);
+    setTabs((prev) => {
+      const without = prev.filter((t) => t.path !== activeTab.path);
+      const next: EditorTab = {
+        path: rel,
+        name: basename(rel),
+        language: detectLanguage(rel),
+        content: activeTab.content,
+        isDirty: false,
+      };
+      return [...without, next];
+    });
+    setActiveTabPath(rel);
+    await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
+  }, [activeTab, openFolder, refreshDir, workspace.root]);
+
+  const revertFile = useCallback(async () => {
+    if (!activeTab) return;
+    if (activeTab.path.startsWith("untitled:")) {
+      const ok = window.confirm("Revert will close this untitled file. Continue?");
+      if (!ok) return;
+      closeTab(activeTab.path);
+      return;
+    }
+    const content = await workspaceReadFile(activeTab.path);
+    setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, content, isDirty: false } : t)));
+  }, [activeTab, closeTab]);
+
+  const saveWorkspaceAs = useCallback(async () => {
+    if (!workspace.root) {
+      window.alert("No folder is open. Open a folder first.");
+      return;
+    }
+    const name = window.prompt("Save Workspace As (file name)", "pompora-workspace.json");
+    if (!name) return;
+    const rel = name.trim().replace(/\\/g, "/");
+    if (!rel) return;
+    const payload = JSON.stringify({ folders: [workspace.root] }, null, 2);
+    await workspaceWriteFile(rel, payload);
+    await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
+  }, [refreshDir, workspace.root]);
+
+  const duplicateWorkspace = useCallback(async () => {
+    if (!workspace.root) {
+      window.alert("No folder is open. Open a folder first.");
+      return;
+    }
+    const name = window.prompt("Duplicate Workspace As (file name)", "pompora-workspace-copy.json");
+    if (!name) return;
+    const rel = name.trim().replace(/\\/g, "/");
+    if (!rel) return;
+    const payload = JSON.stringify({ folders: [workspace.root] }, null, 2);
+    await workspaceWriteFile(rel, payload);
+    await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
+  }, [refreshDir, workspace.root]);
+
+  const openRecentFile = useCallback(
+    async (absPath: string) => {
+      const file = absPath.replace(/\\/g, "/");
+      const root = dirname(file);
+      const w = await workspaceSet(root);
+      setWorkspaceState(w);
+      setSettingsState((s) => ({
+        ...s,
+        workspace_root: w.root,
+        recent_workspaces: w.recent,
+      }));
+      setTabs([]);
+      setActiveTabPath(null);
+      await refreshRoot();
+      await openFile(basename(file));
+      rememberRecentFile(file);
+    },
+    [openFile, refreshRoot, rememberRecentFile]
+  );
+
+  const closeFolder = useCallback(async () => {
+    const ok = window.confirm("Close folder?");
+    if (!ok) return;
+    const w = await workspaceSet(null);
+    setWorkspaceState(w);
+    setSettingsState((s) => ({
+      ...s,
+      workspace_root: w.root,
+      recent_workspaces: w.recent,
+    }));
+    setTabs([]);
+    setActiveTabPath(null);
+    setExplorer({});
+    setExpandedDirs(new Set());
+    setSelectedPath(null);
+  }, []);
+
+  const exitApp = useCallback(() => {
+    try {
+      void getCurrentWindow().close();
+    } catch {
+      window.close();
+    }
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setSettingsState((s) => {
+      const next: AppSettings = { ...s, theme: s.theme === "dark" ? "light" : "dark" };
+      void settingsSet(next).catch((e) => console.error("Failed to save theme", e));
+      return next;
+    });
+  }, []);
+
+  const changeProvider = useCallback(
+    async (p: string | null) => {
+      setKeyStatus(null);
+      setShowKeySaved(false);
+      setShowKeyCleared(false);
+
+      const next = { ...settings, active_provider: p };
+      setSettingsState(next);
+
+      try {
+        await settingsSet(next);
+        if (p) {
+          setKeyStatus(await providerKeyStatus(p));
+        }
+      } catch (e) {
+        console.error("Failed to save provider selection", e);
+        setSecretsError(String(e));
+      }
+    },
+    [settings]
+  );
+
+  const saveSettingsNow = useCallback(async () => {
+    if (isSavingSettings) return;
+    setIsSavingSettings(true);
+    try {
+      await settingsSet(settings);
+    } catch (e) {
+      console.error("Failed to save settings", e);
+      notify({ kind: "error", title: "Settings", message: "Failed to save settings" });
+    } finally {
+      setIsSavingSettings(false);
+    }
+  }, [isSavingSettings, notify, settings]);
+
+  const toggleOfflineMode = useCallback(async () => {
+    if (isTogglingOffline) return;
+    setIsTogglingOffline(true);
+    const next: AppSettings = { ...settings, offline_mode: !settings.offline_mode };
+    setSettingsState(next);
+    try {
+      await settingsSet(next);
+    } catch (e) {
+      console.error("Failed to toggle offline mode", e);
+      notify({ kind: "error", title: "Settings", message: "Failed to toggle offline mode" });
+      setSettingsState(settings);
+    } finally {
+      setIsTogglingOffline(false);
+    }
+  }, [isTogglingOffline, notify, settings]);
+
+  const handleStoreKey = useCallback(async () => {
+    if (!settings.active_provider) return;
+    if (!apiKeyDraft.trim()) return;
+    setIsKeyOperationInProgress(true);
+    setSecretsError(null);
+    try {
+      await providerKeySet({
+        provider: settings.active_provider,
+        apiKey: apiKeyDraft.trim(),
+        encryptionPassword: encryptionPasswordDraft ? encryptionPasswordDraft.trim() : undefined,
+      });
+      setShowKeySaved(true);
+      setTimeout(() => setShowKeySaved(false), 2000);
+      setKeyStatus(await providerKeyStatus(settings.active_provider));
+    } catch (e) {
+      console.error(e);
+      setSecretsError(String(e));
+    } finally {
+      setIsKeyOperationInProgress(false);
+    }
+  }, [apiKeyDraft, encryptionPasswordDraft, settings.active_provider]);
+
+  const clearProviderKey = useCallback(async () => {
+    if (!settings.active_provider) return;
+    setIsKeyOperationInProgress(true);
+    setSecretsError(null);
+    try {
+      await providerKeyClear(settings.active_provider);
+      setShowKeyCleared(true);
+      setTimeout(() => setShowKeyCleared(false), 2000);
+      setKeyStatus(await providerKeyStatus(settings.active_provider));
+    } catch (e) {
+      console.error(e);
+      setSecretsError(String(e));
+    } finally {
+      setIsKeyOperationInProgress(false);
+    }
+  }, [settings.active_provider]);
+
+  const handleDebugGemini = useCallback(async () => {
+    if (!settings.active_provider) return;
+    setIsKeyOperationInProgress(true);
+    setSecretsError(null);
+    setDebugResult("Running debug test...");
+    try {
+      const out = await debugGeminiEndToEnd(apiKeyDraft.trim());
+      setDebugResult(out);
+    } catch (e) {
+      setDebugResult(String(e));
+    } finally {
+      setIsKeyOperationInProgress(false);
+    }
+  }, [apiKeyDraft, settings.active_provider]);
+
+  const sendChat = useCallback(async () => {
+    const text = activeChat.draft.trim();
+    if (!text) return;
+    if (!settings.active_provider) return;
+    if (settings.offline_mode) return;
+
+    if (activeChat.messages.length === 0 && /^Chat\s+\d+$/i.test(activeChat.title)) {
+      setActiveChatTitle(deriveChatTitleFromPrompt(text));
+    }
+
+    setChatBusy(true);
+
+    let encryptionPassword: string | undefined;
+    if (providerNeedsKey && keyStatus?.storage === "encryptedfile") {
+      const pw = window.prompt("Enter encryption password to use your stored provider key");
+      if (!pw) {
+        setChatBusy(false);
+        return;
+      }
+      encryptionPassword = pw;
+    }
+
+    try {
+      const history = chatMessagesRef.current.filter((m) => m.role === "user" || m.role === "assistant");
+      const base = [...history, { role: "user" as const, content: text }];
+      setActiveChatDraft("");
+      setActiveChatMessages([...base, { role: "meta", content: "Thinking…" }]);
+
+      const referencedFiles = workspace.root ? extractFileRefs(text).slice(0, 4) : [];
+      const fileContexts: Array<{ path: string; content: string; truncated: boolean }> = [];
+      const preLogs: ChatUiMessage[] = [];
+      const pushPre = (msg: string) => {
+        const m: ChatUiMessage = { role: "meta", content: msg };
+        preLogs.push(m);
+        setActiveChatMessages((prev) => [...prev, m]);
+      };
+      for (const p of referencedFiles) {
+        try {
+          const content = await workspaceReadFile(p);
+          const max = 12000;
+          const truncated = content.length > max;
+          fileContexts.push({ path: p, content: truncated ? content.slice(0, max) : content, truncated });
+          pushPre(`Read ${p}`);
+        } catch (e) {
+          pushPre(`Read ${p} (failed)`);
+        }
+      }
+
+      const aiMessages: AiChatMessage[] = [
+        {
+          role: "system",
+          content:
+            "You are an agentic coding assistant inside an IDE. Before making ANY changes, you must describe what you will do in a short step-by-step plan for the user (2-6 steps). Then return structured edits in JSON with fields: { message: string, edits: AiEditOp[] }. Prefer modern stacks (React + TypeScript + Tailwind/shadcn) unless the user explicitly requests plain HTML/CSS. IMPORTANT: Prefer op='patch' with a unified diff in the 'content' field and keep patches minimal (do NOT replace whole files unless required). Never invent the previous content of a file; only patch lines that exist in the provided file context. You can run terminal commands by returning an edit op: { op: 'run', content: '<command>' }. Use 'run' for scaffolding/install/build/test commands. Avoid destructive commands. Use op='write' only for new files when patching isn't feasible.",
+        },
+        ...(fileContexts.length
+          ? ([
+              {
+                role: "system" as const,
+                content:
+                  "Workspace file context (use this exact content for patches; if truncated, request a read of the full file):\n\n" +
+                  fileContexts
+                    .map((f) => `FILE: ${f.path}${f.truncated ? " (TRUNCATED)" : ""}\n---\n${f.content}\n---`)
+                    .join("\n\n"),
+              },
+            ] satisfies AiChatMessage[])
+          : ([] as AiChatMessage[])),
+        ...base.filter(isUserOrAssistantMessage).map((m) => ({ role: m.role, content: m.content })),
+      ];
+
+      const requestOnce = async () => {
+        return await aiChat({ messages: aiMessages, encryptionPassword });
+      };
+
+      let res: Awaited<ReturnType<typeof requestOnce>>;
+      try {
+        res = await requestOnce();
+      } catch (e) {
+        const raw = String(e);
+        if (/No content found in (API|Gemini API) response/i.test(raw)) {
+          setActiveChatMessages((prev) => [...prev, { role: "meta", content: "AI returned an empty response. Retrying once…" }]);
+          res = await requestOnce();
+        } else {
+          throw e;
+        }
+      }
+      const resEdits = (res as { edits?: AiEditOp[] | null }).edits;
+      const rawOutPre = String((res as { output?: unknown }).output ?? "");
+      const hasDirectEdits = Array.isArray(resEdits) && resEdits.length > 0;
+      if (!hasDirectEdits && rawOutPre.trim().length === 0) {
+        throw new Error("No content found in API response: <empty assistant output>");
+      }
+      const parsedFromText = tryParseEditsFromAssistantOutput(String(res.output ?? ""));
+
+      const edits = Array.isArray(resEdits) && resEdits.length ? resEdits : parsedFromText?.edits ?? null;
+      const rawOut = String(res.output ?? "");
+      const assistantMsg = (parsedFromText?.message ?? rawOut.trim()).trim();
+
+      if (edits && edits.length) {
+        setChatApplying(true);
+        const showAssistant = assistantMsg && !looksLikeCodeDump(assistantMsg);
+        const assistantId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        setActiveChatMessages([
+          ...base,
+          ...preLogs,
+          ...(showAssistant ? ([{ role: "assistant", content: "", id: assistantId, rating: null }] as ChatUiMessage[]) : ([] as ChatUiMessage[])),
+        ]);
+
+        if (showAssistant) startStreamingToMessageId(assistantId, assistantMsg);
+
+        const pushStep = (msg: string) => {
+          const m: ChatUiMessage = { role: "meta", content: msg };
+          setActiveChatMessages((prev) => [...prev, m]);
+        };
+
+        try {
+          const norm = normalizeAiEdits(edits, workspace.root);
+          const normalized = norm.edits;
+          if (norm.didSanitize) {
+            pushStep("Note: AI returned paths outside this workspace; using workspace-relative filenames instead.");
+          }
+
+          const changeSet = await buildChangeSet(normalized);
+          setIsChatDockOpen(true);
+          setActiveChatChangeSet(changeSet);
+
+          const first = changeSet.files.find((f) => f.kind === "write" && typeof f.path === "string") as ChangeFile | undefined;
+          if (first?.kind === "write") {
+            setSelectedChangePath(first.path);
+            await openFile(first.path);
+          }
+
+          await applyAiEditsNow(normalized, pushStep, {
+            pace: true,
+            previewFile: async (p) => {
+              setSelectedChangePath(p);
+              await openFile(p);
+            },
+          });
+          setActiveChatMessages((prev) => [
+            ...prev,
+            { role: "meta", content: `Applied ${changeSet.stats.files} files (+${changeSet.stats.added} −${changeSet.stats.removed}).` },
+          ]);
+        } finally {
+          setChatApplying(false);
+        }
+      } else {
+        // No edits: still keep chat clean.
+        const safeMsg = assistantMsg.length
+          ? looksLikeCodeDump(assistantMsg)
+            ? "I’m ready—tell me what you want to change and I’ll guide you step by step."
+            : assistantMsg
+          : "Ready.";
+
+        const assistantId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        setActiveChatMessages([...base, ...preLogs, { role: "assistant", content: "", id: assistantId, rating: null }]);
+        startStreamingToMessageId(assistantId, safeMsg);
+      }
+    } catch (e) {
+      const f = friendlyAiError(String(e));
+      notify({ kind: "error", title: f.title, message: f.message });
+    } finally {
+      setChatBusy(false);
+    }
+  }, [
+    activeChat.draft,
+    activeChat.messages.length,
+    activeChat.title,
+    applyAiEditsNow,
+    buildChangeSet,
+    friendlyAiError,
+    keyStatus?.storage,
+    notify,
+    openFile,
+    providerNeedsKey,
+    setActiveChatChangeSet,
+    setActiveChatDraft,
+    setActiveChatMessages,
+    setActiveChatTitle,
+    setSelectedChangePath,
+    settings.active_provider,
+    settings.offline_mode,
+    startStreamingToMessageId,
+    workspace.root,
+  ]);
+
+  useEffect(() => {
+    sendChatRef.current = sendChat;
+  }, [sendChat]);
+
+  const commands = useMemo<Command[]>(() => {
+    const c: Command[] = [
+      { id: "file.openFolder", label: "File: Open Folder...", shortcut: "Ctrl+K Ctrl+O", run: () => void openFolder() },
+      { id: "file.openFile", label: "File: Open File...", shortcut: "Ctrl+O", run: () => void openStandaloneFile() },
+      { id: "file.quickOpen", label: "File: Quick Open...", shortcut: "Ctrl+P", run: () => void openQuickOpen() },
+      { id: "editor.gotoLine", label: "Go: Go to Line...", shortcut: "Ctrl+G", run: () => openGoToLine() },
+      { id: "file.newFile", label: "File: New File", shortcut: "Ctrl+N", run: () => newUntitledFile() },
+      { id: "file.newFolder", label: "File: New Folder...", run: () => void createNewFolder() },
+      { id: "file.rename", label: "File: Rename...", run: () => void renameSelected() },
+      { id: "file.delete", label: "File: Delete", run: () => void deleteSelected() },
+      { id: "file.save", label: "File: Save", shortcut: "Ctrl+S", run: () => void saveActiveFile() },
+      { id: "file.saveAll", label: "File: Save All", shortcut: "Ctrl+K S", run: () => void saveAll() },
+      { id: "view.commandPalette", label: "View: Show Command Palette", shortcut: "Ctrl+Shift+P", run: () => setIsPaletteOpen(true) },
+      { id: "workbench.findInFiles", label: "Search: Find in Files", shortcut: "Ctrl+Shift+F", run: () => setActivity("search") },
+      { id: "view.toggleTheme", label: "Preferences: Toggle Theme", run: () => toggleTheme() },
+      { id: "view.settings", label: "Preferences: Open Settings", shortcut: "Ctrl+,", run: () => openSettingsTab() },
+      { id: "workbench.focusExplorer", label: "View: Focus Explorer", run: () => setActivity("explorer") },
+    ];
+
+    if (activeTab) {
+      c.push({
+        id: "file.closeActive",
+        label: "File: Close Active Editor",
+        shortcut: "Ctrl+W",
+        run: () => closeTab(activeTab.path),
+      });
+    }
+
+    return c;
+  }, [activeTab, closeTab, createNewFolder, deleteSelected, newUntitledFile, openFolder, openGoToLine, openQuickOpen, renameSelected, saveActiveFile, saveAll]);
+
+  const filteredCommands = useMemo(() => {
+    const q = paletteQuery.trim().toLowerCase();
+    if (!q) return commands;
+    return commands.filter((x) => x.label.toLowerCase().includes(q));
+  }, [commands, paletteQuery]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key.toLowerCase() === "l") {
+        e.preventDefault();
+        setIsChatDockOpen((v) => !v);
+        return;
+      }
+
+      if (e.ctrlKey && (e.key === "`" || e.code === "Backquote")) {
+        e.preventDefault();
+        toggleTerminal();
+        return;
+      }
+
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setIsPaletteOpen(true);
+        return;
+      }
+
+      if (e.ctrlKey && e.key === "F4") {
+        if (activeTab) {
+          e.preventDefault();
+          closeTab(activeTab.path);
+        }
+        return;
+      }
+
+      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "f") {
+        const ed = editorRef.current;
+        if (ed) {
+          e.preventDefault();
+          void ed.getAction("actions.find")?.run();
+        }
+        return;
+      }
+
+      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        void openQuickOpen();
+        return;
+      }
+
+      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "g") {
+        e.preventDefault();
+        openGoToLine();
+        return;
+      }
+
+      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "h") {
+        const ed = editorRef.current;
+        if (ed) {
+          e.preventDefault();
+          void ed.getAction("editor.action.startFindReplaceAction")?.run();
+        }
+        return;
+      }
+
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setActivity("search");
+        return;
+      }
+
+      if (e.ctrlKey && e.key === ",") {
+        e.preventDefault();
+        openSettingsTab();
+        return;
+      }
+
+      // chord handling (Ctrl+K ...)
+      if (e.ctrlKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        (window as any).__pomporaChord = { started: Date.now() };
+        return;
+      }
+
+      const chord = (window as any).__pomporaChord as { started: number } | undefined;
+      if (chord && Date.now() - chord.started < 1500) {
+        // Ctrl+K Ctrl+O
+        if (e.ctrlKey && e.key.toLowerCase() === "o") {
+          e.preventDefault();
+          (window as any).__pomporaChord = null;
+          void openFolder();
+          return;
+        }
+        // Ctrl+K S
+        if (e.key.toLowerCase() === "s") {
+          e.preventDefault();
+          (window as any).__pomporaChord = null;
+          void saveAll();
+          return;
+        }
+      }
+      if ((window as any).__pomporaChord) (window as any).__pomporaChord = null;
+
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void saveAs();
+        return;
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void saveActiveFile();
+        return;
+      }
+
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        openNewWindow();
+        return;
+      }
+
+      if (e.ctrlKey && e.altKey && e.metaKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        newUntitledFile();
+        return;
+      }
+
+      if (e.ctrlKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        newUntitledFile();
+        return;
+      }
+
+      if (e.ctrlKey && e.key === "w") {
+        if (activeTab) {
+          e.preventDefault();
+          closeTab(activeTab.path);
+        }
+        return;
+      }
+
+      if (e.key === "Escape") {
+        setIsPaletteOpen(false);
+        setIsQuickOpenOpen(false);
+        setIsGoToLineOpen(false);
+        setExplorerMenu(null);
+        setIsFileMenuOpen(false);
+        setIsFileMenuRecentOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeTab, closeFolder, closeTab, newUntitledFile, openFolder, openGoToLine, openNewWindow, openQuickOpen, openStandaloneFile, saveActiveFile, saveAll, saveAs, toggleTerminal]);
+
+  useEffect(() => {
+    if (!explorerMenu) return;
+    const onMouseDown = () => setExplorerMenu(null);
+    window.addEventListener("mousedown", onMouseDown);
+    return () => window.removeEventListener("mousedown", onMouseDown);
+  }, [explorerMenu]);
+
+  useEffect(() => {
+    const anyOpen =
+      isFileMenuOpen ||
+      isEditMenuOpen ||
+      isSelectionMenuOpen ||
+      isViewMenuOpen ||
+      isRunMenuOpen ||
+      isTerminalMenuOpen;
+    if (!anyOpen) return;
+
+    const onMouseDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      if (!t.closest("[data-menubar-root]")) {
+        setIsFileMenuOpen(false);
+        setIsFileMenuRecentOpen(false);
+        setIsEditMenuOpen(false);
+        setIsSelectionMenuOpen(false);
+        setIsViewMenuOpen(false);
+        setIsRunMenuOpen(false);
+        setIsTerminalMenuOpen(false);
+        setViewMenuSub(null);
+        setViewAppearanceSub(null);
+      }
+    };
+
+    window.addEventListener("mousedown", onMouseDown);
+    return () => window.removeEventListener("mousedown", onMouseDown);
+  }, [isEditMenuOpen, isFileMenuOpen, isRunMenuOpen, isSelectionMenuOpen, isTerminalMenuOpen, isViewMenuOpen]);
+
+  const copyText = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      window.prompt("Copy to clipboard:", text);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isPaletteOpen) {
+      setPaletteQuery("");
+      setPaletteIndex(0);
+    }
+  }, [isPaletteOpen]);
+
+  useEffect(() => {
+    if (!isQuickOpenOpen) {
+      setQuickOpenQuery("");
+      setQuickOpenIndex(0);
+    }
+  }, [isQuickOpenOpen]);
+
+  useEffect(() => {
+    setPaletteIndex(0);
+  }, [paletteQuery]);
+
+  const themeName = settings.theme === "light" ? "vs" : "vs-dark";
+
+  return (
+    <div className="h-full w-full bg-bg text-text">
+      <div className="grid h-full grid-rows-[36px_1fr_26px]">
+        <header className="border-b border-border bg-panel">
+          <div className="grid h-9 grid-cols-[1fr_auto_1fr] items-center px-2" data-menubar-root>
+            <div className="flex min-w-0 items-center gap-2 justify-self-start">
+              <img src="/logo.png" alt="Pompora" className="h-5 w-5 shrink-0" />
+
+              <div className="flex items-center gap-1 text-xs text-muted">
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    onClick={() => {
+                      setIsFileMenuOpen((v) => !v);
+                      setIsFileMenuRecentOpen(false);
+                    }}
+                  >
+                    File
+                  </button>
+                  {isFileMenuOpen ? (
+                    <div className="absolute left-0 top-full z-50 mt-1 w-64 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                      <MenuItem label="New Text File" shortcut="Ctrl+N" onClick={() => newUntitledFile()} />
+                      <MenuItem label="New File" shortcut="Ctrl+Alt+Win+N" onClick={() => newUntitledFile()} />
+                      <MenuItem label="New Window" shortcut="Ctrl+Shift+N" onClick={() => openNewWindow()} />
+                      <MenuSep />
+                      <MenuItem label="Open File" shortcut="Ctrl+O" onClick={() => void openStandaloneFile()} />
+                      <MenuItem label="Open Folder" shortcut="Ctrl+K Ctrl+O" onClick={() => void openFolder()} />
+                      <div className="relative">
+                        <MenuItem
+                          label="Open Recent"
+                          right={<ChevronRight className="h-3.5 w-3.5" />}
+                          onMouseEnter={() => setIsFileMenuRecentOpen(true)}
+                          onMouseLeave={() => setIsFileMenuRecentOpen(false)}
+                          onClick={() => setIsFileMenuRecentOpen((v) => !v)}
+                        />
+                        {isFileMenuRecentOpen ? (
+                          <div
+                            className="absolute left-full top-0 z-50 ml-1 w-72 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow"
+                            onMouseEnter={() => setIsFileMenuRecentOpen(true)}
+                            onMouseLeave={() => setIsFileMenuRecentOpen(false)}
+                          >
+                            <div className="px-2 py-1 text-[11px] font-medium text-muted">Folders</div>
+                            {(workspace.recent.length ? workspace.recent : settings.recent_workspaces).length ? (
+                              (workspace.recent.length ? workspace.recent : settings.recent_workspaces).map((p) => (
+                                <MenuItem key={p} label={p} onClick={() => void openRecent(p)} />
+                              ))
+                            ) : (
+                              <div className="px-2 py-1 text-xs text-muted">No recent folders</div>
+                            )}
+
+                            <MenuSep />
+                            <div className="px-2 py-1 text-[11px] font-medium text-muted">Files</div>
+                            {recentFiles.length ? (
+                              recentFiles.map((p) => <MenuItem key={p} label={p} onClick={() => void openRecentFile(p)} />)
+                            ) : (
+                              <div className="px-2 py-1 text-xs text-muted">No recent files</div>
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+                      <MenuSep />
+                      <MenuItem label="Add Folder to Workspace" onClick={() => void addFolderToWorkspace()} />
+                      <MenuItem label="Save Workspace as" onClick={() => void saveWorkspaceAs()} />
+                      <MenuItem label="Duplicate Workspace" onClick={() => void duplicateWorkspace()} />
+                      <MenuSep />
+                      <MenuItem label="Save" shortcut="Ctrl+S" onClick={() => void saveActiveFile()} />
+                      <MenuItem label="Save As" shortcut="Ctrl+Shift+S" onClick={() => void saveAs()} />
+                      <MenuItem label="Save All" shortcut="Ctrl+K S" onClick={() => void saveAll()} />
+                      <MenuSep />
+                      <MenuItem
+                        label={autoSaveEnabled ? "Auto Save: On" : "Auto Save: Off"}
+                        onClick={() => setAutoSaveEnabled((v) => !v)}
+                      />
+                      <MenuSep />
+                      <MenuItem label="Revert File" onClick={() => void revertFile()} />
+                      <MenuItem
+                        label="Close Editor"
+                        shortcut="Ctrl+F4"
+                        onClick={() => (activeTab ? closeTab(activeTab.path) : undefined)}
+                      />
+                      <MenuItem label="Close Folder" onClick={() => void closeFolder()} />
+                      <MenuItem label="Close Window" shortcut="Alt+F4" onClick={() => exitApp()} />
+                      <MenuSep />
+                      <MenuItem label="Exit" onClick={() => exitApp()} />
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    onClick={() => {
+                      setIsEditMenuOpen((v) => !v);
+                      setIsFileMenuOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  {isEditMenuOpen ? (
+                    <div className="absolute left-0 top-full z-50 mt-1 w-72 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                      <MenuItem label="Undo" shortcut="Ctrl+Z" onClick={() => notify({ kind: "info", title: "Undo", message: "Coming next." })} />
+                      <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => notify({ kind: "info", title: "Redo", message: "Coming next." })} />
+                      <MenuSep />
+                      <MenuItem label="Cut" shortcut="Ctrl+X" onClick={() => notify({ kind: "info", title: "Cut", message: "Coming next." })} />
+                      <MenuItem label="Copy" shortcut="Ctrl+C" onClick={() => notify({ kind: "info", title: "Copy", message: "Coming next." })} />
+                      <MenuItem label="Paste" shortcut="Ctrl+V" onClick={() => notify({ kind: "info", title: "Paste", message: "Coming next." })} />
+                      <MenuSep />
+                      <MenuItem
+                        label="Find"
+                        shortcut="Ctrl+F"
+                        onClick={() => {
+                          const ed = editorRef.current;
+                          if (ed) void ed.getAction("actions.find")?.run();
+                        }}
+                      />
+                      <MenuItem
+                        label="Replace"
+                        shortcut="Ctrl+H"
+                        onClick={() => {
+                          const ed = editorRef.current;
+                          if (ed) void ed.getAction("editor.action.startFindReplaceAction")?.run();
+                        }}
+                      />
+                      <MenuSep />
+                      <MenuItem label="Find in Files" shortcut="Ctrl+Shift+F" onClick={() => setActivity("search")} />
+                      <MenuItem
+                        label="Replace in Files"
+                        shortcut="Ctrl+Shift+H"
+                        onClick={() => notify({ kind: "info", title: "Replace in Files", message: "Coming next." })}
+                      />
+                      <MenuSep />
+                      <MenuItem label="Toggle Line Comment" shortcut="Ctrl+/" onClick={() => notify({ kind: "info", title: "Toggle Line Comment", message: "Coming next." })} />
+                      <MenuItem
+                        label="Toggle Block Comment"
+                        shortcut="Shift+Alt+A"
+                        onClick={() => notify({ kind: "info", title: "Toggle Block Comment", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Emmet: Expand Abbreviation"
+                        shortcut="Tab"
+                        onClick={() => notify({ kind: "info", title: "Emmet", message: "Coming next." })}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    onClick={() => {
+                      setIsSelectionMenuOpen((v) => !v);
+                      setIsFileMenuOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                    }}
+                  >
+                    Selection
+                  </button>
+                  {isSelectionMenuOpen ? (
+                    <div className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                      <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => notify({ kind: "info", title: "Select All", message: "Coming next." })} />
+                      <MenuItem
+                        label="Expand Selection"
+                        shortcut="Shift+Alt+RightArrow"
+                        onClick={() => notify({ kind: "info", title: "Expand Selection", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Shrink Selection"
+                        onClick={() => notify({ kind: "info", title: "Shrink Selection", message: "Coming next." })}
+                      />
+                      <MenuSep />
+                      <MenuItem
+                        label="Copy Line Up"
+                        shortcut="Shift+Alt+UpArrow"
+                        onClick={() => notify({ kind: "info", title: "Copy Line Up", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Copy Line Down"
+                        shortcut="Shift+Alt+DownArrow"
+                        onClick={() => notify({ kind: "info", title: "Copy Line Down", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Move Line Up"
+                        shortcut="Alt+UpArrow"
+                        onClick={() => notify({ kind: "info", title: "Move Line Up", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Move Line Down"
+                        shortcut="Alt+DownArrow"
+                        onClick={() => notify({ kind: "info", title: "Move Line Down", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Duplicate Selection"
+                        onClick={() => notify({ kind: "info", title: "Duplicate Selection", message: "Coming next." })}
+                      />
+                      <MenuSep />
+                      <MenuItem
+                        label="Add Cursor Above"
+                        shortcut="Ctrl+Alt+UpArrow"
+                        onClick={() => notify({ kind: "info", title: "Add Cursor Above", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Add Cursor Below"
+                        shortcut="Ctrl+Alt+DownArrow"
+                        onClick={() => notify({ kind: "info", title: "Add Cursor Below", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Add Cursors to Line End"
+                        shortcut="Shift+Alt+I"
+                        onClick={() => notify({ kind: "info", title: "Add Cursors to Line End", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Add Next Occurrence"
+                        shortcut="Ctrl+D"
+                        onClick={() => notify({ kind: "info", title: "Add Next Occurrence", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Add Previous Occurrence"
+                        onClick={() => notify({ kind: "info", title: "Add Previous Occurrence", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Select All Occurrences"
+                        shortcut="Ctrl+Shift+L"
+                        onClick={() => notify({ kind: "info", title: "Select All Occurrences", message: "Coming next." })}
+                      />
+                      <MenuSep />
+                      <MenuItem
+                        label="Switch to Ctrl+Click for Multi-Cursor"
+                        onClick={() => notify({ kind: "info", title: "Multi-cursor", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Column Selection Mode"
+                        onClick={() => notify({ kind: "info", title: "Column Selection Mode", message: "Coming next." })}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    onClick={() => {
+                      setIsViewMenuOpen((v) => !v);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
+                      setIsFileMenuOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                    }}
+                  >
+                    View
+                  </button>
+                  {isViewMenuOpen ? (
+                    <div
+                      className="absolute left-0 top-full z-50 mt-1 w-80 overflow-visible rounded-xl border border-border bg-panel p-1 shadow"
+                      onMouseLeave={() => {
+                        setViewMenuSub(null);
+                        setViewAppearanceSub(null);
+                      }}
+                    >
+                      <MenuItem label="Command Palette…" shortcut="Ctrl+Shift+P" onClick={() => setIsPaletteOpen(true)} />
+                      <MenuItem label="Open View…" onClick={() => notify({ kind: "info", title: "Open View", message: "Coming next." })} />
+                      <MenuSep />
+
+                      <div className="relative">
+                        <MenuItem
+                          label="Appearance"
+                          right={<ChevronRight className="h-3.5 w-3.5" />}
+                          onMouseEnter={() => setViewMenuSub("appearance")}
+                          onClick={() => setViewMenuSub((v) => (v === "appearance" ? null : "appearance"))}
+                        />
+                        {viewMenuSub === "appearance" ? (
+                          <div className="absolute left-full top-0 z-50 ml-1 w-80 overflow-visible rounded-xl border border-border bg-panel p-1 shadow">
+                            <MenuItem label="Full Screen" shortcut="F11" onClick={() => notify({ kind: "info", title: "Full Screen", message: "Coming next." })} />
+                            <MenuItem
+                              label="Zen Mode"
+                              shortcut="Ctrl+K Z"
+                              onClick={() => notify({ kind: "info", title: "Zen Mode", message: "Coming next." })}
+                            />
+                            <MenuItem
+                              label="Centered Layout"
+                              onClick={() => notify({ kind: "info", title: "Centered Layout", message: "Coming next." })}
+                            />
+                            <MenuSep />
+                            <MenuItem label="Menu Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Menu Bar", message: "Coming next." })} />
+                            <MenuItem label="Primary Side Bar" shortcut="Ctrl+B" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Primary Side Bar", message: "Coming next." })} />
+                            <MenuItem label="Secondary Side Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Secondary Side Bar", message: "Coming next." })} />
+                            <MenuItem label="Status Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Status Bar", message: "Coming next." })} />
+                            <MenuItem label="Panel" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Panel", message: "Coming next." })} />
+                            <MenuSep />
+                            <MenuItem
+                              label="Move Primary Side Bar Right"
+                              onClick={() => notify({ kind: "info", title: "Move Primary Side Bar Right", message: "Coming next." })}
+                            />
+
+                            <div className="relative">
+                              <MenuItem
+                                label="Activity Bar Position"
+                                right={<ChevronRight className="h-3.5 w-3.5" />}
+                                onMouseEnter={() => setViewAppearanceSub("activityBarPosition")}
+                              />
+                              {viewAppearanceSub === "activityBarPosition" ? (
+                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                  <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
+                                  <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
+                                  <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
+                                  <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <div className="relative">
+                              <MenuItem
+                                label="Secondary Activity Bar Position"
+                                right={<ChevronRight className="h-3.5 w-3.5" />}
+                                onMouseEnter={() => setViewAppearanceSub("secondaryActivityBarPosition")}
+                              />
+                              {viewAppearanceSub === "secondaryActivityBarPosition" ? (
+                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                  <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
+                                  <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
+                                  <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
+                                  <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <div className="relative">
+                              <MenuItem
+                                label="Panel Position"
+                                right={<ChevronRight className="h-3.5 w-3.5" />}
+                                onMouseEnter={() => setViewAppearanceSub("panelPosition")}
+                              />
+                              {viewAppearanceSub === "panelPosition" ? (
+                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                  <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
+                                  <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
+                                  <MenuItem label="Right" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
+                                  <MenuItem label="Bottom" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <div className="relative">
+                              <MenuItem
+                                label="Align Panel"
+                                right={<ChevronRight className="h-3.5 w-3.5" />}
+                                onMouseEnter={() => setViewAppearanceSub("alignPanel")}
+                              />
+                              {viewAppearanceSub === "alignPanel" ? (
+                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                  <MenuItem label="Center" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
+                                  <MenuItem label="Justify" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
+                                  <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
+                                  <MenuItem label="Right" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <div className="relative">
+                              <MenuItem
+                                label="Tab Bar"
+                                right={<ChevronRight className="h-3.5 w-3.5" />}
+                                onMouseEnter={() => setViewAppearanceSub("tabBar")}
+                              />
+                              {viewAppearanceSub === "tabBar" ? (
+                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                  <MenuItem label="Multiple Tabs" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
+                                  <MenuItem label="Single Tabs" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
+                                  <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <div className="relative">
+                              <MenuItem
+                                label="Editor Actions Position"
+                                right={<ChevronRight className="h-3.5 w-3.5" />}
+                                onMouseEnter={() => setViewAppearanceSub("editorActionsPosition")}
+                              />
+                              {viewAppearanceSub === "editorActionsPosition" ? (
+                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                  <MenuItem label="Tab Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
+                                  <MenuItem label="Title Bar" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
+                                  <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
+                                </div>
+                              ) : null}
+                            </div>
+
+                            <MenuSep />
+                            <MenuItem label="Minimap" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Minimap", message: "Coming next." })} />
+                            <MenuItem label="Breadcrumbs" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Breadcrumbs", message: "Coming next." })} />
+                            <MenuItem label="Sticky Scroll" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Sticky Scroll", message: "Coming next." })} />
+                            <MenuItem label="Render Whitespace" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Render Whitespace", message: "Coming next." })} />
+                            <MenuItem
+                              label="Render Control Characters"
+                              right={<MenuCheck checked />}
+                              onClick={() => notify({ kind: "info", title: "Render Control Characters", message: "Coming next." })}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <MenuSep />
+                      <MenuItem label="Zoom In" shortcut="Ctrl+=" onClick={() => notify({ kind: "info", title: "Zoom In", message: "Coming next." })} />
+                      <MenuItem label="Zoom Out" shortcut="Ctrl+-" onClick={() => notify({ kind: "info", title: "Zoom Out", message: "Coming next." })} />
+                      <MenuItem
+                        label="Reset Zoom"
+                        shortcut="Ctrl+NumPad0"
+                        onClick={() => notify({ kind: "info", title: "Reset Zoom", message: "Coming next." })}
+                      />
+                      <MenuSep />
+
+                      <div className="relative">
+                        <MenuItem
+                          label="Editor Layout"
+                          right={<ChevronRight className="h-3.5 w-3.5" />}
+                          onMouseEnter={() => setViewMenuSub("editorLayout")}
+                          onClick={() => setViewMenuSub((v) => (v === "editorLayout" ? null : "editorLayout"))}
+                        />
+                        {viewMenuSub === "editorLayout" ? (
+                          <div className="absolute left-full top-0 z-50 ml-1 w-64 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                            <MenuItem
+                              label="Split Up"
+                              shortcut="Ctrl+K Ctrl+\\"
+                              onClick={() => notify({ kind: "info", title: "Split Up", message: "Coming next." })}
+                            />
+                            <MenuItem label="Split Down" onClick={() => notify({ kind: "info", title: "Split Down", message: "Coming next." })} />
+                            <MenuItem label="Split Left" onClick={() => notify({ kind: "info", title: "Split Left", message: "Coming next." })} />
+                            <MenuItem label="Split Right" onClick={() => notify({ kind: "info", title: "Split Right", message: "Coming next." })} />
+                            <MenuSep />
+                            <MenuItem
+                              label="Split in Group"
+                              shortcut="Ctrl+Shift+\\"
+                              onClick={() => notify({ kind: "info", title: "Split in Group", message: "Coming next." })}
+                            />
+                            <MenuSep />
+                            <MenuItem label="Single" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+                            <MenuItem label="Two Columns" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+                            <MenuItem label="Three Columns" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+                            <MenuItem label="Two Rows" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+                            <MenuItem label="Three Rows" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+                            <MenuItem label="Grid 2x2" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+                            <MenuItem label="Two Rows Right" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+                            <MenuItem label="Two Columns Bottom" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+                            <MenuSep />
+                            <MenuItem
+                              label="Flip Layout"
+                              shortcut="Shift+Alt+0"
+                              onClick={() => notify({ kind: "info", title: "Flip Layout", message: "Coming next." })}
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <MenuSep />
+                      <MenuItem label="Explorer" shortcut="Ctrl+Shift+E" onClick={() => setActivity("explorer")} />
+                      <MenuItem label="Search" shortcut="Ctrl+Shift+F" onClick={() => setActivity("search")} />
+                      <MenuItem label="Source Control" shortcut="Ctrl+Shift+G" onClick={() => setActivity("scm")} />
+                      <MenuItem
+                        label="Run"
+                        shortcut="Ctrl+Shift+D"
+                        onClick={() => notify({ kind: "info", title: "Run", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Extensions"
+                        shortcut="Ctrl+Shift+X"
+                        onClick={() => notify({ kind: "info", title: "Extensions", message: "Coming next." })}
+                      />
+                      <MenuSep />
+                      <MenuItem
+                        label="Problems"
+                        shortcut="Ctrl+Shift+M"
+                        onClick={() => notify({ kind: "info", title: "Problems", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Output"
+                        shortcut="Ctrl+Shift+U"
+                        onClick={() => notify({ kind: "info", title: "Output", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Debug Console"
+                        shortcut="Ctrl+Shift+Y"
+                        onClick={() => notify({ kind: "info", title: "Debug Console", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Terminal"
+                        shortcut="Ctrl+`"
+                        onClick={() => {
+                          toggleTerminal();
+                        }}
+                      />
+                      <MenuSep />
+                      <MenuItem
+                        label="Word Wrap"
+                        shortcut="Alt+Z"
+                        onClick={() => notify({ kind: "info", title: "Word Wrap", message: "Coming next." })}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    onClick={() => {
+                      setIsRunMenuOpen((v) => !v);
+                      setIsFileMenuOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                    }}
+                  >
+                    Run
+                  </button>
+                  {isRunMenuOpen ? (
+                    <div className="absolute left-0 top-full z-50 mt-1 w-72 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                      <MenuItem label="Start Debugging" shortcut="F5" onClick={() => notify({ kind: "info", title: "Start Debugging", message: "Coming next." })} />
+                      <MenuItem
+                        label="Run Without Debugging"
+                        shortcut="Ctrl+F5"
+                        onClick={() => notify({ kind: "info", title: "Run Without Debugging", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Stop Debugging"
+                        shortcut="Shift+F5"
+                        onClick={() => notify({ kind: "info", title: "Stop Debugging", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Restart Debugging"
+                        shortcut="Ctrl+Shift+F5"
+                        onClick={() => notify({ kind: "info", title: "Restart Debugging", message: "Coming next." })}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    onClick={() => {
+                      setIsTerminalMenuOpen((v) => !v);
+                      setIsFileMenuOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                    }}
+                  >
+                    Terminal
+                  </button>
+                  {isTerminalMenuOpen ? (
+                    <div className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                      <MenuItem
+                        label="New Terminal"
+                        shortcut="Ctrl+Shift+`"
+                        onClick={() => {
+                          void closeTerminal().finally(() => {
+                            toggleTerminal();
+                          });
+                        }}
+                      />
+                      <MenuItem
+                        label="Split Terminal"
+                        shortcut="Ctrl+Shift+5"
+                        onClick={() => notify({ kind: "info", title: "Split Terminal", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="New Terminal Window"
+                        shortcut="Ctrl+Shift+Alt+`"
+                        onClick={() => notify({ kind: "info", title: "New Terminal Window", message: "Coming next." })}
+                      />
+                      <MenuSep />
+                      <MenuItem label="Run Task…" onClick={() => notify({ kind: "info", title: "Run Task", message: "Coming next." })} />
+                      <MenuItem
+                        label="Run Build Task…"
+                        shortcut="Ctrl+Shift+B"
+                        onClick={() => notify({ kind: "info", title: "Run Build Task", message: "Coming next." })}
+                      />
+                      <MenuItem label="Run Active File" onClick={() => notify({ kind: "info", title: "Run Active File", message: "Coming next." })} />
+                      <MenuItem
+                        label="Run Selected Text"
+                        onClick={() => notify({ kind: "info", title: "Run Selected Text", message: "Coming next." })}
+                      />
+                      <MenuSep />
+                      <MenuItem
+                        label="Show Running Tasks…"
+                        onClick={() => notify({ kind: "info", title: "Show Running Tasks", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Restart Running Tasks…"
+                        onClick={() => notify({ kind: "info", title: "Restart Running Tasks", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Terminate Task…"
+                        onClick={() => notify({ kind: "info", title: "Terminate Task", message: "Coming next." })}
+                      />
+                      <MenuSep />
+                      <MenuItem
+                        label="Configure Tasks…"
+                        onClick={() => notify({ kind: "info", title: "Configure Tasks", message: "Coming next." })}
+                      />
+                      <MenuItem
+                        label="Configure Default Build Task…"
+                        onClick={() => notify({ kind: "info", title: "Configure Default Build Task", message: "Coming next." })}
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="mx-4 hidden min-w-0 items-center justify-self-center md:flex">
+              <div className="flex w-[520px] max-w-[42vw] items-center gap-1">
+                <button
+                  type="button"
+                  className="ws-icon-btn"
+                  onClick={() => notify({ kind: "info", title: "Back", message: "Coming next." })}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  className="ws-icon-btn"
+                  onClick={() => notify({ kind: "info", title: "Forward", message: "Coming next." })}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  className="ws-input h-7 flex-1 cursor-pointer px-3 py-0 text-left text-[12px] text-muted"
+                  onClick={() => setIsPaletteOpen(true)}
+                >
+                  Search or type a command…
+                </button>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1 justify-self-end">
+              <button type="button" className="ws-icon-btn" onClick={() => openSettingsTab()}>
+                <SettingsIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid min-h-0 flex-1 overflow-x-auto" style={{ gridTemplateColumns: mainGridTemplateColumns }}>
+          <aside className="min-w-0 border-r border-border bg-panel">
+            <div className="flex h-full flex-col items-center gap-2 py-2">
+              <ActivityButton id="explorer" active={activity === "explorer"} onClick={setActivity} Icon={FolderOpen} />
+              <ActivityButton id="search" active={activity === "search"} onClick={setActivity} Icon={Search} />
+              <ActivityButton id="scm" active={activity === "scm"} onClick={setActivity} Icon={GitBranch} />
+              <div className="flex-1" />
+            </div>
+          </aside>
+
+          <aside className="relative min-h-0 min-w-0 border-r border-transparent bg-panel">
+            <div
+              className="group absolute right-0 top-0 z-30 h-full w-2 cursor-col-resize"
+              onMouseDown={(e) => {
+                explorerResizeStateRef.current = { startX: e.clientX, startW: explorerWidth };
+              }}
+            >
+              <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-accent/60 opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="absolute inset-y-0 left-0 right-0 opacity-0 transition-opacity group-hover:opacity-100" style={{ boxShadow: "0 0 0 8px rgba(112, 163, 255, 0.06)" }} />
+            </div>
+            {activity === "explorer" ? (
+              <Explorer
+                workspaceRoot={workspace.root}
+                recent={workspace.recent}
+                explorer={explorer}
+                expandedDirs={expandedDirs}
+                selectedPath={selectedPath}
+                onContextMenu={(info) => setExplorerMenu(info)}
+                showTooltipForEl={showTooltipForEl}
+                hideTooltip={hideTooltip}
+                onOpenFolder={() => void openFolder()}
+                onOpenRecent={(p) => void openRecent(p)}
+                onToggleDir={async (dir) => {
+                  const next = new Set(expandedDirs);
+                  if (next.has(dir)) {
+                    next.delete(dir);
+                    setExpandedDirs(next);
+                    return;
+                  }
+
+                  next.add(dir);
+                  setExpandedDirs(next);
+
+                  if (!explorer[dir]) {
+                    await refreshDir(dir);
+                  }
+                }}
+                onSelect={(p) => setSelectedPath(p)}
+                onOpenFile={(p) => void openFile(p)}
+                onRefresh={() => void refreshRoot()}
+                onCreateNewFile={() => void createNewFile()}
+                onCreateNewFolder={() => void createNewFolder()}
+              />
+            ) : activity === "search" ? (
+              <Panel title="Search">
+                {!workspace.root ? (
+                  <div className="text-sm text-muted">Open a folder to search.</div>
+                ) : (
+                  <div className="space-y-3">
+                    <input
+                      className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted"
+                      placeholder="Find in files"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                      autoFocus
+                    />
+
+                    <div className="text-xs text-muted">
+                      {isSearching ? "Searching..." : `${searchResults.length} results`}
+                    </div>
+
+                    <div className="space-y-1">
+                      {searchResults.map((m, idx) => (
+                        <button
+                          key={`${m.path}:${m.line}:${idx}`}
+                          type="button"
+                          className="w-full rounded border border-border bg-bg px-3 py-2 text-left text-sm text-muted hover:border-accent hover:text-text"
+                          onClick={async () => {
+                            setPendingReveal({ path: m.path, line: m.line });
+                            await openFile(m.path);
+                          }}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="truncate text-text">{m.path}</span>
+                            <span className="shrink-0 text-xs text-muted">{m.line}</span>
+                          </div>
+                          <div className="mt-1 truncate text-xs text-muted">{m.text}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </Panel>
+            ) : activity === "scm" ? (
+              <Panel title="Source Control">
+                <div className="text-sm text-muted">Git view is coming next.</div>
+              </Panel>
+            ) : null}
+          </aside>
+
+          <main className="min-h-0 min-w-0 bg-bg">
+            <div className="flex h-full min-h-0 flex-col">
+              <div className="flex h-10 items-center gap-1 border-b border-border bg-panel px-2">
+                <div className="flex min-w-0 flex-1 items-stretch gap-1 overflow-auto">
+                  {tabs.map((t) => (
+                    <TabButton
+                      key={t.path}
+                      tab={t}
+                      active={t.path === activeTabPath}
+                      onActivate={() => setActiveTabPath(t.path)}
+                      onClose={() => closeTab(t.path)}
+                    />
+                  ))}
+                </div>
+                <button type="button" className="ws-icon-btn" onClick={() => void openFolder()}>
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="min-h-0 flex-1 flex flex-col">
+                {!workspace.root ? (
+                  <WelcomeScreen recent={workspace.recent} onOpenFolder={() => void openFolder()} onOpenRecent={(p) => void openRecent(p)} />
+                ) : !activeTab ? (
+                  <WelcomeScreen
+                    recent={workspace.recent}
+                    onOpenFolder={() => void openFolder()}
+                    onOpenRecent={(p) => void openRecent(p)}
+                    title="Open a file from Explorer"
+                    subtitle="Your editor will appear here once you open a file."
+                  />
+                ) : activeTab.path === SETTINGS_TAB_PATH ? (
+                  <div className="min-h-0 flex-1 overflow-auto">
+                    <SettingsScreen
+                      settings={settings}
+                      providerLabel={providerLabel}
+                      keyStatus={keyStatus}
+                      providerChoices={providerChoices}
+                      apiKeyDraft={apiKeyDraft}
+                      encryptionPasswordDraft={encryptionPasswordDraft}
+                      secretsError={secretsError}
+                      isSavingSettings={isSavingSettings}
+                      isTogglingOffline={isTogglingOffline}
+                      isKeyOperationInProgress={isKeyOperationInProgress}
+                      isSettingsLoaded={isSettingsLoaded}
+                      workspaceLabel={workspaceLabel}
+                      recentWorkspaces={workspace.recent}
+                      onChangeTheme={(t: Theme) => setSettingsState((s) => ({ ...s, theme: t }))}
+                      onToggleOffline={toggleOfflineMode}
+                      onChangeProvider={(p) => void changeProvider(p)}
+                      onPickFolder={() => void openFolder()}
+                      onOpenRecent={(p) => void openRecent(p)}
+                      onApiKeyDraft={setApiKeyDraft}
+                      onEncryptionPasswordDraft={setEncryptionPasswordDraft}
+                      onStoreKey={handleStoreKey}
+                      onClearKey={clearProviderKey}
+                      onSaveSettings={saveSettingsNow}
+                      showKeySaved={showKeySaved}
+                      showKeyCleared={showKeyCleared}
+                      onDebugGemini={handleDebugGemini}
+                      debugResult={debugResult}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <div className="min-h-0 flex-1 flex flex-col">
+                      <div className="relative min-h-0 flex-1">
+                        {activeTabChangeFile ? (
+                        <DiffEditor
+                          height="100%"
+                          theme={themeName}
+                          language={activeTab.language}
+                          original={activeTabChangeFile.before ?? ""}
+                          modified={typedEditorText !== null ? typedEditorText : (activeTabChangeFile.after ?? activeTab.content)}
+                          onMount={(ed) => {
+                            const mod = ed.getModifiedEditor();
+                            editorRef.current = mod;
+                            cursorListenerDisposeRef.current?.dispose();
+                            cursorListenerDisposeRef.current = mod.onDidChangeCursorPosition((ev) => {
+                              const p = ev.position;
+                              setCursorPos({ line: p.lineNumber, col: p.column });
+                            });
+                            const p = mod.getPosition();
+                            if (p) setCursorPos({ line: p.lineNumber, col: p.column });
+                            mod.focus();
+                          }}
+                          options={{
+                            readOnly: true,
+                            renderSideBySide: false,
+                            fontSize: 13,
+                            minimap: { enabled: true },
+                            scrollBeyondLastLine: false,
+                            wordWrap: "on",
+                            automaticLayout: true,
+                            padding: { top: 8, bottom: 8 },
+                          }}
+                        />
+                      ) : (
+                        <Editor
+                          height="100%"
+                          theme={themeName}
+                          language={activeTab.language}
+                          value={activeTab.content}
+                          onChange={(v) => {
+                            const next = v ?? "";
+                            setTabs((prev) =>
+                              prev.map((t) =>
+                                t.path === activeTab.path
+                                  ? { ...t, content: next, isDirty: true }
+                                  : t
+                              )
+                            );
+                          }}
+                          onMount={(ed) => {
+                            editorRef.current = ed;
+                            cursorListenerDisposeRef.current?.dispose();
+                            cursorListenerDisposeRef.current = ed.onDidChangeCursorPosition((ev) => {
+                              const p = ev.position;
+                              setCursorPos({ line: p.lineNumber, col: p.column });
+                            });
+                            const p = ed.getPosition();
+                            if (p) setCursorPos({ line: p.lineNumber, col: p.column });
+                            ed.focus();
+                          }}
+                          options={{
+                            fontSize: 13,
+                            minimap: { enabled: true },
+                            scrollBeyondLastLine: false,
+                            wordWrap: "on",
+                            automaticLayout: true,
+                            padding: { top: 8, bottom: 8 },
+                          }}
+                        />
+                      )}
+
+                      {activeChat.changeSet && changeWriteFiles.length ? (
+                        <div className="pointer-events-none absolute bottom-3 left-1/2 z-30 -translate-x-1/2">
+                          <div className="pointer-events-auto flex items-center gap-2 ws-change-bar min-w-[373px] min-h-[35px]">
+                            <button
+                              type="button"
+                              className="ws-icon-btn"
+                              disabled={changeWriteFiles.findIndex((f) => f.path === (selectedChangePath ?? "")) <= 0}
+                              onClick={() => {
+                                const idx = changeWriteFiles.findIndex((f) => f.path === (selectedChangePath ?? ""));
+                                const prev = idx > 0 ? changeWriteFiles[idx - 1] : null;
+                                if (prev?.kind === "write") {
+                                  setSelectedChangePath(prev.path);
+                                  void openFile(prev.path);
+                                }
+                              }}
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </button>
+
+                            <div className="max-w-[42vw] truncate text-[11px] text-muted">
+                              {(() => {
+                                const idx = changeWriteFiles.findIndex((f) => f.path === (selectedChangePath ?? ""));
+                                const n = idx >= 0 ? idx + 1 : 1;
+                                return `${n} of ${changeWriteFiles.length} · ${selectedChangePath ?? changeWriteFiles[0]!.path}`;
+                              })()}
+                            </div>
+
+                            <button
+                              type="button"
+                              className="ws-icon-btn"
+                              disabled={
+                                changeWriteFiles.findIndex((f) => f.path === (selectedChangePath ?? "")) >=
+                                changeWriteFiles.length - 1
+                              }
+                              onClick={() => {
+                                const idx = changeWriteFiles.findIndex((f) => f.path === (selectedChangePath ?? ""));
+                                const next = idx >= 0 ? changeWriteFiles[idx + 1] : null;
+                                if (next?.kind === "write") {
+                                  setSelectedChangePath(next.path);
+                                  void openFile(next.path);
+                                }
+                              }}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={chatApplying || !selectedChangePath}
+                              className="ws-btn ws-btn-secondary h-7 px-2"
+                              onClick={() => {
+                                if (!selectedChangePath) return;
+                                void rejectFileChange(selectedChangePath);
+                              }}
+                            >
+                              Reject File
+                            </button>
+                            <button
+                              type="button"
+                              disabled={chatApplying || !selectedChangePath}
+                              className="ws-btn ws-btn-secondary h-7 px-5 bg-accent hover:opacity-90"
+                              onClick={() => {
+                                if (!selectedChangePath) return;
+                                acceptFileChange(selectedChangePath);
+                              }}
+                            >
+                              Accept File
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {isTerminalOpen ? (
+                <div className="relative border-t border-border bg-panel" style={{ height: terminalHeight }}>
+                  <div
+                    className="absolute left-0 top-0 z-20 h-1 w-full cursor-row-resize"
+                    onMouseDown={(e) => {
+                      terminalResizeStateRef.current = { startY: e.clientY, startH: terminalHeight };
+                    }}
+                  />
+
+                  <div className="flex h-full min-h-0 flex-col">
+                    <div className="flex items-center justify-between border-b border-border bg-panel px-2 py-1.5">
+                      <div className="flex min-w-0 items-center gap-1">
+                        {([
+                          { id: "problems", label: "Problems" },
+                          { id: "output", label: "Output" },
+                          { id: "debug", label: "Debug Console" },
+                          { id: "terminal", label: "Terminal" },
+                          { id: "ports", label: "Ports" },
+                        ] as const).map((t) => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            className={`rounded-md px-2 py-1 text-[11px] ${
+                              panelTab === t.id ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+                            }`}
+                            onClick={() => {
+                              setPanelTab(t.id);
+                              if (t.id === "terminal") {
+                                window.setTimeout(() => {
+                                  void ensureTerminal().then(() => {
+                                    resizeTerminal();
+                                    termRef.current?.focus();
+                                  });
+                                }, 0);
+                              }
+                            }}
+                          >
+                            {t.label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="ws-icon-btn"
+                          onClick={() => {
+                            setPanelTab("terminal");
+                            window.setTimeout(() => {
+                              void ensureTerminal().then(() => {
+                                resizeTerminal();
+                                termRef.current?.focus();
+                              });
+                            }, 0);
+                          }}
+                        >
+                          <Terminal className="h-4 w-4" />
+                        </button>
+                        <button type="button" className="ws-icon-btn" onClick={() => void closeTerminal()}>
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="relative min-h-0 flex-1 bg-bg">
+                      <div className={panelTab === "terminal" ? "absolute inset-0" : "absolute inset-0 hidden"}>
+                        <div ref={termHostRef} className="h-full w-full" />
+                      </div>
+                      {panelTab !== "terminal" ? (
+                        <div className="absolute inset-0 p-3 text-xs text-muted">{panelTab} is coming next.</div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </main>
+
+          {isChatDockOpen ? (
+            <aside className="relative min-h-0 min-w-0 border-l border-border bg-panel">
+              <div
+                className="absolute left-0 top-0 z-20 h-full w-1 cursor-col-resize"
+                onMouseDown={(e) => {
+                  chatResizeStateRef.current = { startX: e.clientX, startW: chatDockWidth };
+                }}
+              />
+              <div className="flex h-full min-h-0 flex-col">
+                <div className="border-b border-transparent bg-panel px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-semibold text-text">{activeChat.title}</div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-1">
+                      {hasChatHistory ? (
+                        <button
+                          type="button"
+                          className="ws-icon-btn"
+                          onClick={() => {
+                            setIsChatHistoryOpen((v) => !v);
+                            if (!isChatHistoryOpen) setChatHistoryQuery("");
+                          }}
+                        >
+                          <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="ws-icon-btn"
+                        onClick={() => {
+                          const now = Date.now();
+                          const id = `${now}-${Math.random().toString(16).slice(2)}`;
+                          setChatSessions((prev) => [
+                            ...prev,
+                            { id, title: nextChatTitle, createdAt: now, updatedAt: now, messages: [], draft: "", changeSet: null },
+                          ]);
+                          setActiveChatId(id);
+                          setIsChatHistoryOpen(false);
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        className="ws-icon-btn"
+                        onClick={() => setIsChatDockOpen(false)}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {hasChatHistory && isChatHistoryOpen ? (
+                  <div className="border-b border-transparent bg-panel px-3 pb-2">
+                    <div className="ws-panel2 overflow-hidden rounded-xl border border-border">
+                      <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          <Search className="h-4 w-4 text-muted" />
+                          <input
+                            className="w-full bg-transparent text-sm text-text outline-none placeholder:text-muted"
+                            placeholder="Search"
+                            value={chatHistoryQuery}
+                            onChange={(e) => setChatHistoryQuery(e.currentTarget.value)}
+                            autoFocus
+                          />
+                        </div>
+                        <div className="shrink-0 rounded-md bg-panel px-2 py-1 text-[11px] text-muted">All Conversations</div>
+                      </div>
+
+                      <div className="h-2" />
+
+                      <div className="max-h-56 overflow-auto px-1 pb-1">
+                        {chatSessions
+                          .slice()
+                          .sort((a, b) => b.updatedAt - a.updatedAt)
+                          .filter((s) => s.messages.some((m) => m.role === "user"))
+                          .filter((s) => {
+                            const q = chatHistoryQuery.trim().toLowerCase();
+                            if (!q) return true;
+                            const hay = `${s.title}\n${s.messages
+                              .filter((m) => m.role === "user")
+                              .map((m) => m.content)
+                              .join("\n")}`.toLowerCase();
+                            return hay.includes(q);
+                          })
+                          .map((s) => (
+                            <button
+                              key={s.id}
+                              type="button"
+                              className={`flex w-full items-start justify-between gap-3 rounded-lg px-2 py-2 text-left focus-visible:outline-none hover:bg-panel ${
+                                s.id === activeChatId ? "bg-panel" : ""
+                              }`}
+                              onClick={() => {
+                                setActiveChatId(s.id);
+                                setIsChatHistoryOpen(false);
+                                window.setTimeout(() => chatComposerRef.current?.focus(), 0);
+                              }}
+                            >
+                              <div className="min-w-0">
+                                <div className="truncate text-sm text-text">{s.title}</div>
+                                <div className="truncate text-[11px] text-muted">{workspacePathLabel}</div>
+                              </div>
+                              <div className="shrink-0 pt-0.5 text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeChat.changeSet ? (
+                  <div className="px-3 pt-2">
+                    <div className="rounded-lg bg-[rgb(var(--p-panel2))] px-2 py-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <button
+                          type="button"
+                          className="flex min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left hover:bg-[rgb(var(--p-panel))]"
+                          onClick={() => setIsChangeSummaryOpen((v) => !v)}
+                        >
+                          <ChevronDown className={`h-4 w-4 text-muted ${isChangeSummaryOpen ? "rotate-180" : ""}`} />
+                          <div className="min-w-0 text-[11px] text-muted">
+                            <span className="text-text">{activeChat.changeSet.stats.files} files</span>
+                            <span className="ml-2 text-emerald-300">+{activeChat.changeSet.stats.added}</span>
+                            <span className="ml-2 text-red-300">-{activeChat.changeSet.stats.removed}</span>
+                          </div>
+                        </button>
+
+                        <div className="flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={chatApplying}
+                            className="ws-btn ws-btn-secondary h-7 px-2"
+                            onClick={() => void rejectAllChanges()}
+                          >
+                            Reject all
+                          </button>
+                          <button
+                            type="button"
+                            disabled={chatApplying}
+                            className="ws-btn h-7 border border-accent bg-accent px-2 text-white hover:opacity-90 disabled:opacity-50"
+                            onClick={() => acceptAllChanges()}
+                          >
+                            Accept all
+                          </button>
+                        </div>
+                      </div>
+
+                      {isChangeSummaryOpen ? (
+                        <div className="mt-2">
+                          <div className="max-h-56 overflow-auto">
+                            {activeChat.changeSet.files.map((f, idx) => {
+                              const isWrite = f.kind === "write";
+                              const isSelected = isWrite && selectedChangePath === f.path;
+                              const kindLabel = f.kind === "write" ? "M" : f.kind === "delete" ? "D" : "R";
+                              const kindClass =
+                                f.kind === "write"
+                                  ? "bg-emerald-500/15 text-emerald-300"
+                                  : f.kind === "delete"
+                                    ? "bg-red-500/15 text-red-300"
+                                    : "bg-sky-500/15 text-sky-300";
+                              return (
+                                <div
+                                  key={`${f.kind}:${f.path}:${idx}`}
+                                  className={`flex items-center justify-between gap-2 rounded-md px-2 py-1 ${
+                                    isSelected ? "bg-[rgb(var(--p-panel))]" : "hover:bg-[rgb(var(--p-panel))]"
+                                  }`}
+                                >
+                                  <button
+                                    type="button"
+                                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                                    onClick={() => {
+                                      if (isWrite) {
+                                        setSelectedChangePath(f.path);
+                                        void openFile(f.path);
+                                      }
+                                    }}
+                                  >
+                                    <span className={`flex h-5 w-5 items-center justify-center rounded text-[11px] ${kindClass}`}>{kindLabel}</span>
+                                    <span className={`min-w-0 truncate text-[11px] ${isWrite ? "text-text" : "text-muted"}`}>{f.path}</span>
+                                  </button>
+
+                                  {isWrite ? (
+                                    <div className="flex shrink-0 items-center gap-1">
+                                      <button
+                                        type="button"
+                                        disabled={chatApplying}
+                                        className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]"
+                                        onClick={() => void rejectFileChange(f.path)}
+                                      >
+                                        Revert
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={chatApplying}
+                                        className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]"
+                                        onClick={() => acceptFileChange(f.path)}
+                                      >
+                                        Accept
+                                      </button>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-auto px-3 py-3">
+                  {!canUseAi ? (
+                    <div className="rounded-lg border border-border bg-bg p-3 text-sm text-muted">
+                      {settings.offline_mode
+                        ? "Offline mode is enabled. Disable it in Settings to use AI features."
+                        : providerNeedsKey
+                          ? `API key required for ${providerLabel}. Configure it in Settings.`
+                          : "AI provider is local. Make sure Ollama/LM Studio is running."}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {activeChat.messages.length ? (
+                        activeChat.messages.map((m, i) => {
+                          if (m.role === "meta") {
+                            return (
+                              <div key={i} className={m.content === "Thinking…" ? "flex justify-center" : "flex justify-start"}>
+                                {m.content === "Thinking…" ? (
+                                  <span className="ws-thinking">
+                                    <span>
+                                      Thinking
+                                      <span className="ws-thinking-dots">
+                                        <span />
+                                        <span />
+                                        <span />
+                                        <span />
+                                        <span />
+                                        <span />
+                                      </span>
+                                    </span>
+                                  </span>
+                                ) : (
+                                  <div className="ws-agent-step">
+                                    <span className="ws-agent-dot" />
+                                    <span className="truncate">{m.content}</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                              <div className="max-w-[92%]">
+                                {m.role === "assistant" && m.kind === "run_request" && m.run ? (
+                                  <div className="ws-msg ws-msg-anim ws-msg-assistant" data-run-menu-root>
+                                    <div className="flex items-center justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <div className="text-[11px] text-muted">Run</div>
+                                        <div className="mt-1 font-mono text-[12px] text-text">
+                                          <span className="rounded border border-border bg-bg px-2 py-1">{m.run.cmd}</span>
+                                        </div>
+                                        {m.run.error ? (
+                                          <div className="mt-2 rounded border border-red-500/30 bg-bg px-2 py-1 text-[11px] text-muted">
+                                            {m.run.error}
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                      <div className="shrink-0 text-right">
+                                        <div className="text-[10px] text-muted">Status</div>
+                                        <div className="mt-1 text-[11px] text-text">{m.run.status}</div>
+                                      </div>
+                                    </div>
+
+                                    <div className="mt-2 flex items-center justify-end gap-2">
+                                      <button
+                                        type="button"
+                                        className="ws-btn ws-btn-secondary h-7 px-2"
+                                        disabled={m.run.status !== "pending"}
+                                        onClick={() => cancelRunCard(m.id ?? "")}
+                                      >
+                                        Cancel
+                                      </button>
+
+                                      {m.run.status === "done" && m.run.error ? (
+                                        <button
+                                          type="button"
+                                          className="ws-btn ws-btn-secondary h-7 px-2"
+                                          onClick={() => void askAiToFixRunError(m.id ?? "")}
+                                        >
+                                          Fix
+                                        </button>
+                                      ) : null}
+
+                                      <div className="relative">
+                                        <button
+                                          type="button"
+                                          className="ws-btn ws-btn-primary h-7 px-3"
+                                          disabled={m.run.status !== "pending"}
+                                          onClick={() => void runFromRunCard(m.id ?? "", "once")}
+                                        >
+                                          Run
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="ml-1 ws-icon-btn h-7 w-7 rounded-lg border border-border bg-panel disabled:opacity-50"
+                                          disabled={m.run.status !== "pending"}
+                                          onClick={() => setRunMenuOpenId((v) => (v === (m.id ?? "") ? null : (m.id ?? "")))}
+                                        >
+                                          <ChevronDown className="h-3.5 w-3.5" />
+                                        </button>
+
+                                        {runMenuOpenId === (m.id ?? "") ? (
+                                          <div className="absolute right-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                            <MenuItem
+                                              label="Run once"
+                                              onClick={() => {
+                                                setRunMenuOpenId(null);
+                                                void runFromRunCard(m.id ?? "", "once");
+                                              }}
+                                            />
+                                            <MenuItem
+                                              label="Always allow & run"
+                                              onClick={() => {
+                                                setRunMenuOpenId(null);
+                                                void runFromRunCard(m.id ?? "", "always");
+                                              }}
+                                            />
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    </div>
+
+                                    {Array.isArray(m.run.remaining) && m.run.remaining.length ? (
+                                      <div className="mt-2 text-[11px] text-muted">
+                                        Next: <span className="font-mono">{m.run.remaining[0]}</span>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                ) : (
+                                  <div className={`ws-msg ws-msg-anim ${m.role === "user" ? "ws-msg-user" : "ws-msg-assistant"}`}>
+                                    <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                                  </div>
+                                )}
+
+                                {m.role === "assistant" ? (
+                                  <div className="mt-1 flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      className={`ws-icon-btn ${m.rating === "up" ? "text-text" : ""}`}
+                                      onClick={() => setMessageRating(i, "up")}
+                                    >
+                                      <ThumbsUp className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={`ws-icon-btn ${m.rating === "down" ? "text-text" : ""}`}
+                                      onClick={() => setMessageRating(i, "down")}
+                                    >
+                                      <ThumbsDown className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="flex h-full min-h-[240px] flex-col items-center justify-center text-center">
+                          <img src="/logo_transparent_bigger.png" alt="Pompora" className="h-47 w-47 opacity-90" />
+                          <div className="mt-4 text-base font-semibold text-text">Pompora Code</div>
+                          <div className="mt-1 max-w-[320px] text-sm text-muted">
+                            Build and improve your codebase - privately.
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-panel px-3 py-2">
+                  <div className="ws-panel2 rounded-md border border-border p-2">
+                    <textarea
+                      ref={chatComposerRef}
+                      className="h-16 w-full resize-none bg-transparent px-2 py-1 text-sm font-normal text-muted outline-none placeholder:text-muted focus-visible:outline-none"
+                      placeholder="Ask anything (Ctrl+L)"
+                      value={activeChat.draft}
+                      onChange={(e) => setActiveChatDraft(e.currentTarget.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          void sendChat();
+                        }
+                      }}
+                    />
+
+                    <div className="mt-2 flex items-center justify-between gap-2 px-1">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className="ws-icon-btn"
+                          onClick={() => notify({ kind: "info", title: "Add", message: "Coming next." })}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+
+                        <div className="relative" data-model-picker-root>
+                          <button
+                            type="button"
+                            className={`flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-[rgb(var(--p-panel2))] focus-visible:outline-none ${
+                              !canUseAi && providerNeedsKey ? "cursor-not-allowed opacity-50" : "text-text"
+                            }`}
+                            onClick={() => {
+                              if (!canUseAi && providerNeedsKey) {
+                                openSettingsTab();
+                                return;
+                              }
+                              void refreshProviderKeyStatuses();
+                              setIsModelPickerOpen((v) => !v);
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!canUseAi && providerNeedsKey) showTooltipForEl(e.currentTarget, "Add an API key in Settings (Ctrl+,)", "tr");
+                            }}
+                            onMouseLeave={hideTooltip}
+                          >
+                            <span className={`text-sm ${providerNeedsKey ? "text-text" : "text-muted"}`}>{providerLabel}</span>
+                            <ChevronDown className={`h-4 w-4 text-muted ${isModelPickerOpen ? "rotate-180" : ""}`} />
+                          </button>
+
+                          {isModelPickerOpen ? (
+                            <div className="absolute left-0 bottom-full z-50 mb-2 w-56 overflow-hidden rounded-xl border border-border bg-panel shadow">
+                              {providerChoices.map((p) => (
+                                (() => {
+                                  const st = providerKeyStatuses[p.id];
+                                  const missingKey = p.api ? st?.is_configured !== true : false;
+                                  return (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[rgb(var(--p-panel2))] ${
+                                    (settings.active_provider ?? "") === p.id ? "bg-[rgb(var(--p-panel2))]" : ""
+                                  } ${missingKey ? "text-muted opacity-60" : "text-text"}`}
+                                  onClick={() => {
+                                    void changeProvider(p.id);
+                                    setIsModelPickerOpen(false);
+                                    if (missingKey) openSettingsTab();
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (missingKey) {
+                                      showTooltipForEl(e.currentTarget, "Add an API key in Settings (Ctrl+,)", "tr");
+                                    }
+                                  }}
+                                  onMouseLeave={hideTooltip}
+                                >
+                                  <span className={p.api ? "" : "text-muted"}>{p.label}</span>
+                                  <span className="text-xs text-muted">{p.api ? (missingKey ? "API key" : "API") : "Local"}</span>
+                                </button>
+                                  );
+                                })()
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          className="relative h-6 w-6 rounded-full focus-visible:outline-none"
+                          onMouseEnter={(e) =>
+                            showTooltipForEl(
+                              e.currentTarget,
+                              `${Math.round(chatContextUsage.pct * 100)}% (${chatContextUsage.used.toLocaleString()} / ${chatContextUsage.total.toLocaleString()}) context used`,
+                              "tr"
+                            )
+                          }
+                          onMouseLeave={hideTooltip}
+                          style={{
+                            background: `conic-gradient(rgb(var(--p-muted)) ${Math.round(chatContextUsage.pct * 360)}deg, rgb(var(--p-panel2)) 0deg)`,
+                          }}
+                        >
+                          <span
+                            className="absolute inset-[2px] rounded-full bg-panel"
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={chatBusy || !activeChat.draft.trim()}
+                          className={`ws-icon-btn ${!canUseAi && providerNeedsKey ? "cursor-not-allowed opacity-50" : ""}`}
+                          onClick={() => {
+                            if (!canUseAi && providerNeedsKey) {
+                              openSettingsTab();
+                              return;
+                            }
+                            void sendChat();
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!canUseAi && providerNeedsKey) showTooltipForEl(e.currentTarget, "Add an API key in Settings (Ctrl+,)", "tr");
+                          }}
+                          onMouseLeave={hideTooltip}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          ) : null}
+        </div>
+
+        <footer className="flex items-center justify-between border-t border-border bg-panel px-3 text-[11px] text-muted">
+          <div className="flex items-center gap-3">
+            <span className="ws-chip">{workspaceLabel}</span>
+            <span className="truncate">{activeTab ? activeTab.path : "No file"}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="ws-chip">{activeTab ? (cursorPos ? `Ln ${cursorPos.line}, Col ${cursorPos.col}` : "Ln -, Col -") : ""}</span>
+            <span className="ws-chip">{activeTab ? activeTab.language : ""}</span>
+            <span className="ws-chip">UTF-8</span>
+            <span className="ws-chip">LF</span>
+            <span className="ws-chip">{notifications.length ? `${notifications.length} alerts` : isSavingSettings ? "Saving" : "Ready"}</span>
+          </div>
+        </footer>
+      </div>
+
+      {isPaletteOpen ? (
+        <CommandPalette
+          query={paletteQuery}
+          setQuery={setPaletteQuery}
+          commands={filteredCommands}
+          index={paletteIndex}
+          setIndex={setPaletteIndex}
+          onClose={() => setIsPaletteOpen(false)}
+          onRun={(cmd) => {
+            cmd.run();
+            setIsPaletteOpen(false);
+          }}
+        />
+      ) : null}
+
+      {isQuickOpenOpen ? (
+        <QuickOpen
+          query={quickOpenQuery}
+          setQuery={setQuickOpenQuery}
+          files={fileIndex}
+          index={quickOpenIndex}
+          setIndex={setQuickOpenIndex}
+          isLoading={isFileIndexLoading}
+          onClose={() => setIsQuickOpenOpen(false)}
+          onPick={(p) => {
+            void openFile(p);
+            setIsQuickOpenOpen(false);
+          }}
+        />
+      ) : null}
+
+      {isGoToLineOpen ? (
+        <GoToLine
+          value={goToLineValue}
+          setValue={setGoToLineValue}
+          onClose={() => setIsGoToLineOpen(false)}
+          onGo={(n) => {
+            goToLine(n);
+            setIsGoToLineOpen(false);
+          }}
+        />
+      ) : null}
+
+      {explorerMenu ? (
+        <ContextMenu
+          x={explorerMenu.x}
+          y={explorerMenu.y}
+          onClose={() => setExplorerMenu(null)}
+          items={[
+            { id: "newFile", label: "New File...", onClick: () => void createNewFile() },
+            { id: "newFolder", label: "New Folder...", onClick: () => void createNewFolder() },
+            { id: "rename", label: "Rename...", onClick: () => void renameSelected() },
+            { id: "delete", label: "Delete", onClick: () => void deleteSelected() },
+            { id: "copyPath", label: "Copy Relative Path", onClick: () => void copyText(explorerMenu.path) },
+            {
+              id: "copyFullPath",
+              label: "Copy Full Path",
+              onClick: () => {
+                const root = (workspace.root ?? "").replace(/\\/g, "/").replace(/\/$/, "");
+                const rel = explorerMenu.path.replace(/^\//, "");
+                void copyText(root && rel ? `${root}/${rel}` : explorerMenu.path);
+              },
+            },
+          ]}
+        />
+      ) : null}
+
+      {wsTooltip ? (
+        <div
+          className="fixed z-[9999] pointer-events-none select-none ws-msg-anim max-w-[320px] rounded-md border border-border ws-panel2 px-2 py-1 text-[11px] text-text shadow-xl backdrop-blur-sm"
+          style={{
+            left: wsTooltip.x,
+            top: wsTooltip.y,
+            transform:
+              wsTooltip.placement === "above"
+                ? wsTooltip.align === "tr"
+                  ? "translate(-100%, -110%)"
+                  : "translate(0, -110%)"
+                : wsTooltip.align === "tr"
+                  ? "translate(-100%, 10%)"
+                  : "translate(0, 10%)",
+          }}
+        >
+          {wsTooltip.text}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function isSubsequence(needle: string, haystack: string): boolean {
+  let i = 0;
+  for (let j = 0; j < haystack.length && i < needle.length; j++) {
+    if (haystack[j] === needle[i]) i++;
+  }
+  return i === needle.length;
+}
+
+function QuickOpen(props: {
+  query: string;
+  setQuery: (v: string) => void;
+  files: string[];
+  index: number;
+  setIndex: (v: number) => void;
+  isLoading: boolean;
+  onClose: () => void;
+  onPick: (path: string) => void;
+}) {
+  const q = props.query.trim().toLowerCase();
+
+  const list = useMemo(() => {
+    if (!props.files.length) return [] as string[];
+    if (!q) return props.files.slice(0, 60);
+
+    const out: string[] = [];
+    for (const f of props.files) {
+      const lf = f.toLowerCase();
+      if (lf.includes(q) || isSubsequence(q, lf)) {
+        out.push(f);
+        if (out.length >= 120) break;
+      }
+    }
+    return out;
+  }, [props.files, q]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        props.setIndex(Math.min(props.index + 1, Math.max(0, list.length - 1)));
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        props.setIndex(Math.max(0, props.index - 1));
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const p = list[props.index];
+        if (p) props.onPick(p);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [list, props]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+      <div
+        className="mx-auto mt-20 w-[820px] max-w-[92vw] overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="border-b border-border p-3">
+          <input
+            className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted"
+            placeholder="Type to search files"
+            autoFocus
+            value={props.query}
+            onChange={(e) => props.setQuery(e.currentTarget.value)}
+          />
+          <div className="mt-2 text-xs text-muted">
+            {props.isLoading ? "Indexing files..." : `${props.files.length} files`}
+          </div>
+        </div>
+        <div className="max-h-[360px] overflow-auto p-2">
+          {list.length ? (
+            list.map((p, i) => (
+              <button
+                key={p}
+                type="button"
+                className={`flex w-full items-center justify-between rounded px-3 py-2 text-left text-sm ${
+                  i === props.index ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+                }`}
+                onMouseEnter={() => props.setIndex(i)}
+                onClick={() => props.onPick(p)}
+              >
+                <span className="truncate">{p}</span>
+              </button>
+            ))
+          ) : (
+            <div className="p-3 text-sm text-muted">No matches</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GoToLine(props: {
+  value: string;
+  setValue: (v: string) => void;
+  onClose: () => void;
+  onGo: (line: number) => void;
+}) {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const n = Number.parseInt(props.value.trim(), 10);
+        if (Number.isFinite(n) && n > 0) props.onGo(n);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [props]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+      <div
+        className="mx-auto mt-20 w-[520px] max-w-[92vw] overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="border-b border-border p-3">
+          <div className="mb-2 text-xs font-semibold text-muted">Go to Line</div>
+          <input
+            className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted"
+            placeholder="Line number"
+            autoFocus
+            value={props.value}
+            onChange={(e) => props.setValue(e.currentTarget.value)}
+          />
+        </div>
+        <div className="p-3">
+          <button
+            type="button"
+            className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-muted hover:border-accent hover:text-text"
+            onClick={() => {
+              const n = Number.parseInt(props.value.trim(), 10);
+              if (Number.isFinite(n) && n > 0) props.onGo(n);
+            }}
+          >
+            Go
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActivityButton(props: {
+  id: ActivityId;
+  active: boolean;
+  onClick: (id: ActivityId) => void;
+  Icon: typeof FolderOpen;
+}) {
+  const { id, active, onClick, Icon } = props;
+  return (
+    <button
+      type="button"
+      className={`relative mx-auto flex h-9 w-9 items-center justify-center rounded-md ${
+        active ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+      }`}
+      onClick={() => onClick(id)}
+      aria-current={active ? "page" : undefined}
+    >
+      <span
+        aria-hidden
+        className={`absolute left-[-10px] top-1.5 h-6 w-0.5 rounded bg-accent transition-opacity ${
+          active ? "opacity-100" : "opacity-0"
+        }`}
+      />
+      <Icon className="h-5 w-5" />
+    </button>
+  );
+}
+
+function Panel(props: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border bg-panel px-3 py-2 text-xs font-semibold text-muted">
+        {props.title}
+      </div>
+      <div className="min-h-0 flex-1 overflow-auto p-2">{props.children}</div>
+    </div>
+  );
+}
+
+function Explorer(props: {
+  workspaceRoot: string | null;
+  recent: string[];
+  explorer: Record<string, DirEntryInfo[]>;
+  expandedDirs: Set<string>;
+  selectedPath: string | null;
+  onContextMenu: (info: { x: number; y: number; path: string; isDir: boolean }) => void;
+  showTooltipForEl: (el: HTMLElement, text: string, align?: "tl" | "tr") => void;
+  hideTooltip: () => void;
+  onOpenFolder: () => void;
+  onOpenRecent: (p: string) => void;
+  onToggleDir: (dir: string) => void;
+  onSelect: (p: string) => void;
+  onOpenFile: (p: string) => void;
+  onRefresh: () => void;
+  onCreateNewFile: () => void;
+  onCreateNewFolder: () => void;
+}) {
+  if (!props.workspaceRoot) {
+    return (
+      <Panel title="Explorer">
+        <WelcomeScreen
+          title="No folder opened"
+          subtitle="Open a folder to browse files and start editing."
+          recent={props.recent}
+          onOpenFolder={props.onOpenFolder}
+          onOpenRecent={props.onOpenRecent}
+          compact
+        />
+      </Panel>
+    );
+  }
+
+  const rootEntries = props.explorer[""] ?? [];
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-transparent bg-panel px-3 py-2">
+        <div className="text-xs font-semibold text-text">Explorer</div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            className="ws-icon-btn"
+            onClick={props.onCreateNewFile}
+          >
+            <FileText className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className="ws-icon-btn"
+            onClick={props.onCreateNewFolder}
+          >
+            <Folder className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className="ws-icon-btn"
+            onClick={props.onRefresh}
+          >
+            <RotateCw className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-auto p-1">
+        <Tree
+          prefix=""
+          entries={rootEntries}
+          explorer={props.explorer}
+          expandedDirs={props.expandedDirs}
+          selectedPath={props.selectedPath}
+          onContextMenu={props.onContextMenu}
+          workspaceRoot={props.workspaceRoot}
+          showTooltipForEl={props.showTooltipForEl}
+          hideTooltip={props.hideTooltip}
+          onToggleDir={props.onToggleDir}
+          onSelect={props.onSelect}
+          onOpenFile={props.onOpenFile}
+        />
+      </div>
+    </div>
+  );
+}
+
+function Tree(props: {
+  prefix: string;
+  entries: DirEntryInfo[];
+  explorer: Record<string, DirEntryInfo[]>;
+  expandedDirs: Set<string>;
+  selectedPath: string | null;
+  onContextMenu: (info: { x: number; y: number; path: string; isDir: boolean }) => void;
+  workspaceRoot: string | null;
+  showTooltipForEl: (el: HTMLElement, text: string, align?: "tl" | "tr") => void;
+  hideTooltip: () => void;
+  onToggleDir: (dir: string) => void;
+  onSelect: (p: string) => void;
+  onOpenFile: (p: string) => void;
+}) {
+  const hoverTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    };
+  }, []);
+
+  return (
+    <div className="space-y-0.5">
+      {props.entries.map((e) => {
+        const isSelected = props.selectedPath === e.path;
+        const rowCls = isSelected
+          ? "bg-panel text-text"
+          : "text-muted hover:bg-panel hover:text-text hover:translate-x-[1px] hover:-translate-y-[0.5px]";
+        const markerCls = isSelected ? "bg-accent opacity-100" : "opacity-0";
+        if (e.is_dir) {
+          const isExpanded = props.expandedDirs.has(e.path);
+          const children = props.explorer[e.path] ?? [];
+          return (
+            <div key={e.path}>
+              <button
+                type="button"
+                className={`group relative flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] transition-all duration-150 ${rowCls}`}
+                onClick={() => {
+                  props.onSelect(e.path);
+                  props.onToggleDir(e.path);
+                }}
+                onContextMenu={(ev) => {
+                  ev.preventDefault();
+                  props.onSelect(e.path);
+                  props.onContextMenu({ x: ev.clientX, y: ev.clientY, path: e.path, isDir: true });
+                }}
+              >
+                <span aria-hidden className={`absolute left-0 top-1.5 h-4 w-0.5 rounded ${markerCls}`} />
+                <ChevronRight
+                  className={`h-4 w-4 text-muted transition-transform duration-150 group-hover:text-text ${isExpanded ? "rotate-90" : ""}`}
+                />
+                <Folder className="h-4 w-4 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+                <span className="truncate">{e.name}</span>
+              </button>
+              {isExpanded ? (
+                <div className="ml-4 border-l border-border/60 pl-2">
+                  <Tree
+                    prefix={e.path}
+                    entries={children}
+                    explorer={props.explorer}
+                    expandedDirs={props.expandedDirs}
+                    selectedPath={props.selectedPath}
+                    onContextMenu={props.onContextMenu}
+                    workspaceRoot={props.workspaceRoot}
+                    showTooltipForEl={props.showTooltipForEl}
+                    hideTooltip={props.hideTooltip}
+                    onToggleDir={props.onToggleDir}
+                    onSelect={props.onSelect}
+                    onOpenFile={props.onOpenFile}
+                  />
+                </div>
+              ) : null}
+            </div>
+          );
+        }
+
+        const Icon = fileIconFor(e.path);
+        return (
+          <button
+            key={e.path}
+            type="button"
+            className={`group relative flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] transition-all duration-150 ${rowCls}`}
+            onMouseEnter={(ev) => {
+              if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+              hoverTimerRef.current = window.setTimeout(() => {
+                hoverTimerRef.current = null;
+                if (!props.workspaceRoot) return;
+                const root = props.workspaceRoot.replace(/\\/g, "/").replace(/\/$/, "");
+                const rel = e.path.replace(/^\//, "");
+                props.showTooltipForEl(ev.currentTarget, `${root}/${rel}`, "tl");
+              }, 350);
+            }}
+            onMouseLeave={() => {
+              if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+              hoverTimerRef.current = null;
+              props.hideTooltip();
+            }}
+            onMouseDown={() => {
+              if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+              hoverTimerRef.current = null;
+              props.hideTooltip();
+            }}
+            onClick={() => {
+              props.onSelect(e.path);
+              props.onOpenFile(e.path);
+            }}
+            onContextMenu={(ev) => {
+              ev.preventDefault();
+              props.onSelect(e.path);
+              props.onContextMenu({ x: ev.clientX, y: ev.clientY, path: e.path, isDir: false });
+            }}
+          >
+            <span aria-hidden className={`absolute left-0 top-1.5 h-4 w-0.5 rounded ${markerCls}`} />
+            <span className="inline-block w-4" />
+            <Icon className="h-4 w-4 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+            <span className="truncate">{e.name}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ContextMenu(props: {
+  x: number;
+  y: number;
+  onClose: () => void;
+  items: Array<{ id: string; label: string; onClick: () => void }>;
+}) {
+  return (
+    <div className="fixed inset-0 z-50" onMouseDown={props.onClose}>
+      <div
+        className="absolute w-56 overflow-hidden rounded border border-border bg-panel shadow-2xl"
+        style={{ left: props.x, top: props.y }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        {props.items.map((it) => (
+          <button
+            key={it.id}
+            type="button"
+            className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-muted hover:bg-bg hover:text-text"
+            onClick={() => {
+              it.onClick();
+              props.onClose();
+            }}
+          >
+            <span>{it.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TabButton(props: {
+  tab: EditorTab;
+  active: boolean;
+  onActivate: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="relative">
+      <div
+        className={`group relative flex h-8 max-w-[220px] items-center gap-2 rounded-md px-2 text-[13px] ${
+          props.active ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+        }`}
+        onClick={props.onActivate}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") props.onActivate();
+        }}
+      >
+        <span className="min-w-0 flex-1 truncate">{props.tab.name}</span>
+        {props.tab.isDirty ? <span className="text-[10px] text-accent">●</span> : null}
+        <button
+          type="button"
+          className="ml-1 rounded p-0.5 text-muted opacity-0 hover:bg-panel hover:text-text group-hover:opacity-100"
+          onClick={(e) => {
+            e.stopPropagation();
+            props.onClose();
+          }}
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+
+        <span
+          aria-hidden
+          className={`absolute bottom-0 left-2 right-2 h-px rounded bg-accent transition-opacity ${
+            props.active ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
+
+function WelcomeScreen(props: {
+  recent: string[];
+  onOpenFolder: () => void;
+  onOpenRecent: (p: string) => void;
+  title?: string;
+  subtitle?: string;
+  compact?: boolean;
+}) {
+  const title = props.title ?? "Welcome to Pompora";
+  const subtitle = props.subtitle ?? "Open a folder to start. Use Ctrl+Shift+P for commands.";
+
+  return (
+    <div className={`h-full w-full ${props.compact ? "p-2" : "p-10"}`}>
+      <div className={`mx-auto ${props.compact ? "max-w-none" : "max-w-2xl"}`}>
+        <div className="rounded-xl border border-border bg-panel p-6">
+          <div className="text-lg font-semibold">{title}</div>
+          <div className="mt-1 text-sm text-muted">{subtitle}</div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="rounded border border-border bg-bg px-3 py-2 text-sm text-muted hover:border-accent hover:text-text"
+              onClick={props.onOpenFolder}
+            >
+              Open Folder
+            </button>
+          </div>
+
+          {props.recent.length ? (
+            <div className="mt-5">
+              <div className="text-xs font-semibold text-muted">Recent</div>
+              <div className="mt-2 grid gap-1">
+                {props.recent.slice(0, 8).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    className="flex items-center justify-between rounded border border-border bg-bg px-3 py-2 text-left text-sm text-muted hover:border-accent hover:text-text"
+                    onClick={() => props.onOpenRecent(p)}
+                  >
+                    <span className="truncate">{p}</span>
+                    <span className="ml-3 text-xs text-muted">Open</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CommandPalette(props: {
+  query: string;
+  setQuery: (v: string) => void;
+  commands: Command[];
+  index: number;
+  setIndex: (v: number) => void;
+  onClose: () => void;
+  onRun: (cmd: Command) => void;
+}) {
+  const list = props.commands;
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        props.setIndex(Math.min(props.index + 1, Math.max(0, list.length - 1)));
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        props.setIndex(Math.max(0, props.index - 1));
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const cmd = list[props.index];
+        if (cmd) props.onRun(cmd);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [list, props]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+      <div
+        className="mx-auto mt-20 w-[820px] max-w-[92vw] overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="border-b border-border p-3">
+          <input
+            className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted"
+            placeholder="Type a command"
+            autoFocus
+            value={props.query}
+            onChange={(e) => props.setQuery(e.currentTarget.value)}
+          />
+        </div>
+        <div className="max-h-[360px] overflow-auto p-2">
+          {list.length ? (
+            list.map((c, i) => (
+              <button
+                key={c.id}
+                type="button"
+                className={`flex w-full items-center justify-between rounded px-3 py-2 text-left text-sm ${
+                  i === props.index ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+                }`}
+                onMouseEnter={() => props.setIndex(i)}
+                onClick={() => props.onRun(c)}
+              >
+                <span>{c.label}</span>
+                <span className="text-xs text-muted">{c.shortcut ?? ""}</span>
+              </button>
+            ))
+          ) : (
+            <div className="p-3 text-sm text-muted">No commands</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface SettingsScreenProps {
+  settings: AppSettings;
+  providerLabel: string;
+  keyStatus: KeyStatus | null;
+  providerChoices: ReadonlyArray<{ id: string; label: string; api: boolean }>;
+  apiKeyDraft: string;
+  encryptionPasswordDraft: string;
+  secretsError: string | null;
+  isSavingSettings: boolean;
+  isTogglingOffline: boolean;
+  isKeyOperationInProgress: boolean;
+  isSettingsLoaded: boolean;
+  workspaceLabel: string;
+  recentWorkspaces: string[];
+  onChangeTheme: (t: Theme) => void;
+  onToggleOffline: () => void;
+  onChangeProvider: (p: string | null) => void;
+  onPickFolder: () => void;
+  onOpenRecent: (p: string) => void;
+  onApiKeyDraft: (v: string) => void;
+  onEncryptionPasswordDraft: (v: string) => void;
+  onStoreKey: () => void;
+  onClearKey: () => void;
+  onSaveSettings: () => void;
+  showKeySaved: boolean;
+  showKeyCleared: boolean;
+  onDebugGemini: () => void;
+  debugResult: string | null;
+}
+
+const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+
+  const sectionList = useMemo(
+    () =>
+      [
+        { id: "workspace", label: "Workspace" },
+        { id: "appearance", label: "Appearance" },
+        { id: "ai", label: "AI" },
+        { id: "security", label: "Security" },
+      ] as const,
+    []
+  );
+
+  const filteredNav = useMemo(() => {
+    if (!q) return sectionList;
+    return sectionList.filter((s) => s.label.toLowerCase().includes(q));
+  }, [q, sectionList]);
+
+  const providerStatusLabel = props.keyStatus?.is_configured ? "Configured" : "Not configured";
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border bg-panel px-4 py-3">
+        <div className="text-sm font-semibold text-text">Settings</div>
+        <div className="mt-1 text-xs text-muted">Configure workspace, appearance, AI providers and keys.</div>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-auto">
+        <div className="mx-auto grid w-full max-w-[1180px] grid-cols-[260px_1fr] gap-4 p-4">
+          <aside className="min-w-0">
+            <input
+              className="ws-input"
+              placeholder="Search settings"
+              value={query}
+              onChange={(e) => setQuery(e.currentTarget.value)}
+            />
+            <div className="mt-3 space-y-1">
+              {filteredNav.map((s) => (
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  className="block rounded-md px-2 py-1 text-sm text-muted hover:bg-panel hover:text-text"
+                >
+                  {s.label}
+                </a>
+              ))}
+            </div>
+          </aside>
+
+          <div className="min-w-0 space-y-4">
+            <div className="rounded border border-border bg-bg p-3 text-sm text-muted">
+              API keys are stored locally. Keys are never returned to the UI.
+            </div>
+
+            <section id="workspace" className="rounded border border-border bg-bg p-3">
+              <div className="text-xs font-semibold text-muted">Workspace</div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="text-sm text-text">{props.workspaceLabel}</div>
+                <button
+                  type="button"
+                  className="rounded border border-border bg-panel px-3 py-2 text-sm text-muted hover:border-accent hover:text-text"
+                  onClick={props.onPickFolder}
+                >
+                  Open Folder
+                </button>
+              </div>
+              {props.recentWorkspaces.length ? (
+                <div className="mt-3 space-y-1">
+                  {props.recentWorkspaces.slice(0, 6).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      className="w-full rounded border border-border bg-panel px-3 py-2 text-left text-sm text-muted hover:border-accent hover:text-text"
+                      onClick={() => props.onOpenRecent(p)}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </section>
+
+            <section id="appearance" className="rounded border border-border bg-bg p-3">
+              <div className="text-xs font-semibold text-muted">Appearance</div>
+              <div className="mt-2">
+                <label className="text-sm text-muted">Theme</label>
+                <select
+                  className="mt-2 w-full rounded border border-border bg-panel px-3 py-2 text-sm text-text"
+                  value={props.settings.theme}
+                  onChange={(e) => props.onChangeTheme(e.currentTarget.value as Theme)}
+                >
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                </select>
+              </div>
+            </section>
+
+            <section id="ai" className="rounded border border-border bg-bg p-3">
+              <div className="text-xs font-semibold text-muted">AI</div>
+              <div className="mt-2">
+                <label className="text-sm text-muted">Provider</label>
+                <select
+                  className="mt-2 w-full rounded border border-border bg-panel px-3 py-2 text-sm text-text"
+                  value={props.settings.active_provider ?? ""}
+                  onChange={(e) => {
+                    const v = e.currentTarget.value;
+                    props.onChangeProvider(v === "" ? null : v);
+                  }}
+                >
+                  <option value="">Not configured</option>
+                  {props.providerChoices.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mt-3">
+                <label className="text-sm text-muted">Offline mode</label>
+                <div className="mt-2 flex items-center gap-2">
+                  <input type="checkbox" checked={props.settings.offline_mode} onChange={props.onToggleOffline} disabled={props.isTogglingOffline} />
+                  <span className="text-sm text-muted">Disable all network AI calls</span>
+                </div>
+              </div>
+
+              <div className="mt-3 text-xs text-muted">
+                Active: <span className="text-text">{props.providerLabel}</span> · Status: {providerStatusLabel}
+              </div>
+            </section>
+
+            <section id="security" className="rounded border border-border bg-bg p-3">
+              <div className="text-xs font-semibold text-muted">Security</div>
+
+              <div className="mt-2">
+                <label className="text-sm text-muted">API key</label>
+                <input
+                  className="mt-2 w-full rounded border border-border bg-panel px-3 py-2 text-sm text-text"
+                  placeholder="Paste your API key"
+                  value={props.apiKeyDraft}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(e) => props.onApiKeyDraft(e.target.value)}
+                />
+                <div className="mt-1 text-xs text-muted">Stored locally. Never leaves your device.</div>
+              </div>
+
+              <div className="mt-3">
+                <label className="text-sm text-muted">Encryption password (optional)</label>
+                <input
+                  className="mt-2 w-full rounded border border-border bg-panel px-3 py-2 text-sm text-text"
+                  placeholder="For additional security"
+                  type={props.encryptionPasswordDraft ? "text" : "password"}
+                  value={props.encryptionPasswordDraft}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(e) => props.onEncryptionPasswordDraft(e.target.value)}
+                />
+              </div>
+
+              {props.secretsError ? (
+                <div className="mt-3 rounded border border-border bg-bg p-3 text-sm text-danger">{props.secretsError}</div>
+              ) : null}
+
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  className="flex-1 rounded border border-border bg-panel px-3 py-2 text-sm text-text disabled:opacity-50"
+                  onClick={props.onStoreKey}
+                  disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.apiKeyDraft.trim() || !props.settings.active_provider}
+                >
+                  Save key
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 rounded border border-border bg-panel px-3 py-2 text-sm text-text disabled:opacity-50"
+                  onClick={props.onClearKey}
+                  disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.settings.active_provider}
+                >
+                  Clear key
+                </button>
+              </div>
+            </section>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="flex-1 rounded border border-border bg-bg px-4 py-2 text-sm font-medium text-muted hover:border-accent hover:text-text disabled:opacity-50"
+                onClick={props.onSaveSettings}
+                disabled={!props.isSettingsLoaded || props.isSavingSettings}
+              >
+                Save settings
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
