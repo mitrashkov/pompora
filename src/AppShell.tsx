@@ -4132,7 +4132,7 @@ export default function AppShell() {
             </div>
           </aside>
 
-          <aside className="relative min-h-0 min-w-0 border-r border-transparent bg-panel">
+          <aside className="relative min-h-0 min-w-0 border-r border-border bg-panel">
             <div
               className="group absolute right-0 top-0 z-30 h-full w-2 cursor-col-resize"
               onMouseDown={(e) => {
@@ -4520,10 +4520,10 @@ export default function AppShell() {
                 }}
               />
               <div className="flex h-full min-h-0 flex-col">
-                <div className="border-b border-transparent bg-panel px-3 py-2">
+                <div className="border-b border-border bg-panel px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-text">{activeChat.title}</div>
+                      <div className="truncate text-[13px] font-normal text-[#a39d9d]">{activeChat.title}</div>
                     </div>
 
                     <div className="flex shrink-0 items-center gap-1">
@@ -5310,7 +5310,7 @@ function ActivityButton(props: {
 function Panel(props: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border bg-panel px-3 py-2 text-xs font-semibold text-muted">
+      <div className="border-b border-border bg-panel px-3 py-2 text-xs font-normal text-muted">
         {props.title}
       </div>
       <div className="min-h-0 flex-1 overflow-auto p-2">{props.children}</div>
@@ -5355,8 +5355,8 @@ function Explorer(props: {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-transparent bg-panel px-3 py-2">
-        <div className="text-xs font-semibold text-text">Explorer</div>
+      <div className="flex items-center justify-between border-border bg-panel px-3 py-2">
+        <div className="text-xs font-normal text-[#a39d9d]">Explorer</div>
         <div className="flex items-center gap-1">
           <button
             type="button"
