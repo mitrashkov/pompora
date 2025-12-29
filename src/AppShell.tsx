@@ -4725,7 +4725,10 @@ export default function AppShell() {
                   </div>
                 ) : null}
 
-                <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-auto px-3 py-3">
+                <div
+                  ref={chatScrollRef}
+                  className={`min-h-0 flex-1 overflow-auto px-3 py-3 ${canUseAi && !activeChat.messages.length ? "flex items-center justify-center" : ""}`}
+                >
                   {!canUseAi ? (
                     <div className="rounded-lg border border-border bg-bg p-3 text-sm text-muted">
                       {settings.offline_mode
@@ -4735,9 +4738,9 @@ export default function AppShell() {
                           : "AI provider is local. Make sure Ollama/LM Studio is running."}
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      {activeChat.messages.length ? (
-                        activeChat.messages.map((m, i) => {
+                    activeChat.messages.length ? (
+                      <div className="space-y-3">
+                        {activeChat.messages.map((m, i) => {
                           if (m.role === "meta") {
                             return (
                               <div key={i} className={m.content === "Thinking…" ? "flex justify-center" : "flex justify-start"}>
@@ -4880,17 +4883,15 @@ export default function AppShell() {
                               </div>
                             </div>
                           );
-                        })
-                      ) : (
-                        <div className="flex h-full min-h-[240px] flex-col items-center justify-center text-center">
-                          <img src="/logo_transparent_bigger.png" alt="Pompora" className="h-47 w-47 opacity-90" />
-                          <div className="mt-4 text-base font-semibold text-text">Pompora Code</div>
-                          <div className="mt-1 max-w-[320px] text-sm text-muted">
-                            Build and improve your codebase - privately.
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                        })}
+                      </div>
+                    ) : (
+                      <div className="flex min-h-[240px] flex-col items-center text-center">
+                        <img src="/logo_transparent_bigger.png" alt="Pompora" className="h-47 w-47 opacity-90" />
+                        <div className="mt-4 text-base font-semibold text-text">Pompora Code</div>
+                        <div className="mt-1 max-w-[320px] text-sm text-muted">Build and improve your codebase - privately.</div>
+                      </div>
+                    )
                   )}
                 </div>
 
