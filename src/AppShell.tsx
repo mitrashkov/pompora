@@ -24,6 +24,7 @@ import {
   ArrowUp,
   ThumbsDown,
   ThumbsUp,
+  Bell,
   X,
 } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -4243,14 +4244,29 @@ export default function AppShell() {
 
               <div className="min-h-0 flex-1 flex flex-col">
                 {!workspace.root ? (
-                  <WelcomeScreen recent={workspace.recent} onOpenFolder={() => void openFolder()} onOpenRecent={(p) => void openRecent(p)} />
+                  <WelcomeScreen
+                    recentWorkspaces={workspace.recent}
+                    recentFiles={recentFiles}
+                    onOpenFolder={() => void openFolder()}
+                    onOpenFile={() => void openStandaloneFile()}
+                    onOpenRecentWorkspace={(p) => void openRecent(p)}
+                    onOpenRecentFile={(p) => void openRecentFile(p)}
+                    onOpenChat={() => setIsChatDockOpen(true)}
+                    onOpenCommandPalette={() => setIsPaletteOpen(true)}
+                  />
                 ) : !activeTab ? (
                   <WelcomeScreen
-                    recent={workspace.recent}
+                    recentWorkspaces={workspace.recent}
+                    recentFiles={recentFiles}
                     onOpenFolder={() => void openFolder()}
-                    onOpenRecent={(p) => void openRecent(p)}
-                    title="Open a file from Explorer"
-                    subtitle="Your editor will appear here once you open a file."
+                    onOpenFile={() => void openStandaloneFile()}
+                    onOpenRecentWorkspace={(p) => void openRecent(p)}
+                    onOpenRecentFile={(p) => void openRecentFile(p)}
+                    onOpenChat={() => setIsChatDockOpen(true)}
+                    onOpenCommandPalette={() => setIsPaletteOpen(true)}
+                    title="POMPORA"
+                    subtitle="Getting started with Pompora"
+                    hint="Open a file from Explorer to start editing."
                   />
                 ) : activeTab.path === SETTINGS_TAB_PATH ? (
                   <div className="min-h-0 flex-1 overflow-auto">
@@ -5027,17 +5043,28 @@ export default function AppShell() {
           ) : null}
         </div>
 
-        <footer className="flex items-center justify-between border-t border-border bg-panel px-3 text-[11px] text-muted">
+        <footer className="flex items-center justify-end border-t border-border bg-panel px-3 text-[11px] text-muted">
           <div className="flex items-center gap-3">
-            <span className="ws-chip">{workspaceLabel}</span>
-            <span className="truncate">{activeTab ? activeTab.path : "No file"}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="ws-chip">{activeTab ? (cursorPos ? `Ln ${cursorPos.line}, Col ${cursorPos.col}` : "Ln -, Col -") : ""}</span>
-            <span className="ws-chip">{activeTab ? activeTab.language : ""}</span>
-            <span className="ws-chip">UTF-8</span>
-            <span className="ws-chip">LF</span>
-            <span className="ws-chip">{notifications.length ? `${notifications.length} alerts` : isSavingSettings ? "Saving" : "Ready"}</span>
+            <button type="button" className="ws-footer-btn" onClick={() => {}}>
+              {activeTab ? activeTab.path : "No file"}
+            </button>
+            {activeTab ? (
+              <button type="button" className="ws-footer-btn" onClick={() => {}}>
+                {activeTab.language}
+              </button>
+            ) : null}
+            {activeTab ? (
+              <button type="button" className="ws-footer-btn" onClick={() => {}}>
+                {cursorPos ? `Ln ${cursorPos.line}, Col ${cursorPos.col}` : "Ln -, Col -"}
+              </button>
+            ) : null}
+            <button type="button" className="ws-footer-btn" onClick={() => {}}>
+              Free plan
+            </button>
+            <button type="button" className="ws-footer-btn" onClick={() => {}} aria-label="Notifications">
+              <Bell className="h-4 w-4" />
+              {notifications.length ? <span className="text-[11px]">{notifications.length}</span> : null}
+            </button>
           </div>
         </footer>
       </div>
@@ -5342,9 +5369,14 @@ function Explorer(props: {
         <WelcomeScreen
           title="No folder opened"
           subtitle="Open a folder to browse files and start editing."
-          recent={props.recent}
           onOpenFolder={props.onOpenFolder}
-          onOpenRecent={props.onOpenRecent}
+          onOpenFile={undefined}
+          recentWorkspaces={props.recent}
+          recentFiles={[]}
+          onOpenRecentWorkspace={props.onOpenRecent}
+          onOpenRecentFile={undefined}
+          onOpenChat={undefined}
+          onOpenCommandPalette={undefined}
           compact
         />
       </Panel>
@@ -5602,51 +5634,155 @@ function TabButton(props: {
 }
 
 function WelcomeScreen(props: {
-  recent: string[];
+  recentWorkspaces: string[];
+  recentFiles?: string[];
   onOpenFolder: () => void;
-  onOpenRecent: (p: string) => void;
+  onOpenFile?: () => void;
+  onOpenRecentWorkspace: (p: string) => void;
+  onOpenRecentFile?: (p: string) => void;
+  onOpenChat?: () => void;
+  onOpenCommandPalette?: () => void;
   title?: string;
   subtitle?: string;
+  hint?: string;
   compact?: boolean;
 }) {
-  const title = props.title ?? "Welcome to Pompora";
-  const subtitle = props.subtitle ?? "Open a folder to start. Use Ctrl+Shift+P for commands.";
+  const isCompact = !!props.compact;
+
+  const title = props.title ?? "POMPORA";
+  const subtitle = props.subtitle ?? "Getting started with Pompora";
+  const hint = props.hint ?? "Open a folder, then open a file to begin.";
+
+  const recentFiles = (props.recentFiles ?? []).filter((x) => typeof x === "string");
+  const recentWorkspaces = (props.recentWorkspaces ?? []).filter((x) => typeof x === "string");
+
+  const renderFileLabel = (p: string): { name: string; detail: string } => {
+    const norm = p.replace(/\\/g, "/");
+    const name = basename(norm);
+    return { name, detail: norm };
+  };
 
   return (
-    <div className={`h-full w-full ${props.compact ? "p-2" : "p-10"}`}>
-      <div className={`mx-auto ${props.compact ? "max-w-none" : "max-w-2xl"}`}>
-        <div className="rounded-xl border border-border bg-panel p-6">
-          <div className="text-lg font-semibold">{title}</div>
-          <div className="mt-1 text-sm text-muted">{subtitle}</div>
+    <div className="relative h-full w-full overflow-hidden">
+      {!isCompact ? (
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          viewBox="0 0 1200 720"
+          preserveAspectRatio="none"
+          aria-hidden
+        >
+          <defs>
+            <radialGradient id="pomporaDotsFade" cx="62%" cy="46%" r="78%">
+              <stop offset="0%" stopColor="white" stopOpacity="1" />
+              <stop offset="55%" stopColor="white" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </radialGradient>
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="rounded border border-border bg-bg px-3 py-2 text-sm text-muted hover:border-accent hover:text-text"
-              onClick={props.onOpenFolder}
-            >
-              Open Folder
-            </button>
-          </div>
+            <mask id="pomporaDotsMask">
+              <rect width="1200" height="720" fill="url(#pomporaDotsFade)" />
+            </mask>
 
-          {props.recent.length ? (
-            <div className="mt-5">
-              <div className="text-xs font-semibold text-muted">Recent</div>
-              <div className="mt-2 grid gap-1">
-                {props.recent.slice(0, 8).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className="flex items-center justify-between rounded border border-border bg-bg px-3 py-2 text-left text-sm text-muted hover:border-accent hover:text-text"
-                    onClick={() => props.onOpenRecent(p)}
-                  >
-                    <span className="truncate">{p}</span>
-                    <span className="ml-3 text-xs text-muted">Open</span>
-                  </button>
-                ))}
+            <pattern id="pomporaDots" width="180" height="180" patternUnits="userSpaceOnUse">
+              <circle cx="24" cy="34" r="1.2" fill="rgb(var(--p-muted))" fillOpacity="0.22" />
+              <circle cx="86" cy="62" r="1.6" fill="rgb(var(--p-muted))" fillOpacity="0.16" />
+              <circle cx="148" cy="26" r="1" fill="rgb(var(--p-muted))" fillOpacity="0.14" />
+              <circle cx="58" cy="134" r="1" fill="rgb(var(--p-muted))" fillOpacity="0.12" />
+              <circle cx="132" cy="128" r="1.8" fill="rgb(var(--p-muted))" fillOpacity="0.18" />
+              <circle cx="170" cy="164" r="1" fill="rgb(var(--p-muted))" fillOpacity="0.1" />
+
+              <circle cx="40" cy="92" r="0.9" fill="rgb(var(--p-muted))" fillOpacity="0.1" />
+              <circle cx="104" cy="156" r="0.9" fill="rgb(var(--p-muted))" fillOpacity="0.1" />
+              <circle cx="164" cy="84" r="0.9" fill="rgb(var(--p-muted))" fillOpacity="0.1" />
+            </pattern>
+          </defs>
+
+          <g mask="url(#pomporaDotsMask)">
+            <rect width="1200" height="720" fill="url(#pomporaDots)" opacity="0.9" />
+          </g>
+        </svg>
+      ) : null}
+
+      <div className={`relative z-10 flex h-full w-full flex-col items-center ${isCompact ? "justify-start" : "justify-center"}`}>
+        <div className={`w-full ${isCompact ? "px-2 py-2" : "px-6 py-6"}`}>
+          <div className={`mx-auto w-full ${isCompact ? "max-w-none" : "max-w-[760px]"}`}>
+            <div className="text-center">
+              <div
+                className={`${
+                  isCompact
+                    ? "ws-brand-title text-2xl"
+                    : "ws-brand-title text-5xl md:text-6xl"
+                } font-normal text-text`}
+              >
+                {title}
               </div>
+              <div className={`${isCompact ? "mt-1 text-[11px]" : "mt-2 text-sm"} text-muted`}>{subtitle}</div>
+              <div className={`${isCompact ? "mt-1 text-[10px]" : "mt-1 text-xs"} text-muted`}>{hint}</div>
             </div>
-          ) : null}
+
+            <div className={`${isCompact ? "mt-4" : "mt-7"} space-y-6`}>
+              <section className="text-left">
+                <div className="ws-welcome-section-title">Quick actions</div>
+                <div className="mt-3 space-y-2">
+                  <button
+                    type="button"
+                    className="ws-welcome-row"
+                    onClick={() => props.onOpenChat?.()}
+                    disabled={!props.onOpenChat}
+                  >
+                    <span className="truncate">Open Chat</span>
+                    <span className="ws-kbd">Ctrl+L</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="ws-welcome-row"
+                    onClick={() => props.onOpenCommandPalette?.()}
+                    disabled={!props.onOpenCommandPalette}
+                  >
+                    <span className="truncate">Open Command Palette</span>
+                    <span className="ws-kbd">Ctrl+Shift+P</span>
+                  </button>
+                </div>
+              </section>
+
+              {recentWorkspaces.length > 0 || (recentFiles.length > 0 && !!props.onOpenRecentFile) ? (
+                <section className="text-left">
+                  <div className="ws-welcome-section-title">Recent</div>
+
+                  {recentWorkspaces.length ? (
+                    <div className="mt-3">
+                      <div className="ws-welcome-subtitle">Workspaces</div>
+                      <div className="mt-2 space-y-2">
+                        {recentWorkspaces.slice(0, 1).map((p) => (
+                          <button key={p} type="button" className="ws-welcome-row" onClick={() => props.onOpenRecentWorkspace(p)}>
+                            <span className="truncate">{p}</span>
+                            <span className="text-[11px] text-muted">Open</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {recentFiles.length && props.onOpenRecentFile ? (
+                    <div className={`${recentWorkspaces.length ? "mt-6" : "mt-3"}`}>
+                      <div className="ws-welcome-subtitle">Files</div>
+                      <div className="mt-2 space-y-2">
+                        {recentFiles.slice(0, 3).map((p) => {
+                          const r = renderFileLabel(p);
+                          return (
+                            <button key={p} type="button" className="ws-welcome-row" onClick={() => props.onOpenRecentFile?.(p)}>
+                              <span className="min-w-0 flex-1 truncate">{r.name}</span>
+                              <span className="ml-3 max-w-[56%] truncate text-[11px] text-muted">{r.detail}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+                </section>
+              ) : null}
+
+            </div>
+          </div>
         </div>
       </div>
     </div>
