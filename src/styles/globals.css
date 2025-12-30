@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Perfograma";
+  src: url("../fonts/perfograma.regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
 
@@ -78,6 +86,32 @@ body {
     @apply inline-flex items-center gap-1 rounded-md border border-border bg-bg px-2 py-0.5 text-[11px] text-muted;
   }
 
+  .ws-kbd {
+    @apply inline-flex items-center rounded-md border border-border bg-panel px-1.5 py-0.5 font-mono text-[10px] text-muted;
+  }
+
+  .ws-welcome-title {
+    text-shadow: 0 0 22px rgba(30, 144, 255, 0.18);
+  }
+
+  .ws-brand-title {
+    font-family: "Perfograma", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    letter-spacing: 0.14em;
+    text-shadow: 0 0 26px rgba(30, 144, 255, 0.14);
+  }
+
+  .ws-welcome-section-title {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-muted;
+  }
+
+  .ws-welcome-subtitle {
+    @apply text-[11px] font-medium text-muted;
+  }
+
+  .ws-welcome-row {
+    @apply flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-bg/35 px-2.5 py-1.5 text-left text-[13px] text-muted backdrop-blur-sm transition-colors hover:border-accent hover:text-text disabled:opacity-50;
+  }
+
   .ws-btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50;
   }
@@ -104,6 +138,10 @@ body {
 
   .ws-icon-btn {
     @apply inline-flex items-center justify-center rounded-md p-1 text-muted hover:bg-bg hover:text-text;
+  }
+
+  .ws-footer-btn {
+    @apply inline-flex items-center gap-1.5 bg-transparent p-0 text-[11px] text-muted hover:text-text focus-visible:outline-none;
   }
 
   .ws-msg {
