@@ -9,10 +9,65 @@ pub struct AiRunResult {
     pub updated_content: Option<String>,
 }
 
+fn messages_to_plain_input(messages: &[ChatMessage]) -> String {
+    let mut out: Vec<String> = Vec::with_capacity(messages.len());
+    for m in messages {
+        let role = m.role.trim();
+        let content = m.content.trim();
+        if content.is_empty() {
+            continue;
+        }
+        out.push(format!("{role}: {content}"));
+    }
+    out.join("\n\n")
+}
+
+fn extract_pompora_output(response_json: &serde_json::Value) -> Option<String> {
+    // New Pompora AI shape: { ok: true, result: { assistant_message, edits, ... } }
+    if let Some(result) = response_json.get("result") {
+        if result.is_object() || result.is_array() {
+            if let Ok(s) = serde_json::to_string(result) {
+                let t = s.trim();
+                if !t.is_empty() {
+                    return Some(t.to_string());
+                }
+            }
+        }
+
+        if let Some(s) = result.as_str() {
+            let t = s.trim();
+            if !t.is_empty() {
+                return Some(t.to_string());
+            }
+        }
+    }
+
+    if let Some(s) = response_json.get("output").and_then(|v| v.as_str()) {
+        let t = s.trim();
+        if !t.is_empty() {
+            return Some(t.to_string());
+        }
+    }
+
+    // Fallback for OpenAI-compatible shapes, just in case.
+    if let Some(choices) = response_json.get("choices").and_then(|c| c.as_array()) {
+        if let Some(first_choice) = choices.first() {
+            if let Some(message) = first_choice.get("message") {
+                if let Some(content) = extract_openai_message_content(message) {
+                    return Some(content);
+                }
+            }
+        }
+    }
+
+    None
+}
+
 pub async fn ai_chat_with_model(
     messages: Vec<ChatMessage>,
     encryption_password: Option<&str>,
     model_override: Option<&str>,
+    thinking: Option<&str>,
 ) -> Result<AiChatResult> {
     let s = settings::load()?;
     if s.offline_mode {
@@ -33,7 +88,7 @@ pub async fn ai_chat_with_model(
     });
     msgs.extend(messages);
 
-    let text = request_chat_completion(provider, encryption_password, msgs, 0.4, model_override).await?;
+    let text = request_chat_completion(provider, encryption_password, msgs, 0.4, model_override, thinking).await?;
 
     let direct = serde_json::from_str::<StructuredChatOut>(&text).ok();
     let extracted = extract_first_json_object(&text)
@@ -150,6 +205,7 @@ fn get_provider_info(provider: &str) -> Result<(String, String, bool)> {
         "groq" => Ok(("https://api.groq.com/openai/v1".to_string(), "llama-3.1-70b-versatile".to_string(), true)),
         "deepseek" => Ok(("https://api.deepseek.com/v1".to_string(), "deepseek-chat".to_string(), true)),
         "gemini" => Ok(("https://generativelanguage.googleapis.com/v1beta".to_string(), "gemini-flash-latest".to_string(), true)),
+        "pompora" => Ok(("https://ai.pompora.dev/v1".to_string(), "pompora".to_string(), true)),
         "ollama" => Ok(("http://127.0.0.1:11434/v1".to_string(), "llama3.2".to_string(), false)),
         "lmstudio" => Ok(("http://127.0.0.1:1234/v1".to_string(), "local-model".to_string(), false)),
         "custom" => Ok(("https://api.openai.com/v1".to_string(), "gpt-4o-mini".to_string(), true)),
@@ -277,6 +333,7 @@ async fn request_chat_completion(
     messages: Vec<ChatMessage>,
     temperature: f32,
     model_override: Option<&str>,
+    thinking: Option<&str>,
 ) -> Result<String> {
     let (base_url, mut model, needs_auth) = get_provider_info(provider)?;
     if let Some(m) = model_override {
@@ -296,6 +353,75 @@ async fn request_chat_completion(
     };
 
     let client = reqwest::Client::new();
+
+    if provider == "pompora" {
+        let url = format!("{}/ai", base_url.trim_end_matches('/'));
+        let input = messages_to_plain_input(&messages);
+        let thinking = thinking
+            .map(|v| v.trim())
+            .filter(|v| !v.is_empty())
+            .unwrap_or("slow");
+        let request_body = json!({
+            "input": input,
+            "apiKey": api_key,
+            "thinking": thinking,
+        });
+
+        let mut request = client.post(&url).json(&request_body);
+        if !api_key.trim().is_empty() {
+            request = request
+                .bearer_auth(api_key.trim())
+                .header("X-API-Key", api_key.trim());
+        }
+
+        let response = request
+            .send()
+            .await
+            .with_context(|| format!("Pompora AI request failed to: {url}"))?;
+
+        let status = response.status();
+        let body = response
+            .text()
+            .await
+            .with_context(|| "Failed to read Pompora AI response text")?;
+
+        if !status.is_success() {
+            if let Ok(response_json) = serde_json::from_str::<serde_json::Value>(&body) {
+                let err = response_json.get("error").and_then(|e| e.as_str()).unwrap_or("");
+                if err == "non_json_output" {
+                    if let Some(raw) = response_json.get("raw").and_then(|v| v.as_str()) {
+                        let t = raw.trim();
+                        if !t.is_empty() {
+                            return Ok(t.to_string());
+                        }
+                    }
+                }
+            }
+            return Err(anyhow!(
+                "Pompora AI request failed (status {status}): {url}\n{}",
+                shorten_for_error(&body)
+            ));
+        }
+
+        let response_json: serde_json::Value = serde_json::from_str(&body)
+            .with_context(|| format!("Invalid Pompora AI JSON response: {}", shorten_for_error(&body)))?;
+
+        if let Some(err) = response_json.get("error").and_then(|e| e.as_str()) {
+            if !err.trim().is_empty() {
+                return Err(anyhow!("Pompora AI error: {err}"));
+            }
+        }
+
+        if let Some(out) = extract_pompora_output(&response_json) {
+            return Ok(out);
+        }
+
+        return Err(anyhow!(
+            "No content found in Pompora AI response: {}",
+            shorten_for_error(&body)
+        ));
+    }
+
     let response_text = if provider == "gemini" {
         // Gemini uses different API format
         let url = format!("{}/models/{}:generateContent?key={}", base_url, model, api_key);
@@ -456,7 +582,11 @@ async fn request_chat_completion(
     }
 }
 
-pub async fn ai_chat(messages: Vec<ChatMessage>, encryption_password: Option<&str>) -> Result<AiChatResult> {
+pub async fn ai_chat(
+    messages: Vec<ChatMessage>,
+    encryption_password: Option<&str>,
+    thinking: Option<&str>,
+) -> Result<AiChatResult> {
     let s = settings::load()?;
     println!("DEBUG: ai_chat loaded settings - offline_mode: {}, active_provider: {:?}", s.offline_mode, s.active_provider);
     
@@ -478,7 +608,7 @@ pub async fn ai_chat(messages: Vec<ChatMessage>, encryption_password: Option<&st
     });
     msgs.extend(messages);
 
-    let text = request_chat_completion(provider, encryption_password, msgs, 0.4, None).await?;
+    let text = request_chat_completion(provider, encryption_password, msgs, 0.4, None, thinking).await?;
 
     let direct = serde_json::from_str::<StructuredChatOut>(&text).ok();
     let extracted = extract_first_json_object(&text)
@@ -515,6 +645,7 @@ pub async fn ai_run_action(
     content: &str,
     selection: Option<&str>,
     encryption_password: Option<&str>,
+    thinking: Option<&str>,
 ) -> Result<AiRunResult> {
     let s = settings::load()?;
     if s.offline_mode {
@@ -602,7 +733,7 @@ pub async fn ai_run_action(
         content: user_content,
     };
 
-    let raw = request_chat_completion(provider, encryption_password, vec![sys, user], 0.2, None).await?;
+    let raw = request_chat_completion(provider, encryption_password, vec![sys, user], 0.2, None, thinking).await?;
 
     if action == "fix" || action == "refactor" {
         let direct = serde_json::from_str::<StructuredOut>(&raw).ok();
