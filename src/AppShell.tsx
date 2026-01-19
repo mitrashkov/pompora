@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { editor as MonacoEditorNS } from "monaco-editor";
 import { listen } from "@tauri-apps/api/event";
@@ -7,10 +7,11 @@ import { FitAddon } from "xterm-addon-fit";
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUp,
+  Bell,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-  RotateCw,
   FileCode,
   FileJson,
   FileText,
@@ -18,21 +19,30 @@ import {
   FolderOpen,
   GitBranch,
   Plus,
+  RotateCw,
+  Save,
   Search,
   Settings as SettingsIcon,
+  Star,
   Terminal,
-  ArrowUp,
   ThumbsDown,
   ThumbsUp,
-  Bell,
+  Wand2,
   X,
+  Palette,
 } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import {
   providerKeyClear,
   providerKeySet,
   providerKeyStatus,
+  authBeginLogin,
+  authWaitLogin,
+  authGetProfile,
+  authLogout,
+  authGetCredits,
   debugGeminiEndToEnd,
   aiChat,
   settingsGet,
@@ -55,7 +65,7 @@ import {
   terminalKill,
 } from "./lib/tauri";
 import type { AiChatMessage, AiEditOp } from "./lib/tauri";
-import type { AppSettings, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
+import type { AppSettings, AuthProfile, CreditsResponse, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
 
 type ActivityId = "explorer" | "search" | "scm";
 
@@ -724,6 +734,7 @@ function MenuItem(props: {
   label: string;
   shortcut?: string;
   right?: React.ReactNode;
+  keepOpen?: boolean;
   onClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -732,7 +743,12 @@ function MenuItem(props: {
     <button
       type="button"
       className="flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs text-text hover:bg-bg"
-      onClick={props.onClick}
+      onClick={() => {
+        props.onClick?.();
+        if (!props.keepOpen) {
+          window.dispatchEvent(new Event("pompora:menubar-close"));
+        }
+      }}
       onMouseEnter={props.onMouseEnter}
       onMouseLeave={props.onMouseLeave}
     >
@@ -836,6 +852,7 @@ export default function AppShell() {
     theme: "dark",
     offline_mode: false,
     active_provider: null,
+    pompora_thinking: null,
     workspace_root: null,
     recent_workspaces: [],
   });
@@ -864,6 +881,32 @@ export default function AppShell() {
     | "editorActionsPosition"
   >(null);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+
+  const closeMenubarMenus = useCallback(() => {
+    setIsFileMenuOpen(false);
+    setIsFileMenuRecentOpen(false);
+    setIsEditMenuOpen(false);
+    setIsSelectionMenuOpen(false);
+    setIsViewMenuOpen(false);
+    setIsRunMenuOpen(false);
+    setIsTerminalMenuOpen(false);
+    setViewMenuSub(null);
+    setViewAppearanceSub(null);
+  }, []);
+
+  const anyMenubarOpen =
+    isFileMenuOpen ||
+    isEditMenuOpen ||
+    isSelectionMenuOpen ||
+    isViewMenuOpen ||
+    isRunMenuOpen ||
+    isTerminalMenuOpen;
+
+  useEffect(() => {
+    const onClose = () => closeMenubarMenus();
+    window.addEventListener("pompora:menubar-close", onClose);
+    return () => window.removeEventListener("pompora:menubar-close", onClose);
+  }, [closeMenubarMenus]);
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
   const [untitledCounter, setUntitledCounter] = useState(1);
   const [explorer, setExplorer] = useState<Record<string, DirEntryInfo[]>>({});
@@ -887,6 +930,11 @@ export default function AppShell() {
   const [showKeySaved, setShowKeySaved] = useState(false);
   const [showKeyCleared, setShowKeyCleared] = useState(false);
   const [debugResult, setDebugResult] = useState<string | null>(null);
+
+  const [authProfile, setAuthProfile] = useState<AuthProfile | null>(null);
+  const [authCredits, setAuthCredits] = useState<CreditsResponse | null>(null);
+  const [isAuthBusy, setIsAuthBusy] = useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   const initialChatIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(16).slice(2)}`);
   const [chatHistoryQuery, setChatHistoryQuery] = useState("");
@@ -932,7 +980,13 @@ export default function AppShell() {
 
   const [chatBusy, setChatBusy] = useState(false);
   const [chatApplying, setChatApplying] = useState(false);
-  const [isChatDockOpen, setIsChatDockOpen] = useState(true);
+  const [isChatDockOpen, setIsChatDockOpen] = useState(false);
+  const SPLASH_SKIP_KEY = "pompora.splash_skip.v1";
+  const [isSplashVisible, setIsSplashVisible] = useState(false);
+  const [isSplashFading, setIsSplashFading] = useState(false);
+  const [isSplashSkipMenuOpen, setIsSplashSkipMenuOpen] = useState(false);
+  const [isSplashVideoReady, setIsSplashVideoReady] = useState(false);
+  const [isSplashVideoError, setIsSplashVideoError] = useState(false);
   const [chatDockWidth, setChatDockWidth] = useState(340);
   const [explorerWidth, setExplorerWidth] = useState(300);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
@@ -972,6 +1026,89 @@ export default function AppShell() {
     }, 250);
     return () => window.clearTimeout(t);
   }, [chatSessions]);
+
+  const splashHideTimerRef = useRef<number | null>(null);
+  const splashVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  const hideSplash = useCallback(() => {
+    setIsSplashFading(true);
+    setIsSplashSkipMenuOpen(false);
+    if (splashHideTimerRef.current) window.clearTimeout(splashHideTimerRef.current);
+    splashHideTimerRef.current = window.setTimeout(() => {
+      setIsSplashVisible(false);
+      setIsSplashFading(false);
+      splashHideTimerRef.current = null;
+    }, 520);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (splashHideTimerRef.current) window.clearTimeout(splashHideTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(SPLASH_SKIP_KEY) !== "1") {
+        setIsSplashVisible(true);
+      }
+    } catch {
+      setIsSplashVisible(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isSplashVisible) return;
+    setIsSplashVideoReady(false);
+    setIsSplashVideoError(false);
+
+    const v = splashVideoRef.current;
+    if (!v) return;
+
+    try {
+      v.load();
+      const p = v.play();
+      if (p && typeof (p as any).catch === "function") {
+        (p as Promise<void>).catch(() => {
+          setIsSplashVideoError(true);
+        });
+      }
+    } catch {
+      setIsSplashVideoError(true);
+    }
+
+    const probe = window.setTimeout(() => {
+      try {
+        const hasDecodedFrame = v.readyState >= 2 && v.videoWidth > 0 && v.videoHeight > 0;
+        if (!hasDecodedFrame) setIsSplashVideoError(true);
+      } catch {
+        setIsSplashVideoError(true);
+      }
+    }, 1200);
+
+    return () => window.clearTimeout(probe);
+  }, [isSplashVisible]);
+
+  useEffect(() => {
+    if (!isSplashVisible) return;
+    if (isSplashFading) return;
+    const t = window.setTimeout(() => {
+      hideSplash();
+    }, 12000);
+    return () => window.clearTimeout(t);
+  }, [hideSplash, isSplashFading, isSplashVisible]);
+
+  const skipSplashOneTime = useCallback(() => {
+    hideSplash();
+  }, [hideSplash]);
+
+  const skipSplashAlways = useCallback(() => {
+    try {
+      localStorage.setItem(SPLASH_SKIP_KEY, "1");
+    } catch {
+    }
+    hideSplash();
+  }, [hideSplash]);
 
   const [notifications] = useState<AppNotification[]>([]);
 
@@ -1966,6 +2103,7 @@ export default function AppShell() {
         setSettingsState((prev) => ({
           ...prev,
           ...s,
+          pompora_thinking: (s as AppSettings).pompora_thinking ?? prev.pompora_thinking ?? null,
           workspace_root: s.workspace_root ?? null,
           recent_workspaces: s.recent_workspaces ?? [],
           active_provider: migratedProvider ?? null,
@@ -2008,6 +2146,132 @@ export default function AppShell() {
     };
   }, [isSettingsLoaded, settings.active_provider]);
 
+  useEffect(() => {
+    let cancelled = false;
+    authGetProfile()
+      .then((p) => {
+        if (cancelled) return;
+        setAuthProfile(p);
+      })
+      .catch(() => {
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authProfile) {
+      setAuthCredits(null);
+      return;
+    }
+    let cancelled = false;
+    authGetCredits()
+      .then((c) => {
+        if (cancelled) return;
+        setAuthCredits(c);
+      })
+      .catch(() => {
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authProfile]);
+
+  useEffect(() => {
+    if (!isAccountMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (!t) return;
+      if (!t.closest("[data-account-menu-root]")) setIsAccountMenuOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [isAccountMenuOpen]);
+
+  const avatarLetter = useMemo(() => {
+    const email = (authProfile?.email ?? "").trim();
+    if (email) return email[0]!.toUpperCase();
+    return "U";
+  }, [authProfile?.email]);
+
+  const safeOpenUrl = useCallback(async (url: string) => {
+    try {
+      await openUrl(url);
+      return true;
+    } catch {
+    }
+    try {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return true;
+    } catch {
+    }
+    return false;
+  }, []);
+
+  const logoutDesktop = useCallback(async () => {
+    if (isAuthBusy) return;
+    setIsAuthBusy(true);
+    try {
+      await authLogout();
+      setAuthProfile(null);
+      setAuthCredits(null);
+      setIsAccountMenuOpen(false);
+      try {
+        if (settings.active_provider === "pompora") {
+          setKeyStatus(await providerKeyStatus("pompora"));
+        }
+      } catch {
+      }
+    } catch (e) {
+      notify({ kind: "error", title: "Logout failed", message: String(e) });
+    } finally {
+      setIsAuthBusy(false);
+    }
+  }, [isAuthBusy, notify, settings.active_provider]);
+
+  const beginDesktopAuthWithMode = useCallback(
+    async (mode: "login" | "signup") => {
+      if (isAuthBusy) return;
+      setIsAuthBusy(true);
+      try {
+        const [url, state] = await authBeginLogin();
+        let target = url;
+        try {
+          const u = new URL(url);
+          const redirectTo = u.searchParams.get("redirect") ?? "";
+          const st = u.searchParams.get("state") ?? state;
+          const next = `/desktop/login?redirect=${redirectTo}&state=${st}`;
+          target = `https://pompora.dev/${mode}?next=${encodeURIComponent(next)}`;
+        } catch {
+        }
+
+        notify({ kind: "info", title: "Sign in", message: "Opening browser…" });
+        const ok = await safeOpenUrl(target);
+        if (!ok) {
+          notify({ kind: "error", title: "Could not open browser", message: "Copy the URL and open it manually." });
+          try {
+            window.prompt("Open this URL in your browser:", target);
+          } catch {
+          }
+        }
+        const profile = await authWaitLogin(state);
+        setAuthProfile(profile);
+        try {
+          const credits = await authGetCredits();
+          setAuthCredits(credits);
+        } catch {
+        }
+        notify({ kind: "info", title: "Signed in", message: "Connected to your Pompora account." });
+      } catch (e) {
+        notify({ kind: "error", title: "Sign in failed", message: String(e) });
+      } finally {
+        setIsAuthBusy(false);
+      }
+    },
+    [authGetCredits, authWaitLogin, isAuthBusy, notify, safeOpenUrl]
+  );
+
   // Additional effect to refresh key status when showKeySaved is true
   useEffect(() => {
     if (showKeySaved && settings.active_provider) {
@@ -2024,6 +2288,7 @@ export default function AppShell() {
   const providerChoices = useMemo(
     () =>
       [
+        { id: "pompora", label: "Pompora AI", api: true },
         { id: "openai", label: "GPT-4o mini", api: true },
         { id: "anthropic", label: "Claude 3.5 Sonnet", api: true },
         { id: "gemini", label: "Gemini Flash", api: true },
@@ -2969,6 +3234,21 @@ export default function AppShell() {
     }
   }, [isTogglingOffline, notify, settings]);
 
+  const setPomporaThinking = useCallback(
+    async (thinking: string | null) => {
+      const next: AppSettings = { ...settings, pompora_thinking: thinking };
+      setSettingsState(next);
+      try {
+        await settingsSet(next);
+      } catch (e) {
+        console.error("Failed to save pompora thinking", e);
+        notify({ kind: "error", title: "Settings", message: "Failed to save thinking mode" });
+        setSettingsState(settings);
+      }
+    },
+    [notify, settings]
+  );
+
   const handleStoreKey = useCallback(async () => {
     if (!settings.active_provider) return;
     if (!apiKeyDraft.trim()) return;
@@ -3093,7 +3373,8 @@ export default function AppShell() {
       ];
 
       const requestOnce = async () => {
-        return await aiChat({ messages: aiMessages, encryptionPassword });
+        const thinking = settings.active_provider === "pompora" ? (settings.pompora_thinking ?? "slow") : null;
+        return await aiChat({ messages: aiMessages, encryptionPassword, thinking });
       };
 
       let res: Awaited<ReturnType<typeof requestOnce>>;
@@ -3405,34 +3686,19 @@ export default function AppShell() {
   }, [explorerMenu]);
 
   useEffect(() => {
-    const anyOpen =
-      isFileMenuOpen ||
-      isEditMenuOpen ||
-      isSelectionMenuOpen ||
-      isViewMenuOpen ||
-      isRunMenuOpen ||
-      isTerminalMenuOpen;
-    if (!anyOpen) return;
+    if (!anyMenubarOpen) return;
 
     const onMouseDown = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
       if (!t) return;
       if (!t.closest("[data-menubar-root]")) {
-        setIsFileMenuOpen(false);
-        setIsFileMenuRecentOpen(false);
-        setIsEditMenuOpen(false);
-        setIsSelectionMenuOpen(false);
-        setIsViewMenuOpen(false);
-        setIsRunMenuOpen(false);
-        setIsTerminalMenuOpen(false);
-        setViewMenuSub(null);
-        setViewAppearanceSub(null);
+        closeMenubarMenus();
       }
     };
 
     window.addEventListener("mousedown", onMouseDown);
     return () => window.removeEventListener("mousedown", onMouseDown);
-  }, [isEditMenuOpen, isFileMenuOpen, isRunMenuOpen, isSelectionMenuOpen, isTerminalMenuOpen, isViewMenuOpen]);
+  }, [anyMenubarOpen, closeMenubarMenus]);
 
   const copyText = useCallback(async (text: string) => {
     try {
@@ -3464,6 +3730,95 @@ export default function AppShell() {
 
   return (
     <div className="h-full w-full bg-bg text-text">
+      {isSplashVisible ? (
+        <div
+          className={`fixed inset-0 z-[100] bg-black transition-opacity duration-500 ${
+            isSplashFading ? "pointer-events-none opacity-0" : "opacity-100"
+          }`}
+          onMouseDown={() => setIsSplashSkipMenuOpen(false)}
+        >
+          <video
+            className="h-full w-full object-cover"
+            ref={splashVideoRef}
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            poster="/logo_transparent_bigger.png"
+            onLoadedData={() => setIsSplashVideoReady(true)}
+            onCanPlay={() => setIsSplashVideoReady(true)}
+            onError={() => setIsSplashVideoError(true)}
+            onEnded={() => {
+              hideSplash();
+            }}
+          >
+            <source src="/loading-screen.mp4" type="video/mp4" />
+            <source src="/loading_screen.mp4" type="video/mp4" />
+          </video>
+
+          {!isSplashVideoReady && !isSplashVideoError ? (
+            <div className="pointer-events-none absolute inset-0 flex items-end justify-start p-4">
+              <div className="rounded-md border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white/80 backdrop-blur">
+                Loading…
+              </div>
+            </div>
+          ) : null}
+
+          {isSplashVideoError ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="max-w-[520px] rounded-xl border border-white/10 bg-black/50 p-5 text-center text-white backdrop-blur">
+                <div className="text-sm font-medium">Your system can’t play this video format.</div>
+                <div className="mt-1 text-[12px] text-white/70">
+                  Re-encode to H.264/AAC (MP4) for best compatibility.
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="absolute bottom-4 right-4" onMouseDown={(e) => e.stopPropagation()}>
+            <div className="relative">
+              <div className="inline-flex overflow-hidden rounded-md border border-white/10 bg-black/40 text-[12px] text-white backdrop-blur">
+                <button
+                  type="button"
+                  className="px-4 py-1.5 hover:bg-black/55"
+                  onClick={skipSplashOneTime}
+                >
+                  Skip
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center px-2 py-1.5 hover:bg-black/55"
+                  onClick={() => setIsSplashSkipMenuOpen((v) => !v)}
+                  aria-label="Skip options"
+                >
+                  <span className="mx-1 h-4 w-px bg-white/10" />
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isSplashSkipMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+
+              {isSplashSkipMenuOpen ? (
+                <div className="absolute bottom-full right-0 mb-2 w-44 overflow-auto rounded-lg border border-white/10 bg-black/70 text-[12px] text-white shadow-xl backdrop-blur max-h-[320px]">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-white/10"
+                    onClick={skipSplashOneTime}
+                  >
+                    Skip one time
+                  </button>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-white/10"
+                    onClick={skipSplashAlways}
+                  >
+                    Always skip
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="grid h-full grid-rows-[36px_1fr_26px]">
         <header className="border-b border-border bg-panel">
           <div className="grid h-9 grid-cols-[1fr_auto_1fr] items-center px-2" data-menubar-root>
@@ -3475,15 +3830,34 @@ export default function AppShell() {
                   <button
                     type="button"
                     className="rounded-md px-2 py-1 hover:bg-bg"
+                    onMouseEnter={() => {
+                      if (!anyMenubarOpen) return;
+                      setIsFileMenuOpen(true);
+                      setIsFileMenuRecentOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
+                    }}
                     onClick={() => {
                       setIsFileMenuOpen((v) => !v);
                       setIsFileMenuRecentOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
                     }}
                   >
                     File
                   </button>
                   {isFileMenuOpen ? (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-64 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                    <div className="absolute left-0 top-full z-50 mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="New Text File" shortcut="Ctrl+N" onClick={() => newUntitledFile()} />
                       <MenuItem label="New File" shortcut="Ctrl+Alt+Win+N" onClick={() => newUntitledFile()} />
                       <MenuItem label="New Window" shortcut="Ctrl+Shift+N" onClick={() => openNewWindow()} />
@@ -3494,13 +3868,14 @@ export default function AppShell() {
                         <MenuItem
                           label="Open Recent"
                           right={<ChevronRight className="h-3.5 w-3.5" />}
+                          keepOpen
                           onMouseEnter={() => setIsFileMenuRecentOpen(true)}
                           onMouseLeave={() => setIsFileMenuRecentOpen(false)}
                           onClick={() => setIsFileMenuRecentOpen((v) => !v)}
                         />
                         {isFileMenuRecentOpen ? (
                           <div
-                            className="absolute left-full top-0 z-50 ml-1 w-72 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow"
+                            className="absolute left-full top-0 z-50 ml-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
                             onMouseEnter={() => setIsFileMenuRecentOpen(true)}
                             onMouseLeave={() => setIsFileMenuRecentOpen(false)}
                           >
@@ -3555,19 +3930,34 @@ export default function AppShell() {
                   <button
                     type="button"
                     className="rounded-md px-2 py-1 hover:bg-bg"
-                    onClick={() => {
-                      setIsEditMenuOpen((v) => !v);
+                    onMouseEnter={() => {
+                      if (!anyMenubarOpen) return;
+                      setIsEditMenuOpen(true);
                       setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
                       setIsSelectionMenuOpen(false);
                       setIsViewMenuOpen(false);
                       setIsRunMenuOpen(false);
                       setIsTerminalMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
+                    }}
+                    onClick={() => {
+                      setIsEditMenuOpen((v) => !v);
+                      setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
                     }}
                   >
                     Edit
                   </button>
                   {isEditMenuOpen ? (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-72 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                    <div className="absolute left-0 top-full z-50 mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="Undo" shortcut="Ctrl+Z" onClick={() => notify({ kind: "info", title: "Undo", message: "Coming next." })} />
                       <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => notify({ kind: "info", title: "Redo", message: "Coming next." })} />
                       <MenuSep />
@@ -3618,19 +4008,34 @@ export default function AppShell() {
                   <button
                     type="button"
                     className="rounded-md px-2 py-1 hover:bg-bg"
-                    onClick={() => {
-                      setIsSelectionMenuOpen((v) => !v);
+                    onMouseEnter={() => {
+                      if (!anyMenubarOpen) return;
+                      setIsSelectionMenuOpen(true);
                       setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
                       setIsEditMenuOpen(false);
                       setIsViewMenuOpen(false);
                       setIsRunMenuOpen(false);
                       setIsTerminalMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
+                    }}
+                    onClick={() => {
+                      setIsSelectionMenuOpen((v) => !v);
+                      setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
                     }}
                   >
                     Selection
                   </button>
                   {isSelectionMenuOpen ? (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                    <div className="absolute left-0 top-full z-50 mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => notify({ kind: "info", title: "Select All", message: "Coming next." })} />
                       <MenuItem
                         label="Expand Selection"
@@ -3713,11 +4118,24 @@ export default function AppShell() {
                   <button
                     type="button"
                     className="rounded-md px-2 py-1 hover:bg-bg"
+                    onMouseEnter={() => {
+                      if (!anyMenubarOpen) return;
+                      setIsViewMenuOpen(true);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
+                      setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                    }}
                     onClick={() => {
                       setIsViewMenuOpen((v) => !v);
                       setViewMenuSub(null);
                       setViewAppearanceSub(null);
                       setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
                       setIsEditMenuOpen(false);
                       setIsSelectionMenuOpen(false);
                       setIsRunMenuOpen(false);
@@ -3728,7 +4146,7 @@ export default function AppShell() {
                   </button>
                   {isViewMenuOpen ? (
                     <div
-                      className="absolute left-0 top-full z-50 mt-1 w-80 overflow-visible rounded-xl border border-border bg-panel p-1 shadow"
+                      className="absolute left-0 top-full z-50 mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
                       onMouseLeave={() => {
                         setViewMenuSub(null);
                         setViewAppearanceSub(null);
@@ -3742,11 +4160,12 @@ export default function AppShell() {
                         <MenuItem
                           label="Appearance"
                           right={<ChevronRight className="h-3.5 w-3.5" />}
+                          keepOpen
                           onMouseEnter={() => setViewMenuSub("appearance")}
                           onClick={() => setViewMenuSub((v) => (v === "appearance" ? null : "appearance"))}
                         />
                         {viewMenuSub === "appearance" ? (
-                          <div className="absolute left-full top-0 z-50 ml-1 w-80 overflow-visible rounded-xl border border-border bg-panel p-1 shadow">
+                          <div className="absolute left-full top-0 z-50 ml-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                             <MenuItem label="Full Screen" shortcut="F11" onClick={() => notify({ kind: "info", title: "Full Screen", message: "Coming next." })} />
                             <MenuItem
                               label="Zen Mode"
@@ -3773,10 +4192,12 @@ export default function AppShell() {
                               <MenuItem
                                 label="Activity Bar Position"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
+                                keepOpen
                                 onMouseEnter={() => setViewAppearanceSub("activityBarPosition")}
+                                onClick={() => setViewAppearanceSub((v) => (v === "activityBarPosition" ? null : "activityBarPosition"))}
                               />
                               {viewAppearanceSub === "activityBarPosition" ? (
-                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
@@ -3789,10 +4210,12 @@ export default function AppShell() {
                               <MenuItem
                                 label="Secondary Activity Bar Position"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
+                                keepOpen
                                 onMouseEnter={() => setViewAppearanceSub("secondaryActivityBarPosition")}
+                                onClick={() => setViewAppearanceSub((v) => (v === "secondaryActivityBarPosition" ? null : "secondaryActivityBarPosition"))}
                               />
                               {viewAppearanceSub === "secondaryActivityBarPosition" ? (
-                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
@@ -3805,10 +4228,12 @@ export default function AppShell() {
                               <MenuItem
                                 label="Panel Position"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
+                                keepOpen
                                 onMouseEnter={() => setViewAppearanceSub("panelPosition")}
+                                onClick={() => setViewAppearanceSub((v) => (v === "panelPosition" ? null : "panelPosition"))}
                               />
                               {viewAppearanceSub === "panelPosition" ? (
-                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
                                   <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
                                   <MenuItem label="Right" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
@@ -3821,10 +4246,12 @@ export default function AppShell() {
                               <MenuItem
                                 label="Align Panel"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
+                                keepOpen
                                 onMouseEnter={() => setViewAppearanceSub("alignPanel")}
+                                onClick={() => setViewAppearanceSub((v) => (v === "alignPanel" ? null : "alignPanel"))}
                               />
                               {viewAppearanceSub === "alignPanel" ? (
-                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Center" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
                                   <MenuItem label="Justify" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
                                   <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
@@ -3837,10 +4264,12 @@ export default function AppShell() {
                               <MenuItem
                                 label="Tab Bar"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
+                                keepOpen
                                 onMouseEnter={() => setViewAppearanceSub("tabBar")}
+                                onClick={() => setViewAppearanceSub((v) => (v === "tabBar" ? null : "tabBar"))}
                               />
                               {viewAppearanceSub === "tabBar" ? (
-                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Multiple Tabs" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
                                   <MenuItem label="Single Tabs" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
@@ -3852,10 +4281,12 @@ export default function AppShell() {
                               <MenuItem
                                 label="Editor Actions Position"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
+                                keepOpen
                                 onMouseEnter={() => setViewAppearanceSub("editorActionsPosition")}
+                                onClick={() => setViewAppearanceSub((v) => (v === "editorActionsPosition" ? null : "editorActionsPosition"))}
                               />
                               {viewAppearanceSub === "editorActionsPosition" ? (
-                                <div className="absolute left-full top-0 z-50 ml-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Tab Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
                                   <MenuItem label="Title Bar" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
@@ -3891,11 +4322,12 @@ export default function AppShell() {
                         <MenuItem
                           label="Editor Layout"
                           right={<ChevronRight className="h-3.5 w-3.5" />}
+                          keepOpen
                           onMouseEnter={() => setViewMenuSub("editorLayout")}
                           onClick={() => setViewMenuSub((v) => (v === "editorLayout" ? null : "editorLayout"))}
                         />
                         {viewMenuSub === "editorLayout" ? (
-                          <div className="absolute left-full top-0 z-50 ml-1 w-64 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                          <div className="absolute left-full top-0 z-50 ml-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                             <MenuItem
                               label="Split Up"
                               shortcut="Ctrl+K Ctrl+\\"
@@ -3980,13 +4412,28 @@ export default function AppShell() {
                   <button
                     type="button"
                     className="rounded-md px-2 py-1 hover:bg-bg"
-                    onClick={() => {
-                      setIsRunMenuOpen((v) => !v);
+                    onMouseEnter={() => {
+                      if (!anyMenubarOpen) return;
+                      setIsRunMenuOpen(true);
                       setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
                       setIsEditMenuOpen(false);
                       setIsSelectionMenuOpen(false);
                       setIsViewMenuOpen(false);
                       setIsTerminalMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
+                    }}
+                    onClick={() => {
+                      setIsRunMenuOpen((v) => !v);
+                      setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsTerminalMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
                     }}
                   >
                     Run
@@ -4017,13 +4464,28 @@ export default function AppShell() {
                   <button
                     type="button"
                     className="rounded-md px-2 py-1 hover:bg-bg"
-                    onClick={() => {
-                      setIsTerminalMenuOpen((v) => !v);
+                    onMouseEnter={() => {
+                      if (!anyMenubarOpen) return;
+                      setIsTerminalMenuOpen(true);
                       setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
                       setIsEditMenuOpen(false);
                       setIsSelectionMenuOpen(false);
                       setIsViewMenuOpen(false);
                       setIsRunMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
+                    }}
+                    onClick={() => {
+                      setIsTerminalMenuOpen((v) => !v);
+                      setIsFileMenuOpen(false);
+                      setIsFileMenuRecentOpen(false);
+                      setIsEditMenuOpen(false);
+                      setIsSelectionMenuOpen(false);
+                      setIsViewMenuOpen(false);
+                      setIsRunMenuOpen(false);
+                      setViewMenuSub(null);
+                      setViewAppearanceSub(null);
                     }}
                   >
                     Terminal
@@ -4116,6 +4578,87 @@ export default function AppShell() {
             </div>
 
             <div className="flex shrink-0 items-center gap-1 justify-self-end">
+              <div className="relative" data-account-menu-root>
+                <button
+                  type="button"
+                  className="ws-icon-btn"
+                  onClick={() => {
+                    setIsAccountMenuOpen((v) => !v);
+                  }}
+                  disabled={isAuthBusy}
+                  aria-label={authProfile ? "Account" : "Sign in"}
+                >
+                  {authProfile?.avatar_url ? (
+                    <img src={authProfile.avatar_url} className="h-5 w-5 rounded-full" alt="Profile" />
+                  ) : (
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgb(var(--p-panel2))] text-[11px] font-semibold text-text">
+                      {avatarLetter}
+                    </div>
+                  )}
+                </button>
+
+                {isAccountMenuOpen ? (
+                  authProfile ? (
+                    <div className="absolute right-0 top-full z-50 mt-1 w-72 overflow-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[420px]">
+                      <div className="px-3 py-2">
+                        <div className="text-xs font-semibold text-text">{authProfile.email || "Account"}</div>
+                        <div className="mt-0.5 text-[11px] text-muted">Plan: {authCredits?.plan || authProfile.plan || "starter"}</div>
+                        {authCredits ? (
+                          <div className="mt-2 text-[11px] text-muted">
+                            Slow credits: {authCredits.slow.remaining} / {authCredits.slow.limit}
+                          </div>
+                        ) : null}
+                      </div>
+                      <MenuSep />
+                      <MenuItem
+                        label="Open Dashboard"
+                        onClick={() => {
+                          setIsAccountMenuOpen(false);
+                          void safeOpenUrl("https://pompora.dev/dashboard");
+                        }}
+                      />
+                      <MenuItem
+                        label="Manage Plan"
+                        onClick={() => {
+                          setIsAccountMenuOpen(false);
+                          void safeOpenUrl("https://pompora.dev/pricing");
+                        }}
+                      />
+                      <MenuSep />
+                      <MenuItem
+                        label="Sign out"
+                        onClick={() => {
+                          setIsAccountMenuOpen(false);
+                          void logoutDesktop();
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="absolute right-0 top-full z-50 mt-1 w-72 overflow-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[420px]">
+                      <div className="px-3 py-2">
+                        <div className="text-xs font-semibold text-text">Not signed in</div>
+                        <div className="mt-0.5 text-[11px] text-muted">Sign in to sync credits and use Pompora AI.</div>
+                      </div>
+                      <MenuSep />
+                      <MenuItem
+                        label="Log in"
+                        onClick={() => {
+                          setIsAccountMenuOpen(false);
+                          void beginDesktopAuthWithMode("login");
+                        }}
+                      />
+                      <MenuItem
+                        label="Create account"
+                        onClick={() => {
+                          setIsAccountMenuOpen(false);
+                          void beginDesktopAuthWithMode("signup");
+                        }}
+                      />
+                    </div>
+                  )
+                ) : null}
+              </div>
+
               <button type="button" className="ws-icon-btn" onClick={() => openSettingsTab()}>
                 <SettingsIcon className="h-4 w-4" />
               </button>
@@ -4287,6 +4830,7 @@ export default function AppShell() {
                       onChangeTheme={(t: Theme) => setSettingsState((s) => ({ ...s, theme: t }))}
                       onToggleOffline={toggleOfflineMode}
                       onChangeProvider={(p) => void changeProvider(p)}
+                      onChangePomporaThinking={(t) => void setPomporaThinking(t)}
                       onPickFolder={() => void openFolder()}
                       onOpenRecent={(p) => void openRecent(p)}
                       onApiKeyDraft={setApiKeyDraft}
@@ -5878,6 +6422,7 @@ interface SettingsScreenProps {
   onChangeTheme: (t: Theme) => void;
   onToggleOffline: () => void;
   onChangeProvider: (p: string | null) => void;
+  onChangePomporaThinking: (t: string | null) => void;
   onPickFolder: () => void;
   onOpenRecent: (p: string) => void;
   onApiKeyDraft: (v: string) => void;
@@ -5898,196 +6443,477 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   const sectionList = useMemo(
     () =>
       [
-        { id: "workspace", label: "Workspace" },
-        { id: "appearance", label: "Appearance" },
-        { id: "ai", label: "AI" },
-        { id: "security", label: "Security" },
+        { id: "common", label: "Commonly Used", icon: Star },
+        { id: "workspace", label: "Workspace", icon: FolderOpen },
+        { id: "appearance", label: "Appearance", icon: Palette },
+        { id: "ai", label: "AI", icon: Wand2 },
       ] as const,
     []
   );
 
-  const filteredNav = useMemo(() => {
-    if (!q) return sectionList;
-    return sectionList.filter((s) => s.label.toLowerCase().includes(q));
-  }, [q, sectionList]);
-
   const providerStatusLabel = props.keyStatus?.is_configured ? "Configured" : "Not configured";
 
+  type SectionId = (typeof sectionList)[number]["id"];
+  const [activeSection, setActiveSection] = useState<SectionId>("workspace");
+
+  const sectionMeta = useMemo(() => {
+    const map: Record<SectionId, { title: string; description: string }> = {
+      common: { title: "Commonly Used", description: "Frequently changed settings" },
+      workspace: { title: "Workspace", description: "Workspace folder and recent workspaces" },
+      appearance: { title: "Appearance", description: "Theme" },
+      ai: { title: "AI", description: "Provider and offline mode" },
+    };
+    return map;
+  }, []);
+
+  useEffect(() => {
+    const allowed = new Set(sectionList.map((s) => s.id));
+    if (!allowed.has(activeSection)) setActiveSection("workspace");
+  }, [activeSection, sectionList]);
+
+  type SettingItem = {
+    id: string;
+    section: SectionId;
+    title: string;
+    description: string;
+    renderControl: () => ReactNode;
+    keywords?: string;
+  };
+
+  const commonIds = useMemo(
+    () =>
+      new Set<string>([
+        "workspace.folder",
+        "appearance.theme",
+        "ai.provider",
+        "ai.offline",
+      ]),
+    []
+  );
+
+  const Dropdown = (p: {
+    value: string;
+    options: Array<{ value: string; label: string }>;
+    onChange: (v: string) => void;
+    widthClassName?: string;
+  }) => {
+    const [open, setOpen] = useState(false);
+    const wrapRef = useRef<HTMLDivElement | null>(null);
+
+    const active = p.options.find((o) => o.value === p.value) ?? p.options[0];
+
+    useEffect(() => {
+      const onDown = (e: MouseEvent) => {
+        if (!open) return;
+        const t = e.target as Node | null;
+        if (!t) return;
+        if (wrapRef.current?.contains(t)) return;
+        setOpen(false);
+      };
+      window.addEventListener("mousedown", onDown);
+      return () => window.removeEventListener("mousedown", onDown);
+    }, [open]);
+
+    return (
+      <div ref={wrapRef} className={`relative ${p.widthClassName ?? ""}`.trim()}>
+        <button
+          type="button"
+          className="ws-vscode-dropdown-btn"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+        >
+          <span className="truncate">{active?.label ?? ""}</span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+
+        {open ? (
+          <div className="ws-vscode-dropdown-menu">
+            {p.options.map((o) => (
+              <button
+                key={o.value}
+                type="button"
+                className={`ws-vscode-dropdown-item ${o.value === p.value ? "ws-vscode-dropdown-item-active" : ""}`}
+                onClick={() => {
+                  p.onChange(o.value);
+                  setOpen(false);
+                }}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  const Switch = (p: { checked: boolean; onChange: (v: boolean) => void; disabled?: boolean }) => {
+    return (
+      <button
+        type="button"
+        className={`ws-vscode-switch ${p.disabled ? "opacity-60" : ""}`}
+        data-checked={p.checked ? "true" : "false"}
+        onClick={() => {
+          if (p.disabled) return;
+          p.onChange(!p.checked);
+        }}
+        aria-checked={p.checked}
+        role="switch"
+      >
+        <span className="ws-vscode-switch-thumb" />
+      </button>
+    );
+  };
+
+  const settingsItems = useMemo<SettingItem[]>(
+    () => [
+      {
+        id: "workspace.folder",
+        section: "workspace",
+        title: "Workspace Folder",
+        description: "Choose the folder you want to work in.",
+        keywords: "workspace folder open",
+        renderControl: () => (
+          <button type="button" className="ws-vscode-btn" onClick={props.onPickFolder}>
+            Open Folder
+          </button>
+        ),
+      },
+      {
+        id: "appearance.theme",
+        section: "appearance",
+        title: "Theme",
+        description: "Choose the color theme.",
+        keywords: "theme dark light appearance",
+        renderControl: () => (
+          <Dropdown
+            value={props.settings.theme}
+            options={[
+              { value: "dark", label: "Dark" },
+              { value: "light", label: "Light" },
+            ]}
+            onChange={(v) => props.onChangeTheme(v as Theme)}
+          />
+        ),
+      },
+      {
+        id: "ai.provider",
+        section: "ai",
+        title: "AI: Provider",
+        description: "Select which provider powers chat and edits.",
+        keywords: "ai provider model",
+        renderControl: () => (
+          <Dropdown
+            value={props.settings.active_provider ?? ""}
+            options={[
+              { value: "", label: "Not configured" },
+              ...props.providerChoices.map((p) => ({ value: p.id, label: p.label })),
+            ]}
+            onChange={(v) => props.onChangeProvider(v === "" ? null : v)}
+          />
+        ),
+      },
+      {
+        id: "ai.offline",
+        section: "ai",
+        title: "AI: Offline Mode",
+        description: "Disable all network AI calls.",
+        keywords: "offline ai network",
+        renderControl: () => <Switch checked={props.settings.offline_mode} onChange={() => props.onToggleOffline()} disabled={props.isTogglingOffline} />,
+      },
+      ...(props.settings.active_provider === "pompora"
+        ? ([
+            {
+              id: "ai.pomporaThinking",
+              section: "ai" as const,
+              title: "Pompora AI: Thinking",
+              description: "Choose speed vs. depth. Availability depends on your plan.",
+              keywords: "pompora thinking slow fast reasoning",
+              renderControl: () => (
+                <Dropdown
+                  value={(props.settings.pompora_thinking as string | null) ?? "slow"}
+                  options={[
+                    { value: "slow", label: "Slow (Starter)" },
+                    { value: "fast", label: "Fast (Plus+)" },
+                    { value: "reasoning", label: "Reasoning (Pro)" },
+                  ]}
+                  onChange={(v) => props.onChangePomporaThinking(v)}
+                />
+              ),
+            },
+          ] satisfies SettingItem[])
+        : ([] as SettingItem[])),
+      {
+        id: "ai.apiKey",
+        section: "ai",
+        title: "AI: API Key",
+        description: "Paste your API key for the selected provider.",
+        keywords: "api key security",
+        renderControl: () => (
+          <input
+            className="ws-vscode-input"
+            placeholder="Paste your API key"
+            value={props.apiKeyDraft}
+            autoComplete="off"
+            spellCheck={false}
+            onChange={(e) => props.onApiKeyDraft(e.target.value)}
+          />
+        ),
+      },
+      {
+        id: "ai.encryption",
+        section: "ai",
+        title: "Encryption Password",
+        description: "Optional extra protection for secrets storage.",
+        keywords: "encryption password security",
+        renderControl: () => (
+          <input
+            className="ws-vscode-input"
+            placeholder="Optional encryption password"
+            type={props.encryptionPasswordDraft ? "text" : "password"}
+            value={props.encryptionPasswordDraft}
+            autoComplete="off"
+            spellCheck={false}
+            onChange={(e) => props.onEncryptionPasswordDraft(e.target.value)}
+          />
+        ),
+      },
+    ],
+    [props]
+  );
+
+  const filteredItems = useMemo(() => {
+    if (!q) {
+      if (activeSection === "common") return settingsItems.filter((x) => commonIds.has(x.id));
+      return settingsItems.filter((x) => x.section === activeSection);
+    }
+    const qq = q.toLowerCase();
+    return settingsItems.filter((x) => `${x.title} ${x.description} ${x.keywords ?? ""}`.toLowerCase().includes(qq));
+  }, [activeSection, commonIds, q, settingsItems]);
+
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col bg-bg">
       <div className="border-b border-border bg-panel px-4 py-3">
-        <div className="text-sm font-semibold text-text">Settings</div>
-        <div className="mt-1 text-xs text-muted">Configure workspace, appearance, AI providers and keys.</div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <SettingsIcon className="h-4 w-4 text-muted" />
+            <div className="text-sm font-semibold text-text">Settings</div>
+          </div>
+
+          <button
+            type="button"
+            className="ws-vscode-btn ws-vscode-btn-primary"
+            onClick={props.onSaveSettings}
+            disabled={!props.isSettingsLoaded || props.isSavingSettings}
+          >
+            <Save className="h-4 w-4" />
+            Save Settings
+          </button>
+        </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
-        <div className="mx-auto grid w-full max-w-[1180px] grid-cols-[260px_1fr] gap-4 p-4">
-          <aside className="min-w-0">
-            <input
-              className="ws-input"
-              placeholder="Search settings"
-              value={query}
-              onChange={(e) => setQuery(e.currentTarget.value)}
-            />
-            <div className="mt-3 space-y-1">
-              {filteredNav.map((s) => (
-                <a
-                  key={s.id}
-                  href={`#${s.id}`}
-                  className="block rounded-md px-2 py-1 text-sm text-muted hover:bg-panel hover:text-text"
-                >
-                  {s.label}
-                </a>
-              ))}
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="grid h-full grid-cols-[260px_1fr]">
+          <aside className="min-w-0 border-r border-border bg-panel">
+            <div className="flex h-full flex-col">
+              <div className="min-h-0 flex-1 overflow-auto px-2 pb-3 pt-4">
+                <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">User</div>
+                <div className="space-y-0.5">
+                  {sectionList.map((s) => {
+                    const isActive = !q && s.id === activeSection;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className={`ws-vscode-nav-item ${isActive ? "ws-vscode-nav-item-active" : ""}`}
+                        onClick={() => {
+                          setActiveSection(s.id);
+                          setQuery("");
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <s.icon className="h-4 w-4" />
+                          <span className="truncate">{s.label}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </aside>
 
-          <div className="min-w-0 space-y-4">
-            <div className="rounded border border-border bg-bg p-3 text-sm text-muted">
-              API keys are stored locally. Keys are never returned to the UI.
-            </div>
-
-            <section id="workspace" className="rounded border border-border bg-bg p-3">
-              <div className="text-xs font-semibold text-muted">Workspace</div>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <div className="text-sm text-text">{props.workspaceLabel}</div>
-                <button
-                  type="button"
-                  className="rounded border border-border bg-panel px-3 py-2 text-sm text-muted hover:border-accent hover:text-text"
-                  onClick={props.onPickFolder}
-                >
-                  Open Folder
-                </button>
+          <main className="min-w-0 overflow-auto bg-bg">
+            <div className="mx-auto w-full max-w-[980px] p-4">
+              <div className="mb-3">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <input
+                    className="ws-vscode-search pl-9"
+                    placeholder="Search settings"
+                    value={query}
+                    onChange={(e) => setQuery(e.currentTarget.value)}
+                  />
+                </div>
               </div>
-              {props.recentWorkspaces.length ? (
-                <div className="mt-3 space-y-1">
-                  {props.recentWorkspaces.slice(0, 6).map((p) => (
+
+              <div className="mb-3">
+                <div className="text-sm font-semibold text-text">{q ? "Search results" : sectionMeta[activeSection].title}</div>
+                <div className="mt-1 text-xs text-muted">
+                  {q ? `Showing ${filteredItems.length} setting(s)` : sectionMeta[activeSection].description}
+                </div>
+              </div>
+
+              <div className="ws-vscode-settings">
+                {filteredItems.length ? (
+                  filteredItems.map((it) => (
+                    <div key={it.id} className="ws-vscode-setting-row">
+                      <div className="min-w-0">
+                        <div className="text-sm text-text">{it.title}</div>
+                        <div className="mt-0.5 text-xs text-muted">{it.description}</div>
+                      </div>
+                      <div className="ws-vscode-setting-control">{it.renderControl()}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-sm text-muted">No settings found.</div>
+                )}
+              </div>
+
+              {activeSection === "workspace" && !q ? (
+                <div className="mt-4">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Recent workspaces</div>
+                  {props.recentWorkspaces.length ? (
+                    <div className="ws-vscode-settings">
+                      {props.recentWorkspaces.slice(0, 12).map((p) => (
+                        <button key={p} type="button" className="ws-vscode-list-row" onClick={() => props.onOpenRecent(p)}>
+                          <span className="truncate">{p}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted">No recent workspaces.</div>
+                  )}
+                </div>
+              ) : null}
+
+              {activeSection === "ai" && !q ? (
+                <div className="mt-3 space-y-3">
+                  <div className="text-xs text-muted">Status: {providerStatusLabel}</div>
+
+                  {props.secretsError ? <div className="ws-vscode-error">{props.secretsError}</div> : null}
+
+                  <div className="flex flex-wrap gap-2">
                     <button
-                      key={p}
                       type="button"
-                      className="w-full rounded border border-border bg-panel px-3 py-2 text-left text-sm text-muted hover:border-accent hover:text-text"
-                      onClick={() => props.onOpenRecent(p)}
+                      className="ws-vscode-btn"
+                      onClick={props.onStoreKey}
+                      disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.apiKeyDraft.trim() || !props.settings.active_provider}
                     >
-                      {p}
+                      Save Key
                     </button>
-                  ))}
+                    <button
+                      type="button"
+                      className="ws-vscode-btn ws-vscode-btn-ghost"
+                      onClick={props.onClearKey}
+                      disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.settings.active_provider}
+                    >
+                      Clear Key
+                    </button>
+                    <div className="flex-1" />
+                    <button type="button" className="ws-vscode-btn" onClick={props.onDebugGemini}>
+                      Test AI
+                    </button>
+                  </div>
+                  {props.debugResult ? <pre className="ws-vscode-pre">{props.debugResult}</pre> : null}
+
+                  {props.settings.active_provider === "pompora" ? (
+                    <div className="overflow-hidden rounded-xl border border-border bg-panel">
+                      <div className="border-b border-border px-4 py-3">
+                        <div className="text-sm font-semibold text-text">Pompora AI Plans</div>
+                        <div className="mt-1 text-xs text-muted">
+                          Credits keep the service fast and fair. <span className="text-text">2 credits = 1 request</span>.
+                        </div>
+                      </div>
+
+                      <div className="grid gap-3 p-3 md:grid-cols-3">
+                        <div className="rounded-lg border border-border bg-bg p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-semibold text-text">Starter</div>
+                            <div className="text-xs text-muted">Free</div>
+                          </div>
+                          <div className="mt-2 space-y-1 text-xs text-muted">
+                            <div>25 Slow Credits (reset every 2 weeks)</div>
+                            <div>Unlimited tab completions</div>
+                            <div>Unlimited inline edits</div>
+                            <div>Local AI (slow thinking)</div>
+                            <div>BYOK support</div>
+                          </div>
+                          <button
+                            type="button"
+                            className="mt-3 w-full rounded-md bg-[rgb(var(--p-panel2))] px-3 py-2 text-xs font-semibold text-text hover:opacity-90"
+                            onClick={() => void openUrl("https://pompora.dev/pricing")}
+                          >
+                            Start Free
+                          </button>
+                        </div>
+
+                        <div className="rounded-lg border border-border bg-gradient-to-b from-[rgba(255,255,255,0.06)] to-[rgba(255,255,255,0.02)] p-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm font-semibold text-text">Plus</div>
+                              <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                                Most Popular
+                              </div>
+                            </div>
+                            <div className="text-xs text-text">$10 / month</div>
+                          </div>
+                          <div className="mt-2 space-y-1 text-xs text-muted">
+                            <div>150 Fast Credits / month (daily cap: 100)</div>
+                            <div>50 Slow Credits (reset every 2 weeks)</div>
+                            <div>Fast thinking enabled</div>
+                            <div>Priority execution</div>
+                            <div>BYOK support</div>
+                          </div>
+                          <button
+                            type="button"
+                            className="mt-3 w-full rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
+                            onClick={() => void openUrl("https://pompora.dev/pricing")}
+                          >
+                            Upgrade to Plus
+                          </button>
+                        </div>
+
+                        <div className="rounded-lg border border-border bg-bg p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-semibold text-text">Pro</div>
+                            <div className="text-xs text-text">$20 / month</div>
+                          </div>
+                          <div className="mt-2 space-y-1 text-xs text-muted">
+                            <div>300 Fast Credits / month (daily cap: 150)</div>
+                            <div>150 Slow Credits (reset every 2 weeks)</div>
+                            <div>Reasoning + fast thinking</div>
+                            <div>Highest priority</div>
+                            <div>Advanced agents</div>
+                            <div>BYOK support</div>
+                          </div>
+                          <button
+                            type="button"
+                            className="mt-3 w-full rounded-md bg-[rgb(var(--p-panel2))] px-3 py-2 text-xs font-semibold text-text hover:opacity-90"
+                            onClick={() => void openUrl("https://pompora.dev/pricing")}
+                          >
+                            Go Pro
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
-            </section>
 
-            <section id="appearance" className="rounded border border-border bg-bg p-3">
-              <div className="text-xs font-semibold text-muted">Appearance</div>
-              <div className="mt-2">
-                <label className="text-sm text-muted">Theme</label>
-                <select
-                  className="mt-2 w-full rounded border border-border bg-panel px-3 py-2 text-sm text-text"
-                  value={props.settings.theme}
-                  onChange={(e) => props.onChangeTheme(e.currentTarget.value as Theme)}
-                >
-                  <option value="dark">Dark</option>
-                  <option value="light">Light</option>
-                </select>
-              </div>
-            </section>
-
-            <section id="ai" className="rounded border border-border bg-bg p-3">
-              <div className="text-xs font-semibold text-muted">AI</div>
-              <div className="mt-2">
-                <label className="text-sm text-muted">Provider</label>
-                <select
-                  className="mt-2 w-full rounded border border-border bg-panel px-3 py-2 text-sm text-text"
-                  value={props.settings.active_provider ?? ""}
-                  onChange={(e) => {
-                    const v = e.currentTarget.value;
-                    props.onChangeProvider(v === "" ? null : v);
-                  }}
-                >
-                  <option value="">Not configured</option>
-                  {props.providerChoices.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mt-3">
-                <label className="text-sm text-muted">Offline mode</label>
-                <div className="mt-2 flex items-center gap-2">
-                  <input type="checkbox" checked={props.settings.offline_mode} onChange={props.onToggleOffline} disabled={props.isTogglingOffline} />
-                  <span className="text-sm text-muted">Disable all network AI calls</span>
-                </div>
-              </div>
-
-              <div className="mt-3 text-xs text-muted">
-                Active: <span className="text-text">{props.providerLabel}</span> · Status: {providerStatusLabel}
-              </div>
-            </section>
-
-            <section id="security" className="rounded border border-border bg-bg p-3">
-              <div className="text-xs font-semibold text-muted">Security</div>
-
-              <div className="mt-2">
-                <label className="text-sm text-muted">API key</label>
-                <input
-                  className="mt-2 w-full rounded border border-border bg-panel px-3 py-2 text-sm text-text"
-                  placeholder="Paste your API key"
-                  value={props.apiKeyDraft}
-                  autoComplete="off"
-                  spellCheck={false}
-                  onChange={(e) => props.onApiKeyDraft(e.target.value)}
-                />
-                <div className="mt-1 text-xs text-muted">Stored locally. Never leaves your device.</div>
-              </div>
-
-              <div className="mt-3">
-                <label className="text-sm text-muted">Encryption password (optional)</label>
-                <input
-                  className="mt-2 w-full rounded border border-border bg-panel px-3 py-2 text-sm text-text"
-                  placeholder="For additional security"
-                  type={props.encryptionPasswordDraft ? "text" : "password"}
-                  value={props.encryptionPasswordDraft}
-                  autoComplete="off"
-                  spellCheck={false}
-                  onChange={(e) => props.onEncryptionPasswordDraft(e.target.value)}
-                />
-              </div>
-
-              {props.secretsError ? (
-                <div className="mt-3 rounded border border-border bg-bg p-3 text-sm text-danger">{props.secretsError}</div>
-              ) : null}
-
-              <div className="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  className="flex-1 rounded border border-border bg-panel px-3 py-2 text-sm text-text disabled:opacity-50"
-                  onClick={props.onStoreKey}
-                  disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.apiKeyDraft.trim() || !props.settings.active_provider}
-                >
-                  Save key
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 rounded border border-border bg-panel px-3 py-2 text-sm text-text disabled:opacity-50"
-                  onClick={props.onClearKey}
-                  disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.settings.active_provider}
-                >
-                  Clear key
-                </button>
-              </div>
-            </section>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="flex-1 rounded border border-border bg-bg px-4 py-2 text-sm font-medium text-muted hover:border-accent hover:text-text disabled:opacity-50"
-                onClick={props.onSaveSettings}
-                disabled={!props.isSettingsLoaded || props.isSavingSettings}
-              >
-                Save settings
-              </button>
+              {q ? <div className="mt-3 text-xs text-muted">Tip: click a category on the left to exit search.</div> : null}
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </div>

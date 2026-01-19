@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { AppSettings, DirEntryInfo, KeyStatus, WorkspaceInfo } from "./types";
+import type { AppSettings, AuthProfile, CreditsResponse, DirEntryInfo, KeyStatus, WorkspaceInfo } from "./types";
 
 export async function settingsGet(): Promise<AppSettings> {
   return invoke<AppSettings>("settings_get");
@@ -25,10 +25,15 @@ export async function providerKeySet(args: {
   });
 }
 
-export async function aiChat(args: { messages: AiChatMessage[]; encryptionPassword?: string }): Promise<AiChatResult> {
+export async function aiChat(args: {
+  messages: AiChatMessage[];
+  encryptionPassword?: string;
+  thinking?: string | null;
+}): Promise<AiChatResult> {
   return invoke<AiChatResult>("ai_chat", {
     messages: args.messages,
     encryptionPassword: args.encryptionPassword ?? null,
+    thinking: args.thinking ?? null,
   });
 }
 
@@ -36,11 +41,13 @@ export async function aiChatWithModel(args: {
   messages: AiChatMessage[];
   model?: string | null;
   encryptionPassword?: string;
+  thinking?: string | null;
 }): Promise<AiChatResult> {
   return invoke<AiChatResult>("ai_chat_with_model", {
     messages: args.messages,
     model: args.model ?? null,
     encryptionPassword: args.encryptionPassword ?? null,
+    thinking: args.thinking ?? null,
   });
 }
 
@@ -54,6 +61,26 @@ export async function openrouterListModels(): Promise<OpenRouterModelInfo[]> {
 
 export async function providerKeyClear(provider: string): Promise<void> {
   return invoke<void>("provider_key_clear", { provider });
+}
+
+export async function authBeginLogin(): Promise<[string, string]> {
+  return invoke<[string, string]>("auth_begin_login");
+}
+
+export async function authWaitLogin(state: string): Promise<AuthProfile> {
+  return invoke<AuthProfile>("auth_wait_login", { state });
+}
+
+export async function authGetProfile(): Promise<AuthProfile | null> {
+  return invoke<AuthProfile | null>("auth_get_profile");
+}
+
+export async function authLogout(): Promise<void> {
+  return invoke<void>("auth_logout");
+}
+
+export async function authGetCredits(): Promise<CreditsResponse> {
+  return invoke<CreditsResponse>("auth_get_credits");
 }
 
 export async function debugGeminiEndToEnd(apiKey: string): Promise<string> {
@@ -174,6 +201,7 @@ export async function aiRunAction(args: {
   content: string;
   selection?: string;
   encryptionPassword?: string;
+  thinking?: string | null;
 }): Promise<AiRunResult> {
   return invoke<AiRunResult>("ai_run_action", {
     action: args.action,
@@ -181,5 +209,6 @@ export async function aiRunAction(args: {
     content: args.content,
     selection: args.selection ?? null,
     encryptionPassword: args.encryptionPassword ?? null,
+    thinking: args.thinking ?? null,
   });
 }

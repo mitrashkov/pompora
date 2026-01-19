@@ -140,8 +140,244 @@ body {
     @apply inline-flex items-center justify-center rounded-md p-1 text-muted hover:bg-bg hover:text-text;
   }
 
-  .ws-footer-btn {
-    @apply inline-flex items-center gap-1.5 bg-transparent p-0 text-[11px] text-muted hover:text-text focus-visible:outline-none;
+  .ws-toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+    background-color: hsl(var(--border));
+  }
+
+  .ws-toggle input {
+    @apply sr-only;
+  }
+
+  .ws-toggle input:checked + span {
+    @apply translate-x-6;
+    background-color: hsl(var(--accent));
+  }
+
+  .ws-toggle span {
+    @apply inline-block h-4 w-4 transform rounded-full bg-text transition-transform;
+  }
+
+  .ws-toggle input:checked + span {
+    transform: translateX(1.25rem);
+  }
+
+  .ws-select {
+    @apply rounded-lg border border-border/60 bg-panel/50 px-3 py-2 text-sm text-text backdrop-blur-sm transition-all hover:border-accent/50 focus-visible:border-accent focus-visible:outline-none;
+  }
+
+  .ws-vscode-search {
+    @apply w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-[12px] text-text outline-none placeholder:text-muted hover:border-accent/40 focus-visible:border-accent;
+  }
+
+  .ws-vscode-nav-item {
+    @apply relative w-full rounded-md px-2 py-1.5 text-left text-[13px] text-muted hover:bg-bg hover:text-text;
+  }
+
+  .ws-vscode-nav-item-active {
+    @apply bg-bg text-text;
+  }
+
+  .ws-vscode-nav-item-active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    border-radius: 9999px;
+    background: rgb(var(--p-accent));
+  }
+
+  .ws-vscode-settings {
+    @apply overflow-visible rounded-md border border-border bg-panel;
+  }
+
+  .ws-vscode-setting-row {
+    @apply grid grid-cols-1 gap-3 border-b border-border px-4 py-3 md:grid-cols-[1fr_300px] md:gap-6;
+  }
+
+  .ws-vscode-setting-row:hover {
+    background: rgb(var(--p-bg));
+  }
+
+  .ws-vscode-setting-row:last-child {
+    border-bottom: none;
+  }
+
+  .ws-vscode-setting-control {
+    @apply flex items-start justify-start md:justify-end;
+  }
+
+  .ws-vscode-list-row {
+    @apply w-full border-b border-border px-4 py-2 text-left text-[13px] text-muted hover:bg-bg hover:text-text;
+  }
+
+  .ws-vscode-list-row:last-child {
+    border-bottom: none;
+  }
+
+  .ws-vscode-input {
+    @apply w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-[12px] text-text outline-none placeholder:text-muted hover:border-accent/40 focus-visible:border-accent;
+  }
+
+  .ws-vscode-select {
+    @apply w-[240px] rounded-md border border-border bg-bg px-2.5 py-1.5 pr-8 text-[12px] text-text outline-none hover:border-accent/40 focus-visible:border-accent;
+    appearance: none;
+  }
+
+  .ws-vscode-btn {
+    @apply inline-flex items-center justify-center rounded-md border border-border bg-bg px-3 py-1.5 text-[12px] text-text hover:border-accent;
+  }
+
+  .ws-vscode-btn-primary {
+    @apply border-accent bg-accent text-bg shadow-sm;
+  }
+
+  .ws-vscode-btn-primary:hover {
+    @apply border-accent;
+    background: rgb(var(--p-accent) / 0.92);
+  }
+
+  .ws-vscode-btn-ghost {
+    @apply bg-transparent;
+  }
+
+  .ws-vscode-menu {
+    @apply absolute right-0 top-full z-50 mt-1 w-[280px] overflow-auto rounded-md border border-border bg-panel shadow;
+    max-height: min(420px, calc(100vh - 96px));
+  }
+
+  .ws-vscode-menu-item {
+    @apply w-full px-3 py-2 text-left text-[13px] text-muted hover:bg-bg hover:text-text;
+  }
+
+  .ws-vscode-menu-item-active {
+    @apply bg-bg text-text;
+  }
+
+  .ws-vscode-error {
+    @apply rounded-md border border-border bg-bg px-3 py-2 text-sm text-danger;
+  }
+
+  .ws-vscode-pre {
+    @apply overflow-auto rounded-md border border-border bg-bg p-3 text-xs text-muted;
+  }
+
+  .ws-vscode-checkbox {
+    @apply inline-flex items-center;
+  }
+
+  .ws-vscode-checkbox input {
+    @apply h-4 w-4 accent-[rgb(var(--p-accent))];
+  }
+
+  .ws-vscode-dropdown-btn {
+    @apply inline-flex min-h-[30px] w-[240px] items-center justify-between gap-2 rounded-md border border-border bg-bg px-2.5 py-1.5 text-[12px] text-text outline-none hover:border-accent/40 focus-visible:border-accent;
+  }
+
+  .ws-vscode-dropdown-menu {
+    @apply absolute right-0 top-full z-50 mt-1 w-[280px] overflow-auto rounded-md border border-border bg-panel shadow;
+    max-height: min(420px, calc(100vh - 96px));
+  }
+
+  .ws-vscode-dropdown-item {
+    @apply w-full px-3 py-2 text-left text-[13px] text-muted hover:bg-bg hover:text-text;
+  }
+
+  .ws-vscode-dropdown-item-active {
+    @apply bg-bg text-text;
+  }
+
+  .ws-vscode-switch {
+    @apply relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-border bg-bg transition-colors;
+  }
+
+  .ws-vscode-switch[data-checked="true"] {
+    background: rgb(var(--p-accent) / 0.28);
+    border-color: rgb(var(--p-accent) / 0.55);
+  }
+
+  .ws-vscode-switch-thumb {
+    @apply absolute left-[3px] top-[3px] h-[18px] w-[18px] rounded-full bg-text shadow transition-transform;
+    transform: translateX(0);
+  }
+
+  .ws-vscode-switch[data-checked="true"] .ws-vscode-switch-thumb {
+    transform: translateX(20px);
+    background: #fff;
+  }
+
+  .ws-settings-input {
+    @apply w-full rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text outline-none placeholder:text-muted backdrop-blur-sm transition-colors hover:border-accent/40 focus-visible:border-accent;
+  }
+
+  .ws-settings-btn {
+    @apply inline-flex items-center gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm font-medium text-text backdrop-blur-sm transition-colors hover:border-accent/50 hover:bg-panel/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50;
+  }
+
+  .ws-settings-btn-ghost {
+    @apply border-transparent bg-transparent hover:border-border/60 hover:bg-panel/40;
+  }
+
+  .ws-settings-nav-item {
+    @apply relative flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-panel/40 hover:text-text;
+  }
+
+  .ws-settings-nav-item-active {
+    @apply bg-accent/10 text-text;
+  }
+
+  .ws-settings-list-item {
+    @apply flex w-full items-center gap-2 rounded-xl border border-border/60 bg-panel/20 px-3 py-2 text-left text-sm text-muted transition-colors hover:border-accent/50 hover:bg-panel/50 hover:text-text;
+  }
+
+  .ws-dropdown-btn {
+    @apply flex w-[240px] max-w-[44vw] items-center justify-between gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text backdrop-blur-sm transition-colors hover:border-accent/50 hover:bg-panel/50 focus-visible:outline-none;
+  }
+
+  .ws-dropdown-menu {
+    @apply absolute right-0 top-full z-50 mt-2 w-[280px] overflow-auto rounded-xl border border-border/60 bg-panel/90 p-1 shadow-xl backdrop-blur;
+    max-height: min(420px, calc(100vh - 96px));
+  }
+
+  .ws-dropdown-item {
+    @apply w-full rounded-lg px-3 py-2 text-left text-sm text-muted transition-colors hover:bg-bg/40 hover:text-text;
+  }
+
+  .ws-dropdown-item-active {
+    @apply bg-accent/10 text-text;
+  }
+
+  .ws-switch {
+    @apply relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-border/60 bg-panel/40 transition-colors;
+  }
+
+  .ws-switch[data-checked="true"] {
+    background: rgba(var(--p-accent) / 0.28);
+    border-color: rgba(var(--p-accent) / 0.45);
+  }
+
+  .ws-switch-thumb {
+    @apply absolute left-[3px] top-[3px] h-[18px] w-[18px] rounded-full bg-text shadow transition-transform;
+    transform: translateX(0);
+  }
+
+  .ws-switch[data-checked="true"] .ws-switch-thumb {
+    transform: translateX(20px);
+    background: #fff;
+  }
+
+  .ws-segment {
+    @apply inline-flex items-center overflow-hidden rounded-xl border border-border/60 bg-panel/30;
+  }
+
+  .ws-segment-item {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-sm text-muted transition-colors hover:bg-panel/50 hover:text-text;
+  }
+
+  .ws-segment-item-active {
+    @apply bg-accent/10 text-text;
   }
 
   .ws-msg {

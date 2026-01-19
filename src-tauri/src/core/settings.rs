@@ -11,6 +11,8 @@ pub struct AppSettings {
     pub offline_mode: bool,
     pub active_provider: Option<String>,
     #[serde(default)]
+    pub pompora_thinking: Option<String>,
+    #[serde(default)]
     pub workspace_root: Option<String>,
     #[serde(default)]
     pub recent_workspaces: Vec<String>,
@@ -29,6 +31,7 @@ impl Default for AppSettings {
             theme: Theme::Dark,
             offline_mode: false,
             active_provider: None,
+            pompora_thinking: None,
             workspace_root: None,
             recent_workspaces: Vec::new(),
         }

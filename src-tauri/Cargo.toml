@@ -40,4 +40,5 @@ thiserror = "2"
 tokio-util = "0.7"
 walkdir = "2"
 portable-pty = "0.8"
+urlencoding = "2"
 

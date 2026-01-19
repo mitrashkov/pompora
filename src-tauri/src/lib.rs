@@ -1,6 +1,6 @@
 mod core;
 
-use core::{ai, fsops, search, secrets, settings, terminal, workspace};
+use core::{ai, auth, fsops, search, secrets, settings, terminal, workspace};
 use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
@@ -54,6 +54,31 @@ fn provider_key_clear(provider: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+async fn auth_begin_login() -> Result<(String, String), String> {
+    auth::begin_login().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn auth_wait_login(state: String) -> Result<auth::AuthProfile, String> {
+    auth::wait_login(&state).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn auth_get_profile() -> Result<Option<auth::AuthProfile>, String> {
+    auth::load_profile().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn auth_logout() -> Result<(), String> {
+    auth::logout().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn auth_get_credits() -> Result<auth::CreditsResponse, String> {
+    auth::fetch_credits().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn workspace_get() -> Result<workspace::WorkspaceInfo, String> {
     workspace::workspace_get().map_err(|e| e.to_string())
 }
@@ -81,7 +106,7 @@ async fn debug_gemini_end_to_end(api_key: String) -> Result<String, String> {
         role: "user".to_string(),
         content: "Respond with exactly: OK".to_string(),
     };
-    let resp = ai::ai_chat(vec![test_message], None)
+    let resp = ai::ai_chat(vec![test_message], None, None)
         .await
         .map_err(|e| format!("ai_chat failed: {e}"))?;
 
@@ -102,7 +127,7 @@ async fn test_gemini_api() -> Result<String, String> {
         content: "Hello! Please respond with just 'API test successful'".to_string(),
     };
     
-    match ai_chat(vec![test_message], None).await {
+    match ai_chat(vec![test_message], None, None).await {
         Ok(result) => Ok(format!("Gemini API test successful. Response: {}", result.output)),
         Err(e) => Err(format!("Gemini API test failed: {}", e)),
     }
@@ -234,8 +259,12 @@ fn workspace_set(root: Option<String>) -> Result<workspace::WorkspaceInfo, Strin
 }
 
 #[tauri::command]
-async fn ai_chat(messages: Vec<ai::ChatMessage>, encryption_password: Option<String>) -> Result<ai::AiChatResult, String> {
-    ai::ai_chat(messages, encryption_password.as_deref())
+async fn ai_chat(
+    messages: Vec<ai::ChatMessage>,
+    encryption_password: Option<String>,
+    thinking: Option<String>,
+) -> Result<ai::AiChatResult, String> {
+    ai::ai_chat(messages, encryption_password.as_deref(), thinking.as_deref())
         .await
         .map_err(|e| e.to_string())
 }
@@ -245,8 +274,9 @@ async fn ai_chat_with_model(
     messages: Vec<ai::ChatMessage>,
     encryption_password: Option<String>,
     model: Option<String>,
+    thinking: Option<String>,
 ) -> Result<ai::AiChatResult, String> {
-    ai::ai_chat_with_model(messages, encryption_password.as_deref(), model.as_deref())
+    ai::ai_chat_with_model(messages, encryption_password.as_deref(), model.as_deref(), thinking.as_deref())
         .await
         .map_err(|e| e.to_string())
 }
@@ -263,6 +293,7 @@ async fn ai_run_action(
     content: String,
     selection: Option<String>,
     encryption_password: Option<String>,
+    thinking: Option<String>,
 ) -> Result<ai::AiRunResult, String> {
     ai::ai_run_action(
         &action,
@@ -270,6 +301,7 @@ async fn ai_run_action(
         &content,
         selection.as_deref(),
         encryption_password.as_deref(),
+        thinking.as_deref(),
     )
     .await
     .map_err(|e| e.to_string())
@@ -287,6 +319,11 @@ pub fn run() {
             provider_key_set,
             provider_key_get,
             provider_key_clear,
+            auth_begin_login,
+            auth_wait_login,
+            auth_get_profile,
+            auth_logout,
+            auth_get_credits,
             test_gemini_api,
             debug_gemini_end_to_end,
             workspace_get,

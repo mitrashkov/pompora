@@ -24,6 +24,31 @@ description = "Allows removing an AI provider key."
 commands.allow = ["provider_key_clear"]
 
 [[permission]]
+identifier = "allow-auth-begin-login"
+description = "Allows starting desktop login flow (opens browser with callback URL)."
+commands.allow = ["auth_begin_login"]
+
+[[permission]]
+identifier = "allow-auth-wait-login"
+description = "Allows awaiting completion of desktop login flow via localhost callback."
+commands.allow = ["auth_wait_login"]
+
+[[permission]]
+identifier = "allow-auth-get-profile"
+description = "Allows reading the current desktop auth profile (if signed in)."
+commands.allow = ["auth_get_profile"]
+
+[[permission]]
+identifier = "allow-auth-logout"
+description = "Allows logging out of the desktop account (clears stored API key and profile)."
+commands.allow = ["auth_logout"]
+
+[[permission]]
+identifier = "allow-auth-get-credits"
+description = "Allows fetching plan/credits for the signed-in desktop account."
+commands.allow = ["auth_get_credits"]
+
+[[permission]]
 identifier = "allow-workspace-get"
 description = "Allows reading workspace state (current root and recent workspaces)."
 commands.allow = ["workspace_get"]
@@ -132,6 +157,11 @@ permissions = [
   "allow-provider-key-status",
   "allow-provider-key-set",
   "allow-provider-key-clear",
+  "allow-auth-begin-login",
+  "allow-auth-wait-login",
+  "allow-auth-get-profile",
+  "allow-auth-logout",
+  "allow-auth-get-credits",
   "allow-workspace-get",
   "allow-workspace-set",
   "allow-workspace-pick-folder",
