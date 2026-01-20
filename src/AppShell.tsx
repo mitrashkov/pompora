@@ -1753,7 +1753,14 @@ export default function AppShell() {
           if (existing && existing.length > 2000) {
             const nextLen = (e.content ?? "").length;
             if (nextLen < existing.length * 0.3) {
-              throw new Error(`Refused to overwrite ${p} with a much shorter file to avoid destructive loss.`);
+              const ok = window.confirm(
+                `This edit would overwrite ${p} with a much shorter file.\n\n` +
+                  `Old size: ${existing.length} chars\nNew size: ${nextLen} chars\n\n` +
+                  `This can be correct when generating a new file, but it can also be destructive.\n\nOverwrite anyway?`
+              );
+              if (!ok) {
+                throw new Error(`Canceled overwrite for ${p}.`);
+              }
             }
           }
           await workspaceWriteFile(p, e.content ?? "");
@@ -2193,7 +2200,7 @@ export default function AppShell() {
     const first = (authProfile?.first_name ?? "").trim();
     const last = (authProfile?.last_name ?? "").trim();
     if (first && last) return `${first[0]!.toUpperCase()}${last[0]!.toUpperCase()}`;
-    if (first) return first.slice(0, 2).toUpperCase();
+    if (first) return first[0]!.toUpperCase();
     const email = (authProfile?.email ?? "").trim();
     if (email) return email[0]!.toUpperCase();
     return "U";
@@ -2331,7 +2338,7 @@ export default function AppShell() {
   const providerChoices = useMemo(
     () =>
       [
-        { id: "pompora", label: "Pompora AI", api: true },
+        { id: "pompora", label: "Pompora", api: false },
         { id: "openai", label: "GPT-4o mini", api: true },
         { id: "anthropic", label: "Claude 3.5 Sonnet", api: true },
         { id: "gemini", label: "Gemini Flash", api: true },
@@ -2354,6 +2361,7 @@ export default function AppShell() {
   const providerNeedsKey = useMemo(() => {
     const p = settings.active_provider;
     if (!p) return true;
+    if (p === "pompora") return false;
     // Local providers that don't need API keys
     return !["ollama", "lmstudio"].includes(p);
   }, [settings.active_provider]);
@@ -3294,6 +3302,7 @@ export default function AppShell() {
 
   const handleStoreKey = useCallback(async () => {
     if (!settings.active_provider) return;
+    if (settings.active_provider === "pompora") return;
     if (!apiKeyDraft.trim()) return;
     setIsKeyOperationInProgress(true);
     setSecretsError(null);
@@ -3316,6 +3325,7 @@ export default function AppShell() {
 
   const clearProviderKey = useCallback(async () => {
     if (!settings.active_provider) return;
+    if (settings.active_provider === "pompora") return;
     setIsKeyOperationInProgress(true);
     setSecretsError(null);
     try {
@@ -3351,6 +3361,15 @@ export default function AppShell() {
     if (!text) return;
     if (!settings.active_provider) return;
     if (settings.offline_mode) return;
+
+    if (settings.active_provider === "pompora" && !authProfile) {
+      notify({
+        kind: "info",
+        title: "Sign in required",
+        message: "To use Pompora, please log in from Settings → AI.",
+      });
+      return;
+    }
 
     if (activeChat.messages.length === 0 && /^Chat\s+\d+$/i.test(activeChat.title)) {
       setActiveChatTitle(deriveChatTitleFromPrompt(text));
@@ -3504,6 +3523,15 @@ export default function AppShell() {
         setActiveChatMessages([...base, ...preLogs, { role: "assistant", content: "", id: assistantId, rating: null }]);
         startStreamingToMessageId(assistantId, safeMsg);
       }
+
+      // If the active provider is Pompora, credits can change per request.
+      if (settings.active_provider === "pompora") {
+        try {
+          const credits = await authGetCredits();
+          setAuthCredits(credits);
+        } catch {
+        }
+      }
     } catch (e) {
       const f = friendlyAiError(String(e));
       notify({ kind: "error", title: f.title, message: f.message });
@@ -3514,6 +3542,7 @@ export default function AppShell() {
     activeChat.draft,
     activeChat.messages.length,
     activeChat.title,
+    authProfile,
     applyAiEditsNow,
     buildChangeSet,
     friendlyAiError,
@@ -3526,6 +3555,7 @@ export default function AppShell() {
     setActiveChatMessages,
     setActiveChatTitle,
     setSelectedChangePath,
+    authGetCredits,
     settings.active_provider,
     settings.offline_mode,
     startStreamingToMessageId,
@@ -4632,9 +4662,9 @@ export default function AppShell() {
                   aria-label={authProfile ? "Account" : "Sign in"}
                 >
                   {authProfile?.avatar_url ? (
-                    <img src={authProfile.avatar_url} className="h-5 w-5 rounded-full" alt="Profile" />
+                    <img src={authProfile.avatar_url} className="h-5 w-5 rounded-full object-cover" alt="Profile" />
                   ) : (
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgb(var(--p-panel2))] text-[11px] font-semibold text-text">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgb(var(--p-panel2))] text-[11px] font-semibold leading-none text-text">
                       {avatarLetter}
                     </div>
                   )}
@@ -6694,23 +6724,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
             },
           ] satisfies SettingItem[])
         : ([] as SettingItem[])),
-      {
-        id: "ai.apiKey",
-        section: "ai",
-        title: "AI: API Key",
-        description: "Paste your API key for the selected provider.",
-        keywords: "api key security",
-        renderControl: () => (
-          <input
-            className="ws-vscode-input"
-            placeholder="Paste your API key"
-            value={props.apiKeyDraft}
-            autoComplete="off"
-            spellCheck={false}
-            onChange={(e) => props.onApiKeyDraft(e.target.value)}
-          />
-        ),
-      },
+      ...(props.settings.active_provider && props.settings.active_provider !== "pompora"
+        ? ([
+            {
+              id: "ai.apiKey",
+              section: "ai" as const,
+              title: "AI: API Key",
+              description: "Paste your API key for the selected provider.",
+              keywords: "api key security",
+              renderControl: () => (
+                <input
+                  className="ws-vscode-input"
+                  placeholder="Paste your API key"
+                  value={props.apiKeyDraft}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(e) => props.onApiKeyDraft(e.target.value)}
+                />
+              ),
+            },
+          ] satisfies SettingItem[])
+        : ([] as SettingItem[])),
       {
         id: "ai.encryption",
         section: "ai",
@@ -6882,22 +6916,31 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                   {props.secretsError ? <div className="ws-vscode-error">{props.secretsError}</div> : null}
 
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="ws-vscode-btn"
-                      onClick={props.onStoreKey}
-                      disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.apiKeyDraft.trim() || !props.settings.active_provider}
-                    >
-                      Save Key
-                    </button>
-                    <button
-                      type="button"
-                      className="ws-vscode-btn ws-vscode-btn-ghost"
-                      onClick={props.onClearKey}
-                      disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.settings.active_provider}
-                    >
-                      Clear Key
-                    </button>
+                    {props.settings.active_provider && props.settings.active_provider !== "pompora" ? (
+                      <>
+                        <button
+                          type="button"
+                          className="ws-vscode-btn"
+                          onClick={props.onStoreKey}
+                          disabled={
+                            !props.isSettingsLoaded ||
+                            props.isKeyOperationInProgress ||
+                            !props.apiKeyDraft.trim() ||
+                            !props.settings.active_provider
+                          }
+                        >
+                          Save Key
+                        </button>
+                        <button
+                          type="button"
+                          className="ws-vscode-btn ws-vscode-btn-ghost"
+                          onClick={props.onClearKey}
+                          disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.settings.active_provider}
+                        >
+                          Clear Key
+                        </button>
+                      </>
+                    ) : null}
                     <div className="flex-1" />
                     <button type="button" className="ws-vscode-btn" onClick={props.onDebugGemini}>
                       Test AI
