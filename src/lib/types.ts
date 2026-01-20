@@ -39,6 +39,8 @@ export type AuthProfile = {
   email: string;
   plan: string;
   avatar_url: string;
+  first_name: string;
+  last_name: string;
 };
 
 export type CreditsBucket = {

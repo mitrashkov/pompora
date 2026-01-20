@@ -2190,15 +2190,25 @@ export default function AppShell() {
   }, [isAccountMenuOpen]);
 
   const avatarLetter = useMemo(() => {
+    const first = (authProfile?.first_name ?? "").trim();
+    const last = (authProfile?.last_name ?? "").trim();
+    if (first && last) return `${first[0]!.toUpperCase()}${last[0]!.toUpperCase()}`;
+    if (first) return first.slice(0, 2).toUpperCase();
     const email = (authProfile?.email ?? "").trim();
     if (email) return email[0]!.toUpperCase();
     return "U";
-  }, [authProfile?.email]);
+  }, [authProfile?.email, authProfile?.first_name, authProfile?.last_name]);
 
   const safeOpenUrl = useCallback(async (url: string) => {
     try {
-      await openUrl(url);
-      return true;
+      const attempt = openUrl(url);
+      const result = await Promise.race([
+        attempt
+          .then(() => "ok" as const)
+          .catch(() => "err" as const),
+        new Promise<"timeout">((resolve) => window.setTimeout(() => resolve("timeout"), 1500)),
+      ]);
+      if (result === "ok") return true;
     } catch {
     }
     try {
@@ -2254,22 +2264,55 @@ export default function AppShell() {
             window.prompt("Open this URL in your browser:", target);
           } catch {
           }
+          setIsAuthBusy(false);
+          void authWaitLogin(state)
+            .then(async (profile) => {
+              setAuthProfile(profile);
+              try {
+                const credits = await authGetCredits();
+                setAuthCredits(credits);
+              } catch {
+              }
+              try {
+                if (settings.active_provider === "pompora") {
+                  setKeyStatus(await providerKeyStatus("pompora"));
+                }
+              } catch {
+              }
+              notify({ kind: "info", title: "Signed in", message: "Connected to your Pompora account." });
+            })
+            .catch((e) => {
+              notify({ kind: "error", title: "Sign in failed", message: String(e) });
+            });
+          return;
         }
-        const profile = await authWaitLogin(state);
-        setAuthProfile(profile);
-        try {
-          const credits = await authGetCredits();
-          setAuthCredits(credits);
-        } catch {
-        }
-        notify({ kind: "info", title: "Signed in", message: "Connected to your Pompora account." });
+        setIsAuthBusy(false);
+        void authWaitLogin(state)
+          .then(async (profile) => {
+            setAuthProfile(profile);
+            try {
+              const credits = await authGetCredits();
+              setAuthCredits(credits);
+            } catch {
+            }
+            try {
+              if (settings.active_provider === "pompora") {
+                setKeyStatus(await providerKeyStatus("pompora"));
+              }
+            } catch {
+            }
+            notify({ kind: "info", title: "Signed in", message: "Connected to your Pompora account." });
+          })
+          .catch((e) => {
+            notify({ kind: "error", title: "Sign in failed", message: String(e) });
+          });
       } catch (e) {
         notify({ kind: "error", title: "Sign in failed", message: String(e) });
       } finally {
         setIsAuthBusy(false);
       }
     },
-    [authGetCredits, authWaitLogin, isAuthBusy, notify, safeOpenUrl]
+    [authGetCredits, authWaitLogin, isAuthBusy, notify, safeOpenUrl, settings.active_provider]
   );
 
   // Additional effect to refresh key status when showKeySaved is true
@@ -4599,7 +4642,7 @@ export default function AppShell() {
 
                 {isAccountMenuOpen ? (
                   authProfile ? (
-                    <div className="absolute right-0 top-full z-50 mt-1 w-72 overflow-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[420px]">
+                    <div className="absolute right-0 top-full z-[80] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <div className="px-3 py-2">
                         <div className="text-xs font-semibold text-text">{authProfile.email || "Account"}</div>
                         <div className="mt-0.5 text-[11px] text-muted">Plan: {authCredits?.plan || authProfile.plan || "starter"}</div>
@@ -4634,7 +4677,7 @@ export default function AppShell() {
                       />
                     </div>
                   ) : (
-                    <div className="absolute right-0 top-full z-50 mt-1 w-72 overflow-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[420px]">
+                    <div className="absolute right-0 top-full z-[80] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <div className="px-3 py-2">
                         <div className="text-xs font-semibold text-text">Not signed in</div>
                         <div className="mt-0.5 text-[11px] text-muted">Sign in to sync credits and use Pompora AI.</div>
@@ -4815,6 +4858,8 @@ export default function AppShell() {
                   <div className="min-h-0 flex-1 overflow-auto">
                     <SettingsScreen
                       settings={settings}
+                      authProfile={authProfile}
+                      isAuthBusy={isAuthBusy}
                       providerLabel={providerLabel}
                       keyStatus={keyStatus}
                       providerChoices={providerChoices}
@@ -4837,6 +4882,8 @@ export default function AppShell() {
                       onEncryptionPasswordDraft={setEncryptionPasswordDraft}
                       onStoreKey={handleStoreKey}
                       onClearKey={clearProviderKey}
+                      onLoginToPompora={() => void beginDesktopAuthWithMode("login")}
+                      onSignupToPompora={() => void beginDesktopAuthWithMode("signup")}
                       onSaveSettings={saveSettingsNow}
                       showKeySaved={showKeySaved}
                       showKeyCleared={showKeyCleared}
@@ -6407,6 +6454,8 @@ function CommandPalette(props: {
 
 interface SettingsScreenProps {
   settings: AppSettings;
+  authProfile: AuthProfile | null;
+  isAuthBusy: boolean;
   providerLabel: string;
   keyStatus: KeyStatus | null;
   providerChoices: ReadonlyArray<{ id: string; label: string; api: boolean }>;
@@ -6429,6 +6478,8 @@ interface SettingsScreenProps {
   onEncryptionPasswordDraft: (v: string) => void;
   onStoreKey: () => void;
   onClearKey: () => void;
+  onLoginToPompora: () => void;
+  onSignupToPompora: () => void;
   onSaveSettings: () => void;
   showKeySaved: boolean;
   showKeyCleared: boolean;
@@ -6800,6 +6851,33 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
               {activeSection === "ai" && !q ? (
                 <div className="mt-3 space-y-3">
                   <div className="text-xs text-muted">Status: {providerStatusLabel}</div>
+
+                  {props.settings.active_provider === "pompora" && !props.authProfile ? (
+                    <div className="rounded-xl border border-border bg-panel p-3">
+                      <div className="text-sm font-semibold text-text">Connect to Pompora</div>
+                      <div className="mt-1 text-xs text-muted">
+                        Log in to sync your plan and credits across devices.
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className="ws-vscode-btn ws-vscode-btn-primary"
+                          onClick={props.onLoginToPompora}
+                          disabled={props.isAuthBusy}
+                        >
+                          Log in
+                        </button>
+                        <button
+                          type="button"
+                          className="ws-vscode-btn"
+                          onClick={props.onSignupToPompora}
+                          disabled={props.isAuthBusy}
+                        >
+                          Create account
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
 
                   {props.secretsError ? <div className="ws-vscode-error">{props.secretsError}</div> : null}
 
