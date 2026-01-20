@@ -20,6 +20,10 @@ pub struct AuthProfile {
     pub plan: String,
     #[serde(default)]
     pub avatar_url: String,
+    #[serde(default)]
+    pub first_name: String,
+    #[serde(default)]
+    pub last_name: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -187,6 +191,8 @@ fn handle_callback_request(state_expected: &str, req: &str) -> Result<AuthProfil
     let email = qp.get("email").cloned().unwrap_or_else(|| "".to_string());
     let user_id = qp.get("userId").cloned().unwrap_or_else(|| "".to_string());
     let avatar_url = qp.get("avatarUrl").cloned().unwrap_or_else(|| "".to_string());
+    let first_name = qp.get("firstName").cloned().unwrap_or_else(|| "".to_string());
+    let last_name = qp.get("lastName").cloned().unwrap_or_else(|| "".to_string());
 
     secrets::provider_key_set("pompora", api_key, None).map_err(|e| anyhow!(e))?;
 
@@ -195,6 +201,8 @@ fn handle_callback_request(state_expected: &str, req: &str) -> Result<AuthProfil
         email,
         plan,
         avatar_url,
+        first_name,
+        last_name,
     };
 
     store_profile(&profile)?;
