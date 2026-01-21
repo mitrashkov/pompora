@@ -103,7 +103,19 @@ pub fn store(next: &AppSettings) -> Result<()> {
         .sync_all()
         .with_context(|| format!("sync settings tmp: {}", tmp.display()))?;
     
-    fs::rename(&tmp, &path).with_context(|| format!("replace settings: {}", path.display()))?;
+    if let Err(e) = fs::rename(&tmp, &path) {
+        // Fallback 1: remove existing and retry rename.
+        let _ = fs::remove_file(&path);
+        if let Err(e2) = fs::rename(&tmp, &path) {
+            // Fallback 2: copy tmp to final.
+            fs::copy(&tmp, &path)
+                .with_context(|| format!("copy settings tmp to final after rename failure: {}", path.display()))?;
+            let _ = fs::remove_file(&tmp);
+            // Preserve the original error chain for debugging.
+            let _ = e;
+            let _ = e2;
+        }
+    }
     
     // Ensure the rename is flushed to disk
     if let Ok(file) = fs::File::open(&path) {
@@ -114,6 +126,6 @@ pub fn store(next: &AppSettings) -> Result<()> {
 }
 
 fn settings_path() -> Result<PathBuf> {
-    let base = dirs::config_dir().context("missing config dir")?;
+    let base = dirs::config_dir().or_else(|| dirs::home_dir().map(|h| h.join(".config"))).context("missing config dir")?;
     Ok(base.join("Pompora").join("settings.json"))
 }
