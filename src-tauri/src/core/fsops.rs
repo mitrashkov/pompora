@@ -2,6 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Component, PathBuf};
+use std::collections::HashSet;
 use walkdir::WalkDir;
 
 use super::settings;
@@ -71,6 +72,7 @@ pub fn workspace_list_dir(rel_dir: Option<&str>) -> Result<Vec<DirEntryInfo>> {
     let dir = abs_path(rel, true)?;
 
     let mut out = Vec::new();
+    let mut seen = HashSet::<String>::new();
     for e in fs::read_dir(&dir).with_context(|| format!("list dir: {}", dir.display()))? {
         let e = e.with_context(|| format!("list dir entry: {}", dir.display()))?;
         let ft = e.file_type().with_context(|| "file_type")?;
@@ -83,11 +85,13 @@ pub fn workspace_list_dir(rel_dir: Option<&str>) -> Result<Vec<DirEntryInfo>> {
             format!("{}/{}", base, name)
         };
 
-        out.push(DirEntryInfo {
-            path: child_rel,
-            name,
-            is_dir: ft.is_dir(),
-        });
+        if seen.insert(child_rel.clone()) {
+            out.push(DirEntryInfo {
+                path: child_rel,
+                name,
+                is_dir: ft.is_dir(),
+            });
+        }
     }
 
     out.sort_by(|a, b| {
@@ -104,6 +108,7 @@ pub fn workspace_list_dir(rel_dir: Option<&str>) -> Result<Vec<DirEntryInfo>> {
 pub fn workspace_list_files(max_files: usize) -> Result<Vec<String>> {
     let root = workspace_root_path()?;
     let mut out: Vec<String> = Vec::new();
+    let mut seen = HashSet::<String>::new();
 
     for entry in WalkDir::new(&root)
         .follow_links(false)
@@ -136,7 +141,9 @@ pub fn workspace_list_files(max_files: usize) -> Result<Vec<String>> {
         if rel.trim().is_empty() {
             continue;
         }
-        out.push(rel);
+        if seen.insert(rel.clone()) {
+            out.push(rel);
+        }
     }
 
     out.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
