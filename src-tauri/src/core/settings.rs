@@ -93,35 +93,40 @@ pub fn store(next: &AppSettings) -> Result<()> {
 
     let tmp = path.with_extension("json.tmp");
     let s = serde_json::to_string_pretty(next).context("serialize settings")?;
-    fs::write(&tmp, s).with_context(|| format!("write settings tmp: {}", tmp.display()))?;
-    
-    // Ensure the write is flushed to disk
-    OpenOptions::new()
-        .read(true)
-        .open(&tmp)
-        .with_context(|| format!("open settings tmp for sync: {}", tmp.display()))?
-        .sync_all()
-        .with_context(|| format!("sync settings tmp: {}", tmp.display()))?;
-    
+    fs::write(&tmp, s.as_bytes()).with_context(|| format!("write settings tmp: {}", tmp.display()))?;
+
+    // Best-effort durability: on some systems/filesystems, fsync can fail even though the
+    // write succeeded. Settings should still be saved in that case.
+    if let Ok(f) = OpenOptions::new().read(true).write(true).open(&tmp) {
+        let _ = f.sync_all();
+    }
+
     if let Err(e) = fs::rename(&tmp, &path) {
         // Fallback 1: remove existing and retry rename.
         let _ = fs::remove_file(&path);
         if let Err(e2) = fs::rename(&tmp, &path) {
             // Fallback 2: copy tmp to final.
-            fs::copy(&tmp, &path)
-                .with_context(|| format!("copy settings tmp to final after rename failure: {}", path.display()))?;
+            let copy_res = fs::copy(&tmp, &path)
+                .with_context(|| format!("copy settings tmp to final after rename failure: {}", path.display()));
+            if copy_res.is_err() {
+                // Fallback 3: on Windows the destination can be locked, and copy won't overwrite.
+                // As a last resort, try writing the final file directly.
+                let _ = fs::remove_file(&path);
+                fs::write(&path, s.as_bytes())
+                    .with_context(|| format!("write settings final after rename+copy failure: {}", path.display()))?;
+            }
             let _ = fs::remove_file(&tmp);
             // Preserve the original error chain for debugging.
             let _ = e;
             let _ = e2;
         }
     }
-    
-    // Ensure the rename is flushed to disk
+
+    // Best-effort durability for the final file.
     if let Ok(file) = fs::File::open(&path) {
         let _ = file.sync_all();
     }
-    
+
     Ok(())
 }
 
