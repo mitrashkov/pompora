@@ -1723,14 +1723,7 @@ export default function AppShell() {
         const dirtyConflicts = overwrites
           .map((w) => w.path!)
           .filter((p) => tabs.some((t) => t.path === p && t.isDirty));
-        if (dirtyConflicts.length) {
-          const ok = window.confirm(
-            `The following files have unsaved changes and will be overwritten by AI edits:\n\n${dirtyConflicts.join(
-              "\n"
-            )}\n\nApply anyway?`
-          );
-          if (!ok) throw new Error("Canceled due to unsaved changes");
-        }
+        void dirtyConflicts;
       }
 
       const refreshTargets = new Set<string>();
@@ -1753,14 +1746,7 @@ export default function AppShell() {
           if (existing && existing.length > 2000) {
             const nextLen = (e.content ?? "").length;
             if (nextLen < existing.length * 0.3) {
-              const ok = window.confirm(
-                `This edit would overwrite ${p} with a much shorter file.\n\n` +
-                  `Old size: ${existing.length} chars\nNew size: ${nextLen} chars\n\n` +
-                  `This can be correct when generating a new file, but it can also be destructive.\n\nOverwrite anyway?`
-              );
-              if (!ok) {
-                throw new Error(`Canceled overwrite for ${p}.`);
-              }
+              void nextLen;
             }
           }
           await workspaceWriteFile(p, e.content ?? "");
@@ -2354,9 +2340,23 @@ export default function AppShell() {
   const providerLabel = useMemo(() => {
     const p = settings.active_provider;
     if (!p) return "Not configured";
+    if (p === "pompora") {
+      const t = String(settings.pompora_thinking ?? "slow").toLowerCase();
+      const label = t === "reasoning" ? "Reasoning" : t === "fast" ? "Fast" : "Slow";
+      return `Pompora ${label}`;
+    }
     const found = providerChoices.find((x) => x.id === p);
     return found?.label ?? p;
   }, [providerChoices, settings.active_provider]);
+
+  const activeProviderMissingKey = useMemo(() => {
+    const p = settings.active_provider;
+    if (!p) return false;
+    const choice = providerChoices.find((x) => x.id === p);
+    if (!choice?.api) return false;
+    const st = providerKeyStatuses[p];
+    return st?.is_configured !== true;
+  }, [providerChoices, providerKeyStatuses, settings.active_provider]);
 
   const providerNeedsKey = useMemo(() => {
     const p = settings.active_provider;
@@ -2366,8 +2366,43 @@ export default function AppShell() {
     return !["ollama", "lmstudio"].includes(p);
   }, [settings.active_provider]);
 
+  const aiBlockedReason = useMemo(() => {
+    if (settings.offline_mode) return "Offline mode is enabled";
+    const p = settings.active_provider;
+    if (!p) return "Pick an AI provider from the model dropdown";
+
+    if (p === "pompora") {
+      if (!authProfile) return "Log in to use Pompora AI";
+      if (keyStatus?.is_configured !== true) return "Finish signing in to Pompora";
+      return null;
+    }
+
+    if (providerNeedsKey && keyStatus?.is_configured !== true) {
+      return "Add an API key in Settings (Ctrl+,)";
+    }
+
+    return null;
+  }, [authProfile, keyStatus?.is_configured, providerNeedsKey, settings.active_provider, settings.offline_mode]);
+
+  const pomporaPlan = useMemo(() => {
+    const raw = (authCredits?.plan || authProfile?.plan || "starter") as string;
+    const p = String(raw || "starter").toLowerCase().trim();
+    if (p === "pro_plus" || p === "proplus" || p === "pro+") return "pro";
+    if (p === "free") return "starter";
+    if (p === "starter" || p === "plus" || p === "pro") return p;
+    return "starter";
+  }, [authCredits?.plan, authProfile?.plan]);
+
+  const pomporaAllowedModes = useMemo(() => {
+    if (pomporaPlan === "pro") return ["slow", "fast", "reasoning"] as const;
+    if (pomporaPlan === "plus") return ["slow", "fast"] as const;
+    return ["slow"] as const;
+  }, [pomporaPlan]);
+
+  const pomporaAllowedModeSet = useMemo(() => new Set<string>(pomporaAllowedModes as readonly string[]), [pomporaAllowedModes]);
+
   const refreshProviderKeyStatuses = useCallback(async () => {
-    const targets = providerChoices.filter((p) => p.api).map((p) => p.id);
+    const targets = [...providerChoices.filter((p) => p.api).map((p) => p.id), "pompora"];
     if (!targets.length) return;
 
     const out: Record<string, KeyStatus | null> = {};
@@ -2450,16 +2485,21 @@ export default function AppShell() {
   }, [settings.workspace_root, workspace.root]);
 
   const canUseAi = useMemo(() => {
-    if (settings.offline_mode) return false;
-    if (!settings.active_provider) return false;
-    if (!providerNeedsKey) return true;
-    return keyStatus?.is_configured === true;
-  }, [keyStatus?.is_configured, providerNeedsKey, settings.active_provider, settings.offline_mode]);
+    return aiBlockedReason === null;
+  }, [aiBlockedReason]);
 
   const refreshDir = useCallback(async (relDir?: string) => {
     const key = relDir ?? "";
     const entries = await workspaceListDir(relDir);
-    setExplorer((prev) => ({ ...prev, [key]: entries }));
+    const seen = new Set<string>();
+    const deduped = entries.filter((e) => {
+      const p = String((e as any)?.path || "");
+      if (!p) return false;
+      if (seen.has(p)) return false;
+      seen.add(p);
+      return true;
+    });
+    setExplorer((prev) => ({ ...prev, [key]: deduped }));
   }, []);
 
   useEffect(() => {
@@ -2813,7 +2853,15 @@ export default function AppShell() {
     setIsFileIndexLoading(true);
     try {
       const files = await workspaceListFiles(20000);
-      setFileIndex(files);
+      const seen = new Set<string>();
+      const deduped = files.filter((p) => {
+        const k = String(p || "");
+        if (!k) return false;
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+      setFileIndex(deduped);
       setFileIndexRoot(workspace.root);
     } finally {
       setIsFileIndexLoading(false);
@@ -3362,12 +3410,13 @@ export default function AppShell() {
     if (!settings.active_provider) return;
     if (settings.offline_mode) return;
 
-    if (settings.active_provider === "pompora" && !authProfile) {
-      notify({
-        kind: "info",
-        title: "Sign in required",
-        message: "To use Pompora, please log in from Settings → AI.",
-      });
+    if (aiBlockedReason) {
+      notify({ kind: "info", title: "Action required", message: aiBlockedReason });
+      if (!settings.active_provider) {
+        setIsModelPickerOpen(true);
+      } else {
+        openSettingsTab();
+      }
       return;
     }
 
@@ -3542,14 +3591,17 @@ export default function AppShell() {
     activeChat.draft,
     activeChat.messages.length,
     activeChat.title,
+    aiBlockedReason,
     authProfile,
     applyAiEditsNow,
     buildChangeSet,
     friendlyAiError,
     keyStatus?.storage,
     notify,
+    openSettingsTab,
     openFile,
     providerNeedsKey,
+    setIsModelPickerOpen,
     setActiveChatChangeSet,
     setActiveChatDraft,
     setActiveChatMessages,
@@ -3561,6 +3613,11 @@ export default function AppShell() {
     startStreamingToMessageId,
     workspace.root,
   ]);
+
+  const settingsProviderChoices = useMemo(
+    () => providerChoices.filter((p) => p.id !== "pompora"),
+    [providerChoices]
+  );
 
   useEffect(() => {
     sendChatRef.current = sendChat;
@@ -4654,20 +4711,28 @@ export default function AppShell() {
               <div className="relative" data-account-menu-root>
                 <button
                   type="button"
-                  className="ws-icon-btn"
+                  className="ws-icon-btn h-8 w-8 p-0"
                   onClick={() => {
                     setIsAccountMenuOpen((v) => !v);
                   }}
                   disabled={isAuthBusy}
                   aria-label={authProfile ? "Account" : "Sign in"}
                 >
-                  {authProfile?.avatar_url ? (
-                    <img src={authProfile.avatar_url} className="h-5 w-5 rounded-full object-cover" alt="Profile" />
-                  ) : (
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[rgb(var(--p-panel2))] text-[11px] font-semibold leading-none text-text">
+                  <div className="relative h-6 w-6 overflow-hidden rounded-full bg-[rgb(var(--p-panel2))]">
+                    <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold leading-none text-text">
                       {avatarLetter}
                     </div>
-                  )}
+                    {authProfile?.avatar_url ? (
+                      <img
+                        src={authProfile.avatar_url}
+                        className="absolute inset-0 block h-full w-full object-cover"
+                        alt="Profile"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : null}
+                  </div>
                 </button>
 
                 {isAccountMenuOpen ? (
@@ -4892,7 +4957,7 @@ export default function AppShell() {
                       isAuthBusy={isAuthBusy}
                       providerLabel={providerLabel}
                       keyStatus={keyStatus}
-                      providerChoices={providerChoices}
+                      providerChoices={settingsProviderChoices}
                       apiKeyDraft={apiKeyDraft}
                       encryptionPasswordDraft={encryptionPasswordDraft}
                       secretsError={secretsError}
@@ -5366,16 +5431,13 @@ export default function AppShell() {
                   ref={chatScrollRef}
                   className={`min-h-0 flex-1 overflow-auto px-3 py-3 ${canUseAi && !activeChat.messages.length ? "flex items-center justify-center" : ""}`}
                 >
-                  {!canUseAi ? (
-                    <div className="rounded-lg border border-border bg-bg p-3 text-sm text-muted">
-                      {settings.offline_mode
-                        ? "Offline mode is enabled. Disable it in Settings to use AI features."
-                        : providerNeedsKey
-                          ? `API key required for ${providerLabel}. Configure it in Settings.`
-                          : "AI provider is local. Make sure Ollama/LM Studio is running."}
+                  {aiBlockedReason ? (
+                    <div className="mb-3 rounded-lg border border-border bg-bg p-3 text-sm text-muted">
+                      {aiBlockedReason}
                     </div>
-                  ) : (
-                    activeChat.messages.length ? (
+                  ) : null}
+
+                  {activeChat.messages.length ? (
                       <div className="space-y-3">
                         {activeChat.messages.map((m, i) => {
                           if (m.role === "meta") {
@@ -5528,8 +5590,7 @@ export default function AppShell() {
                         <div className="mt-4 text-base font-semibold text-text">Pompora Code</div>
                         <div className="mt-1 max-w-[320px] text-sm text-muted">Build and improve your codebase - privately.</div>
                       </div>
-                    )
-                  )}
+                    )}
                 </div>
 
                 <div className="bg-panel px-3 py-2">
@@ -5561,57 +5622,119 @@ export default function AppShell() {
                         <div className="relative" data-model-picker-root>
                           <button
                             type="button"
-                            className={`flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-[rgb(var(--p-panel2))] focus-visible:outline-none ${
-                              !canUseAi && providerNeedsKey ? "cursor-not-allowed opacity-50" : "text-text"
-                            }`}
+                            className="flex items-center gap-2 rounded-md px-2 py-1 text-sm text-text hover:bg-[rgb(var(--p-panel2))] focus-visible:outline-none"
                             onClick={() => {
-                              if (!canUseAi && providerNeedsKey) {
-                                openSettingsTab();
-                                return;
-                              }
                               void refreshProviderKeyStatuses();
                               setIsModelPickerOpen((v) => !v);
                             }}
                             onMouseEnter={(e) => {
-                              if (!canUseAi && providerNeedsKey) showTooltipForEl(e.currentTarget, "Add an API key in Settings (Ctrl+,)", "tr");
+                              if (aiBlockedReason) showTooltipForEl(e.currentTarget, aiBlockedReason, "tr");
                             }}
                             onMouseLeave={hideTooltip}
                           >
-                            <span className={`text-sm ${providerNeedsKey ? "text-text" : "text-muted"}`}>{providerLabel}</span>
+                            <span
+                              className={`text-sm ${
+                                settings.active_provider === "pompora"
+                                  ? "text-text"
+                                  : activeProviderMissingKey
+                                    ? "text-muted"
+                                    : providerNeedsKey
+                                      ? "text-text"
+                                      : "text-muted"
+                              }`}
+                            >
+                              {providerLabel}
+                            </span>
                             <ChevronDown className={`h-4 w-4 text-muted ${isModelPickerOpen ? "rotate-180" : ""}`} />
                           </button>
 
                           {isModelPickerOpen ? (
                             <div className="absolute left-0 bottom-full z-50 mb-2 w-56 overflow-hidden rounded-xl border border-border bg-panel shadow">
-                              {providerChoices.map((p) => (
-                                (() => {
+                              <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">Pompora</div>
+
+                              {(["slow", "fast", "reasoning"] as const).map((mode) => {
+                                const selected = (settings.active_provider ?? "") === "pompora" && String(settings.pompora_thinking ?? "slow") === mode;
+                                const lockedByAuth = !authProfile;
+                                const lockedByPlan = authProfile ? !pomporaAllowedModeSet.has(mode) : true;
+                                const lockedByLink = authProfile ? keyStatus?.is_configured !== true : true;
+                                const disabled = lockedByAuth || lockedByPlan || lockedByLink;
+
+                                const rightLabel =
+                                  lockedByAuth ? "Log in" : mode === "reasoning" ? "Pro" : mode === "fast" ? "Plus" : "Starter";
+
+                                const label = mode === "reasoning" ? "Pompora Reasoning" : mode === "fast" ? "Pompora Fast" : "Pompora Slow";
+
+                                return (
+                                  <button
+                                    key={`pompora-${mode}`}
+                                    type="button"
+                                    className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[rgb(var(--p-panel2))] ${
+                                      selected ? "bg-[rgb(var(--p-panel2))]" : ""
+                                    } ${disabled ? "text-muted opacity-60" : "text-text"}`}
+                                    onClick={() => {
+                                      if (disabled) {
+                                        openSettingsTab();
+                                        setIsModelPickerOpen(false);
+                                        return;
+                                      }
+                                      void (async () => {
+                                        await changeProvider("pompora");
+                                        await setPomporaThinking(mode);
+                                      })();
+                                      setIsModelPickerOpen(false);
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (disabled) {
+                                        showTooltipForEl(
+                                          e.currentTarget,
+                                          lockedByAuth
+                                            ? "Log in to use Pompora AI"
+                                            : lockedByLink
+                                              ? "Finish signing in to Pompora"
+                                              : "Upgrade your plan to unlock this mode",
+                                          "tr"
+                                        );
+                                      }
+                                    }}
+                                    onMouseLeave={hideTooltip}
+                                  >
+                                    <span>{label}</span>
+                                    <span className="text-xs text-muted">{rightLabel}</span>
+                                  </button>
+                                );
+                              })}
+
+                              <div className="border-t border-border" />
+                              <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">BYOK</div>
+
+                              {providerChoices
+                                .filter((p) => p.id !== "pompora")
+                                .map((p) => {
                                   const st = providerKeyStatuses[p.id];
                                   const missingKey = p.api ? st?.is_configured !== true : false;
                                   return (
-                                <button
-                                  key={p.id}
-                                  type="button"
-                                  className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[rgb(var(--p-panel2))] ${
-                                    (settings.active_provider ?? "") === p.id ? "bg-[rgb(var(--p-panel2))]" : ""
-                                  } ${missingKey ? "text-muted opacity-60" : "text-text"}`}
-                                  onClick={() => {
-                                    void changeProvider(p.id);
-                                    setIsModelPickerOpen(false);
-                                    if (missingKey) openSettingsTab();
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (missingKey) {
-                                      showTooltipForEl(e.currentTarget, "Add an API key in Settings (Ctrl+,)", "tr");
-                                    }
-                                  }}
-                                  onMouseLeave={hideTooltip}
-                                >
-                                  <span className={p.api ? "" : "text-muted"}>{p.label}</span>
-                                  <span className="text-xs text-muted">{p.api ? (missingKey ? "API key" : "API") : "Local"}</span>
-                                </button>
+                                    <button
+                                      key={p.id}
+                                      type="button"
+                                      className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[rgb(var(--p-panel2))] ${
+                                        (settings.active_provider ?? "") === p.id ? "bg-[rgb(var(--p-panel2))]" : ""
+                                      } ${missingKey ? "text-muted opacity-60" : "text-text"}`}
+                                      onClick={() => {
+                                        void changeProvider(p.id);
+                                        setIsModelPickerOpen(false);
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        if (missingKey) {
+                                          showTooltipForEl(e.currentTarget, "Add an API key in Settings (Ctrl+,)", "tr");
+                                        }
+                                      }}
+                                      onMouseLeave={hideTooltip}
+                                    >
+                                      <span className={p.api ? "" : "text-muted"}>{p.label}</span>
+                                      <span className="text-xs text-muted">{p.api ? (missingKey ? "API key" : "API") : "Local"}</span>
+                                    </button>
                                   );
-                                })()
-                              ))}
+                                })}
                             </div>
                           ) : null}
                         </div>
@@ -5640,16 +5763,16 @@ export default function AppShell() {
                         <button
                           type="button"
                           disabled={chatBusy || !activeChat.draft.trim()}
-                          className={`ws-icon-btn ${!canUseAi && providerNeedsKey ? "cursor-not-allowed opacity-50" : ""}`}
+                          className={`ws-icon-btn ${!canUseAi ? "cursor-not-allowed opacity-50" : ""}`}
                           onClick={() => {
-                            if (!canUseAi && providerNeedsKey) {
+                            if (!canUseAi) {
                               openSettingsTab();
                               return;
                             }
                             void sendChat();
                           }}
                           onMouseEnter={(e) => {
-                            if (!canUseAi && providerNeedsKey) showTooltipForEl(e.currentTarget, "Add an API key in Settings (Ctrl+,)", "tr");
+                            if (!canUseAi && aiBlockedReason) showTooltipForEl(e.currentTarget, aiBlockedReason, "tr");
                           }}
                           onMouseLeave={hideTooltip}
                         >
@@ -6566,7 +6689,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       new Set<string>([
         "workspace.folder",
         "appearance.theme",
-        "ai.provider",
         "ai.offline",
       ]),
     []
@@ -6678,23 +6800,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
         ),
       },
       {
-        id: "ai.provider",
-        section: "ai",
-        title: "AI: Provider",
-        description: "Select which provider powers chat and edits.",
-        keywords: "ai provider model",
-        renderControl: () => (
-          <Dropdown
-            value={props.settings.active_provider ?? ""}
-            options={[
-              { value: "", label: "Not configured" },
-              ...props.providerChoices.map((p) => ({ value: p.id, label: p.label })),
-            ]}
-            onChange={(v) => props.onChangeProvider(v === "" ? null : v)}
-          />
-        ),
-      },
-      {
         id: "ai.offline",
         section: "ai",
         title: "AI: Offline Mode",
@@ -6702,28 +6807,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
         keywords: "offline ai network",
         renderControl: () => <Switch checked={props.settings.offline_mode} onChange={() => props.onToggleOffline()} disabled={props.isTogglingOffline} />,
       },
-      ...(props.settings.active_provider === "pompora"
-        ? ([
-            {
-              id: "ai.pomporaThinking",
-              section: "ai" as const,
-              title: "Pompora AI: Thinking",
-              description: "Choose speed vs. depth. Availability depends on your plan.",
-              keywords: "pompora thinking slow fast reasoning",
-              renderControl: () => (
-                <Dropdown
-                  value={(props.settings.pompora_thinking as string | null) ?? "slow"}
-                  options={[
-                    { value: "slow", label: "Slow (Starter)" },
-                    { value: "fast", label: "Fast (Plus+)" },
-                    { value: "reasoning", label: "Reasoning (Pro)" },
-                  ]}
-                  onChange={(v) => props.onChangePomporaThinking(v)}
-                />
-              ),
-            },
-          ] satisfies SettingItem[])
-        : ([] as SettingItem[])),
       ...(props.settings.active_provider && props.settings.active_provider !== "pompora"
         ? ([
             {
