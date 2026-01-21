@@ -3341,8 +3341,28 @@ export default function AppShell() {
         await settingsSet(next);
       } catch (e) {
         console.error("Failed to save pompora thinking", e);
-        notify({ kind: "error", title: "Settings", message: "Failed to save thinking mode" });
+        notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${String(e)}` });
         setSettingsState(settings);
+      }
+    },
+    [notify, settings]
+  );
+
+  const selectPomporaMode = useCallback(
+    async (mode: "slow" | "fast" | "reasoning") => {
+      const prev = settings;
+      const next: AppSettings = { ...settings, active_provider: "pompora", pompora_thinking: mode };
+      setSettingsState(next);
+      try {
+        await settingsSet(next);
+        try {
+          setKeyStatus(await providerKeyStatus("pompora"));
+        } catch {
+        }
+      } catch (e) {
+        console.error("Failed to select pompora mode", e);
+        notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${String(e)}` });
+        setSettingsState(prev);
       }
     },
     [notify, settings]
@@ -5653,10 +5673,11 @@ export default function AppShell() {
                               <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">Pompora</div>
 
                               {(["slow", "fast", "reasoning"] as const).map((mode) => {
+                                const pomporaSt = providerKeyStatuses["pompora"];
                                 const selected = (settings.active_provider ?? "") === "pompora" && String(settings.pompora_thinking ?? "slow") === mode;
                                 const lockedByAuth = !authProfile;
                                 const lockedByPlan = authProfile ? !pomporaAllowedModeSet.has(mode) : true;
-                                const lockedByLink = authProfile ? keyStatus?.is_configured !== true : true;
+                                const lockedByLink = authProfile ? pomporaSt?.is_configured !== true : true;
                                 const disabled = lockedByAuth || lockedByPlan || lockedByLink;
 
                                 const rightLabel =
@@ -5677,10 +5698,7 @@ export default function AppShell() {
                                         setIsModelPickerOpen(false);
                                         return;
                                       }
-                                      void (async () => {
-                                        await changeProvider("pompora");
-                                        await setPomporaThinking(mode);
-                                      })();
+                                      void selectPomporaMode(mode);
                                       setIsModelPickerOpen(false);
                                     }}
                                     onMouseEnter={(e) => {
