@@ -995,6 +995,21 @@ export default function AppShell() {
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
 
+  const formatErr = useCallback((e: unknown): string => {
+    if (e instanceof Error) {
+      return e.message || String(e);
+    }
+    if (typeof e === "string") return e;
+    if (e === null) return "<null>";
+    if (e === undefined) return "<undefined>";
+    try {
+      const s = JSON.stringify(e);
+      return s && s !== "{}" ? s : String(e);
+    } catch {
+      return String(e);
+    }
+  }, []);
+
   const hasChatHistory = useMemo(() => {
     return chatSessions.some((s) => s.messages.some((m) => m.role === "user"));
   }, [chatSessions]);
@@ -3341,11 +3356,11 @@ export default function AppShell() {
         await settingsSet(next);
       } catch (e) {
         console.error("Failed to save pompora thinking", e);
-        notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${String(e)}` });
+        notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${formatErr(e)}` });
         setSettingsState(settings);
       }
     },
-    [notify, settings]
+    [formatErr, notify, settings]
   );
 
   const selectPomporaMode = useCallback(
@@ -3361,11 +3376,11 @@ export default function AppShell() {
         }
       } catch (e) {
         console.error("Failed to select pompora mode", e);
-        notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${String(e)}` });
+        notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${formatErr(e)}` });
         setSettingsState(prev);
       }
     },
-    [notify, settings]
+    [formatErr, notify, settings]
   );
 
   const handleStoreKey = useCallback(async () => {
@@ -5480,7 +5495,7 @@ export default function AppShell() {
                                 ) : (
                                   <div className="ws-agent-step">
                                     <span className="ws-agent-dot" />
-                                    <span className="truncate">{m.content}</span>
+                                    <span className="whitespace-pre-wrap break-words">{m.content}</span>
                                   </div>
                                 )}
                               </div>
