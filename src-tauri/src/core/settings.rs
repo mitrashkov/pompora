@@ -1,9 +1,10 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::thread;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AppSettings {
@@ -101,10 +102,41 @@ pub fn store(next: &AppSettings) -> Result<()> {
         let _ = f.sync_all();
     }
 
-    if let Err(e) = fs::rename(&tmp, &path) {
+    let rename_with_retry = |from: &PathBuf, to: &PathBuf| {
+        let mut last: Option<std::io::Error> = None;
+        for i in 0..6u32 {
+            match fs::rename(from, to) {
+                Ok(()) => return Ok(()),
+                Err(e) => {
+                    last = Some(e);
+                    // On Windows, file locks (AV/indexer) can cause transient failures.
+                    // Retry a few times with a short backoff.
+                    thread::sleep(Duration::from_millis(25u64.saturating_mul((i + 1) as u64)));
+                }
+            }
+        }
+        Err(last.unwrap_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "rename failed")))
+    };
+
+    let write_final_with_retry = |to: &PathBuf, bytes: &[u8]| -> Result<()> {
+        let mut last: Option<std::io::Error> = None;
+        for i in 0..6u32 {
+            match fs::write(to, bytes) {
+                Ok(()) => return Ok(()),
+                Err(e) => {
+                    last = Some(e);
+                    thread::sleep(Duration::from_millis(25u64.saturating_mul((i + 1) as u64)));
+                }
+            }
+        }
+        let e = last.unwrap_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "write failed"));
+        Err(anyhow!(e)).with_context(|| format!("write settings final: {}", to.display()))
+    };
+
+    if let Err(e) = rename_with_retry(&tmp, &path) {
         // Fallback 1: remove existing and retry rename.
         let _ = fs::remove_file(&path);
-        if let Err(e2) = fs::rename(&tmp, &path) {
+        if let Err(e2) = rename_with_retry(&tmp, &path) {
             // Fallback 2: copy tmp to final.
             let copy_res = fs::copy(&tmp, &path)
                 .with_context(|| format!("copy settings tmp to final after rename failure: {}", path.display()));
@@ -112,7 +144,7 @@ pub fn store(next: &AppSettings) -> Result<()> {
                 // Fallback 3: on Windows the destination can be locked, and copy won't overwrite.
                 // As a last resort, try writing the final file directly.
                 let _ = fs::remove_file(&path);
-                fs::write(&path, s.as_bytes())
+                write_final_with_retry(&path, s.as_bytes())
                     .with_context(|| format!("write settings final after rename+copy failure: {}", path.display()))?;
             }
             let _ = fs::remove_file(&tmp);
