@@ -2362,7 +2362,7 @@ export default function AppShell() {
     }
     const found = providerChoices.find((x) => x.id === p);
     return found?.label ?? p;
-  }, [providerChoices, settings.active_provider]);
+  }, [providerChoices, settings.active_provider, settings.pompora_thinking]);
 
   const activeProviderMissingKey = useMemo(() => {
     const p = settings.active_provider;
