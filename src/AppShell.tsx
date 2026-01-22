@@ -10,10 +10,13 @@ import {
   ArrowRight,
   ArrowUp,
   Bell,
+  Brain,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Check,
+  CheckCircle2,
+  CircleDashed,
   Eye,
   FileCode,
   FileJson,
@@ -21,7 +24,9 @@ import {
   Folder,
   FolderOpen,
   GitBranch,
+  ListChecks,
   Plus,
+  TerminalSquare,
   RotateCw,
   Save,
   Search,
@@ -101,7 +106,7 @@ type ChatUiMessage = {
   content: string;
   id?: string;
   rating?: "up" | "down" | null;
-  kind?: "run_request" | "activity" | "proposal";
+  kind?: "run_request" | "activity" | "proposal" | "agent_run";
   run?: {
     cmd: string;
     status: "pending" | "running" | "done" | "canceled";
@@ -126,6 +131,18 @@ type ChatUiMessage = {
     files: Array<{ path: string; kind: "write" | "delete" | "rename"; isNew?: boolean }>;
     stats: { files: number; added: number; removed: number };
   };
+  agentRun?: {
+    phase: "think" | "plan" | "act" | "verify" | "done";
+    status: "running" | "done" | "error";
+    contextFiles: string[];
+    thinkText: string;
+    planItems: string[];
+    verifyText: string;
+    doneText: string;
+    actions: Array<{ id: string; label: string; status: "pending" | "running" | "done" | "error" }>;
+    output: string[];
+    collapsed: { think: boolean; plan: boolean; act: boolean; output: boolean; verify: boolean; done: boolean };
+  };
 };
 
 type TerminalCapture = {
@@ -138,6 +155,14 @@ type TerminalCapture = {
   maxEmitted: number;
   emit: (line: string) => void;
 };
+
+function phaseRank(p: "think" | "plan" | "act" | "verify" | "done"): number {
+  if (p === "think") return 0;
+  if (p === "plan") return 1;
+  if (p === "act") return 2;
+  if (p === "verify") return 3;
+  return 4;
+}
 
 function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
@@ -618,7 +643,9 @@ function computeStats(files: ChangeFile[]): { files: number; added: number; remo
   return { files: files.length, added, removed };
 }
 
-function tryParseEditsFromAssistantOutput(raw: string): { message: string; edits: AiEditOp[] } | null {
+function tryParseEditsFromAssistantOutput(
+  raw: string
+): { message: string; edits: AiEditOp[]; think?: string; plan?: string[]; verify?: string; done?: string } | null {
   const t = raw.trim();
   if (!t) return null;
 
@@ -721,6 +748,10 @@ function tryParseEditsFromAssistantOutput(raw: string): { message: string; edits
       edits?: unknown;
       assistant_message?: unknown;
       summary?: unknown;
+      think?: unknown;
+      plan?: unknown;
+      verify?: unknown;
+      done?: unknown;
     };
     if (Array.isArray(obj.edits)) {
       const edits = obj.edits as AiEditOp[];
@@ -728,7 +759,26 @@ function tryParseEditsFromAssistantOutput(raw: string): { message: string; edits
         (typeof obj.assistant_message === "string" ? obj.assistant_message : null) ??
         (typeof obj.summary === "string" ? obj.summary : null) ??
         "Proposed changes are ready.";
-      return { message: String(msg).trim(), edits };
+
+      const think = typeof obj.think === "string" ? obj.think : undefined;
+      const verify = typeof obj.verify === "string" ? obj.verify : undefined;
+      const done = typeof obj.done === "string" ? obj.done : undefined;
+
+      let plan: string[] | undefined;
+      if (Array.isArray(obj.plan)) {
+        plan = (obj.plan as unknown[])
+          .map((x) => (typeof x === "string" ? x.trim() : ""))
+          .filter(Boolean)
+          .slice(0, 16);
+      } else if (typeof obj.plan === "string") {
+        plan = obj.plan
+          .split("\n")
+          .map((l) => l.replace(/^([-*]|\d+\.)\s+/, "").trim())
+          .filter(Boolean)
+          .slice(0, 16);
+      }
+
+      return { message: String(msg).trim(), edits, think, plan, verify, done };
     }
   }
 
@@ -1031,6 +1081,7 @@ export default function AppShell() {
   const [panelTab, setPanelTab] = useState<"problems" | "output" | "debug" | "terminal" | "ports">("terminal");
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
+  const [uiPomporaThinking, setUiPomporaThinking] = useState<"slow" | "fast" | "reasoning" | null>(null);
 
   const formatErr = useCallback((e: unknown): string => {
     if (e instanceof Error) {
@@ -1182,6 +1233,8 @@ export default function AppShell() {
   const metaQueueRef = useRef<string[]>([]);
   const metaFlushTimerRef = useRef<number | null>(null);
   const lastQueuedMetaRef = useRef<string>("");
+
+  const activeAgentRunIdRef = useRef<string | null>(null);
 
   const termIdRef = useRef<string | null>(null);
   const termRef = useRef<XTermTerminal | null>(null);
@@ -2540,13 +2593,13 @@ export default function AppShell() {
     const p = settings.active_provider;
     if (!p) return "Not configured";
     if (p === "pompora") {
-      const t = String(settings.pompora_thinking ?? "slow").toLowerCase();
+      const t = String(settings.pompora_thinking ?? uiPomporaThinking ?? "slow").toLowerCase();
       const label = t === "reasoning" ? "Reasoning" : t === "fast" ? "Fast" : "Slow";
       return `Pompora ${label}`;
     }
     const found = providerChoices.find((x) => x.id === p);
     return found?.label ?? p;
-  }, [providerChoices, settings.active_provider, settings.pompora_thinking]);
+  }, [providerChoices, settings.active_provider, settings.pompora_thinking, uiPomporaThinking]);
 
   const activeProviderMissingKey = useMemo(() => {
     const p = settings.active_provider;
@@ -2909,6 +2962,25 @@ export default function AppShell() {
   const [selectedChangePath, setSelectedChangePath] = useState<string | null>(null);
 
   const [proposalPreviewOpen, setProposalPreviewOpen] = useState<Record<string, boolean>>({});
+
+  const updateAgentRun = useCallback(
+    (id: string, up: (prev: NonNullable<ChatUiMessage["agentRun"]>) => NonNullable<ChatUiMessage["agentRun"]>) => {
+      setActiveChatMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== id || m.kind !== "agent_run" || !m.agentRun) return m;
+          return { ...m, agentRun: up(m.agentRun) };
+        })
+      );
+    },
+    [setActiveChatMessages]
+  );
+
+  const toggleAgentRunSection = useCallback(
+    (id: string, key: keyof NonNullable<ChatUiMessage["agentRun"]>["collapsed"]) => {
+      updateAgentRun(id, (ar) => ({ ...ar, collapsed: { ...ar.collapsed, [key]: !ar.collapsed[key] } }));
+    },
+    [updateAgentRun]
+  );
 
   const [isChangeSummaryOpen, setIsChangeSummaryOpen] = useState(false);
   const lastChangeSetIdRef = useRef<string | null>(null);
@@ -3692,6 +3764,7 @@ export default function AppShell() {
     async (mode: "slow" | "fast" | "reasoning") => {
       const seq = (settingsMutationSeqRef.current += 1);
       const prev = settings;
+      setUiPomporaThinking(mode);
       const next: AppSettings = { ...settings, active_provider: "pompora", pompora_thinking: mode };
       setSettingsState(next);
       try {
@@ -3705,6 +3778,9 @@ export default function AppShell() {
         notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${formatErr(e)}` });
         if (settingsMutationSeqRef.current === seq) {
           setSettingsState(prev);
+          setUiPomporaThinking(
+            prev.active_provider === "pompora" ? (String(prev.pompora_thinking ?? "slow").toLowerCase() as "slow" | "fast" | "reasoning") : null
+          );
         }
       }
     },
@@ -3800,30 +3876,56 @@ export default function AppShell() {
     }
 
     try {
-      const previous = (chatMessagesRef.current ?? []).filter(
-        (m) => !(m.role === "meta" && m.content.trim() === "Thinking…")
-      );
+      const previous = (chatMessagesRef.current ?? []).filter((m) => !(m.role === "meta" && m.content.trim() === "Thinking…"));
       const base = [...previous, { role: "user" as const, content: text }];
       setActiveChatDraft("");
-      setActiveChatMessages([...base, { role: "meta", content: "Thinking…" }]);
 
-      const referencedFiles = workspace.root ? extractFileRefs(text).slice(0, 4) : [];
-      const fileContexts: Array<{ path: string; content: string; truncated: boolean }> = [];
-      const preLogs: ChatUiMessage[] = [];
-      const pushPre = (msg: string) => {
-        const m: ChatUiMessage = { role: "meta", content: msg };
-        preLogs.push(m);
-        setActiveChatMessages((prev) => [...prev, m]);
+      const referencedFiles = workspace.root ? extractFileRefs(text).slice(0, 6) : [];
+      const agentRunId = `run-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      activeAgentRunIdRef.current = agentRunId;
+
+      const agentRunMessage: ChatUiMessage = {
+        id: agentRunId,
+        role: "assistant",
+        content: "",
+        kind: "agent_run",
+        agentRun: {
+          phase: "think",
+          status: "running",
+          contextFiles: referencedFiles,
+          thinkText: "",
+          planItems: [],
+          verifyText: "",
+          doneText: "",
+          actions: [],
+          output: [],
+          collapsed: { think: false, plan: false, act: false, output: true, verify: true, done: false },
+        },
       };
+
+      setActiveChatMessages([...base, agentRunMessage]);
+
+      const fileContexts: Array<{ path: string; content: string; truncated: boolean }> = [];
       for (const p of referencedFiles) {
+        const actionId = `read:${p}`;
+        updateAgentRun(agentRunId, (ar) => ({
+          ...ar,
+          actions: ([...ar.actions, { id: actionId, label: `Read ${p}`, status: "running" as const }].slice(-40) as typeof ar.actions),
+        }));
         try {
           const content = await workspaceReadFile(p);
           const max = 12000;
           const truncated = content.length > max;
           fileContexts.push({ path: p, content: truncated ? content.slice(0, max) : content, truncated });
-          pushPre(`Read ${p}`);
-        } catch (e) {
-          pushPre(`Read ${p} (failed)`);
+          updateAgentRun(agentRunId, (ar) => ({
+            ...ar,
+            actions: ar.actions.map((a) => (a.id === actionId ? { ...a, status: "done" } : a)),
+          }));
+        } catch {
+          updateAgentRun(agentRunId, (ar) => ({
+            ...ar,
+            actions: ar.actions.map((a) => (a.id === actionId ? { ...a, status: "error" } : a)),
+          }));
         }
       }
 
@@ -3845,7 +3947,7 @@ export default function AppShell() {
         {
           role: "system",
           content:
-            "You are an agentic coding assistant inside an IDE. Before making ANY changes, you must describe what you will do in a short step-by-step plan for the user (2-6 steps). Then return structured edits in JSON with fields: { message: string, edits: AiEditOp[] }. Prefer modern stacks (React + TypeScript + Tailwind/shadcn) unless the user explicitly requests plain HTML/CSS. IMPORTANT: Prefer op='patch' with a unified diff in the 'content' field and keep patches minimal (do NOT replace whole files unless required). Never invent the previous content of a file; only patch lines that exist in the provided file context. You can run terminal commands by returning an edit op: { op: 'run', content: '<command>' }. Use 'run' for scaffolding/install/build/test commands. Avoid destructive commands. Use op='write' only for new files when patching isn't feasible.",
+            "You are Pompora, an autonomous agentic coding system operating inside a real codebase. You MUST follow this workflow in order: THINK, PLAN, ACT, VERIFY, DONE. No skipping.\n\nOutput MUST be valid JSON only (no markdown), shaped as:\n{\n  \"assistant_message\": string,\n  \"think\": string,\n  \"plan\": string[],\n  \"verify\": string,\n  \"done\": string,\n  \"edits\": AiEditOp[]\n}\n\nRules:\n- Do not hallucinate files.\n- Prefer op='patch' with unified diff; keep patches minimal; do not replace whole files unless necessary.\n- Never patch lines that don't exist in the provided file context.\n- Use op='run' for commands; avoid destructive commands.\n- If you need more file context, return edits=[] and explain in assistant_message what file(s) to read.\n",
         },
         ...(fileContexts.length
           ? ([
@@ -3871,7 +3973,8 @@ export default function AppShell() {
       ];
 
       const requestOnce = async () => {
-        const thinking = settings.active_provider === "pompora" ? (settings.pompora_thinking ?? "slow") : null;
+        const thinkingRaw = settings.active_provider === "pompora" ? (settings.pompora_thinking ?? uiPomporaThinking ?? "slow") : null;
+        const thinking = thinkingRaw ? String(thinkingRaw).toLowerCase() : null;
         return await aiChat({ messages: aiMessages, encryptionPassword, thinking });
       };
 
@@ -3899,17 +4002,19 @@ export default function AppShell() {
       const rawOut = String(res.output ?? "");
       const assistantMsg = (parsedFromText?.message ?? rawOut.trim()).trim();
 
+      updateAgentRun(agentRunId, (ar) => ({
+        ...ar,
+        thinkText: String(parsedFromText?.think ?? "").trim(),
+        planItems: Array.isArray(parsedFromText?.plan) ? parsedFromText!.plan!.slice(0, 16) : ar.planItems,
+        verifyText: String(parsedFromText?.verify ?? "").trim(),
+        doneText: String(parsedFromText?.done ?? "").trim(),
+        phase: parsedFromText?.plan && parsedFromText.plan.length ? "plan" : "think",
+      }));
+
       if (edits && edits.length) {
         setChatApplying(true);
-        const showAssistant = assistantMsg && !looksLikeCodeDump(assistantMsg);
-        const assistantId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        setActiveChatMessages([
-          ...base,
-          ...preLogs,
-          ...(showAssistant ? ([{ role: "assistant", content: "", id: assistantId, rating: null }] as ChatUiMessage[]) : ([] as ChatUiMessage[])),
-        ]);
 
-        if (showAssistant) startStreamingToMessageId(assistantId, assistantMsg);
+        updateAgentRun(agentRunId, (ar) => ({ ...ar, phase: phaseRank(ar.phase) < phaseRank("act") ? "act" : ar.phase }));
 
         try {
           const norm = normalizeAiEdits(edits, workspace.root);
@@ -3940,16 +4045,18 @@ export default function AppShell() {
           setChatApplying(false);
         }
       } else {
-        // No edits: still keep chat clean.
         const safeMsg = assistantMsg.length
           ? looksLikeCodeDump(assistantMsg)
             ? "I’m ready—tell me what you want to change and I’ll guide you step by step."
             : assistantMsg
           : "Ready.";
 
-        const assistantId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        setActiveChatMessages([...base, ...preLogs, { role: "assistant", content: "", id: assistantId, rating: null }]);
-        startStreamingToMessageId(assistantId, safeMsg);
+        updateAgentRun(agentRunId, (ar) => ({
+          ...ar,
+          phase: "done",
+          status: "done",
+          doneText: ar.doneText || safeMsg,
+        }));
       }
 
       // If the active provider is Pompora, credits can change per request.
@@ -5850,7 +5957,221 @@ export default function AppShell() {
                           return (
                             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                               <div className="max-w-[92%]">
-                                {m.role === "assistant" && m.kind === "activity" && m.activity ? (
+                                {m.role === "assistant" && m.kind === "agent_run" && m.agentRun ? (
+                                  <div className="ws-msg ws-msg-anim ws-msg-assistant">
+                                    {(() => {
+                                      const ar = m.agentRun!;
+                                      const phaseLabel =
+                                        ar.phase === "think"
+                                          ? "Think"
+                                          : ar.phase === "plan"
+                                            ? "Plan"
+                                            : ar.phase === "act"
+                                              ? "Act"
+                                              : ar.phase === "verify"
+                                                ? "Verify"
+                                                : "Done";
+
+                                      const phaseIcon =
+                                        ar.phase === "think"
+                                          ? Brain
+                                          : ar.phase === "plan"
+                                            ? ListChecks
+                                            : ar.phase === "act"
+                                              ? Wand2
+                                              : ar.phase === "verify"
+                                                ? Check
+                                                : CheckCircle2;
+
+                                      const PhaseIcon = phaseIcon;
+
+                                      return (
+                                        <>
+                                          <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                              <div className="text-[11px] text-muted">Agent</div>
+                                              <div className="mt-1 flex items-center gap-2 text-[13px] text-text">
+                                                <PhaseIcon className="h-4 w-4 text-muted" />
+                                                <span className="truncate">Pompora</span>
+                                              </div>
+                                            </div>
+                                            <div className="shrink-0 text-right">
+                                              <div className="flex items-center justify-end gap-2">
+                                                {ar.status === "running" ? (
+                                                  <CircleDashed className="h-4 w-4 text-muted animate-spin" />
+                                                ) : ar.status === "done" ? (
+                                                  <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                                                ) : (
+                                                  <AlertTriangle className="h-4 w-4 text-red-300" />
+                                                )}
+                                                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${statusPillClass(ar.status === "error" ? "error" : ar.status === "done" ? "done" : "running")}`}
+                                                >
+                                                  {phaseLabel}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <div className="mt-3 space-y-2">
+                                            <div className="rounded-lg border border-border bg-bg">
+                                              <button
+                                                type="button"
+                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
+                                                onClick={() => toggleAgentRunSection(m.id ?? "", "think")}
+                                              >
+                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                                                  <Brain className="h-4 w-4" />
+                                                  Thinking
+                                                </span>
+                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.think ? "" : "rotate-180"}`} />
+                                              </button>
+                                              {!ar.collapsed.think ? (
+                                                <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
+                                                  {ar.thinkText || (ar.status === "running" ? "Thinking…" : "")}
+                                                </div>
+                                              ) : null}
+                                            </div>
+
+                                            <div className="rounded-lg border border-border bg-bg">
+                                              <button
+                                                type="button"
+                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
+                                                onClick={() => toggleAgentRunSection(m.id ?? "", "plan")}
+                                              >
+                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                                                  <ListChecks className="h-4 w-4" />
+                                                  Plan
+                                                </span>
+                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.plan ? "" : "rotate-180"}`} />
+                                              </button>
+                                              {!ar.collapsed.plan ? (
+                                                <div className="px-2 pb-2">
+                                                  {(ar.planItems ?? []).length ? (
+                                                    <div className="space-y-1">
+                                                      {(ar.planItems ?? []).slice(0, 10).map((p, idx) => (
+                                                        <div key={idx} className="flex items-start gap-2 text-[12px] text-muted">
+                                                          <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded border border-border bg-panel text-[10px]">{idx + 1}</span>
+                                                          <span className="whitespace-pre-wrap break-words">{p}</span>
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  ) : (
+                                                    <div className="text-[12px] text-muted">No plan yet.</div>
+                                                  )}
+                                                </div>
+                                              ) : null}
+                                            </div>
+
+                                            <div className="rounded-lg border border-border bg-bg">
+                                              <button
+                                                type="button"
+                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
+                                                onClick={() => toggleAgentRunSection(m.id ?? "", "act")}
+                                              >
+                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                                                  <Wand2 className="h-4 w-4" />
+                                                  Actions
+                                                </span>
+                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.act ? "" : "rotate-180"}`} />
+                                              </button>
+                                              {!ar.collapsed.act ? (
+                                                <div className="px-2 pb-2">
+                                                  {(ar.actions ?? []).length ? (
+                                                    <div className="space-y-1">
+                                                      {(ar.actions ?? []).slice(-12).map((a) => (
+                                                        <div key={a.id} className="flex items-start gap-2 text-[12px] text-muted">
+                                                          <span className="mt-0.5">
+                                                            {a.status === "running" ? (
+                                                              <CircleDashed className="h-4 w-4 animate-spin" />
+                                                            ) : a.status === "done" ? (
+                                                              <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                                                            ) : a.status === "error" ? (
+                                                              <AlertTriangle className="h-4 w-4 text-red-300" />
+                                                            ) : (
+                                                              <CircleDashed className="h-4 w-4" />
+                                                            )}
+                                                          </span>
+                                                          <span className="whitespace-pre-wrap break-words">{a.label}</span>
+                                                        </div>
+                                                      ))}
+                                                    </div>
+                                                  ) : (
+                                                    <div className="text-[12px] text-muted">No actions yet.</div>
+                                                  )}
+                                                </div>
+                                              ) : null}
+                                            </div>
+
+                                            <div className="rounded-lg border border-border bg-bg">
+                                              <button
+                                                type="button"
+                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
+                                                onClick={() => toggleAgentRunSection(m.id ?? "", "output")}
+                                              >
+                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                                                  <TerminalSquare className="h-4 w-4" />
+                                                  Command Output
+                                                </span>
+                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.output ? "" : "rotate-180"}`} />
+                                              </button>
+                                              {!ar.collapsed.output ? (
+                                                <div className="px-2 pb-2">
+                                                  {(ar.output ?? []).length ? (
+                                                    <div className="max-h-40 overflow-auto rounded-md border border-border bg-panel p-2 font-mono text-[11px] text-muted">
+                                                      {(ar.output ?? []).slice(-80).map((line, idx) => (
+                                                        <div key={idx} className="whitespace-pre-wrap break-words">{line}</div>
+                                                      ))}
+                                                    </div>
+                                                  ) : (
+                                                    <div className="text-[12px] text-muted">No output.</div>
+                                                  )}
+                                                </div>
+                                              ) : null}
+                                            </div>
+
+                                            <div className="rounded-lg border border-border bg-bg">
+                                              <button
+                                                type="button"
+                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
+                                                onClick={() => toggleAgentRunSection(m.id ?? "", "verify")}
+                                              >
+                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                                                  <Check className="h-4 w-4" />
+                                                  Verify
+                                                </span>
+                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.verify ? "" : "rotate-180"}`} />
+                                              </button>
+                                              {!ar.collapsed.verify ? (
+                                                <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
+                                                  {ar.verifyText || ""}
+                                                </div>
+                                              ) : null}
+                                            </div>
+
+                                            <div className="rounded-lg border border-border bg-bg">
+                                              <button
+                                                type="button"
+                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
+                                                onClick={() => toggleAgentRunSection(m.id ?? "", "done")}
+                                              >
+                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                                                  <CheckCircle2 className="h-4 w-4" />
+                                                  Done
+                                                </span>
+                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.done ? "" : "rotate-180"}`} />
+                                              </button>
+                                              {!ar.collapsed.done ? (
+                                                <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
+                                                  {ar.doneText || ""}
+                                                </div>
+                                              ) : null}
+                                            </div>
+                                          </div>
+                                        </>
+                                      );
+                                    })()}
+                                  </div>
+                                ) : m.role === "assistant" && m.kind === "activity" && m.activity ? (
                                   <div className="ws-msg ws-msg-anim ws-msg-assistant">
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="min-w-0">
@@ -6299,7 +6620,8 @@ export default function AppShell() {
 
                               {(["slow", "fast", "reasoning"] as const).map((mode) => {
                                 const pomporaSt = providerKeyStatuses["pompora"];
-                                const selected = (settings.active_provider ?? "") === "pompora" && String(settings.pompora_thinking ?? "slow") === mode;
+                                const effectiveMode = String(settings.pompora_thinking ?? uiPomporaThinking ?? "slow").toLowerCase();
+                                const selected = (settings.active_provider ?? "") === "pompora" && effectiveMode === mode;
                                 const lockedByAuth = !authProfile;
                                 const lockedByPlan = authProfile ? !pomporaAllowedModeSet.has(mode) : true;
                                 const lockedByLink = authProfile ? pomporaSt?.is_configured !== true : true;
