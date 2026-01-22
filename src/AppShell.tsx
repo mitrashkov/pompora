@@ -2680,35 +2680,43 @@ export default function AppShell() {
 
   const openFile = useCallback(
     async (relPath: string) => {
-      const existing = tabs.find((t) => t.path === relPath);
-      if (existing) {
-        setActiveTabPath(relPath);
-        return;
-      }
+      let norm = String(relPath || "").trim();
+      if (!norm) return;
+      norm = norm.replace(/\\/g, "/");
+      while (norm.startsWith("./")) norm = norm.slice(2);
+      norm = norm.replace(/^\/+/, "");
 
       let content = "";
       try {
-        content = await workspaceReadFile(relPath);
+        content = await workspaceReadFile(norm);
       } catch {
         content = "";
       }
       const tab: EditorTab = {
-        path: relPath,
-        name: basename(relPath),
-        language: detectLanguage(relPath),
+        path: norm,
+        name: basename(norm),
+        language: detectLanguage(norm),
         content,
         isDirty: false,
       };
 
-      setTabs((prev) => [...prev, tab]);
-      setActiveTabPath(relPath);
+      setTabs((prev) => {
+        const key = norm.toLowerCase();
+        const existing = prev.find((t) => String(t.path || "").replace(/\\/g, "/").toLowerCase() === key);
+        if (existing) {
+          setActiveTabPath(existing.path);
+          return prev;
+        }
+        return [...prev, tab];
+      });
+      setActiveTabPath(norm);
 
       if (workspace.root) {
-        const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${relPath}`;
+        const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${norm}`;
         rememberRecentFile(abs);
       }
     },
-    [rememberRecentFile, tabs, workspace.root]
+    [rememberRecentFile, workspace.root]
   );
 
   const changeWriteFiles = useMemo(() => {
@@ -3472,8 +3480,10 @@ export default function AppShell() {
     }
 
     try {
-      const history = chatMessagesRef.current.filter((m) => m.role === "user" || m.role === "assistant");
-      const base = [...history, { role: "user" as const, content: text }];
+      const previous = (chatMessagesRef.current ?? []).filter(
+        (m) => !(m.role === "meta" && m.content.trim() === "Thinking…")
+      );
+      const base = [...previous, { role: "user" as const, content: text }];
       setActiveChatDraft("");
       setActiveChatMessages([...base, { role: "meta", content: "Thinking…" }]);
 
@@ -3497,6 +3507,20 @@ export default function AppShell() {
         }
       }
 
+      const recentMetaLines = previous
+        .filter((m) => m.role === "meta")
+        .map((m) => String(m.content || "").trim())
+        .filter(Boolean)
+        .filter((line) =>
+          /^(Applied\b|Read\b|Run\b|Reverted\b|Accepted\b|Rejected\b|Note:\b|AI returned\b)/i.test(line)
+        )
+        .slice(-16);
+
+      const conversationForModel = base
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .filter((m) => String(m.content || "").trim().length > 0)
+        .filter((m) => !(m.role === "assistant" && m.kind === "run_request"));
+
       const aiMessages: AiChatMessage[] = [
         {
           role: "system",
@@ -3515,7 +3539,15 @@ export default function AppShell() {
               },
             ] satisfies AiChatMessage[])
           : ([] as AiChatMessage[])),
-        ...base.filter(isUserOrAssistantMessage).map((m) => ({ role: m.role, content: m.content })),
+        ...(recentMetaLines.length
+          ? ([
+              {
+                role: "system" as const,
+                content: "Recent IDE actions (already executed):\n" + recentMetaLines.map((l) => `- ${l}`).join("\n"),
+              },
+            ] satisfies AiChatMessage[])
+          : ([] as AiChatMessage[])),
+        ...conversationForModel.map((m) => ({ role: m.role, content: m.content })),
       ];
 
       const requestOnce = async () => {
