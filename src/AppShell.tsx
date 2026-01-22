@@ -5,6 +5,7 @@ import { listen } from "@tauri-apps/api/event";
 import { Terminal as XTermTerminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
@@ -12,6 +13,8 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Check,
+  Eye,
   FileCode,
   FileJson,
   FileText,
@@ -98,7 +101,7 @@ type ChatUiMessage = {
   content: string;
   id?: string;
   rating?: "up" | "down" | null;
-  kind?: "run_request";
+  kind?: "run_request" | "activity" | "proposal";
   run?: {
     cmd: string;
     status: "pending" | "running" | "done" | "canceled";
@@ -106,6 +109,22 @@ type ChatUiMessage = {
     error?: string | null;
     tail?: string[] | null;
     autoFixRequested?: boolean;
+  };
+  activity?: {
+    title: string;
+    status: "pending" | "running" | "done" | "error";
+    steps: string[];
+    details?: string[];
+    collapsed?: boolean;
+    progress?: { done: number; total: number; current?: string };
+  };
+  proposal?: {
+    changeSetId: string;
+    title: string;
+    plan: string[];
+    risks: string[];
+    files: Array<{ path: string; kind: "write" | "delete" | "rename"; isNew?: boolean }>;
+    stats: { files: number; added: number; removed: number };
   };
 };
 
@@ -164,7 +183,7 @@ type ChangeSet = {
   applied: boolean;
 };
 
-function isUserOrAssistantMessage(m: ChatUiMessage): m is { role: "user" | "assistant"; content: string } {
+function isUserOrAssistantMessage(m: ChatUiMessage): m is ChatUiMessage & { role: "user" | "assistant" } {
   return m.role === "user" || m.role === "assistant";
 }
 
@@ -776,6 +795,16 @@ function dirname(p: string) {
   return norm.slice(0, idx);
 }
 
+ function normalizeRelPath(p: string) {
+   let norm = String(p || "").trim();
+   if (!norm) return "";
+   norm = norm.replace(/\\/g, "/");
+   while (norm.startsWith("./")) norm = norm.slice(2);
+   norm = norm.replace(/^\/+/, "");
+   norm = norm.replace(/\/+?/g, "/");
+   return norm;
+ }
+
 function detectLanguage(path: string): string {
   const lower = path.toLowerCase();
   const ext = lower.includes(".") ? lower.split(".").pop() ?? "" : "";
@@ -800,6 +829,13 @@ function fileIconFor(path: string) {
     return FileCode;
   }
   return FileText;
+}
+
+function statusPillClass(status: "pending" | "running" | "done" | "error"): string {
+  if (status === "done") return "bg-emerald-500/15 text-emerald-300 border-emerald-500/25";
+  if (status === "error") return "bg-red-500/15 text-red-300 border-red-500/25";
+  if (status === "running") return "bg-sky-500/15 text-sky-300 border-sky-500/25";
+  return "bg-muted/10 text-muted border-border";
 }
 
 export default function AppShell() {
@@ -856,6 +892,7 @@ export default function AppShell() {
     workspace_root: null,
     recent_workspaces: [],
   });
+  const settingsMutationSeqRef = useRef(0);
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isTogglingOffline, setIsTogglingOffline] = useState(false);
@@ -1199,6 +1236,58 @@ export default function AppShell() {
       );
     },
     [activeChatId]
+  );
+
+  const appendActivityStep = useCallback(
+    (activityId: string, step: string, opts?: { detail?: boolean }) => {
+      const t = String(step || "").trim();
+      if (!t) return;
+      setActiveChatMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== activityId || m.kind !== "activity" || !m.activity) return m;
+          const steps = opts?.detail ? m.activity.steps : [...m.activity.steps, t].slice(-80);
+          const details = opts?.detail ? [...(m.activity.details ?? []), t].slice(-200) : m.activity.details;
+          return { ...m, activity: { ...m.activity, steps, details } };
+        })
+      );
+    },
+    [setActiveChatMessages]
+  );
+
+  const toggleActivityCollapsed = useCallback(
+    (activityId: string) => {
+      setActiveChatMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== activityId || m.kind !== "activity" || !m.activity) return m;
+          return { ...m, activity: { ...m.activity, collapsed: !m.activity.collapsed } };
+        })
+      );
+    },
+    [setActiveChatMessages]
+  );
+
+  const setActivityStatus = useCallback(
+    (activityId: string, status: "pending" | "running" | "done" | "error") => {
+      setActiveChatMessages((prev) =>
+        prev.map((m) =>
+          m.id === activityId && m.kind === "activity" && m.activity ? { ...m, activity: { ...m.activity, status } } : m
+        )
+      );
+    },
+    [setActiveChatMessages]
+  );
+
+  const setActivityProgress = useCallback(
+    (activityId: string, progress: { done: number; total: number; current?: string }) => {
+      setActiveChatMessages((prev) =>
+        prev.map((m) =>
+          m.id === activityId && m.kind === "activity" && m.activity
+            ? { ...m, activity: { ...m.activity, progress } }
+            : m
+        )
+      );
+    },
+    [setActiveChatMessages]
   );
 
   const enqueueMetaLine = useCallback(
@@ -1597,6 +1686,18 @@ export default function AppShell() {
 
       const tail: string[] = [];
 
+      const activityId = `act-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setActiveChatMessages((prev) => [
+        ...prev,
+        {
+          id: activityId,
+          role: "assistant",
+          content: "",
+          kind: "activity",
+          activity: { title: `Running: ${cmd}`, status: "running", steps: [] },
+        },
+      ]);
+
       const pushStep = (msg: string) => {
         const t = msg.trim();
         if (!t) return;
@@ -1605,7 +1706,7 @@ export default function AppShell() {
           if (!clean.trim()) return;
           // Basic filtering of spinners / noisy progress glyphs.
           if (/^[⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]+$/.test(clean.trim())) return;
-          enqueueMetaLine(clean);
+          appendActivityStep(activityId, clean, { detail: true });
           tail.push(clean);
           if (tail.length > 80) tail.splice(0, tail.length - 80);
           return;
@@ -1626,6 +1727,7 @@ export default function AppShell() {
         setActiveChatMessages((prev) =>
           prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, status: "done" } : m.run } : m))
         );
+        setActivityStatus(activityId, "done");
 
         if (looksFailed) {
           const err = tail.slice(-20).join("\n");
@@ -1670,31 +1772,32 @@ export default function AppShell() {
             prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, tail: tail.slice(-80) } : m.run } : m))
           );
         }
+
+        const next = remaining[0] ?? "";
+        const rest = remaining.slice(1);
+        if (next.trim()) {
+          if (runPolicy === "always") {
+            pushRunRequest(next, rest);
+            window.setTimeout(() => {
+              const last = (chatMessagesRef.current ?? [])
+                .slice()
+                .reverse()
+                .find((m) => m.kind === "run_request" && m.run?.cmd === next);
+              if (last?.id) void runFromRunCard(last.id, "once");
+            }, 0);
+          } else {
+            pushRunRequest(next, rest);
+          }
+        }
       } catch (e) {
-        enqueueMetaLine(`Command failed: ${String(e)}`);
+        appendActivityStep(activityId, `Command failed: ${String(e)}`);
+        setActivityStatus(activityId, "error");
         setActiveChatMessages((prev) =>
           prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, status: "canceled" } : m.run } : m))
         );
-        return;
-      }
-
-      const auto = mode === "always" || runPolicy === "always";
-      if (remaining.length) {
-        const next = remaining[0]!;
-        const rest = remaining.slice(1);
-        if (auto) {
-          // Auto-queue next as another card so user sees each command, but execute immediately.
-          pushRunRequest(next, rest);
-          window.setTimeout(() => {
-            const last = (chatMessagesRef.current ?? []).slice().reverse().find((m) => m.kind === "run_request" && m.run?.cmd === next);
-            if (last?.id) void runFromRunCard(last.id, "once");
-          }, 0);
-        } else {
-          pushRunRequest(next, rest);
-        }
       }
     },
-    [enqueueMetaLine, pushRunRequest, refreshWorkspaceAfterRun, runPolicy, runTerminalCommand, setActiveChatMessages]
+    [appendActivityStep, askAiToFixRunError, pushRunRequest, refreshWorkspaceAfterRun, runPolicy, runTerminalCommand, setActiveChatMessages, setActivityStatus]
   );
 
   const cancelRunCard = useCallback(
@@ -1830,6 +1933,7 @@ export default function AppShell() {
           if (!queuedRunSet.has(cmd)) {
             queuedRunSet.add(cmd);
             queuedRuns.push(cmd);
+            onStep?.(`run ${cmd}`);
           }
         } else {
           throw new Error(`Unsupported AI edit op: ${e.op}`);
@@ -1921,10 +2025,90 @@ export default function AppShell() {
         edits,
         files,
         stats,
-        applied: true,
+        applied: false,
       };
     },
     [tabs]
+  );
+
+  const confirmApplyChangeSet = useCallback(
+    async (cs: ChangeSet): Promise<boolean> => {
+      const writeFiles = cs.files.filter((f) => f.kind === "write");
+      const deletes = cs.files.filter((f) => f.kind === "delete");
+      const renames = cs.files.filter((f) => f.kind === "rename");
+      const newFiles = writeFiles.filter((f) => f.before === null);
+
+      const reasons: string[] = [];
+      if (cs.files.length > 8) reasons.push(`Large change: ${cs.files.length} files`);
+      if (newFiles.length) reasons.push(`Creates new files: ${newFiles.length}`);
+      if (deletes.length) reasons.push(`Deletes files: ${deletes.length}`);
+      if (renames.length) reasons.push(`Renames: ${renames.length}`);
+
+      if (!reasons.length) return true;
+      const ok = window.confirm(
+        `This change set is larger than usual or potentially destructive:\n\n- ${reasons.join("\n- ")}\n\nApply anyway?`
+      );
+      return ok;
+    },
+    []
+  );
+
+  const buildProposal = useCallback(
+    (assistantText: string, cs: ChangeSet, didSanitize: boolean): ChatUiMessage["proposal"] => {
+      const plan: string[] = [];
+      const lines = String(assistantText || "")
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+      let inPlan = false;
+      for (const l of lines) {
+        const lower = l.toLowerCase();
+        if (lower === "plan:" || lower === "plan" || lower.startsWith("plan:")) {
+          inPlan = true;
+          continue;
+        }
+        if (inPlan) {
+          if (lower.startsWith("notes") || lower.startsWith("result") || lower.startsWith("changes") || lower.startsWith("summary")) {
+            inPlan = false;
+            continue;
+          }
+          const item = l.replace(/^([-*]|\d+\.)\s+/, "").trim();
+          if (item) plan.push(item);
+          if (plan.length >= 6) break;
+        }
+      }
+
+      const files = cs.files
+        .map((f) => {
+          if (f.kind === "rename") {
+            const parts = f.path.split(" → ");
+            return { path: parts[1] ?? f.path, kind: "rename" as const, isNew: false };
+          }
+          return { path: f.path, kind: f.kind, isNew: f.kind === "write" ? f.before === null : false };
+        })
+        .slice(0, 30);
+
+      const risks: string[] = [];
+      if (didSanitize) risks.push("AI returned paths outside this workspace; paths were sanitized.");
+      const newFiles = cs.files.filter((f) => f.kind === "write" && f.before === null).length;
+      const deletes = cs.files.filter((f) => f.kind === "delete").length;
+      const renames = cs.files.filter((f) => f.kind === "rename").length;
+      if (cs.files.length > 8) risks.push(`Large scope: ${cs.files.length} files.`);
+      if (newFiles) risks.push(`Creates new files: ${newFiles}.`);
+      if (deletes) risks.push(`Deletes files: ${deletes}.`);
+      if (renames) risks.push(`Renames files: ${renames}.`);
+
+      return {
+        changeSetId: cs.id,
+        title: "Proposed changes",
+        plan: plan.length ? plan : ["Review proposed changes", "Apply when ready"],
+        risks,
+        files,
+        stats: cs.stats,
+      };
+    },
+    []
   );
 
   const notify = useCallback(
@@ -1932,9 +2116,9 @@ export default function AppShell() {
       if (n.kind !== "error") return;
       const line = `${n.title}: ${n.message}`.trim();
       if (!line) return;
-      setActiveChatMessages((prev) => [...prev, { role: "meta", content: line }]);
+      enqueueMetaLine(line);
     },
-    [setActiveChatMessages]
+    [enqueueMetaLine]
   );
 
   useEffect(() => {
@@ -2680,11 +2864,8 @@ export default function AppShell() {
 
   const openFile = useCallback(
     async (relPath: string) => {
-      let norm = String(relPath || "").trim();
+      const norm = normalizeRelPath(relPath);
       if (!norm) return;
-      norm = norm.replace(/\\/g, "/");
-      while (norm.startsWith("./")) norm = norm.slice(2);
-      norm = norm.replace(/^\/+/, "");
 
       let content = "";
       try {
@@ -2707,9 +2888,9 @@ export default function AppShell() {
           setActiveTabPath(existing.path);
           return prev;
         }
+        setActiveTabPath(norm);
         return [...prev, tab];
       });
-      setActiveTabPath(norm);
 
       if (workspace.root) {
         const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${norm}`;
@@ -2727,6 +2908,8 @@ export default function AppShell() {
 
   const [selectedChangePath, setSelectedChangePath] = useState<string | null>(null);
 
+  const [proposalPreviewOpen, setProposalPreviewOpen] = useState<Record<string, boolean>>({});
+
   const [isChangeSummaryOpen, setIsChangeSummaryOpen] = useState(false);
   const lastChangeSetIdRef = useRef<string | null>(null);
 
@@ -2735,6 +2918,7 @@ export default function AppShell() {
     if (id !== lastChangeSetIdRef.current) {
       lastChangeSetIdRef.current = id;
       setIsChangeSummaryOpen(false);
+      setProposalPreviewOpen({});
     }
   }, [activeChat.changeSet?.id]);
 
@@ -2752,15 +2936,89 @@ export default function AppShell() {
   }, [activeChat.changeSet, changeWriteFiles, openFile, selectedChangePath]);
 
   const acceptAllChanges = useCallback(() => {
-    if (!activeChat.changeSet) return;
-    setActiveChatChangeSet(null);
-    setSelectedChangePath(null);
-    setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Accepted all changes." }]);
-  }, [activeChat.changeSet, setActiveChatChangeSet, setActiveChatMessages]);
+    const cs = activeChat.changeSet;
+    if (!cs) return;
+    if (cs.applied) {
+      setActiveChatChangeSet(null);
+      setSelectedChangePath(null);
+      setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Accepted all changes." }]);
+      return;
+    }
+
+    void (async () => {
+      if (!workspace.root) {
+        notifyRef.current?.({ kind: "error", title: "No workspace", message: "Open a folder first." });
+        return;
+      }
+      const ok = await confirmApplyChangeSet(cs);
+      if (!ok) return;
+
+      const runCmds = new Set<string>();
+      for (const e of cs.edits) {
+        const op = String(e.op || "").toLowerCase();
+        if (op !== "run") continue;
+        const cmd = String(e.content ?? "").trim();
+        if (cmd) runCmds.add(cmd);
+      }
+      const nonRun = cs.edits.filter((e) => String(e.op || "").toLowerCase() !== "run").length;
+      const total = Math.max(1, nonRun + runCmds.size);
+
+      const activityId = `act-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setActiveChatMessages((prev) => [
+        ...prev,
+        {
+          id: activityId,
+          role: "assistant",
+          content: "",
+          kind: "activity",
+          activity: { title: "Applying changes", status: "running", steps: [], progress: { done: 0, total, current: "Starting…" } },
+        },
+      ]);
+
+      setChatApplying(true);
+      let done = 0;
+      try {
+        const onStep = (msg: string) => {
+          appendActivityStep(activityId, msg);
+          const t = String(msg || "").trim();
+          if (!t) return;
+          if (/^(write|patch|delete|rename|run)\b/i.test(t)) {
+            done = Math.min(total, done + 1);
+            setActivityProgress(activityId, { done, total, current: t });
+          }
+        };
+
+        await applyAiEditsNow(cs.edits, onStep, {
+          pace: true,
+          previewFile: async (p) => {
+            setSelectedChangePath(p);
+            await openFile(p);
+          },
+        });
+        done = total;
+        setActivityProgress(activityId, { done, total, current: "Done" });
+        setActivityStatus(activityId, "done");
+        setActiveChatChangeSet({ ...cs, applied: true });
+      } catch (e) {
+        appendActivityStep(activityId, `Failed: ${String(e)}`);
+        setActivityProgress(activityId, { done: Math.min(done, total), total, current: "Failed" });
+        setActivityStatus(activityId, "error");
+      } finally {
+        setChatApplying(false);
+      }
+    })();
+  }, [activeChat.changeSet, appendActivityStep, applyAiEditsNow, confirmApplyChangeSet, openFile, setActiveChatChangeSet, setActivityProgress, setActivityStatus, setSelectedChangePath, workspace.root]);
 
   const rejectAllChanges = useCallback(async () => {
     const chatChangeSet = activeChat.changeSet;
     if (!chatChangeSet) return;
+    if (!chatChangeSet.applied) {
+      setActiveChatChangeSet(null);
+      setSelectedChangePath(null);
+      setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Discarded proposed changes." }]);
+      return;
+    }
+
     if (!workspace.root) {
       notifyRef.current?.({ kind: "error", title: "No workspace", message: "Open a folder first." });
       return;
@@ -2803,6 +3061,37 @@ export default function AppShell() {
     (path: string) => {
       const cs = activeChat.changeSet;
       if (!cs) return;
+      if (!cs.applied) {
+        void (async () => {
+          if (!workspace.root) {
+            notifyRef.current?.({ kind: "error", title: "No workspace", message: "Open a folder first." });
+            return;
+          }
+          const fileEdits = cs.edits.filter((e) => {
+            const op = String(e.op || "").toLowerCase();
+            if (op === "write" || op === "patch" || op === "delete") return String(e.path || "").trim() === path;
+            return false;
+          });
+
+          if (!fileEdits.length) {
+            const nextFiles = cs.files.filter((f) => !(f.kind === "write" && f.path === path));
+            const next = { ...cs, files: nextFiles, stats: computeStats(nextFiles) };
+            setActiveChatChangeSet(nextFiles.length ? next : null);
+            return;
+          }
+
+          setChatApplying(true);
+          try {
+            await applyAiEditsNow(fileEdits, undefined, { pace: true, previewFile: async (p) => void openFile(p) });
+          } finally {
+            setChatApplying(false);
+          }
+
+          setActiveChatChangeSet({ ...cs, applied: true });
+          setActiveChatMessages((prev) => [...prev, { role: "meta", content: `Applied ${path}.` }]);
+        })();
+        return;
+      }
       const nextFiles = cs.files.filter((f) => !(f.kind === "write" && f.path === path));
       if (!nextFiles.length) {
         setActiveChatChangeSet(null);
@@ -2828,6 +3117,24 @@ export default function AppShell() {
       if (!cs) return;
       const f = cs.files.find((x) => x.kind === "write" && x.path === path);
       if (!f || f.kind !== "write") return;
+      if (!cs.applied) {
+        const nextFiles = cs.files.filter((x) => !(x.kind === "write" && x.path === path));
+        if (!nextFiles.length) {
+          setActiveChatChangeSet(null);
+          setSelectedChangePath(null);
+          return;
+        }
+        const next = { ...cs, files: nextFiles, stats: computeStats(nextFiles) };
+        setActiveChatChangeSet(next);
+        if (!nextFiles.some((x) => x.kind === "write" && x.path === selectedChangePath)) {
+          const first = nextFiles.find((x) => x.kind === "write") as ChangeFile | undefined;
+          if (first?.kind === "write") {
+            setSelectedChangePath(first.path);
+            void openFile(first.path);
+          }
+        }
+        return;
+      }
       if (!workspace.root) {
         notifyRef.current?.({ kind: "error", title: "No workspace", message: "Open a folder first." });
         return;
@@ -2877,13 +3184,15 @@ export default function AppShell() {
     try {
       const files = await workspaceListFiles(20000);
       const seen = new Set<string>();
-      const deduped = files.filter((p) => {
-        const k = String(p || "");
-        if (!k) return false;
-        if (seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      });
+      const deduped = files
+        .map((p) => normalizeRelPath(p))
+        .filter((p) => {
+          const k = String(p || "");
+          if (!k) return false;
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
       setFileIndex(deduped);
       setFileIndexRoot(workspace.root);
     } finally {
@@ -3307,6 +3616,7 @@ export default function AppShell() {
 
   const changeProvider = useCallback(
     async (p: string | null) => {
+      const seq = (settingsMutationSeqRef.current += 1);
       setKeyStatus(null);
       setShowKeySaved(false);
       setShowKeyCleared(false);
@@ -3322,6 +3632,10 @@ export default function AppShell() {
       } catch (e) {
         console.error("Failed to save provider selection", e);
         setSecretsError(String(e));
+        if (settingsMutationSeqRef.current === seq) {
+          // Don't let an older failure clobber a newer successful selection.
+          setSettingsState(settings);
+        }
       }
     },
     [settings]
@@ -3358,6 +3672,7 @@ export default function AppShell() {
 
   const setPomporaThinking = useCallback(
     async (thinking: string | null) => {
+      const seq = (settingsMutationSeqRef.current += 1);
       const next: AppSettings = { ...settings, pompora_thinking: thinking };
       setSettingsState(next);
       try {
@@ -3365,7 +3680,9 @@ export default function AppShell() {
       } catch (e) {
         console.error("Failed to save pompora thinking", e);
         notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${formatErr(e)}` });
-        setSettingsState(settings);
+        if (settingsMutationSeqRef.current === seq) {
+          setSettingsState(settings);
+        }
       }
     },
     [formatErr, notify, settings]
@@ -3373,6 +3690,7 @@ export default function AppShell() {
 
   const selectPomporaMode = useCallback(
     async (mode: "slow" | "fast" | "reasoning") => {
+      const seq = (settingsMutationSeqRef.current += 1);
       const prev = settings;
       const next: AppSettings = { ...settings, active_provider: "pompora", pompora_thinking: mode };
       setSettingsState(next);
@@ -3385,7 +3703,9 @@ export default function AppShell() {
       } catch (e) {
         console.error("Failed to select pompora mode", e);
         notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${formatErr(e)}` });
-        setSettingsState(prev);
+        if (settingsMutationSeqRef.current === seq) {
+          setSettingsState(prev);
+        }
       }
     },
     [formatErr, notify, settings]
@@ -3517,7 +3837,7 @@ export default function AppShell() {
         .slice(-16);
 
       const conversationForModel = base
-        .filter((m) => m.role === "user" || m.role === "assistant")
+        .filter(isUserOrAssistantMessage)
         .filter((m) => String(m.content || "").trim().length > 0)
         .filter((m) => !(m.role === "assistant" && m.kind === "run_request"));
 
@@ -3591,18 +3911,9 @@ export default function AppShell() {
 
         if (showAssistant) startStreamingToMessageId(assistantId, assistantMsg);
 
-        const pushStep = (msg: string) => {
-          const m: ChatUiMessage = { role: "meta", content: msg };
-          setActiveChatMessages((prev) => [...prev, m]);
-        };
-
         try {
           const norm = normalizeAiEdits(edits, workspace.root);
           const normalized = norm.edits;
-          if (norm.didSanitize) {
-            pushStep("Note: AI returned paths outside this workspace; using workspace-relative filenames instead.");
-          }
-
           const changeSet = await buildChangeSet(normalized);
           setIsChatDockOpen(true);
           setActiveChatChangeSet(changeSet);
@@ -3613,16 +3924,17 @@ export default function AppShell() {
             await openFile(first.path);
           }
 
-          await applyAiEditsNow(normalized, pushStep, {
-            pace: true,
-            previewFile: async (p) => {
-              setSelectedChangePath(p);
-              await openFile(p);
-            },
-          });
+          const proposalId = `prop-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+          const proposal = buildProposal(assistantMsg, changeSet, norm.didSanitize);
           setActiveChatMessages((prev) => [
             ...prev,
-            { role: "meta", content: `Applied ${changeSet.stats.files} files (+${changeSet.stats.added} −${changeSet.stats.removed}).` },
+            {
+              id: proposalId,
+              role: "assistant",
+              content: "",
+              kind: "proposal",
+              proposal,
+            },
           ]);
         } finally {
           setChatApplying(false);
@@ -3662,6 +3974,7 @@ export default function AppShell() {
     authProfile,
     applyAiEditsNow,
     buildChangeSet,
+    buildProposal,
     friendlyAiError,
     keyStatus?.storage,
     notify,
@@ -5537,7 +5850,272 @@ export default function AppShell() {
                           return (
                             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                               <div className="max-w-[92%]">
-                                {m.role === "assistant" && m.kind === "run_request" && m.run ? (
+                                {m.role === "assistant" && m.kind === "activity" && m.activity ? (
+                                  <div className="ws-msg ws-msg-anim ws-msg-assistant">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <div className="text-[11px] text-muted">Activity</div>
+                                        <div className="mt-1 text-[13px] text-text">{m.activity.title}</div>
+                                      </div>
+                                      <div className="shrink-0 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                          {m.activity.status === "running" ? (
+                                            <RotateCw className="h-3.5 w-3.5 text-muted animate-spin" />
+                                          ) : m.activity.status === "done" ? (
+                                            <Check className="h-3.5 w-3.5 text-emerald-300" />
+                                          ) : m.activity.status === "error" ? (
+                                            <AlertTriangle className="h-3.5 w-3.5 text-red-300" />
+                                          ) : null}
+                                          <span
+                                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${statusPillClass(
+                                              m.activity.status
+                                            )}`}
+                                          >
+                                            {m.activity.status}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {m.activity.progress ? (
+                                      <div className="mt-2">
+                                        <div className="flex items-center justify-between gap-2 text-[11px] text-muted">
+                                          <span className="truncate">
+                                            {m.activity.progress.current ? m.activity.progress.current : ""}
+                                          </span>
+                                          <span className="shrink-0">
+                                            {m.activity.progress.done}/{m.activity.progress.total}
+                                          </span>
+                                        </div>
+                                        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full border border-border bg-bg">
+                                          <div
+                                            className="h-full bg-accent transition-[width] duration-300"
+                                            style={{
+                                              width: `${Math.max(
+                                                0,
+                                                Math.min(
+                                                  100,
+                                                  Math.round(
+                                                    (100 * (m.activity.progress.total ? m.activity.progress.done : 0)) /
+                                                      Math.max(1, m.activity.progress.total)
+                                                  )
+                                                )
+                                              )}%`,
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                    ) : null}
+
+                                    {(m.activity.steps?.length ?? 0) > 0 ? (
+                                      <div className="mt-2 space-y-1">
+                                        {(m.activity.steps ?? []).slice(-6).map((s, idx) => (
+                                          <div key={idx} className="text-[11px] text-muted whitespace-pre-wrap break-words">
+                                            {s}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : null}
+
+                                    {(m.activity.details?.length ?? 0) > 0 ? (
+                                      <div className="mt-2">
+                                        <button
+                                          type="button"
+                                          className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]"
+                                          onClick={() => toggleActivityCollapsed(m.id ?? "")}
+                                        >
+                                          {m.activity.collapsed ? "Show details" : "Hide details"}
+                                        </button>
+
+                                        {!m.activity.collapsed ? (
+                                          <div className="mt-2 max-h-44 overflow-auto rounded-lg border border-border bg-bg p-2 font-mono text-[11px] text-muted">
+                                            {(m.activity.details ?? []).slice(-120).map((line, idx) => (
+                                              <div key={idx} className="whitespace-pre-wrap break-words">
+                                                {line}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                ) : m.role === "assistant" && m.kind === "proposal" && m.proposal ? (
+                                  <div className="ws-msg ws-msg-anim ws-msg-assistant">
+                                    {(() => {
+                                      const cs = activeChat.changeSet;
+                                      const isCurrent = Boolean(cs && cs.id === m.proposal?.changeSetId);
+                                      const isApplied = Boolean(cs && cs.id === m.proposal?.changeSetId && cs.applied);
+                                      return (
+                                        <>
+                                          <div className="flex items-start justify-between gap-3">
+                                            <div className="min-w-0">
+                                              <div className="text-[11px] text-muted">Proposal</div>
+                                              <div className="mt-1 text-[13px] text-text">{m.proposal.title}</div>
+                                              <div className="mt-1 text-[11px] text-muted">
+                                                <span className="text-text">{m.proposal.stats.files} files</span>
+                                                <span className="ml-2 text-emerald-300">+{m.proposal.stats.added}</span>
+                                                <span className="ml-2 text-red-300">-{m.proposal.stats.removed}</span>
+                                              </div>
+                                            </div>
+                                            <div className="shrink-0 text-right">
+                                              <div className="text-[10px] text-muted">State</div>
+                                              <div className="mt-1 text-[11px] text-text">
+                                                {!isCurrent ? "outdated" : isApplied ? "applied" : "pending"}
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <div className="mt-3">
+                                            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Plan</div>
+                                            <div className="mt-1 space-y-1">
+                                              {(m.proposal.plan ?? []).slice(0, 6).map((p, idx) => (
+                                                <div key={idx} className="flex items-start gap-2 text-[12px] text-muted">
+                                                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[rgb(var(--p-accent))]" />
+                                                  <span className="whitespace-pre-wrap break-words">{p}</span>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+
+                                          {(m.proposal.risks?.length ?? 0) > 0 ? (
+                                            <div className="mt-3">
+                                              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Warnings</div>
+                                              <div className="mt-1 space-y-1">
+                                                {(m.proposal.risks ?? []).slice(0, 6).map((r, idx) => (
+                                                  <div key={idx} className="text-[12px] text-muted whitespace-pre-wrap break-words">
+                                                    {r}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          ) : null}
+
+                                          <div className="mt-3">
+                                            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Files</div>
+                                            <div className="mt-1 max-h-52 overflow-auto rounded-lg border border-border bg-bg">
+                                              {(m.proposal.files ?? []).map((f, idx) => {
+                                                const badge = f.kind === "delete" ? "D" : f.kind === "rename" ? "R" : f.isNew ? "A" : "M";
+                                                const badgeCls =
+                                                  f.kind === "delete"
+                                                    ? "bg-red-500/15 text-red-300"
+                                                    : f.kind === "rename"
+                                                      ? "bg-sky-500/15 text-sky-300"
+                                                      : "bg-emerald-500/15 text-emerald-300";
+                                                const full = cs?.files.find((x) => x.kind === "write" && x.path === f.path) ?? null;
+                                                const canPreview = Boolean(full && full.kind === "write" && typeof full.before === "string" && typeof full.after === "string");
+                                                const isOpen = Boolean(proposalPreviewOpen[f.path]);
+                                                const FileIcon = fileIconFor(f.path);
+
+                                                return (
+                                                  <div key={`${f.kind}:${f.path}:${idx}`} className="border-b border-border/60 last:border-b-0">
+                                                    <div className="flex items-center justify-between gap-2 px-2 py-1.5">
+                                                      <button
+                                                        type="button"
+                                                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                                                        onClick={() => {
+                                                          if (f.kind === "write") void openFile(f.path);
+                                                        }}
+                                                      >
+                                                        <span className={`flex h-5 w-5 items-center justify-center rounded text-[11px] ${badgeCls}`}>{badge}</span>
+                                                        <FileIcon className="h-4 w-4 text-muted" />
+                                                        <span className="min-w-0 truncate text-[12px] text-text">{f.path}</span>
+                                                      </button>
+
+                                                      <div className="flex shrink-0 items-center gap-1">
+                                                        {f.kind === "write" && canPreview ? (
+                                                          <button
+                                                            type="button"
+                                                            className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]"
+                                                            onClick={() =>
+                                                              setProposalPreviewOpen((prev) => ({ ...prev, [f.path]: !Boolean(prev[f.path]) }))
+                                                            }
+                                                          >
+                                                            <Eye className="mr-1 inline-block h-3.5 w-3.5" />
+                                                            {isOpen ? "Hide" : "Preview"}
+                                                          </button>
+                                                        ) : null}
+
+                                                        {f.kind === "write" && isCurrent && !isApplied ? (
+                                                          <>
+                                                            <button
+                                                              type="button"
+                                                              className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]"
+                                                              disabled={chatApplying}
+                                                              onClick={() => void rejectFileChange(f.path)}
+                                                            >
+                                                              Reject
+                                                            </button>
+                                                            <button
+                                                              type="button"
+                                                              className="ws-btn ws-btn-primary h-6 px-2 text-[11px]"
+                                                              disabled={chatApplying}
+                                                              onClick={() => acceptFileChange(f.path)}
+                                                            >
+                                                              Apply
+                                                            </button>
+                                                          </>
+                                                        ) : null}
+                                                      </div>
+                                                    </div>
+
+                                                    {f.kind === "write" && canPreview ? (
+                                                      <div
+                                                        className={`overflow-hidden transition-[max-height,opacity] duration-300 ${
+                                                          isOpen ? "max-h-[360px] opacity-100" : "max-h-0 opacity-0"
+                                                        }`}
+                                                      >
+                                                        <div className="px-2 pb-2">
+                                                          <div className="rounded-lg border border-border bg-panel">
+                                                            <DiffEditor
+                                                              height="240px"
+                                                              theme={themeName}
+                                                              language={detectLanguage(f.path)}
+                                                              original={full?.before ?? ""}
+                                                              modified={full?.after ?? ""}
+                                                              options={{
+                                                                readOnly: true,
+                                                                renderSideBySide: false,
+                                                                minimap: { enabled: false },
+                                                                scrollBeyondLastLine: false,
+                                                                wordWrap: "on",
+                                                                automaticLayout: true,
+                                                                fontSize: 12,
+                                                                padding: { top: 8, bottom: 8 },
+                                                              }}
+                                                            />
+                                                          </div>
+                                                        </div>
+                                                      </div>
+                                                    ) : null}
+                                                  </div>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+
+                                          <div className="mt-3 flex items-center justify-end gap-2">
+                                            <button
+                                              type="button"
+                                              className="ws-btn ws-btn-secondary h-7 px-2"
+                                              disabled={!isCurrent || chatApplying}
+                                              onClick={() => void rejectAllChanges()}
+                                            >
+                                              Discard
+                                            </button>
+                                            <button
+                                              type="button"
+                                              className="ws-btn h-7 border border-accent bg-accent px-2 text-white hover:opacity-90 disabled:opacity-50"
+                                              disabled={!isCurrent || isApplied || chatApplying}
+                                              onClick={() => acceptAllChanges()}
+                                            >
+                                              Apply
+                                            </button>
+                                          </div>
+                                        </>
+                                      );
+                                    })()}
+                                  </div>
+                                ) : m.role === "assistant" && m.kind === "run_request" && m.run ? (
                                   <div className="ws-msg ws-msg-anim ws-msg-assistant" data-run-menu-root>
                                     <div className="flex items-center justify-between gap-3">
                                       <div className="min-w-0">
