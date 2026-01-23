@@ -10,6 +10,30 @@
   font-display: swap;
 }
 
+@keyframes wsTypingDot {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  40% {
+    transform: translateY(-3px);
+    opacity: 0.9;
+  }
+}
+
+@keyframes wsCaret {
+  0%,
+  45% {
+    opacity: 0.15;
+  }
+  55%,
+  100% {
+    opacity: 0.75;
+  }
+}
+
 :root {
   color-scheme: dark;
 
@@ -474,6 +498,148 @@ body {
   .ws-agent-dot {
     @apply h-2 w-2 shrink-0 rounded-full bg-accent;
     box-shadow: 0 0 0 8px rgba(112, 163, 255, 0.08);
+  }
+
+  .ws-caret {
+    display: inline-block;
+    width: 6px;
+    height: 1.05em;
+    margin-left: 2px;
+    border-radius: 2px;
+    background: rgb(var(--p-accent));
+    opacity: 0.65;
+    animation: wsCaret 900ms infinite;
+    vertical-align: text-bottom;
+  }
+
+  .ws-typing {
+    @apply inline-flex items-center gap-2;
+    animation: wsFadeUp 160ms ease-out;
+  }
+
+  .ws-typing-bubble {
+    @apply rounded-full border border-border bg-panel px-3 py-2;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+
+  .ws-typing-label {
+    @apply text-[11px] text-muted;
+  }
+
+  .ws-typing-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 10px;
+  }
+
+  .ws-typing-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgb(var(--p-muted));
+    opacity: 0.35;
+    animation: wsTypingDot 900ms infinite;
+  }
+
+  .ws-typing-dots span:nth-child(2) {
+    animation-delay: 120ms;
+  }
+
+  .ws-typing-dots span:nth-child(3) {
+    animation-delay: 240ms;
+  }
+
+  .ws-log-panel {
+    @apply w-full max-w-[92%] rounded-xl border border-border bg-panel;
+    animation: wsFadeUp 160ms ease-out;
+  }
+
+  .ws-log-panel-header {
+    @apply flex items-center justify-between gap-2 px-2.5 py-2;
+  }
+
+  .ws-log-panel-title {
+    @apply inline-flex min-w-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-[12px] text-muted hover:bg-bg hover:text-text;
+  }
+
+  .ws-log-pill {
+    @apply inline-flex items-center rounded-full border border-border bg-bg px-2 py-0.5 text-[11px] text-muted;
+  }
+
+  .ws-log-count {
+    @apply inline-flex items-center justify-center rounded-md border border-border bg-bg px-1.5 py-0.5 text-[10px] text-muted;
+  }
+
+  .ws-log-chevron {
+    @apply h-4 w-4 shrink-0 text-muted transition-transform duration-200;
+  }
+
+  .ws-log-actions {
+    @apply shrink-0;
+  }
+
+  .ws-log-panel-body {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 260ms ease, opacity 200ms ease;
+  }
+
+  .ws-log-panel-body-open {
+    max-height: 420px;
+    opacity: 1;
+  }
+
+  .ws-log-latest {
+    @apply border-t border-border/60 px-2.5 py-2;
+  }
+
+  .ws-log-list {
+    @apply px-2.5 py-2;
+  }
+
+  .ws-log-item {
+    @apply flex items-start gap-2 py-1 text-[12px] text-muted;
+  }
+
+  .ws-log-item-latest {
+    @apply text-text;
+  }
+
+  .ws-log-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: rgb(var(--p-accent));
+    opacity: 0.85;
+    box-shadow: 0 0 0 10px rgba(112, 163, 255, 0.08);
+    margin-top: 4px;
+    flex: 0 0 auto;
+  }
+
+  .ws-agent-panel {
+    @apply overflow-hidden rounded-lg border border-border bg-bg;
+  }
+
+  .ws-agent-panel-h {
+    @apply transition-colors hover:bg-panel;
+  }
+
+  .ws-agent-panel-b {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 260ms ease, opacity 200ms ease;
+  }
+
+  .ws-agent-panel-b-open {
+    max-height: 520px;
+    opacity: 1;
+  }
+
+  .ws-terminal-log {
+    @apply max-h-56 overflow-auto rounded-md border border-border bg-panel p-2 font-mono text-[11px] text-muted;
   }
 }
 

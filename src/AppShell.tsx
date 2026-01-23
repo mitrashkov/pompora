@@ -156,6 +156,386 @@ type TerminalCapture = {
   emit: (line: string) => void;
 };
 
+type GroupedChatItem =
+  | { type: "msg"; key: string; msg: ChatUiMessage }
+  | { type: "thinking"; key: string }
+  | { type: "meta_group"; key: string; lines: string[] };
+
+function groupChatMessages(messages: ChatUiMessage[]): GroupedChatItem[] {
+  const out: GroupedChatItem[] = [];
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
+    if (m.role !== "meta") {
+      out.push({ type: "msg", key: `m:${m.id ?? i}`, msg: m });
+      continue;
+    }
+
+    const content = String(m.content ?? "");
+    if (content === "Thinking…") {
+      out.push({ type: "thinking", key: `t:${m.id ?? i}` });
+      continue;
+    }
+
+    const lines: string[] = [];
+    const start = i;
+    while (i < messages.length) {
+      const cur = messages[i];
+      if (cur.role !== "meta") break;
+      const c = String(cur.content ?? "");
+      if (c === "Thinking…") break;
+      const t = c.trim();
+      if (t) lines.push(t);
+      i++;
+    }
+    i -= 1;
+
+    if (lines.length) {
+      out.push({ type: "meta_group", key: `g:${start}`, lines });
+    }
+  }
+  return out;
+}
+
+function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: number; maxChars?: number }): string {
+  const enabled = opts?.enabled !== false;
+  const cps = Math.max(10, Math.min(240, Math.floor(opts?.cps ?? 70)));
+  const maxChars = Math.max(200, Math.min(12000, Math.floor(opts?.maxChars ?? 6000)));
+  const safe = String(text ?? "").slice(0, maxChars);
+  const [n, setN] = useState<number>(enabled ? 0 : safe.length);
+  const prevTextRef = useRef<string>(safe);
+
+  useEffect(() => {
+    if (!enabled) {
+      setN(safe.length);
+      prevTextRef.current = safe;
+      return;
+    }
+
+    // If text is streaming and only grows, keep the current cursor position.
+    // Otherwise restart typing from the beginning.
+    setN((prev) => {
+      const prevText = prevTextRef.current;
+      if (safe.startsWith(prevText) && prev <= prevText.length) return prev;
+      return 0;
+    });
+    if (!safe.length) return;
+
+    const stepMs = Math.max(12, Math.floor(1000 / cps));
+    let alive = true;
+    const timer = window.setInterval(() => {
+      if (!alive) return;
+      setN((prev) => {
+        if (prev >= safe.length) return prev;
+        return Math.min(safe.length, prev + 1);
+      });
+    }, stepMs);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, [safe, enabled, cps]);
+
+  useEffect(() => {
+    prevTextRef.current = safe;
+  }, [safe]);
+
+  return safe.slice(0, n);
+}
+
+function TypingIndicator({ label }: { label?: string }) {
+  return (
+    <div className="ws-typing">
+      <div className="ws-typing-bubble">
+        <span className="ws-typing-dots">
+          <span />
+          <span />
+          <span />
+        </span>
+      </div>
+      {label ? <div className="ws-typing-label">{label}</div> : null}
+    </div>
+  );
+}
+
+function MetaLogPanel({ lines }: { lines: string[] }) {
+  const [open, setOpen] = useState<boolean>(false);
+  const last = lines[lines.length - 1] ?? "";
+  const typedLast = useTypewriterText(last, { enabled: true, cps: 90, maxChars: 1600 });
+
+  const copyAll = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+    } catch {
+    }
+  }, [lines]);
+
+  return (
+    <div className="ws-log-panel">
+      <div className="ws-log-panel-header">
+        <button type="button" className="ws-log-panel-title" onClick={() => setOpen((v) => !v)}>
+          <span className="ws-log-pill">Logs</span>
+          <span className="ws-log-count">{lines.length}</span>
+          <ChevronDown className={`ws-log-chevron ${open ? "rotate-180" : ""}`} />
+        </button>
+        <div className="ws-log-actions">
+          <button type="button" className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]" onClick={() => void copyAll()}>
+            Copy
+          </button>
+        </div>
+      </div>
+
+      {last ? (
+        <div className="ws-log-latest">
+          <div className="ws-log-item ws-log-item-latest">
+            <span className="ws-log-dot" />
+            <span className="whitespace-pre-wrap break-words">{typedLast}</span>
+            <span className="ws-caret" />
+          </div>
+        </div>
+      ) : null}
+
+      <div className={`ws-log-panel-body ${open ? "ws-log-panel-body-open" : ""}`}>
+        <div className="ws-log-list">
+          {lines.slice(0, Math.max(0, lines.length - 1)).map((l, idx) => (
+            <div key={idx} className="ws-log-item">
+              <span className="ws-log-dot" />
+              <span className="whitespace-pre-wrap break-words">{l}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AgentRunCard({
+  messageId,
+  ar,
+  onToggle,
+}: {
+  messageId: string;
+  ar: NonNullable<ChatUiMessage["agentRun"]>;
+  onToggle: (id: string, key: keyof NonNullable<ChatUiMessage["agentRun"]>["collapsed"]) => void;
+}) {
+  const phaseLabel =
+    ar.phase === "think"
+      ? "Think"
+      : ar.phase === "plan"
+        ? "Plan"
+        : ar.phase === "act"
+          ? "Act"
+          : ar.phase === "verify"
+            ? "Verify"
+            : "Done";
+
+  const phaseIcon =
+    ar.phase === "think"
+      ? Brain
+      : ar.phase === "plan"
+        ? ListChecks
+        : ar.phase === "act"
+          ? Wand2
+          : ar.phase === "verify"
+            ? Check
+            : CheckCircle2;
+
+  const PhaseIcon = phaseIcon;
+  const thinkTyped = useTypewriterText(ar.thinkText || (ar.status === "running" ? "Thinking…" : ""), { enabled: true, cps: 75 });
+  const verifyTyped = useTypewriterText(ar.verifyText || "", { enabled: true, cps: 85 });
+  const doneTyped = useTypewriterText(ar.doneText || "", { enabled: true, cps: 90 });
+
+  return (
+    <div className="ws-msg ws-msg-anim ws-msg-assistant">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[11px] text-muted">Agent</div>
+          <div className="mt-1 flex items-center gap-2 text-[13px] text-text">
+            <PhaseIcon className="h-4 w-4 text-muted" />
+            <span className="truncate">Pompora</span>
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="flex items-center justify-end gap-2">
+            {ar.status === "running" ? (
+              <CircleDashed className="h-4 w-4 text-muted animate-spin" />
+            ) : ar.status === "done" ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+            ) : (
+              <AlertTriangle className="h-4 w-4 text-red-300" />
+            )}
+            <span
+              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${statusPillClass(
+                ar.status === "error" ? "error" : ar.status === "done" ? "done" : "running"
+              )}`}
+            >
+              {phaseLabel}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 space-y-2">
+        <div className="ws-agent-panel">
+          <button
+            type="button"
+            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
+            onClick={() => onToggle(messageId, "think")}
+          >
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              <Brain className="h-4 w-4" />
+              Thinking
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.think ? "" : "rotate-180"}`} />
+          </button>
+          <div className={`ws-agent-panel-b ${ar.collapsed.think ? "" : "ws-agent-panel-b-open"}`}>
+            <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
+              {thinkTyped}
+              {ar.status === "running" ? <span className="ws-caret" /> : null}
+            </div>
+          </div>
+        </div>
+
+        <div className="ws-agent-panel">
+          <button
+            type="button"
+            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
+            onClick={() => onToggle(messageId, "plan")}
+          >
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              <ListChecks className="h-4 w-4" />
+              Plan
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.plan ? "" : "rotate-180"}`} />
+          </button>
+          <div className={`ws-agent-panel-b ${ar.collapsed.plan ? "" : "ws-agent-panel-b-open"}`}>
+            <div className="px-2 pb-2">
+              {(ar.planItems ?? []).length ? (
+                <div className="space-y-1">
+                  {(ar.planItems ?? []).slice(0, 12).map((p, idx) => (
+                    <div key={idx} className="flex items-start gap-2 text-[12px] text-muted">
+                      <span className="ws-log-dot mt-1" />
+                      <span className="whitespace-pre-wrap break-words">{p}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[12px] text-muted">No plan yet.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="ws-agent-panel">
+          <button
+            type="button"
+            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
+            onClick={() => onToggle(messageId, "act")}
+          >
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              <Wand2 className="h-4 w-4" />
+              Actions
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.act ? "" : "rotate-180"}`} />
+          </button>
+          <div className={`ws-agent-panel-b ${ar.collapsed.act ? "" : "ws-agent-panel-b-open"}`}>
+            <div className="px-2 pb-2">
+              {(ar.actions ?? []).length ? (
+                <div className="space-y-1">
+                  {(ar.actions ?? []).slice(-14).map((a) => (
+                    <div key={a.id} className="flex items-start gap-2 text-[12px] text-muted">
+                      <span className="mt-0.5">
+                        {a.status === "running" ? (
+                          <CircleDashed className="h-4 w-4 animate-spin" />
+                        ) : a.status === "done" ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                        ) : a.status === "error" ? (
+                          <AlertTriangle className="h-4 w-4 text-red-300" />
+                        ) : (
+                          <CircleDashed className="h-4 w-4" />
+                        )}
+                      </span>
+                      <span className="whitespace-pre-wrap break-words">{a.label}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[12px] text-muted">No actions yet.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="ws-agent-panel">
+          <button
+            type="button"
+            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
+            onClick={() => onToggle(messageId, "output")}
+          >
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              <TerminalSquare className="h-4 w-4" />
+              Output
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.output ? "" : "rotate-180"}`} />
+          </button>
+          <div className={`ws-agent-panel-b ${ar.collapsed.output ? "" : "ws-agent-panel-b-open"}`}>
+            <div className="px-2 pb-2">
+              {(ar.output ?? []).length ? (
+                <div className="ws-terminal-log">
+                  {(ar.output ?? []).slice(-120).map((line, idx) => (
+                    <div key={idx} className="whitespace-pre-wrap break-words">
+                      {line}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-[12px] text-muted">No output.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="ws-agent-panel">
+          <button
+            type="button"
+            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
+            onClick={() => onToggle(messageId, "verify")}
+          >
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              <Check className="h-4 w-4" />
+              Verify
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.verify ? "" : "rotate-180"}`} />
+          </button>
+          <div className={`ws-agent-panel-b ${ar.collapsed.verify ? "" : "ws-agent-panel-b-open"}`}>
+            <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
+              {verifyTyped}
+            </div>
+          </div>
+        </div>
+
+        <div className="ws-agent-panel">
+          <button
+            type="button"
+            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
+            onClick={() => onToggle(messageId, "done")}
+          >
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              <CheckCircle2 className="h-4 w-4" />
+              Done
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.done ? "" : "rotate-180"}`} />
+          </button>
+          <div className={`ws-agent-panel-b ${ar.collapsed.done ? "" : "ws-agent-panel-b-open"}`}>
+            <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
+              {doneTyped}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function phaseRank(p: "think" | "plan" | "act" | "verify" | "done"): number {
   if (p === "think") return 0;
   if (p === "plan") return 1;
@@ -5926,251 +6306,29 @@ export default function AppShell() {
 
                   {activeChat.messages.length ? (
                       <div className="space-y-3">
-                        {activeChat.messages.map((m, i) => {
-                          if (m.role === "meta") {
+                        {groupChatMessages(activeChat.messages).map((it) => {
+                          if (it.type === "thinking") {
                             return (
-                              <div key={i} className={m.content === "Thinking…" ? "flex justify-center" : "flex justify-start"}>
-                                {m.content === "Thinking…" ? (
-                                  <span className="ws-thinking">
-                                    <span>
-                                      Thinking
-                                      <span className="ws-thinking-dots">
-                                        <span />
-                                        <span />
-                                        <span />
-                                        <span />
-                                        <span />
-                                        <span />
-                                      </span>
-                                    </span>
-                                  </span>
-                                ) : (
-                                  <div className="ws-agent-step">
-                                    <span className="ws-agent-dot" />
-                                    <span className="whitespace-pre-wrap break-words">{m.content}</span>
-                                  </div>
-                                )}
+                              <div key={it.key} className="flex justify-center">
+                                <TypingIndicator label="Thinking" />
                               </div>
                             );
                           }
 
+                          if (it.type === "meta_group") {
+                            return (
+                              <div key={it.key} className="flex justify-start">
+                                <MetaLogPanel lines={it.lines} />
+                              </div>
+                            );
+                          }
+
+                          const m = it.msg;
                           return (
-                            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                            <div key={it.key} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                               <div className="max-w-[92%]">
                                 {m.role === "assistant" && m.kind === "agent_run" && m.agentRun ? (
-                                  <div className="ws-msg ws-msg-anim ws-msg-assistant">
-                                    {(() => {
-                                      const ar = m.agentRun!;
-                                      const phaseLabel =
-                                        ar.phase === "think"
-                                          ? "Think"
-                                          : ar.phase === "plan"
-                                            ? "Plan"
-                                            : ar.phase === "act"
-                                              ? "Act"
-                                              : ar.phase === "verify"
-                                                ? "Verify"
-                                                : "Done";
-
-                                      const phaseIcon =
-                                        ar.phase === "think"
-                                          ? Brain
-                                          : ar.phase === "plan"
-                                            ? ListChecks
-                                            : ar.phase === "act"
-                                              ? Wand2
-                                              : ar.phase === "verify"
-                                                ? Check
-                                                : CheckCircle2;
-
-                                      const PhaseIcon = phaseIcon;
-
-                                      return (
-                                        <>
-                                          <div className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0">
-                                              <div className="text-[11px] text-muted">Agent</div>
-                                              <div className="mt-1 flex items-center gap-2 text-[13px] text-text">
-                                                <PhaseIcon className="h-4 w-4 text-muted" />
-                                                <span className="truncate">Pompora</span>
-                                              </div>
-                                            </div>
-                                            <div className="shrink-0 text-right">
-                                              <div className="flex items-center justify-end gap-2">
-                                                {ar.status === "running" ? (
-                                                  <CircleDashed className="h-4 w-4 text-muted animate-spin" />
-                                                ) : ar.status === "done" ? (
-                                                  <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                                                ) : (
-                                                  <AlertTriangle className="h-4 w-4 text-red-300" />
-                                                )}
-                                                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${statusPillClass(ar.status === "error" ? "error" : ar.status === "done" ? "done" : "running")}`}
-                                                >
-                                                  {phaseLabel}
-                                                </span>
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          <div className="mt-3 space-y-2">
-                                            <div className="rounded-lg border border-border bg-bg">
-                                              <button
-                                                type="button"
-                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
-                                                onClick={() => toggleAgentRunSection(m.id ?? "", "think")}
-                                              >
-                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                                                  <Brain className="h-4 w-4" />
-                                                  Thinking
-                                                </span>
-                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.think ? "" : "rotate-180"}`} />
-                                              </button>
-                                              {!ar.collapsed.think ? (
-                                                <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
-                                                  {ar.thinkText || (ar.status === "running" ? "Thinking…" : "")}
-                                                </div>
-                                              ) : null}
-                                            </div>
-
-                                            <div className="rounded-lg border border-border bg-bg">
-                                              <button
-                                                type="button"
-                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
-                                                onClick={() => toggleAgentRunSection(m.id ?? "", "plan")}
-                                              >
-                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                                                  <ListChecks className="h-4 w-4" />
-                                                  Plan
-                                                </span>
-                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.plan ? "" : "rotate-180"}`} />
-                                              </button>
-                                              {!ar.collapsed.plan ? (
-                                                <div className="px-2 pb-2">
-                                                  {(ar.planItems ?? []).length ? (
-                                                    <div className="space-y-1">
-                                                      {(ar.planItems ?? []).slice(0, 10).map((p, idx) => (
-                                                        <div key={idx} className="flex items-start gap-2 text-[12px] text-muted">
-                                                          <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded border border-border bg-panel text-[10px]">{idx + 1}</span>
-                                                          <span className="whitespace-pre-wrap break-words">{p}</span>
-                                                        </div>
-                                                      ))}
-                                                    </div>
-                                                  ) : (
-                                                    <div className="text-[12px] text-muted">No plan yet.</div>
-                                                  )}
-                                                </div>
-                                              ) : null}
-                                            </div>
-
-                                            <div className="rounded-lg border border-border bg-bg">
-                                              <button
-                                                type="button"
-                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
-                                                onClick={() => toggleAgentRunSection(m.id ?? "", "act")}
-                                              >
-                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                                                  <Wand2 className="h-4 w-4" />
-                                                  Actions
-                                                </span>
-                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.act ? "" : "rotate-180"}`} />
-                                              </button>
-                                              {!ar.collapsed.act ? (
-                                                <div className="px-2 pb-2">
-                                                  {(ar.actions ?? []).length ? (
-                                                    <div className="space-y-1">
-                                                      {(ar.actions ?? []).slice(-12).map((a) => (
-                                                        <div key={a.id} className="flex items-start gap-2 text-[12px] text-muted">
-                                                          <span className="mt-0.5">
-                                                            {a.status === "running" ? (
-                                                              <CircleDashed className="h-4 w-4 animate-spin" />
-                                                            ) : a.status === "done" ? (
-                                                              <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                                                            ) : a.status === "error" ? (
-                                                              <AlertTriangle className="h-4 w-4 text-red-300" />
-                                                            ) : (
-                                                              <CircleDashed className="h-4 w-4" />
-                                                            )}
-                                                          </span>
-                                                          <span className="whitespace-pre-wrap break-words">{a.label}</span>
-                                                        </div>
-                                                      ))}
-                                                    </div>
-                                                  ) : (
-                                                    <div className="text-[12px] text-muted">No actions yet.</div>
-                                                  )}
-                                                </div>
-                                              ) : null}
-                                            </div>
-
-                                            <div className="rounded-lg border border-border bg-bg">
-                                              <button
-                                                type="button"
-                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
-                                                onClick={() => toggleAgentRunSection(m.id ?? "", "output")}
-                                              >
-                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                                                  <TerminalSquare className="h-4 w-4" />
-                                                  Command Output
-                                                </span>
-                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.output ? "" : "rotate-180"}`} />
-                                              </button>
-                                              {!ar.collapsed.output ? (
-                                                <div className="px-2 pb-2">
-                                                  {(ar.output ?? []).length ? (
-                                                    <div className="max-h-40 overflow-auto rounded-md border border-border bg-panel p-2 font-mono text-[11px] text-muted">
-                                                      {(ar.output ?? []).slice(-80).map((line, idx) => (
-                                                        <div key={idx} className="whitespace-pre-wrap break-words">{line}</div>
-                                                      ))}
-                                                    </div>
-                                                  ) : (
-                                                    <div className="text-[12px] text-muted">No output.</div>
-                                                  )}
-                                                </div>
-                                              ) : null}
-                                            </div>
-
-                                            <div className="rounded-lg border border-border bg-bg">
-                                              <button
-                                                type="button"
-                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
-                                                onClick={() => toggleAgentRunSection(m.id ?? "", "verify")}
-                                              >
-                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                                                  <Check className="h-4 w-4" />
-                                                  Verify
-                                                </span>
-                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.verify ? "" : "rotate-180"}`} />
-                                              </button>
-                                              {!ar.collapsed.verify ? (
-                                                <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
-                                                  {ar.verifyText || ""}
-                                                </div>
-                                              ) : null}
-                                            </div>
-
-                                            <div className="rounded-lg border border-border bg-bg">
-                                              <button
-                                                type="button"
-                                                className="flex w-full items-center justify-between px-2 py-2 text-left"
-                                                onClick={() => toggleAgentRunSection(m.id ?? "", "done")}
-                                              >
-                                                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                                                  <CheckCircle2 className="h-4 w-4" />
-                                                  Done
-                                                </span>
-                                                <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.done ? "" : "rotate-180"}`} />
-                                              </button>
-                                              {!ar.collapsed.done ? (
-                                                <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
-                                                  {ar.doneText || ""}
-                                                </div>
-                                              ) : null}
-                                            </div>
-                                          </div>
-                                        </>
-                                      );
-                                    })()}
-                                  </div>
+                                  <AgentRunCard messageId={m.id ?? ""} ar={m.agentRun} onToggle={toggleAgentRunSection} />
                                 ) : m.role === "assistant" && m.kind === "activity" && m.activity ? (
                                   <div className="ws-msg ws-msg-anim ws-msg-assistant">
                                     <div className="flex items-start justify-between gap-3">
@@ -6532,14 +6690,20 @@ export default function AppShell() {
                                     <button
                                       type="button"
                                       className={`ws-icon-btn ${m.rating === "up" ? "text-text" : ""}`}
-                                      onClick={() => setMessageRating(i, "up")}
+                                      onClick={() => {
+                                        const idx = activeChat.messages.findIndex((x) => x === m);
+                                        if (idx >= 0) setMessageRating(idx, "up");
+                                      }}
                                     >
                                       <ThumbsUp className="h-4 w-4" />
                                     </button>
                                     <button
                                       type="button"
                                       className={`ws-icon-btn ${m.rating === "down" ? "text-text" : ""}`}
-                                      onClick={() => setMessageRating(i, "down")}
+                                      onClick={() => {
+                                        const idx = activeChat.messages.findIndex((x) => x === m);
+                                        if (idx >= 0) setMessageRating(idx, "down");
+                                      }}
                                     >
                                       <ThumbsDown className="h-4 w-4" />
                                     </button>
