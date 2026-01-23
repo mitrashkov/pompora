@@ -77,12 +77,24 @@ import type { AppSettings, AuthProfile, CreditsResponse, DirEntryInfo, EditorTab
 
 type ActivityId = "explorer" | "search" | "scm";
 
+type ChatLogEntry = {
+  id: string;
+  ts: number;
+  groupId?: string | null;
+  kind: "info" | "error" | "action";
+  title: string;
+  status?: "pending" | "running" | "done" | "error";
+  details?: string[];
+  collapsed?: boolean;
+};
+
 type ChatSession = {
   id: string;
   title: string;
   createdAt: number;
   updatedAt: number;
   messages: ChatUiMessage[];
+  logs: ChatLogEntry[];
   draft: string;
   changeSet: ChangeSet | null;
 };
@@ -156,46 +168,6 @@ type TerminalCapture = {
   emit: (line: string) => void;
 };
 
-type GroupedChatItem =
-  | { type: "msg"; key: string; msg: ChatUiMessage }
-  | { type: "thinking"; key: string }
-  | { type: "meta_group"; key: string; lines: string[] };
-
-function groupChatMessages(messages: ChatUiMessage[]): GroupedChatItem[] {
-  const out: GroupedChatItem[] = [];
-  for (let i = 0; i < messages.length; i++) {
-    const m = messages[i];
-    if (m.role !== "meta") {
-      out.push({ type: "msg", key: `m:${m.id ?? i}`, msg: m });
-      continue;
-    }
-
-    const content = String(m.content ?? "");
-    if (content === "Thinking…") {
-      out.push({ type: "thinking", key: `t:${m.id ?? i}` });
-      continue;
-    }
-
-    const lines: string[] = [];
-    const start = i;
-    while (i < messages.length) {
-      const cur = messages[i];
-      if (cur.role !== "meta") break;
-      const c = String(cur.content ?? "");
-      if (c === "Thinking…") break;
-      const t = c.trim();
-      if (t) lines.push(t);
-      i++;
-    }
-    i -= 1;
-
-    if (lines.length) {
-      out.push({ type: "meta_group", key: `g:${start}`, lines });
-    }
-  }
-  return out;
-}
-
 function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: number; maxChars?: number }): string {
   const enabled = opts?.enabled !== false;
   const cps = Math.max(10, Math.min(240, Math.floor(opts?.cps ?? 70)));
@@ -240,72 +212,6 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
   }, [safe]);
 
   return safe.slice(0, n);
-}
-
-function TypingIndicator({ label }: { label?: string }) {
-  return (
-    <div className="ws-typing">
-      <div className="ws-typing-bubble">
-        <span className="ws-typing-dots">
-          <span />
-          <span />
-          <span />
-        </span>
-      </div>
-      {label ? <div className="ws-typing-label">{label}</div> : null}
-    </div>
-  );
-}
-
-function MetaLogPanel({ lines }: { lines: string[] }) {
-  const [open, setOpen] = useState<boolean>(false);
-  const last = lines[lines.length - 1] ?? "";
-  const typedLast = useTypewriterText(last, { enabled: true, cps: 90, maxChars: 1600 });
-
-  const copyAll = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(lines.join("\n"));
-    } catch {
-    }
-  }, [lines]);
-
-  return (
-    <div className="ws-log-panel">
-      <div className="ws-log-panel-header">
-        <button type="button" className="ws-log-panel-title" onClick={() => setOpen((v) => !v)}>
-          <span className="ws-log-pill">Logs</span>
-          <span className="ws-log-count">{lines.length}</span>
-          <ChevronDown className={`ws-log-chevron ${open ? "rotate-180" : ""}`} />
-        </button>
-        <div className="ws-log-actions">
-          <button type="button" className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]" onClick={() => void copyAll()}>
-            Copy
-          </button>
-        </div>
-      </div>
-
-      {last ? (
-        <div className="ws-log-latest">
-          <div className="ws-log-item ws-log-item-latest">
-            <span className="ws-log-dot" />
-            <span className="whitespace-pre-wrap break-words">{typedLast}</span>
-            <span className="ws-caret" />
-          </div>
-        </div>
-      ) : null}
-
-      <div className={`ws-log-panel-body ${open ? "ws-log-panel-body-open" : ""}`}>
-        <div className="ws-log-list">
-          {lines.slice(0, Math.max(0, lines.length - 1)).map((l, idx) => (
-            <div key={idx} className="ws-log-item">
-              <span className="ws-log-dot" />
-              <span className="whitespace-pre-wrap break-words">{l}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function AgentRunCard({
@@ -1420,6 +1326,7 @@ export default function AppShell() {
               createdAt: typeof x.createdAt === "number" ? x.createdAt : now,
               updatedAt: typeof x.updatedAt === "number" ? x.updatedAt : now,
               messages: Array.isArray(x.messages) ? (x.messages as ChatUiMessage[]) : ([] as ChatUiMessage[]),
+              logs: Array.isArray(x.logs) ? (x.logs as ChatLogEntry[]) : ([] as ChatLogEntry[]),
               draft: typeof x.draft === "string" ? x.draft : "",
               changeSet: (x.changeSet as ChangeSet | null) ?? null,
             }))
@@ -1438,6 +1345,7 @@ export default function AppShell() {
         createdAt: now,
         updatedAt: now,
         messages: [],
+        logs: [],
         draft: "",
         changeSet: null,
       },
@@ -1448,6 +1356,8 @@ export default function AppShell() {
   const [chatBusy, setChatBusy] = useState(false);
   const [chatApplying, setChatApplying] = useState(false);
   const [isChatDockOpen, setIsChatDockOpen] = useState(false);
+  const [chatDockTab, setChatDockTab] = useState<"chat" | "logs">("chat");
+  const [logGroupCollapsed, setLogGroupCollapsed] = useState<Record<string, boolean>>({});
   const SPLASH_SKIP_KEY = "pompora.splash_skip.v1";
   const [isSplashVisible, setIsSplashVisible] = useState(false);
   const [isSplashFading, setIsSplashFading] = useState(false);
@@ -1490,7 +1400,7 @@ export default function AppShell() {
     // Always start on a fresh empty chat on app launch.
     const now = Date.now();
     const id = `${now}-${Math.random().toString(16).slice(2)}`;
-    setChatSessions((prev) => [...prev, { id, title: "Chat", createdAt: now, updatedAt: now, messages: [], draft: "", changeSet: null }]);
+    setChatSessions((prev) => [...prev, { id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
     setActiveChatId(id);
   }, []);
 
@@ -1613,6 +1523,7 @@ export default function AppShell() {
   const metaQueueRef = useRef<string[]>([]);
   const metaFlushTimerRef = useRef<number | null>(null);
   const lastQueuedMetaRef = useRef<string>("");
+  const logStreamIdRef = useRef<Record<string, string>>({});
 
   const activeAgentRunIdRef = useRef<string | null>(null);
 
@@ -1669,6 +1580,72 @@ export default function AppShell() {
       );
     },
     [activeChatId]
+  );
+
+  const setActiveChatLogs = useCallback(
+    (logs: ChatLogEntry[] | ((prev: ChatLogEntry[]) => ChatLogEntry[])) => {
+      setChatSessions((prev) =>
+        prev.map((s) => {
+          if (s.id !== activeChatId) return s;
+          const nextLogs = typeof logs === "function" ? logs(s.logs) : logs;
+          return { ...s, logs: nextLogs, updatedAt: Date.now() };
+        })
+      );
+    },
+    [activeChatId]
+  );
+
+  const addLog = useCallback(
+    (input: Omit<ChatLogEntry, "id" | "ts"> & { id?: string; ts?: number }) => {
+      const now = Date.now();
+      const id = input.id ?? `log-${now}-${Math.random().toString(16).slice(2)}`;
+      const groupId = input.groupId ?? activeAgentRunIdRef.current ?? "session";
+      const entry: ChatLogEntry = {
+        id,
+        ts: input.ts ?? now,
+        groupId,
+        kind: input.kind,
+        title: input.title,
+        status: input.status,
+        details: input.details,
+        collapsed: input.collapsed ?? true,
+      };
+      setActiveChatLogs((prev) => [...prev, entry].slice(-400));
+      return id;
+    },
+    [setActiveChatLogs]
+  );
+
+  const toggleLogCollapsed = useCallback(
+    (id: string) => {
+      setActiveChatLogs((prev) => prev.map((l) => (l.id === id ? { ...l, collapsed: !l.collapsed } : l)));
+    },
+    [setActiveChatLogs]
+  );
+
+  const setLogStatus = useCallback(
+    (id: string, status: NonNullable<ChatLogEntry["status"]>) => {
+      setActiveChatLogs((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+    },
+    [setActiveChatLogs]
+  );
+
+  const appendLogDetail = useCallback(
+    (id: string, line: string) => {
+      const t = String(line || "").trim();
+      if (!t) return;
+      setActiveChatLogs((prev) =>
+        prev.map((l) =>
+          l.id === id
+            ? {
+                ...l,
+                details: ([...(l.details ?? []), t].slice(-240) as string[]),
+              }
+            : l
+        )
+      );
+    },
+    [setActiveChatLogs]
   );
 
   const appendActivityStep = useCallback(
@@ -1735,17 +1712,29 @@ export default function AppShell() {
       metaQueueRef.current.push(line);
       if (metaFlushTimerRef.current) return;
 
+      const groupId = activeAgentRunIdRef.current ?? "session";
+      const streamMap = logStreamIdRef.current;
+
+      if (!streamMap[groupId]) {
+        streamMap[groupId] = addLog({ kind: "info", title: "Activity", status: "running", details: [], collapsed: false, groupId });
+      }
+      const streamId = streamMap[groupId];
+
       metaFlushTimerRef.current = window.setInterval(() => {
         const next = metaQueueRef.current.shift();
         if (!next) {
           if (metaFlushTimerRef.current) window.clearInterval(metaFlushTimerRef.current);
           metaFlushTimerRef.current = null;
+          if (streamId) {
+            setLogStatus(streamId, "done");
+            delete streamMap[groupId];
+          }
           return;
         }
-        setActiveChatMessages((prev) => [...prev, { role: "meta", content: next }]);
-      }, 120);
+        if (streamId) appendLogDetail(streamId, next);
+      }, 80);
     },
-    [setActiveChatMessages]
+    [addLog, appendLogDetail, setLogStatus]
   );
 
   const askAiToFixRunError = useCallback(
@@ -2181,7 +2170,7 @@ export default function AppShell() {
             )
           );
 
-          setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Run failed. Click Fix to ask AI to resolve it." }]);
+          addLog({ kind: "error", title: "Run failed", status: "error", details: ["Click Fix to ask AI to resolve it."] });
 
           const currentAfter = (chatMessagesRef.current ?? []).find((m) => m.id === messageId);
           const already = Boolean(currentAfter?.run?.autoFixRequested);
@@ -2230,7 +2219,7 @@ export default function AppShell() {
         );
       }
     },
-    [appendActivityStep, askAiToFixRunError, pushRunRequest, refreshWorkspaceAfterRun, runPolicy, runTerminalCommand, setActiveChatMessages, setActivityStatus]
+    [addLog, appendActivityStep, askAiToFixRunError, pushRunRequest, refreshWorkspaceAfterRun, runPolicy, runTerminalCommand, setActiveChatMessages, setActivityStatus]
   );
 
   const cancelRunCard = useCallback(
@@ -3393,7 +3382,7 @@ export default function AppShell() {
     if (cs.applied) {
       setActiveChatChangeSet(null);
       setSelectedChangePath(null);
-      setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Accepted all changes." }]);
+      addLog({ kind: "action", title: "Accepted all changes", status: "done" });
       return;
     }
 
@@ -3467,7 +3456,7 @@ export default function AppShell() {
     if (!chatChangeSet.applied) {
       setActiveChatChangeSet(null);
       setSelectedChangePath(null);
-      setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Discarded proposed changes." }]);
+      addLog({ kind: "action", title: "Discarded proposed changes", status: "done" });
       return;
     }
 
@@ -3501,7 +3490,7 @@ export default function AppShell() {
       await applyAiEditsNow(reverse);
       setActiveChatChangeSet(null);
       setSelectedChangePath(null);
-      setActiveChatMessages((prev) => [...prev, { role: "meta", content: "Reverted all changes." }]);
+      addLog({ kind: "action", title: "Reverted all changes", status: "done" });
     } catch (e) {
       notifyRef.current?.({ kind: "error", title: "Revert failed", message: String(e) });
     } finally {
@@ -3540,7 +3529,7 @@ export default function AppShell() {
           }
 
           setActiveChatChangeSet({ ...cs, applied: true });
-          setActiveChatMessages((prev) => [...prev, { role: "meta", content: `Applied ${path}.` }]);
+          addLog({ kind: "action", title: `Applied ${path}`, status: "done" });
         })();
         return;
       }
@@ -4256,7 +4245,7 @@ export default function AppShell() {
     }
 
     try {
-      const previous = (chatMessagesRef.current ?? []).filter((m) => !(m.role === "meta" && m.content.trim() === "Thinking…"));
+      const previous = (chatMessagesRef.current ?? []).filter((m) => m.role !== "meta");
       const base = [...previous, { role: "user" as const, content: text }];
       setActiveChatDraft("");
 
@@ -4309,13 +4298,14 @@ export default function AppShell() {
         }
       }
 
-      const recentMetaLines = previous
-        .filter((m) => m.role === "meta")
-        .map((m) => String(m.content || "").trim())
+      const recentMetaLines = (activeChat.logs ?? [])
+        .slice(-24)
+        .map((l) => {
+          const base = `${l.title}`.trim();
+          const detail = (l.details ?? []).slice(-1)[0];
+          return detail ? `${base} · ${detail}` : base;
+        })
         .filter(Boolean)
-        .filter((line) =>
-          /^(Applied\b|Read\b|Run\b|Reverted\b|Accepted\b|Rejected\b|Note:\b|AI returned\b)/i.test(line)
-        )
         .slice(-16);
 
       const conversationForModel = base
@@ -4364,7 +4354,7 @@ export default function AppShell() {
       } catch (e) {
         const raw = String(e);
         if (/No content found in (API|Gemini API) response/i.test(raw)) {
-          setActiveChatMessages((prev) => [...prev, { role: "meta", content: "AI returned an empty response. Retrying once…" }]);
+          addLog({ kind: "info", title: "AI returned an empty response", status: "running", details: ["Retrying once…"] });
           res = await requestOnce();
         } else {
           throw e;
@@ -5674,22 +5664,9 @@ export default function AppShell() {
         <div className="grid min-h-0 flex-1 overflow-x-auto" style={{ gridTemplateColumns: mainGridTemplateColumns }}>
           <aside className="min-w-0 border-r border-border bg-panel">
             <div className="flex h-full flex-col items-center gap-2 py-2">
-              <ActivityButton id="explorer" active={activity === "explorer"} onClick={setActivity} Icon={FolderOpen} />
               <ActivityButton id="search" active={activity === "search"} onClick={setActivity} Icon={Search} />
               <ActivityButton id="scm" active={activity === "scm"} onClick={setActivity} Icon={GitBranch} />
               <div className="flex-1" />
-            </div>
-          </aside>
-
-          <aside className="relative min-h-0 min-w-0 border-r border-border bg-panel">
-            <div
-              className="group absolute right-0 top-0 z-30 h-full w-2 cursor-col-resize"
-              onMouseDown={(e) => {
-                explorerResizeStateRef.current = { startX: e.clientX, startW: explorerWidth };
-              }}
-            >
-              <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-accent/60 opacity-0 transition-opacity group-hover:opacity-100" />
-              <div className="absolute inset-y-0 left-0 right-0 opacity-0 transition-opacity group-hover:opacity-100" style={{ boxShadow: "0 0 0 8px rgba(112, 163, 255, 0.06)" }} />
             </div>
             {activity === "explorer" ? (
               <Explorer
@@ -6116,7 +6093,7 @@ export default function AppShell() {
                           const id = `${now}-${Math.random().toString(16).slice(2)}`;
                           setChatSessions((prev) => [
                             ...prev,
-                            { id, title: nextChatTitle, createdAt: now, updatedAt: now, messages: [], draft: "", changeSet: null },
+                            { id, title: nextChatTitle, createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null },
                           ]);
                           setActiveChatId(id);
                           setIsChatHistoryOpen(false);
@@ -6294,6 +6271,65 @@ export default function AppShell() {
                   </div>
                 ) : null}
 
+                <div className="border-b border-border bg-panel px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="truncate text-[13px] font-normal text-[#a39d9d]">{activeChat.title}</div>
+                    </div>
+
+                    <div className="flex shrink-0 items-center gap-1">
+                      <div className="ws-segment">
+                        <button
+                          type="button"
+                          className={`ws-segment-item ${chatDockTab === "chat" ? "ws-segment-item-active" : ""}`}
+                          onClick={() => setChatDockTab("chat")}
+                        >
+                          Chat
+                        </button>
+                        <button
+                          type="button"
+                          className={`ws-segment-item ${chatDockTab === "logs" ? "ws-segment-item-active" : ""}`}
+                          onClick={() => setChatDockTab("logs")}
+                        >
+                          Logs
+                        </button>
+                      </div>
+
+                      {hasChatHistory ? (
+                        <button
+                          type="button"
+                          className="ws-icon-btn"
+                          onClick={() => {
+                            setIsChatHistoryOpen((v) => !v);
+                            if (!isChatHistoryOpen) setChatHistoryQuery("");
+                          }}
+                        >
+                          <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="ws-icon-btn"
+                        onClick={() => {
+                          const now = Date.now();
+                          const id = `${now}-${Math.random().toString(16).slice(2)}`;
+                          setChatSessions((prev) => [
+                            ...prev,
+                            { id, title: nextChatTitle, createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null },
+                          ]);
+                          setActiveChatId(id);
+                          setIsChatHistoryOpen(false);
+                        }}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                      <button type="button" className="ws-icon-btn" onClick={() => setIsChatDockOpen(false)}>
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div
                   ref={chatScrollRef}
                   className={`min-h-0 flex-1 overflow-auto px-3 py-3 ${canUseAi && !activeChat.messages.length ? "flex items-center justify-center" : ""}`}
@@ -6304,28 +6340,120 @@ export default function AppShell() {
                     </div>
                   ) : null}
 
-                  {activeChat.messages.length ? (
-                      <div className="space-y-3">
-                        {groupChatMessages(activeChat.messages).map((it) => {
-                          if (it.type === "thinking") {
-                            return (
-                              <div key={it.key} className="flex justify-center">
-                                <TypingIndicator label="Thinking" />
-                              </div>
-                            );
-                          }
+                  {chatDockTab === "logs" ? (
+                    <div className="space-y-3">
+                      {(() => {
+                        const all = (activeChat.logs ?? []).slice(-400);
+                        if (!all.length) return <div className="text-sm text-muted">No logs yet.</div>;
 
-                          if (it.type === "meta_group") {
-                            return (
-                              <div key={it.key} className="flex justify-start">
-                                <MetaLogPanel lines={it.lines} />
-                              </div>
-                            );
-                          }
+                        const runIds = (activeChat.messages ?? [])
+                          .filter((m) => m.role === "assistant" && m.kind === "agent_run" && m.id)
+                          .map((m) => m.id as string);
+                        const runIndex = new Map<string, number>(runIds.map((id, idx) => [id, idx + 1]));
 
-                          const m = it.msg;
+                        const groups = new Map<string, ChatLogEntry[]>();
+                        for (const l of all) {
+                          const gid = l.groupId ?? "session";
+                          const arr = groups.get(gid);
+                          if (arr) arr.push(l);
+                          else groups.set(gid, [l]);
+                        }
+
+                        const ordered = [...groups.entries()].sort((a, b) => {
+                          const at = a[1][a[1].length - 1]?.ts ?? 0;
+                          const bt = b[1][b[1].length - 1]?.ts ?? 0;
+                          return bt - at;
+                        });
+
+                        return ordered.map(([gid, entries]) => {
+                          const key = `${activeChatId}:${gid}`;
+                          const isCollapsed = Boolean(logGroupCollapsed[key]);
+
+                          const runMsg = (activeChat.messages ?? []).find((m) => m.id === gid && m.kind === "agent_run" && m.agentRun) ?? null;
+                          const runStatus = runMsg?.agentRun?.status ?? (gid === "session" ? "done" : "running");
+                          const title = gid === "session" ? "Session" : `Run ${runIndex.get(gid) ?? ""}`.trim();
+                          const subtitle = gid === "session" ? "General" : "Agent";
+
                           return (
-                            <div key={it.key} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                            <div key={gid} className="ws-log-group">
+                              <button
+                                type="button"
+                                className="ws-log-group-h"
+                                onClick={() => setLogGroupCollapsed((prev) => ({ ...prev, [key]: !Boolean(prev[key]) }))}
+                              >
+                                <div className="min-w-0">
+                                  <div className="ws-log-group-title">{title}</div>
+                                  <div className="ws-log-group-sub">{subtitle}</div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`ws-log-status ${statusPillClass(
+                                      runStatus === "error" ? "error" : runStatus === "done" ? "done" : "running"
+                                    )}`}
+                                  >
+                                    {runStatus}
+                                  </span>
+                                  <ChevronDown className={`h-4 w-4 text-muted transition-transform ${isCollapsed ? "" : "rotate-180"}`} />
+                                </div>
+                              </button>
+
+                              {!isCollapsed ? (
+                                <div className="ws-log-group-b">
+                                  <div className="space-y-2">
+                                    {entries.map((l) => (
+                                      <div key={l.id} className="ws-log-entry">
+                                        <button
+                                          type="button"
+                                          className="ws-log-entry-h"
+                                          onClick={() => toggleLogCollapsed(l.id)}
+                                        >
+                                          <div className="min-w-0">
+                                            <div className="ws-log-entry-title">{l.title}</div>
+                                            <div className="ws-log-entry-sub">{formatRelTime(l.ts)}</div>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            {l.status ? (
+                                              <span
+                                                className={`ws-log-status ${statusPillClass(
+                                                  l.status === "pending" ? "pending" : l.status
+                                                )}`}
+                                              >
+                                                {l.status}
+                                              </span>
+                                            ) : null}
+                                            <ChevronDown
+                                              className={`h-4 w-4 text-muted transition-transform ${
+                                                l.collapsed ? "" : "rotate-180"
+                                              }`}
+                                            />
+                                          </div>
+                                        </button>
+                                        {!l.collapsed && (l.details ?? []).length ? (
+                                          <div className="ws-log-entry-b">
+                                            <div className="ws-terminal-log">
+                                              {(l.details ?? []).slice(-160).map((d, idx) => (
+                                                <div key={idx} className="whitespace-pre-wrap break-words">
+                                                  {d}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  ) : activeChat.messages.length ? (
+                      <div className="space-y-3">
+                        {(activeChat.messages ?? []).filter((m) => m.role !== "meta").map((m, idx) => {
+                          return (
+                            <div key={m.id ?? idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                               <div className="max-w-[92%]">
                                 {m.role === "assistant" && m.kind === "agent_run" && m.agentRun ? (
                                   <AgentRunCard messageId={m.id ?? ""} ar={m.agentRun} onToggle={toggleAgentRunSection} />
