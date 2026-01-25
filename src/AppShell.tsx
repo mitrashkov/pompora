@@ -2550,11 +2550,21 @@ export default function AppShell() {
   const friendlyAiError = useCallback((raw: string): { title: string; message: string } => {
     const msg = raw.trim();
 
-    if (msg.includes("Insufficient Balance") || msg.includes("status 402") || msg.includes("Payment Required")) {
+    if (/openrouter_privacy_block/i.test(msg) || /Free model publication/i.test(msg)) {
       return {
-        title: "DeepSeek: Payment required",
+        title: "OpenRouter: privacy settings",
         message:
-          "Your DeepSeek API key has insufficient balance. Add credits / enable billing in DeepSeek or switch to another provider.",
+          "OpenRouter blocked the request due to your privacy/data-policy settings for free models (\"Free model publication\"). Open https://openrouter.ai/settings/privacy and relax the restriction (or use a non-free model / BYOK).",
+      };
+    }
+
+    if (msg.includes("Insufficient Balance") || msg.includes("status 402") || msg.includes("Payment Required")) {
+      const mentionsDeepSeek = /deepseek/i.test(msg);
+      return {
+        title: mentionsDeepSeek ? "DeepSeek: Payment required" : "AI: Payment required",
+        message: mentionsDeepSeek
+          ? "Your DeepSeek API key has insufficient balance. Add credits / enable billing in DeepSeek or switch to another provider."
+          : "This provider requires billing/credits for the selected upstream route. Switch provider/model or wait and retry if this is coming from OpenRouter shared capacity.",
       };
     }
 
@@ -4249,7 +4259,20 @@ export default function AppShell() {
       const base = [...previous, { role: "user" as const, content: text }];
       setActiveChatDraft("");
 
-      const referencedFiles = workspace.root ? extractFileRefs(text).slice(0, 6) : [];
+      const explicitRefs = workspace.root ? extractFileRefs(text) : [];
+      const recentChangeFiles =
+        workspace.root && activeChat.changeSet
+          ? activeChat.changeSet.files
+              .filter((f) => f.kind === "write" && typeof f.path === "string")
+              .map((f) => f.path)
+              .slice(0, 4)
+          : [];
+      const autoRefs = workspace.root && activeTab?.path ? [activeTab.path] : [];
+
+      const referencedFiles =
+        workspace.root
+          ? Array.from(new Set([...explicitRefs, ...autoRefs, ...recentChangeFiles])).slice(0, 6)
+          : [];
       const agentRunId = `run-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       activeAgentRunIdRef.current = agentRunId;
 
@@ -4282,8 +4305,13 @@ export default function AppShell() {
           actions: ([...ar.actions, { id: actionId, label: `Read ${p}`, status: "running" as const }].slice(-40) as typeof ar.actions),
         }));
         try {
-          const content = await workspaceReadFile(p);
           const max = 12000;
+          const pending =
+            activeChat.changeSet?.files.find(
+              (f) => f.kind === "write" && f.path === p && typeof f.after === "string"
+            ) ?? null;
+
+          const content = pending ? String(pending.after || "") : await workspaceReadFile(p);
           const truncated = content.length > max;
           fileContexts.push({ path: p, content: truncated ? content.slice(0, max) : content, truncated });
           updateAgentRun(agentRunId, (ar) => ({
@@ -4440,6 +4468,13 @@ export default function AppShell() {
     } catch (e) {
       const f = friendlyAiError(String(e));
       notify({ kind: "error", title: f.title, message: f.message });
+
+      updateAgentRun(agentRunId, (ar) => ({
+        ...ar,
+        phase: "done",
+        status: "error",
+        doneText: ar.doneText || `${f.title}: ${f.message}`,
+      }));
     } finally {
       setChatBusy(false);
     }
