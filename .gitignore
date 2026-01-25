@@ -1,1 +1,4 @@
 *:Zone.Identifier
+dist/
+node_modules/
+src-tauri/target/
