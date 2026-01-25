@@ -2550,6 +2550,27 @@ export default function AppShell() {
   const friendlyAiError = useCallback((raw: string): { title: string; message: string } => {
     const msg = raw.trim();
 
+    if (/\bout_of_credits\b/i.test(msg)) {
+      return {
+        title: "Pompora: out of credits",
+        message: "You ran out of credits for this mode. Upgrade your plan or wait for the quota reset.",
+      };
+    }
+
+    if (/\bno_fast_access\b/i.test(msg)) {
+      return {
+        title: "Pompora: fast not available",
+        message: "Your current plan does not include fast mode. Upgrade your plan or use slow mode.",
+      };
+    }
+
+    if (/openrouter_rate_limited/i.test(msg)) {
+      return {
+        title: "OpenRouter: rate limited",
+        message: "OpenRouter rate limited the upstream request (shared free capacity). Wait a bit or switch to a different model/provider.",
+      };
+    }
+
     if (/openrouter_privacy_block/i.test(msg) || /Free model publication/i.test(msg)) {
       return {
         title: "OpenRouter: privacy settings",
@@ -4228,6 +4249,8 @@ export default function AppShell() {
     if (!settings.active_provider) return;
     if (settings.offline_mode) return;
 
+    let agentRunId: string | null = null;
+
     if (aiBlockedReason) {
       notify({ kind: "info", title: "Action required", message: aiBlockedReason });
       if (!settings.active_provider) {
@@ -4273,7 +4296,7 @@ export default function AppShell() {
         workspace.root
           ? Array.from(new Set([...explicitRefs, ...autoRefs, ...recentChangeFiles])).slice(0, 6)
           : [];
-      const agentRunId = `run-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      agentRunId = `run-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       activeAgentRunIdRef.current = agentRunId;
 
       const agentRunMessage: ChatUiMessage = {
@@ -4469,12 +4492,14 @@ export default function AppShell() {
       const f = friendlyAiError(String(e));
       notify({ kind: "error", title: f.title, message: f.message });
 
-      updateAgentRun(agentRunId, (ar) => ({
-        ...ar,
-        phase: "done",
-        status: "error",
-        doneText: ar.doneText || `${f.title}: ${f.message}`,
-      }));
+      if (agentRunId) {
+        updateAgentRun(agentRunId, (ar) => ({
+          ...ar,
+          phase: "done",
+          status: "error",
+          doneText: ar.doneText || `${f.title}: ${f.message}`,
+        }));
+      }
     } finally {
       setChatBusy(false);
     }
