@@ -3,6 +3,14 @@ mod core;
 use core::{ai, auth, fsops, search, secrets, settings, terminal, workspace};
 use tauri_plugin_dialog::DialogExt;
 
+#[cfg(debug_assertions)]
+fn debug_log(msg: &str) {
+    println!("{msg}");
+}
+
+#[cfg(not(debug_assertions))]
+fn debug_log(_msg: &str) {}
+
 #[tauri::command]
 fn terminal_start(app: tauri::AppHandle, cols: u16, rows: u16, cwd: Option<String>) -> Result<String, String> {
     terminal::terminal_start(app, cols, rows, cwd)
@@ -138,7 +146,7 @@ async fn workspace_pick_folder(app: tauri::AppHandle) -> Result<Option<String>, 
     use tokio::sync::oneshot;
     use std::time::Duration;
 
-    println!("workspace_pick_folder: invoked");
+    debug_log("workspace_pick_folder: invoked");
 
     let (tx, rx) = oneshot::channel::<Option<String>>();
     app.dialog().file().pick_folder(move |file_path| {
@@ -153,12 +161,12 @@ async fn workspace_pick_folder(app: tauri::AppHandle) -> Result<Option<String>, 
     {
         match tokio::time::timeout(Duration::from_secs(8), rx).await {
             Ok(Ok(out)) => {
-                println!("workspace_pick_folder: result={:?}", out);
+                debug_log(&format!("workspace_pick_folder: result={out:?}"));
                 Ok(out)
             }
             Ok(Err(e)) => Err(e.to_string()),
             Err(_) => {
-                println!("workspace_pick_folder: timeout on linux; falling back to rfd");
+                debug_log("workspace_pick_folder: timeout on linux; falling back to rfd");
                 tokio::task::spawn_blocking(|| workspace::workspace_pick_folder())
                     .await
                     .map_err(|e| e.to_string())?
@@ -170,7 +178,7 @@ async fn workspace_pick_folder(app: tauri::AppHandle) -> Result<Option<String>, 
     #[cfg(not(target_os = "linux"))]
     {
         let out = rx.await.map_err(|e| e.to_string())?;
-        println!("workspace_pick_folder: result={:?}", out);
+        debug_log(&format!("workspace_pick_folder: result={out:?}"));
         Ok(out)
     }
 }
@@ -180,7 +188,7 @@ async fn workspace_pick_file(app: tauri::AppHandle) -> Result<Option<String>, St
     use tokio::sync::oneshot;
     use std::time::Duration;
 
-    println!("workspace_pick_file: invoked");
+    debug_log("workspace_pick_file: invoked");
 
     let (tx, rx) = oneshot::channel::<Option<String>>();
     app.dialog().file().pick_file(move |file_path| {
@@ -195,12 +203,12 @@ async fn workspace_pick_file(app: tauri::AppHandle) -> Result<Option<String>, St
     {
         match tokio::time::timeout(Duration::from_secs(8), rx).await {
             Ok(Ok(out)) => {
-                println!("workspace_pick_file: result={:?}", out);
+                debug_log(&format!("workspace_pick_file: result={out:?}"));
                 Ok(out)
             }
             Ok(Err(e)) => Err(e.to_string()),
             Err(_) => {
-                println!("workspace_pick_file: timeout on linux; falling back to rfd");
+                debug_log("workspace_pick_file: timeout on linux; falling back to rfd");
                 tokio::task::spawn_blocking(|| workspace::workspace_pick_file())
                     .await
                     .map_err(|e| e.to_string())?
@@ -212,7 +220,7 @@ async fn workspace_pick_file(app: tauri::AppHandle) -> Result<Option<String>, St
     #[cfg(not(target_os = "linux"))]
     {
         let out = rx.await.map_err(|e| e.to_string())?;
-        println!("workspace_pick_file: result={:?}", out);
+        debug_log(&format!("workspace_pick_file: result={out:?}"));
         Ok(out)
     }
 }

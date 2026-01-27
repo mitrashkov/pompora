@@ -641,6 +641,52 @@ body {
   .ws-terminal-log {
     @apply max-h-56 overflow-auto rounded-md border border-border bg-panel p-2 font-mono text-[11px] text-muted;
   }
+
+  .ws-log-entry {
+    @apply overflow-hidden rounded-xl border border-border bg-panel;
+    animation: wsFadeUp 160ms ease-out;
+  }
+
+  .ws-log-group {
+    @apply overflow-hidden rounded-2xl border border-border bg-panel;
+    animation: wsFadeUp 160ms ease-out;
+  }
+
+  .ws-log-group-h {
+    @apply flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-bg;
+  }
+
+  .ws-log-group-title {
+    @apply truncate text-[13px] font-medium text-text;
+  }
+
+  .ws-log-group-sub {
+    @apply mt-0.5 text-[11px] text-muted;
+  }
+
+  .ws-log-group-b {
+    @apply border-t border-border/60 px-3 py-3;
+  }
+
+  .ws-log-entry-h {
+    @apply flex w-full items-center justify-between gap-3 px-3 py-2 text-left hover:bg-bg;
+  }
+
+  .ws-log-entry-title {
+    @apply truncate text-[13px] text-text;
+  }
+
+  .ws-log-entry-sub {
+    @apply mt-0.5 text-[11px] text-muted;
+  }
+
+  .ws-log-status {
+    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-[11px];
+  }
+
+  .ws-log-entry-b {
+    @apply border-t border-border/60 px-3 py-2;
+  }
 }
 
 @keyframes wsFadeUp {
