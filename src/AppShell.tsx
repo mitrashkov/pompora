@@ -1537,10 +1537,23 @@ export default function AppShell() {
   const termCwdRef = useRef<string | null>(null);
 
   const mainGridTemplateColumns = useMemo(() => {
-    const cols: string[] = ["52px", `minmax(220px, ${explorerWidth}px)`, "minmax(520px, 1fr)"];
+    const cols: string[] = ["52px", `minmax(220px, ${explorerWidth}px)`, "minmax(0, 1fr)"];
     if (isChatDockOpen) cols.push(`minmax(280px, ${chatDockWidth}px)`);
     return cols.join(" ");
   }, [chatDockWidth, explorerWidth, isChatDockOpen]);
+
+  const canShowChatLogs = Boolean(import.meta.env?.DEV);
+  const devConsoleError = useCallback(
+    (...args: any[]) => {
+      if (!canShowChatLogs) return;
+      console.error(...args);
+    },
+    [canShowChatLogs]
+  );
+
+  useEffect(() => {
+    if (!canShowChatLogs && chatDockTab === "logs") setChatDockTab("chat");
+  }, [canShowChatLogs, chatDockTab]);
 
   const nextChatTitle = useMemo(() => {
     const nums = chatSessions
@@ -2728,10 +2741,10 @@ export default function AppShell() {
       // In dev, this will load the devUrl; in production it loads the bundled index.
       new WebviewWindow(label, { title: "Pompora", width: 1280, height: 800 });
     } catch (e) {
-      console.error("New window failed", e);
+      devConsoleError("New window failed", e);
       window.alert(`Failed to open new window: ${String(e)}`);
     }
-  }, []);
+  }, [devConsoleError]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -3294,10 +3307,10 @@ export default function AppShell() {
       setActiveTabPath(null);
       await refreshRoot();
     } catch (e) {
-      console.error("Open folder failed", e);
+      devConsoleError("Open folder failed", e);
       window.alert(`Failed to open folder: ${String(e)}`);
     }
-  }, [refreshRoot]);
+  }, [devConsoleError, refreshRoot]);
 
   const openRecent = useCallback(
     async (root: string) => {
@@ -3709,10 +3722,10 @@ export default function AppShell() {
       await openFile(basename(file));
       rememberRecentFile(file);
     } catch (e) {
-      console.error("Open file failed", e);
+      devConsoleError("Open file failed", e);
       window.alert(`Failed to open file: ${String(e)}`);
     }
-  }, [openFile, refreshRoot, rememberRecentFile]);
+  }, [devConsoleError, openFile, refreshRoot, rememberRecentFile]);
 
   useEffect(() => {
     if (!autoSaveEnabled) return;
@@ -3726,7 +3739,7 @@ export default function AppShell() {
           await workspaceWriteFile(activeTab.path, activeTab.content);
           setTabs((prev) => prev.map((x) => (x.path === activeTab.path ? { ...x, isDirty: false } : x)));
         } catch (e) {
-          console.error("Auto save failed", e);
+          devConsoleError("Auto save failed", e);
         }
       })();
     }, 600);
@@ -4081,10 +4094,10 @@ export default function AppShell() {
   const toggleTheme = useCallback(() => {
     setSettingsState((s) => {
       const next: AppSettings = { ...s, theme: s.theme === "dark" ? "light" : "dark" };
-      void settingsSet(next).catch((e) => console.error("Failed to save theme", e));
+      void settingsSet(next).catch((e) => devConsoleError("Failed to save theme", e));
       return next;
     });
-  }, []);
+  }, [devConsoleError]);
 
   const changeProvider = useCallback(
     async (p: string | null) => {
@@ -4102,7 +4115,7 @@ export default function AppShell() {
           setKeyStatus(await providerKeyStatus(p));
         }
       } catch (e) {
-        console.error("Failed to save provider selection", e);
+        devConsoleError("Failed to save provider selection", e);
         setSecretsError(String(e));
         if (settingsMutationSeqRef.current === seq) {
           // Don't let an older failure clobber a newer successful selection.
@@ -4110,7 +4123,7 @@ export default function AppShell() {
         }
       }
     },
-    [settings]
+    [devConsoleError, settings]
   );
 
   const saveSettingsNow = useCallback(async () => {
@@ -4119,12 +4132,12 @@ export default function AppShell() {
     try {
       await settingsSet(settings);
     } catch (e) {
-      console.error("Failed to save settings", e);
+      devConsoleError("Failed to save settings", e);
       notify({ kind: "error", title: "Settings", message: "Failed to save settings" });
     } finally {
       setIsSavingSettings(false);
     }
-  }, [isSavingSettings, notify, settings]);
+  }, [devConsoleError, isSavingSettings, notify, settings]);
 
   const toggleOfflineMode = useCallback(async () => {
     if (isTogglingOffline) return;
@@ -4134,13 +4147,13 @@ export default function AppShell() {
     try {
       await settingsSet(next);
     } catch (e) {
-      console.error("Failed to toggle offline mode", e);
+      devConsoleError("Failed to toggle offline mode", e);
       notify({ kind: "error", title: "Settings", message: "Failed to toggle offline mode" });
       setSettingsState(settings);
     } finally {
       setIsTogglingOffline(false);
     }
-  }, [isTogglingOffline, notify, settings]);
+  }, [devConsoleError, isTogglingOffline, notify, settings]);
 
   const setPomporaThinking = useCallback(
     async (thinking: string | null) => {
@@ -4150,14 +4163,14 @@ export default function AppShell() {
       try {
         await settingsSet(next);
       } catch (e) {
-        console.error("Failed to save pompora thinking", e);
+        devConsoleError("Failed to save pompora thinking", e);
         notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${formatErr(e)}` });
         if (settingsMutationSeqRef.current === seq) {
           setSettingsState(settings);
         }
       }
     },
-    [formatErr, notify, settings]
+    [devConsoleError, formatErr, notify, settings]
   );
 
   const selectPomporaMode = useCallback(
@@ -4174,7 +4187,7 @@ export default function AppShell() {
         } catch {
         }
       } catch (e) {
-        console.error("Failed to select pompora mode", e);
+        devConsoleError("Failed to select pompora mode", e);
         notify({ kind: "error", title: "Settings", message: `Failed to save thinking mode: ${formatErr(e)}` });
         if (settingsMutationSeqRef.current === seq) {
           setSettingsState(prev);
@@ -4184,7 +4197,7 @@ export default function AppShell() {
         }
       }
     },
-    [formatErr, notify, settings]
+    [devConsoleError, formatErr, notify, settings]
   );
 
   const handleStoreKey = useCallback(async () => {
@@ -4203,12 +4216,12 @@ export default function AppShell() {
       setTimeout(() => setShowKeySaved(false), 2000);
       setKeyStatus(await providerKeyStatus(settings.active_provider));
     } catch (e) {
-      console.error(e);
+      devConsoleError(e);
       setSecretsError(String(e));
     } finally {
       setIsKeyOperationInProgress(false);
     }
-  }, [apiKeyDraft, encryptionPasswordDraft, settings.active_provider]);
+  }, [apiKeyDraft, devConsoleError, encryptionPasswordDraft, settings.active_provider]);
 
   const clearProviderKey = useCallback(async () => {
     if (!settings.active_provider) return;
@@ -4221,12 +4234,12 @@ export default function AppShell() {
       setTimeout(() => setShowKeyCleared(false), 2000);
       setKeyStatus(await providerKeyStatus(settings.active_provider));
     } catch (e) {
-      console.error(e);
+      devConsoleError(e);
       setSecretsError(String(e));
     } finally {
       setIsKeyOperationInProgress(false);
     }
-  }, [settings.active_provider]);
+  }, [devConsoleError, settings.active_provider]);
 
   const handleDebugGemini = useCallback(async () => {
     if (!settings.active_provider) return;
@@ -5721,13 +5734,24 @@ export default function AppShell() {
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 overflow-x-auto" style={{ gridTemplateColumns: mainGridTemplateColumns }}>
+        <div className="grid min-h-0 flex-1 overflow-hidden" style={{ gridTemplateColumns: mainGridTemplateColumns }}>
           <aside className="min-w-0 border-r border-border bg-panel">
             <div className="flex h-full flex-col items-center gap-2 py-2">
+              <ActivityButton id="explorer" active={activity === "explorer"} onClick={setActivity} Icon={FolderOpen} />
               <ActivityButton id="search" active={activity === "search"} onClick={setActivity} Icon={Search} />
               <ActivityButton id="scm" active={activity === "scm"} onClick={setActivity} Icon={GitBranch} />
               <div className="flex-1" />
             </div>
+          </aside>
+
+          <aside className="relative min-h-0 min-w-0 border-r border-border bg-panel">
+            <div
+              className="absolute right-0 top-0 z-20 h-full w-1 cursor-col-resize"
+              onMouseDown={(e) => {
+                explorerResizeStateRef.current = { startX: e.clientX, startW: explorerWidth };
+              }}
+            />
+
             {activity === "explorer" ? (
               <Explorer
                 workspaceRoot={workspace.root}
@@ -6126,52 +6150,6 @@ export default function AppShell() {
                 }}
               />
               <div className="flex h-full min-h-0 flex-col">
-                <div className="border-b border-border bg-panel px-3 py-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="truncate text-[13px] font-normal text-[#a39d9d]">{activeChat.title}</div>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-1">
-                      {hasChatHistory ? (
-                        <button
-                          type="button"
-                          className="ws-icon-btn"
-                          onClick={() => {
-                            setIsChatHistoryOpen((v) => !v);
-                            if (!isChatHistoryOpen) setChatHistoryQuery("");
-                          }}
-                        >
-                          <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="ws-icon-btn"
-                        onClick={() => {
-                          const now = Date.now();
-                          const id = `${now}-${Math.random().toString(16).slice(2)}`;
-                          setChatSessions((prev) => [
-                            ...prev,
-                            { id, title: nextChatTitle, createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null },
-                          ]);
-                          setActiveChatId(id);
-                          setIsChatHistoryOpen(false);
-                        }}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        className="ws-icon-btn"
-                        onClick={() => setIsChatDockOpen(false)}
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
                 {hasChatHistory && isChatHistoryOpen ? (
                   <div className="border-b border-transparent bg-panel px-3 pb-2">
                     <div className="ws-panel2 overflow-hidden rounded-xl border border-border">
@@ -6346,13 +6324,15 @@ export default function AppShell() {
                         >
                           Chat
                         </button>
-                        <button
-                          type="button"
-                          className={`ws-segment-item ${chatDockTab === "logs" ? "ws-segment-item-active" : ""}`}
-                          onClick={() => setChatDockTab("logs")}
-                        >
-                          Logs
-                        </button>
+                        {canShowChatLogs ? (
+                          <button
+                            type="button"
+                            className={`ws-segment-item ${chatDockTab === "logs" ? "ws-segment-item-active" : ""}`}
+                            onClick={() => setChatDockTab("logs")}
+                          >
+                            Logs
+                          </button>
+                        ) : null}
                       </div>
 
                       {hasChatHistory ? (
