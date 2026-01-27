@@ -1,6 +1,6 @@
 [package]
 name = "pompora"
-version = "0.1.1"
+version = "0.0.40"
 description = "Pompora"
 authors = ["you"]
 edition = "2021"

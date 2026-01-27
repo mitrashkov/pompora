@@ -3193,7 +3193,7 @@ export default function AppShell() {
 
   const refreshRoot = useCallback(async () => {
     setExplorer({});
-    setExpandedDirs(new Set());
+    setExpandedDirs(new Set([""]));
     setSelectedPath(null);
     if (!workspace.root) return;
     await refreshDir(undefined);
@@ -7161,14 +7161,25 @@ export default function AppShell() {
           items={[
             { id: "newFile", label: "New File...", onClick: () => void createNewFile() },
             { id: "newFolder", label: "New Folder...", onClick: () => void createNewFolder() },
-            { id: "rename", label: "Rename...", onClick: () => void renameSelected() },
-            { id: "delete", label: "Delete", onClick: () => void deleteSelected() },
-            { id: "copyPath", label: "Copy Relative Path", onClick: () => void copyText(explorerMenu.path) },
+            ...(explorerMenu.path === ""
+              ? [
+                  { id: "refresh", label: "Refresh", onClick: () => void refreshRoot() },
+                  { id: "closeFolder", label: "Close Folder", onClick: () => void closeFolder() },
+                ]
+              : [
+                  { id: "rename", label: "Rename...", onClick: () => void renameSelected() },
+                  { id: "delete", label: "Delete", onClick: () => void deleteSelected() },
+                  { id: "copyPath", label: "Copy Relative Path", onClick: () => void copyText(explorerMenu.path) },
+                ]),
             {
               id: "copyFullPath",
               label: "Copy Full Path",
               onClick: () => {
                 const root = (workspace.root ?? "").replace(/\\/g, "/").replace(/\/$/, "");
+                if (explorerMenu.path === "") {
+                  void copyText(root);
+                  return;
+                }
                 const rel = explorerMenu.path.replace(/^\//, "");
                 void copyText(root && rel ? `${root}/${rel}` : explorerMenu.path);
               },
@@ -7408,7 +7419,7 @@ function Explorer(props: {
     return (
       <Panel title="Explorer">
         <WelcomeScreen
-          title="No folder opened"
+          title="No folder open"
           subtitle="Open a folder to browse files and start editing."
           onOpenFolder={props.onOpenFolder}
           onOpenFile={undefined}
@@ -7418,18 +7429,23 @@ function Explorer(props: {
           onOpenRecentFile={undefined}
           onOpenChat={undefined}
           onOpenCommandPalette={undefined}
+          useBrandFont={false}
           compact
         />
       </Panel>
     );
   }
 
-  const rootEntries = props.explorer[""] ?? [];
+  const rootNode: DirEntryInfo = {
+    path: "",
+    name: basename(props.workspaceRoot.replace(/\\/g, "/").replace(/\/$/, "")),
+    is_dir: true,
+  };
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-border bg-panel px-3 py-2">
-        <div className="text-xs font-normal text-[#a39d9d]">Explorer</div>
+        <div className="text-xs font-normal text-muted">Explorer</div>
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -7458,7 +7474,7 @@ function Explorer(props: {
       <div className="min-h-0 flex-1 overflow-auto p-1">
         <Tree
           prefix=""
-          entries={rootEntries}
+          entries={[rootNode]}
           explorer={props.explorer}
           expandedDirs={props.expandedDirs}
           selectedPath={props.selectedPath}
@@ -7509,6 +7525,7 @@ function Tree(props: {
         if (e.is_dir) {
           const isExpanded = props.expandedDirs.has(e.path);
           const children = props.explorer[e.path] ?? [];
+          const isRoot = e.path === "";
           return (
             <div key={e.path}>
               <button
@@ -7528,8 +7545,12 @@ function Tree(props: {
                 <ChevronRight
                   className={`h-4 w-4 text-muted transition-transform duration-150 group-hover:text-text ${isExpanded ? "rotate-90" : ""}`}
                 />
-                <Folder className="h-4 w-4 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
-                <span className="truncate">{e.name}</span>
+                {isRoot ? (
+                  <FolderOpen className="h-4 w-4 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+                ) : (
+                  <Folder className="h-4 w-4 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+                )}
+                <span className={`truncate ${isRoot ? "font-medium text-text" : ""}`}>{e.name}</span>
               </button>
               {isExpanded ? (
                 <div className="ml-4 border-l border-border/60 pl-2">
@@ -7687,8 +7708,10 @@ function WelcomeScreen(props: {
   subtitle?: string;
   hint?: string;
   compact?: boolean;
+  useBrandFont?: boolean;
 }) {
   const isCompact = !!props.compact;
+  const useBrandFont = props.useBrandFont ?? true;
 
   const title = props.title ?? "POMPORA";
   const subtitle = props.subtitle ?? "Getting started with Pompora";
@@ -7750,8 +7773,8 @@ function WelcomeScreen(props: {
               <div
                 className={`${
                   isCompact
-                    ? "ws-brand-title text-2xl"
-                    : "ws-brand-title text-5xl md:text-6xl"
+                    ? `${useBrandFont ? "ws-brand-title" : ""} text-2xl`.trim()
+                    : `${useBrandFont ? "ws-brand-title" : ""} text-5xl md:text-6xl`.trim()
                 } font-normal text-text`}
               >
                 {title}
