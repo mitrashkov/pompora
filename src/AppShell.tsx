@@ -7063,16 +7063,11 @@ export default function AppShell() {
               </button>
             ) : null}
             {authProfile ? (
-              <button type="button" className="ws-footer-btn" onClick={() => void openUrl("https://pompora.dev/pricing")}
-              >
+              <button type="button" className="ws-footer-btn" onClick={() => void openUrl("https://pompora.dev/pricing")}>
                 {pomporaPlan === "pro" ? "Pro" : pomporaPlan === "plus" ? "Plus" : "Starter"} plan
               </button>
             ) : (
-              <button
-                type="button"
-                className="ws-footer-btn h-full rounded-none border border-blue-500/50 bg-blue-600 px-4 text-[12px] font-medium text-white hover:bg-blue-500"
-                onClick={() => void beginDesktopAuthWithMode("login")}
-              >
+              <button type="button" className="ws-footer-btn" onClick={() => void beginDesktopAuthWithMode("login")}>
                 Log in
               </button>
             )}
