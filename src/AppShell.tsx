@@ -25,6 +25,7 @@ import {
   FolderOpen,
   GitBranch,
   ListChecks,
+  Pencil,
   Plus,
   TerminalSquare,
   RotateCw,
@@ -33,6 +34,7 @@ import {
   Settings as SettingsIcon,
   Star,
   Terminal,
+  Trash2,
   ThumbsDown,
   ThumbsUp,
   Wand2,
@@ -1310,6 +1312,7 @@ export default function AppShell() {
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   const initialChatIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  const [chatHistoryQueryDraft, setChatHistoryQueryDraft] = useState("");
   const [chatHistoryQuery, setChatHistoryQuery] = useState("");
   const [chatSessions, setChatSessions] = useState<ChatSession[]>(() => {
     try {
@@ -1356,8 +1359,6 @@ export default function AppShell() {
   const [chatBusy, setChatBusy] = useState(false);
   const [chatApplying, setChatApplying] = useState(false);
   const [isChatDockOpen, setIsChatDockOpen] = useState(false);
-  const [chatDockTab, setChatDockTab] = useState<"chat" | "logs">("chat");
-  const [logGroupCollapsed, setLogGroupCollapsed] = useState<Record<string, boolean>>({});
   const SPLASH_SKIP_KEY = "pompora.splash_skip.v1";
   const [isSplashVisible, setIsSplashVisible] = useState(false);
   const [isSplashFading, setIsSplashFading] = useState(false);
@@ -1391,6 +1392,55 @@ export default function AppShell() {
   const hasChatHistory = useMemo(() => {
     return chatSessions.some((s) => s.messages.some((m) => m.role === "user"));
   }, [chatSessions]);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setChatHistoryQuery(chatHistoryQueryDraft.trim());
+    }, 140);
+    return () => window.clearTimeout(t);
+  }, [chatHistoryQueryDraft]);
+
+  const chatHistorySessions = useMemo(() => {
+    const q = chatHistoryQuery.trim().toLowerCase();
+    const rawTokens = q.split(/\s+/).map((t) => t.trim()).filter(Boolean);
+    const tokens = rawTokens.length ? rawTokens : q ? [q] : [];
+
+    const all = chatSessions
+      .slice()
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .filter((s) => s.messages.some((m) => m.role === "user"))
+      .map((s) => {
+        if (!tokens.length) return { s, score: 0, titleMatch: true };
+
+        const userText = s.messages
+          .filter((m) => m.role === "user")
+          .map((m) => m.content)
+          .join("\n");
+        const titleHay = s.title.toLowerCase();
+        const userHay = userText.toLowerCase();
+
+        const titleMatch = tokens.every((tok) => titleHay.includes(tok));
+        const userMatch = tokens.every((tok) => userHay.includes(tok));
+        if (!titleMatch && !userMatch) return null;
+
+        let score = 0;
+        for (const tok of tokens) {
+          const w = tok.length >= 4 ? 2 : 1;
+          if (titleHay.includes(tok)) score += w * 4;
+          else score += w;
+        }
+        if (titleMatch) score += 100;
+        return { s, score, titleMatch };
+      })
+      .filter((x): x is { s: ChatSession; score: number; titleMatch: boolean } => x !== null);
+
+    const scored = tokens.length && all.some((x) => x.titleMatch) ? all.filter((x) => x.titleMatch) : all;
+
+    return scored
+      .sort((a, b) => b.score - a.score || b.s.updatedAt - a.s.updatedAt)
+      .slice(0, 120)
+      .map((x) => x.s);
+  }, [chatHistoryQuery, chatSessions]);
 
   const didBootstrapFreshChatRef = useRef(false);
   useEffect(() => {
@@ -1517,6 +1567,7 @@ export default function AppShell() {
   const chatResizeStateRef = useRef<{ startX: number; startW: number } | null>(null);
   const explorerResizeStateRef = useRef<{ startX: number; startW: number } | null>(null);
   const terminalResizeStateRef = useRef<{ startY: number; startH: number } | null>(null);
+  const chatHistoryMenuRef = useRef<HTMLDivElement | null>(null);
   const notifyRef = useRef<((n: Omit<AppNotification, "id">) => void) | null>(null);
   const sendChatRef = useRef<(() => Promise<void>) | null>(null);
   const refreshDirRef = useRef<((relDir?: string) => Promise<void>) | null>(null);
@@ -1541,19 +1592,27 @@ export default function AppShell() {
     if (isChatDockOpen) cols.push(`minmax(280px, ${chatDockWidth}px)`);
     return cols.join(" ");
   }, [chatDockWidth, explorerWidth, isChatDockOpen]);
-
-  const canShowChatLogs = Boolean(import.meta.env?.DEV);
   const devConsoleError = useCallback(
     (...args: any[]) => {
-      if (!canShowChatLogs) return;
+      if (!import.meta.env?.DEV) return;
       console.error(...args);
     },
-    [canShowChatLogs]
+    []
   );
 
   useEffect(() => {
-    if (!canShowChatLogs && chatDockTab === "logs") setChatDockTab("chat");
-  }, [canShowChatLogs, chatDockTab]);
+    if (!isChatHistoryOpen) return;
+
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node | null;
+      if (!t) return;
+      if (chatHistoryMenuRef.current?.contains(t)) return;
+      setIsChatHistoryOpen(false);
+    };
+
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [isChatHistoryOpen]);
 
   const nextChatTitle = useMemo(() => {
     const nums = chatSessions
@@ -1565,6 +1624,45 @@ export default function AppShell() {
     const max = nums.length ? Math.max(...nums) : 0;
     return `Chat ${max + 1}`;
   }, [chatSessions]);
+
+  const deleteChatSession = useCallback(
+    (id: string) => {
+      let nextActive: string | null = null;
+      setChatSessions((prev) => {
+        const remaining = prev.filter((s) => s.id !== id);
+        if (id === activeChatId) {
+          const next = remaining
+            .slice()
+            .sort((a, b) => b.updatedAt - a.updatedAt)[0]?.id;
+          if (next) {
+            nextActive = next;
+          } else {
+            const now = Date.now();
+            const newId = `${now}-${Math.random().toString(16).slice(2)}`;
+            nextActive = newId;
+            return [{ id: newId, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }];
+          }
+        }
+        return remaining.length ? remaining : prev;
+      });
+
+      if (nextActive) setActiveChatId(nextActive);
+      setIsChatHistoryOpen(false);
+      window.setTimeout(() => chatComposerRef.current?.focus(), 0);
+    },
+    [activeChatId]
+  );
+
+  const renameChatSession = useCallback(
+    (id: string) => {
+      const current = chatSessions.find((s) => s.id === id);
+      const next = window.prompt("Chat name", current?.title || "Chat");
+      const title = String(next ?? "").trim();
+      if (!title) return;
+      setChatSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title, updatedAt: Date.now() } : s)));
+    },
+    [chatSessions]
+  );
 
   const setActiveChatTitle = useCallback(
     (title: string) => {
@@ -1625,13 +1723,6 @@ export default function AppShell() {
       };
       setActiveChatLogs((prev) => [...prev, entry].slice(-400));
       return id;
-    },
-    [setActiveChatLogs]
-  );
-
-  const toggleLogCollapsed = useCallback(
-    (id: string) => {
-      setActiveChatLogs((prev) => prev.map((l) => (l.id === id ? { ...l, collapsed: !l.collapsed } : l)));
     },
     [setActiveChatLogs]
   );
@@ -2537,7 +2628,7 @@ export default function AppShell() {
       return {
         changeSetId: cs.id,
         title: "Proposed changes",
-        plan: plan.length ? plan : ["Review proposed changes", "Apply when ready"],
+        plan,
         risks,
         files,
         stats: cs.stats,
@@ -3142,11 +3233,6 @@ export default function AppShell() {
     const root = workspace.root ?? settings.workspace_root;
     if (!root) return "No folder";
     return basename(root);
-  }, [settings.workspace_root, workspace.root]);
-
-  const workspacePathLabel = useMemo(() => {
-    const root = workspace.root ?? settings.workspace_root;
-    return root ?? "";
   }, [settings.workspace_root, workspace.root]);
 
   const canUseAi = useMemo(() => {
@@ -5638,35 +5724,33 @@ export default function AppShell() {
             </div>
 
             <div className="flex shrink-0 items-center gap-1 justify-self-end">
-              <div className="relative" data-account-menu-root>
-                <button
-                  type="button"
-                  className="ws-icon-btn h-8 w-8 p-0"
-                  onClick={() => {
-                    setIsAccountMenuOpen((v) => !v);
-                  }}
-                  disabled={isAuthBusy}
-                  aria-label={authProfile ? "Account" : "Sign in"}
-                >
-                  <div className="relative h-6 w-6 overflow-hidden rounded-full bg-[rgb(var(--p-panel2))]">
-                    <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold leading-none text-text">
-                      {avatarLetter}
+              {authProfile ? (
+                <div className="relative" data-account-menu-root>
+                  <button
+                    type="button"
+                    className="ws-icon-btn h-8 w-8 p-0"
+                    onClick={() => {
+                      setIsAccountMenuOpen((v) => !v);
+                    }}
+                    disabled={isAuthBusy}
+                    aria-label="Account"
+                  >
+                    <div className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-[rgb(var(--p-panel2))]">
+                      <div className="text-[11px] font-semibold leading-none text-text">{avatarLetter}</div>
+                      {authProfile.avatar_url ? (
+                        <img
+                          src={authProfile.avatar_url}
+                          className="absolute inset-0 block h-full w-full object-cover"
+                          alt="Profile"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      ) : null}
                     </div>
-                    {authProfile?.avatar_url ? (
-                      <img
-                        src={authProfile.avatar_url}
-                        className="absolute inset-0 block h-full w-full object-cover"
-                        alt="Profile"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : null}
-                  </div>
-                </button>
+                  </button>
 
-                {isAccountMenuOpen ? (
-                  authProfile ? (
+                  {isAccountMenuOpen ? (
                     <div className="absolute right-0 top-full z-[80] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <div className="px-3 py-2">
                         <div className="text-xs font-semibold text-text">{authProfile.email || "Account"}</div>
@@ -5701,31 +5785,21 @@ export default function AppShell() {
                         }}
                       />
                     </div>
-                  ) : (
-                    <div className="absolute right-0 top-full z-[80] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
-                      <div className="px-3 py-2">
-                        <div className="text-xs font-semibold text-text">Not signed in</div>
-                        <div className="mt-0.5 text-[11px] text-muted">Sign in to sync credits and use Pompora AI.</div>
-                      </div>
-                      <MenuSep />
-                      <MenuItem
-                        label="Log in"
-                        onClick={() => {
-                          setIsAccountMenuOpen(false);
-                          void beginDesktopAuthWithMode("login");
-                        }}
-                      />
-                      <MenuItem
-                        label="Create account"
-                        onClick={() => {
-                          setIsAccountMenuOpen(false);
-                          void beginDesktopAuthWithMode("signup");
-                        }}
-                      />
-                    </div>
-                  )
-                ) : null}
-              </div>
+                  ) : null}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="ws-vscode-btn ws-vscode-btn-primary h-7 px-6 text-[13px] font-medium text-white"
+                  disabled={isAuthBusy}
+                  onClick={() => {
+                    setIsAccountMenuOpen(false);
+                    void beginDesktopAuthWithMode("login");
+                  }}
+                >
+                  Log in
+                </button>
+              )}
 
               <button type="button" className="ws-icon-btn" onClick={() => openSettingsTab()}>
                 <SettingsIcon className="h-4 w-4" />
@@ -5882,6 +5956,7 @@ export default function AppShell() {
                     <SettingsScreen
                       settings={settings}
                       authProfile={authProfile}
+                      authCredits={authCredits}
                       isAuthBusy={isAuthBusy}
                       providerLabel={providerLabel}
                       keyStatus={keyStatus}
@@ -6150,64 +6225,6 @@ export default function AppShell() {
                 }}
               />
               <div className="flex h-full min-h-0 flex-col">
-                {hasChatHistory && isChatHistoryOpen ? (
-                  <div className="border-b border-transparent bg-panel px-3 pb-2">
-                    <div className="ws-panel2 overflow-hidden rounded-xl border border-border">
-                      <div className="flex items-center justify-between gap-2 px-2 py-1.5">
-                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                          <Search className="h-4 w-4 text-muted" />
-                          <input
-                            className="w-full bg-transparent text-sm text-text outline-none placeholder:text-muted"
-                            placeholder="Search"
-                            value={chatHistoryQuery}
-                            onChange={(e) => setChatHistoryQuery(e.currentTarget.value)}
-                            autoFocus
-                          />
-                        </div>
-                        <div className="shrink-0 rounded-md bg-panel px-2 py-1 text-[11px] text-muted">All Conversations</div>
-                      </div>
-
-                      <div className="h-2" />
-
-                      <div className="max-h-56 overflow-auto px-1 pb-1">
-                        {chatSessions
-                          .slice()
-                          .sort((a, b) => b.updatedAt - a.updatedAt)
-                          .filter((s) => s.messages.some((m) => m.role === "user"))
-                          .filter((s) => {
-                            const q = chatHistoryQuery.trim().toLowerCase();
-                            if (!q) return true;
-                            const hay = `${s.title}\n${s.messages
-                              .filter((m) => m.role === "user")
-                              .map((m) => m.content)
-                              .join("\n")}`.toLowerCase();
-                            return hay.includes(q);
-                          })
-                          .map((s) => (
-                            <button
-                              key={s.id}
-                              type="button"
-                              className={`flex w-full items-start justify-between gap-3 rounded-lg px-2 py-2 text-left focus-visible:outline-none hover:bg-panel ${
-                                s.id === activeChatId ? "bg-panel" : ""
-                              }`}
-                              onClick={() => {
-                                setActiveChatId(s.id);
-                                setIsChatHistoryOpen(false);
-                                window.setTimeout(() => chatComposerRef.current?.focus(), 0);
-                              }}
-                            >
-                              <div className="min-w-0">
-                                <div className="truncate text-sm text-text">{s.title}</div>
-                                <div className="truncate text-[11px] text-muted">{workspacePathLabel}</div>
-                              </div>
-                              <div className="shrink-0 pt-0.5 text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
-                            </button>
-                          ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
                 {activeChat.changeSet ? (
                   <div className="px-3 pt-2">
                     <div className="rounded-lg bg-[rgb(var(--p-panel2))] px-2 py-1">
@@ -6316,36 +6333,88 @@ export default function AppShell() {
                     </div>
 
                     <div className="flex shrink-0 items-center gap-1">
-                      <div className="ws-segment">
-                        <button
-                          type="button"
-                          className={`ws-segment-item ${chatDockTab === "chat" ? "ws-segment-item-active" : ""}`}
-                          onClick={() => setChatDockTab("chat")}
-                        >
-                          Chat
-                        </button>
-                        {canShowChatLogs ? (
+                      {hasChatHistory ? (
+                        <div className="relative" ref={chatHistoryMenuRef}>
                           <button
                             type="button"
-                            className={`ws-segment-item ${chatDockTab === "logs" ? "ws-segment-item-active" : ""}`}
-                            onClick={() => setChatDockTab("logs")}
+                            className="ws-icon-btn"
+                            onClick={() => {
+                              setIsChatHistoryOpen((v) => !v);
+                              if (!isChatHistoryOpen) {
+                                setChatHistoryQueryDraft("");
+                                setChatHistoryQuery("");
+                              }
+                            }}
                           >
-                            Logs
+                            <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
                           </button>
-                        ) : null}
-                      </div>
 
-                      {hasChatHistory ? (
-                        <button
-                          type="button"
-                          className="ws-icon-btn"
-                          onClick={() => {
-                            setIsChatHistoryOpen((v) => !v);
-                            if (!isChatHistoryOpen) setChatHistoryQuery("");
-                          }}
-                        >
-                          <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
-                        </button>
+                          {isChatHistoryOpen ? (
+                            <div className="absolute right-0 top-full z-[70] mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-panel shadow">
+                              <div className="flex items-center gap-2 border-b border-border/40 bg-bg px-3 py-2">
+                                <div className="flex min-w-0 flex-1 items-center gap-2">
+                                  <Search className="h-4 w-4 text-muted" />
+                                  <input
+                                    className="w-full bg-transparent text-[13px] text-text outline-none placeholder:text-muted"
+                                    placeholder="Search chats"
+                                    value={chatHistoryQueryDraft}
+                                    onChange={(e) => setChatHistoryQueryDraft(e.currentTarget.value)}
+                                    autoFocus
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="max-h-48 overflow-auto p-1">
+                                {chatHistorySessions.map((s) => {
+                                    return (
+                                      <button
+                                        key={s.id}
+                                        type="button"
+                                        className={`group relative flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-left focus-visible:outline-none hover:bg-bg ${
+                                          s.id === activeChatId ? "bg-bg" : ""
+                                        }`}
+                                        onClick={() => {
+                                          setActiveChatId(s.id);
+                                          setIsChatHistoryOpen(false);
+                                          window.setTimeout(() => chatComposerRef.current?.focus(), 0);
+                                        }}
+                                      >
+                                        <div className="min-w-0 flex-1">
+                                          <div className="truncate text-[12px] text-text">{s.title}</div>
+                                          <div className="truncate text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
+                                        </div>
+
+                                        <div className="flex shrink-0 items-center gap-1">
+                                          <button
+                                            type="button"
+                                            className="ws-icon-btn h-7 w-7 rounded-xl border border-border bg-bg"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              renameChatSession(s.id);
+                                            }}
+                                            aria-label="Rename chat"
+                                          >
+                                            <Pencil className="h-4 w-4" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="ws-icon-btn h-7 w-7 rounded-xl border border-border bg-bg"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deleteChatSession(s.id);
+                                            }}
+                                            aria-label="Delete chat"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </button>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
                       ) : null}
                       <button
                         type="button"
@@ -6380,116 +6449,7 @@ export default function AppShell() {
                     </div>
                   ) : null}
 
-                  {chatDockTab === "logs" ? (
-                    <div className="space-y-3">
-                      {(() => {
-                        const all = (activeChat.logs ?? []).slice(-400);
-                        if (!all.length) return <div className="text-sm text-muted">No logs yet.</div>;
-
-                        const runIds = (activeChat.messages ?? [])
-                          .filter((m) => m.role === "assistant" && m.kind === "agent_run" && m.id)
-                          .map((m) => m.id as string);
-                        const runIndex = new Map<string, number>(runIds.map((id, idx) => [id, idx + 1]));
-
-                        const groups = new Map<string, ChatLogEntry[]>();
-                        for (const l of all) {
-                          const gid = l.groupId ?? "session";
-                          const arr = groups.get(gid);
-                          if (arr) arr.push(l);
-                          else groups.set(gid, [l]);
-                        }
-
-                        const ordered = [...groups.entries()].sort((a, b) => {
-                          const at = a[1][a[1].length - 1]?.ts ?? 0;
-                          const bt = b[1][b[1].length - 1]?.ts ?? 0;
-                          return bt - at;
-                        });
-
-                        return ordered.map(([gid, entries]) => {
-                          const key = `${activeChatId}:${gid}`;
-                          const isCollapsed = Boolean(logGroupCollapsed[key]);
-
-                          const runMsg = (activeChat.messages ?? []).find((m) => m.id === gid && m.kind === "agent_run" && m.agentRun) ?? null;
-                          const runStatus = runMsg?.agentRun?.status ?? (gid === "session" ? "done" : "running");
-                          const title = gid === "session" ? "Session" : `Run ${runIndex.get(gid) ?? ""}`.trim();
-                          const subtitle = gid === "session" ? "General" : "Agent";
-
-                          return (
-                            <div key={gid} className="ws-log-group">
-                              <button
-                                type="button"
-                                className="ws-log-group-h"
-                                onClick={() => setLogGroupCollapsed((prev) => ({ ...prev, [key]: !Boolean(prev[key]) }))}
-                              >
-                                <div className="min-w-0">
-                                  <div className="ws-log-group-title">{title}</div>
-                                  <div className="ws-log-group-sub">{subtitle}</div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span
-                                    className={`ws-log-status ${statusPillClass(
-                                      runStatus === "error" ? "error" : runStatus === "done" ? "done" : "running"
-                                    )}`}
-                                  >
-                                    {runStatus}
-                                  </span>
-                                  <ChevronDown className={`h-4 w-4 text-muted transition-transform ${isCollapsed ? "" : "rotate-180"}`} />
-                                </div>
-                              </button>
-
-                              {!isCollapsed ? (
-                                <div className="ws-log-group-b">
-                                  <div className="space-y-2">
-                                    {entries.map((l) => (
-                                      <div key={l.id} className="ws-log-entry">
-                                        <button
-                                          type="button"
-                                          className="ws-log-entry-h"
-                                          onClick={() => toggleLogCollapsed(l.id)}
-                                        >
-                                          <div className="min-w-0">
-                                            <div className="ws-log-entry-title">{l.title}</div>
-                                            <div className="ws-log-entry-sub">{formatRelTime(l.ts)}</div>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                            {l.status ? (
-                                              <span
-                                                className={`ws-log-status ${statusPillClass(
-                                                  l.status === "pending" ? "pending" : l.status
-                                                )}`}
-                                              >
-                                                {l.status}
-                                              </span>
-                                            ) : null}
-                                            <ChevronDown
-                                              className={`h-4 w-4 text-muted transition-transform ${
-                                                l.collapsed ? "" : "rotate-180"
-                                              }`}
-                                            />
-                                          </div>
-                                        </button>
-                                        {!l.collapsed && (l.details ?? []).length ? (
-                                          <div className="ws-log-entry-b">
-                                            <div className="ws-terminal-log">
-                                              {(l.details ?? []).slice(-160).map((d, idx) => (
-                                                <div key={idx} className="whitespace-pre-wrap break-words">
-                                                  {d}
-                                                </div>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        ) : null}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              ) : null}
-                            </div>
-                          );
-                        });
-                      })()}
-                    </div>
-                  ) : activeChat.messages.length ? (
+                  {activeChat.messages.length ? (
                       <div className="space-y-3">
                         {(activeChat.messages ?? []).filter((m) => m.role !== "meta").map((m, idx) => {
                           return (
@@ -6592,6 +6552,7 @@ export default function AppShell() {
                                       const cs = activeChat.changeSet;
                                       const isCurrent = Boolean(cs && cs.id === m.proposal?.changeSetId);
                                       const isApplied = Boolean(cs && cs.id === m.proposal?.changeSetId && cs.applied);
+                                      const hasProposalPlan = (m.proposal.plan ?? []).length > 0;
                                       return (
                                         <>
                                           <div className="flex items-start justify-between gap-3">
@@ -6612,17 +6573,19 @@ export default function AppShell() {
                                             </div>
                                           </div>
 
-                                          <div className="mt-3">
-                                            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Plan</div>
-                                            <div className="mt-1 space-y-1">
-                                              {(m.proposal.plan ?? []).slice(0, 6).map((p, idx) => (
-                                                <div key={idx} className="flex items-start gap-2 text-[12px] text-muted">
-                                                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[rgb(var(--p-accent))]" />
-                                                  <span className="whitespace-pre-wrap break-words">{p}</span>
-                                                </div>
-                                              ))}
+                                          {hasProposalPlan ? (
+                                            <div className="mt-3">
+                                              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Plan</div>
+                                              <div className="mt-1 space-y-1">
+                                                {(m.proposal.plan ?? []).slice(0, 6).map((p, idx) => (
+                                                  <div key={idx} className="flex items-start gap-2 text-[12px] text-muted">
+                                                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[rgb(var(--p-accent))]" />
+                                                    <span className="whitespace-pre-wrap break-words">{p}</span>
+                                                  </div>
+                                                ))}
+                                              </div>
                                             </div>
-                                          </div>
+                                          ) : null}
 
                                           {(m.proposal.risks?.length ?? 0) > 0 ? (
                                             <div className="mt-3">
@@ -7084,7 +7047,7 @@ export default function AppShell() {
           ) : null}
         </div>
 
-        <footer className="flex items-center justify-end border-t border-border bg-panel px-3 text-[11px] text-muted">
+        <footer className="flex h-9 items-center justify-end border-t border-border bg-panel px-3 text-[11px] text-muted">
           <div className="flex items-center gap-3">
             <button type="button" className="ws-footer-btn" onClick={() => {}}>
               {activeTab ? activeTab.path : "No file"}
@@ -7099,9 +7062,20 @@ export default function AppShell() {
                 {cursorPos ? `Ln ${cursorPos.line}, Col ${cursorPos.col}` : "Ln -, Col -"}
               </button>
             ) : null}
-            <button type="button" className="ws-footer-btn" onClick={() => {}}>
-              Free plan
-            </button>
+            {authProfile ? (
+              <button type="button" className="ws-footer-btn" onClick={() => void openUrl("https://pompora.dev/pricing")}
+              >
+                {pomporaPlan === "pro" ? "Pro" : pomporaPlan === "plus" ? "Plus" : "Starter"} plan
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="ws-footer-btn h-full rounded-none border border-blue-500/50 bg-blue-600 px-4 text-[12px] font-medium text-white hover:bg-blue-500"
+                onClick={() => void beginDesktopAuthWithMode("login")}
+              >
+                Log in
+              </button>
+            )}
             <button type="button" className="ws-footer-btn" onClick={() => {}} aria-label="Notifications">
               <Bell className="h-4 w-4" />
               {notifications.length ? <span className="text-[11px]">{notifications.length}</span> : null}
@@ -7519,9 +7493,8 @@ function Tree(props: {
       {props.entries.map((e) => {
         const isSelected = props.selectedPath === e.path;
         const rowCls = isSelected
-          ? "bg-panel text-text"
+          ? "bg-[rgb(var(--p-panel2))] text-text shadow-sm"
           : "text-muted hover:bg-panel hover:text-text hover:translate-x-[1px] hover:-translate-y-[0.5px]";
-        const markerCls = isSelected ? "bg-accent opacity-100" : "opacity-0";
         if (e.is_dir) {
           const isExpanded = props.expandedDirs.has(e.path);
           const children = props.explorer[e.path] ?? [];
@@ -7530,7 +7503,7 @@ function Tree(props: {
             <div key={e.path}>
               <button
                 type="button"
-                className={`group relative flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] transition-all duration-150 ${rowCls}`}
+                className={`group relative flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
                 onClick={() => {
                   props.onSelect(e.path);
                   props.onToggleDir(e.path);
@@ -7541,16 +7514,15 @@ function Tree(props: {
                   props.onContextMenu({ x: ev.clientX, y: ev.clientY, path: e.path, isDir: true });
                 }}
               >
-                <span aria-hidden className={`absolute left-0 top-1.5 h-4 w-0.5 rounded ${markerCls}`} />
                 <ChevronRight
-                  className={`h-4 w-4 text-muted transition-transform duration-150 group-hover:text-text ${isExpanded ? "rotate-90" : ""}`}
+                  className={`h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-hover:text-text ${isExpanded ? "rotate-90" : ""}`}
                 />
                 {isRoot ? (
-                  <FolderOpen className="h-4 w-4 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+                  <FolderOpen className="h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
                 ) : (
-                  <Folder className="h-4 w-4 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+                  <Folder className="h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
                 )}
-                <span className={`truncate ${isRoot ? "font-medium text-text" : ""}`}>{e.name}</span>
+                <span className={`relative top-[0.5px] truncate ${isRoot ? "font-medium text-text" : ""}`}>{e.name}</span>
               </button>
               {isExpanded ? (
                 <div className="ml-4 border-l border-border/60 pl-2">
@@ -7579,7 +7551,7 @@ function Tree(props: {
           <button
             key={e.path}
             type="button"
-            className={`group relative flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] transition-all duration-150 ${rowCls}`}
+            className={`group relative flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
             onMouseEnter={(ev) => {
               if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
               hoverTimerRef.current = window.setTimeout(() => {
@@ -7610,10 +7582,9 @@ function Tree(props: {
               props.onContextMenu({ x: ev.clientX, y: ev.clientY, path: e.path, isDir: false });
             }}
           >
-            <span aria-hidden className={`absolute left-0 top-1.5 h-4 w-0.5 rounded ${markerCls}`} />
-            <span className="inline-block w-4" />
-            <Icon className="h-4 w-4 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
-            <span className="truncate">{e.name}</span>
+            <span className="inline-block w-4 shrink-0" />
+            <Icon className="h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+            <span className="relative top-[0.5px] truncate">{e.name}</span>
           </button>
         );
       })}
@@ -7928,6 +7899,7 @@ function CommandPalette(props: {
 interface SettingsScreenProps {
   settings: AppSettings;
   authProfile: AuthProfile | null;
+  authCredits: CreditsResponse | null;
   isAuthBusy: boolean;
   providerLabel: string;
   keyStatus: KeyStatus | null;
@@ -8295,10 +8267,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                       <div className="mt-1 text-xs text-muted">
                         Log in to sync your plan and credits across devices.
                       </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 grid gap-2">
                         <button
                           type="button"
-                          className="ws-vscode-btn ws-vscode-btn-primary"
+                          className="ws-vscode-btn ws-vscode-btn-primary w-full rounded-none"
                           onClick={props.onLoginToPompora}
                           disabled={props.isAuthBusy}
                         >
@@ -8306,7 +8278,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                         </button>
                         <button
                           type="button"
-                          className="ws-vscode-btn"
+                          className="ws-vscode-btn w-full rounded-none"
                           onClick={props.onSignupToPompora}
                           disabled={props.isAuthBusy}
                         >
@@ -8351,84 +8323,46 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                   </div>
                   {props.debugResult ? <pre className="ws-vscode-pre">{props.debugResult}</pre> : null}
 
-                  {props.settings.active_provider === "pompora" ? (
+                  {props.settings.active_provider === "pompora" && props.authProfile ? (
                     <div className="overflow-hidden rounded-xl border border-border bg-panel">
                       <div className="border-b border-border px-4 py-3">
-                        <div className="text-sm font-semibold text-text">Pompora AI Plans</div>
-                        <div className="mt-1 text-xs text-muted">
-                          Credits keep the service fast and fair. <span className="text-text">2 credits = 1 request</span>.
-                        </div>
+                        <div className="text-sm font-semibold text-text">Pompora account</div>
+                        <div className="mt-1 text-xs text-muted">Plan: {props.authCredits?.plan || props.authProfile.plan || "starter"}</div>
                       </div>
 
-                      <div className="grid gap-3 p-3 md:grid-cols-3">
-                        <div className="rounded-lg border border-border bg-bg p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm font-semibold text-text">Starter</div>
-                            <div className="text-xs text-muted">Free</div>
+                      {props.authCredits ? (
+                        <div className="space-y-2 p-3 text-xs text-muted">
+                          <div className="flex items-center justify-between gap-3">
+                            <span>Slow credits</span>
+                            <span className="shrink-0 text-text">
+                              {props.authCredits.slow.remaining} / {props.authCredits.slow.limit}
+                            </span>
                           </div>
-                          <div className="mt-2 space-y-1 text-xs text-muted">
-                            <div>25 Slow Credits (reset every 2 weeks)</div>
-                            <div>Unlimited tab completions</div>
-                            <div>Unlimited inline edits</div>
-                            <div>Local AI (slow thinking)</div>
-                            <div>BYOK support</div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>Fast credits (today)</span>
+                            <span className="shrink-0 text-text">
+                              {props.authCredits.fast.remaining_today} / {props.authCredits.fast.daily_cap}
+                            </span>
                           </div>
-                          <button
-                            type="button"
-                            className="mt-3 w-full rounded-md bg-[rgb(var(--p-panel2))] px-3 py-2 text-xs font-semibold text-text hover:opacity-90"
-                            onClick={() => void openUrl("https://pompora.dev/pricing")}
-                          >
-                            Start Free
-                          </button>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>Fast credits (month)</span>
+                            <span className="shrink-0 text-text">
+                              {props.authCredits.fast.remaining_month} / {props.authCredits.fast.limit_month}
+                            </span>
+                          </div>
                         </div>
+                      ) : (
+                        <div className="p-3 text-xs text-muted">Fetching credits…</div>
+                      )}
 
-                        <div className="rounded-lg border border-border bg-gradient-to-b from-[rgba(255,255,255,0.06)] to-[rgba(255,255,255,0.02)] p-3">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="text-sm font-semibold text-text">Plus</div>
-                              <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                                Most Popular
-                              </div>
-                            </div>
-                            <div className="text-xs text-text">$10 / month</div>
-                          </div>
-                          <div className="mt-2 space-y-1 text-xs text-muted">
-                            <div>150 Fast Credits / month (daily cap: 100)</div>
-                            <div>50 Slow Credits (reset every 2 weeks)</div>
-                            <div>Fast thinking enabled</div>
-                            <div>Priority execution</div>
-                            <div>BYOK support</div>
-                          </div>
-                          <button
-                            type="button"
-                            className="mt-3 w-full rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
-                            onClick={() => void openUrl("https://pompora.dev/pricing")}
-                          >
-                            Upgrade to Plus
-                          </button>
-                        </div>
-
-                        <div className="rounded-lg border border-border bg-bg p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm font-semibold text-text">Pro</div>
-                            <div className="text-xs text-text">$20 / month</div>
-                          </div>
-                          <div className="mt-2 space-y-1 text-xs text-muted">
-                            <div>300 Fast Credits / month (daily cap: 150)</div>
-                            <div>150 Slow Credits (reset every 2 weeks)</div>
-                            <div>Reasoning + fast thinking</div>
-                            <div>Highest priority</div>
-                            <div>Advanced agents</div>
-                            <div>BYOK support</div>
-                          </div>
-                          <button
-                            type="button"
-                            className="mt-3 w-full rounded-md bg-[rgb(var(--p-panel2))] px-3 py-2 text-xs font-semibold text-text hover:opacity-90"
-                            onClick={() => void openUrl("https://pompora.dev/pricing")}
-                          >
-                            Go Pro
-                          </button>
-                        </div>
+                      <div className="border-t border-border p-3">
+                        <button
+                          type="button"
+                          className="ws-vscode-btn ws-vscode-btn-primary w-full rounded-none"
+                          onClick={() => void openUrl("https://pompora.dev/pricing")}
+                        >
+                          Manage plan
+                        </button>
                       </div>
                     </div>
                   ) : null}
