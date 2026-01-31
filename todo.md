@@ -1,5 +1,0 @@
-1. make the login button blue, make it height smaller so it can look better, make it rounded, wider and make it look like VSCode, white text and make the text little bigger. JUST COPY OF VSCode [done]
-
-2. i want the chat history to show in the chat, not in the left out of the chat, show the dropdown menu inside the chat always,  optimize more the menu, MAKE IT TO SOW INSIDE OF THE CHAT. NOT IN THE LEFT. LIKE WINDSURF. optimize and fix the text of search and remove history text. search chats is up than the icon, fix it. and make it work in the right way, because when we type the title we see a lot of chats but it doesnt match fully what we search for [done]
-
-5. the button to log in in the bottom menu where we are seeing files information and etc, JUST THE BOTTOM MENU WHERE WE HAVE LOG IN. MAKE IT FULLY FROM TOP TO END. ON THE BOTTOM. LIKE OUR FOOTER OF THE APP. I WANT TO BE FULL OF THE SECTION FROM TOP TO BOTTOM. AND MAKE IT BIGGER LIKE WIDER AND OPTIMIZED. [done]
