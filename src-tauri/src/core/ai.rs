@@ -588,6 +588,7 @@ pub async fn ai_chat(
     thinking: Option<&str>,
 ) -> Result<AiChatResult> {
     let s = settings::load()?;
+    #[cfg(debug_assertions)]
     println!("DEBUG: ai_chat loaded settings - offline_mode: {}, active_provider: {:?}", s.offline_mode, s.active_provider);
     
     if s.offline_mode {

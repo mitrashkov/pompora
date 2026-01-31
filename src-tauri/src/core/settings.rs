@@ -72,6 +72,7 @@ pub fn load() -> Result<AppSettings> {
                 let _ = fs::remove_file(&path);
             }
 
+            #[cfg(debug_assertions)]
             eprintln!(
                 "parse settings failed ({}): {} (backed up to {})",
                 path.display(),
