@@ -1,7 +1,53 @@
 mod core;
 
 use core::{ai, auth, fsops, search, secrets, settings, terminal, workspace};
+use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
+
+#[cfg(windows)]
+use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+
+#[cfg(windows)]
+use windows::{
+    core::PCVOID,
+    Win32::{
+        Foundation::HWND,
+        Graphics::Dwm::{DwmExtendFrameIntoClientArea, DwmSetWindowAttribute, DWMWINDOWATTRIBUTE},
+        UI::WindowsAndMessaging::MARGINS,
+    },
+};
+
+#[cfg(windows)]
+fn apply_windows_border_fix<R: tauri::Runtime>(window: &tauri::webview::WebviewWindow<R>) {
+    let handle = match window.window_handle() {
+        Ok(h) => h,
+        Err(_) => return,
+    };
+
+    let raw = handle.as_raw();
+    let hwnd = match raw {
+        RawWindowHandle::Win32(h) => HWND(h.hwnd.get() as isize),
+        _ => return,
+    };
+
+    unsafe {
+        let color_none: u32 = 0xFFFFFFFE;
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            DWMWINDOWATTRIBUTE::DWMWA_BORDER_COLOR,
+            PCVOID((&color_none as *const u32) as *const _),
+            std::mem::size_of::<u32>() as u32,
+        );
+
+        let margins = MARGINS {
+            cxLeftWidth: -1,
+            cxRightWidth: -1,
+            cyTopHeight: -1,
+            cyBottomHeight: -1,
+        };
+        let _ = DwmExtendFrameIntoClientArea(hwnd, &margins);
+    }
+}
 
 #[cfg(debug_assertions)]
 fn debug_log(msg: &str) {
@@ -318,6 +364,15 @@ async fn ai_run_action(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .setup(|app| {
+            #[cfg(windows)]
+            {
+                if let Some(w) = app.get_webview_window("main") {
+                    apply_windows_border_fix(&w);
+                }
+            }
+            Ok(())
+        })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
