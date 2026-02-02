@@ -9,11 +9,11 @@ use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
 #[cfg(windows)]
 use windows::{
-    core::PCVOID,
     Win32::{
         Foundation::HWND,
-        Graphics::Dwm::{DwmExtendFrameIntoClientArea, DwmSetWindowAttribute, DWMWINDOWATTRIBUTE},
-        UI::WindowsAndMessaging::MARGINS,
+        Graphics::Dwm::{
+            DwmExtendFrameIntoClientArea, DwmSetWindowAttribute, DWMWA_BORDER_COLOR, MARGINS,
+        },
     },
 };
 
@@ -26,7 +26,7 @@ fn apply_windows_border_fix<R: tauri::Runtime>(window: &tauri::webview::WebviewW
 
     let raw = handle.as_raw();
     let hwnd = match raw {
-        RawWindowHandle::Win32(h) => HWND(h.hwnd.get() as isize),
+        RawWindowHandle::Win32(h) => HWND(h.hwnd.get() as *mut std::ffi::c_void),
         _ => return,
     };
 
@@ -34,8 +34,8 @@ fn apply_windows_border_fix<R: tauri::Runtime>(window: &tauri::webview::WebviewW
         let color_none: u32 = 0xFFFFFFFE;
         let _ = DwmSetWindowAttribute(
             hwnd,
-            DWMWINDOWATTRIBUTE::DWMWA_BORDER_COLOR,
-            PCVOID((&color_none as *const u32) as *const _),
+            DWMWA_BORDER_COLOR,
+            (&color_none as *const u32) as *const std::ffi::c_void,
             std::mem::size_of::<u32>() as u32,
         );
 
