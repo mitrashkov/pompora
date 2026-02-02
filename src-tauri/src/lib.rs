@@ -12,8 +12,9 @@ use windows::{
     Win32::{
         Foundation::HWND,
         Graphics::Dwm::{
-            DwmExtendFrameIntoClientArea, DwmSetWindowAttribute, DWMWA_BORDER_COLOR, MARGINS,
+            DwmExtendFrameIntoClientArea, DwmSetWindowAttribute, DWMWA_BORDER_COLOR,
         },
+        UI::Controls::MARGINS,
     },
 };
 
