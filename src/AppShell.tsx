@@ -1287,6 +1287,8 @@ export default function AppShell() {
   const [explorer, setExplorer] = useState<Record<string, DirEntryInfo[]>>({});
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [inlineRenamePath, setInlineRenamePath] = useState<string | null>(null);
+  const [inlineRenameValue, setInlineRenameValue] = useState<string>("");
 
   const [tabs, setTabs] = useState<EditorTab[]>([]);
   const [activeTabPath, setActiveTabPath] = useState<string | null>(null);
@@ -1359,12 +1361,6 @@ export default function AppShell() {
   const [chatBusy, setChatBusy] = useState(false);
   const [chatApplying, setChatApplying] = useState(false);
   const [isChatDockOpen, setIsChatDockOpen] = useState(false);
-  const SPLASH_SKIP_KEY = "pompora.splash_skip.v1";
-  const [isSplashVisible, setIsSplashVisible] = useState(false);
-  const [isSplashFading, setIsSplashFading] = useState(false);
-  const [isSplashSkipMenuOpen, setIsSplashSkipMenuOpen] = useState(false);
-  const [isSplashVideoReady, setIsSplashVideoReady] = useState(false);
-  const [isSplashVideoError, setIsSplashVideoError] = useState(false);
   const [chatDockWidth, setChatDockWidth] = useState(340);
   const [explorerWidth, setExplorerWidth] = useState(300);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
@@ -1469,89 +1465,6 @@ export default function AppShell() {
     }, 250);
     return () => window.clearTimeout(t);
   }, [chatSessions]);
-
-  const splashHideTimerRef = useRef<number | null>(null);
-  const splashVideoRef = useRef<HTMLVideoElement | null>(null);
-
-  const hideSplash = useCallback(() => {
-    setIsSplashFading(true);
-    setIsSplashSkipMenuOpen(false);
-    if (splashHideTimerRef.current) window.clearTimeout(splashHideTimerRef.current);
-    splashHideTimerRef.current = window.setTimeout(() => {
-      setIsSplashVisible(false);
-      setIsSplashFading(false);
-      splashHideTimerRef.current = null;
-    }, 520);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (splashHideTimerRef.current) window.clearTimeout(splashHideTimerRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (localStorage.getItem(SPLASH_SKIP_KEY) !== "1") {
-        setIsSplashVisible(true);
-      }
-    } catch {
-      setIsSplashVisible(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isSplashVisible) return;
-    setIsSplashVideoReady(false);
-    setIsSplashVideoError(false);
-
-    const v = splashVideoRef.current;
-    if (!v) return;
-
-    try {
-      v.load();
-      const p = v.play();
-      if (p && typeof (p as any).catch === "function") {
-        (p as Promise<void>).catch(() => {
-          setIsSplashVideoError(true);
-        });
-      }
-    } catch {
-      setIsSplashVideoError(true);
-    }
-
-    const probe = window.setTimeout(() => {
-      try {
-        const hasDecodedFrame = v.readyState >= 2 && v.videoWidth > 0 && v.videoHeight > 0;
-        if (!hasDecodedFrame) setIsSplashVideoError(true);
-      } catch {
-        setIsSplashVideoError(true);
-      }
-    }, 1200);
-
-    return () => window.clearTimeout(probe);
-  }, [isSplashVisible]);
-
-  useEffect(() => {
-    if (!isSplashVisible) return;
-    if (isSplashFading) return;
-    const t = window.setTimeout(() => {
-      hideSplash();
-    }, 12000);
-    return () => window.clearTimeout(t);
-  }, [hideSplash, isSplashFading, isSplashVisible]);
-
-  const skipSplashOneTime = useCallback(() => {
-    hideSplash();
-  }, [hideSplash]);
-
-  const skipSplashAlways = useCallback(() => {
-    try {
-      localStorage.setItem(SPLASH_SKIP_KEY, "1");
-    } catch {
-    }
-    hideSplash();
-  }, [hideSplash]);
 
   const [notifications] = useState<AppNotification[]>([]);
 
@@ -3887,6 +3800,120 @@ export default function AppShell() {
     await openFile(rel);
   }, [baseDirForCreate, openFile, openFolder, refreshDir, selectedPath, workspace.root]);
 
+  const commitInlineRename = useCallback(
+    async (opts?: { openAfter?: boolean }) => {
+      const fromRel = inlineRenamePath;
+      if (!fromRel) return;
+
+      const raw = inlineRenameValue.trim();
+      if (!raw) {
+        setInlineRenamePath(null);
+        setInlineRenameValue("");
+        return;
+      }
+
+      const nextName = raw.includes(".") ? raw : `${raw}.txt`;
+      const parent = fromRel.includes("/") ? fromRel.split("/").slice(0, -1).join("/") : "";
+      const toRel = parent ? `${parent}/${nextName}` : nextName;
+
+      setInlineRenamePath(null);
+      setInlineRenameValue("");
+
+      if (toRel === fromRel) {
+        if (opts?.openAfter) await openFile(toRel);
+        return;
+      }
+
+      await workspaceRename(fromRel, toRel);
+
+      setTabs((prev) =>
+        prev.map((t) => {
+          if (t.path === fromRel) {
+            return { ...t, path: toRel, name: basename(toRel) };
+          }
+          const prefix = fromRel.endsWith("/") ? fromRel : `${fromRel}/`;
+          if (t.path.startsWith(prefix)) {
+            const rest = t.path.slice(prefix.length);
+            const nextPath = `${toRel}/${rest}`;
+            return { ...t, path: nextPath, name: basename(nextPath) };
+          }
+          return t;
+        })
+      );
+
+      setActiveTabPath((prev) => {
+        if (!prev) return prev;
+        if (prev === fromRel) return toRel;
+        const prefix = fromRel.endsWith("/") ? fromRel : `${fromRel}/`;
+        if (prev.startsWith(prefix)) {
+          const rest = prev.slice(prefix.length);
+          return `${toRel}/${rest}`;
+        }
+        return prev;
+      });
+
+      setSelectedPath(toRel);
+      await refreshRoot();
+      if (opts?.openAfter) await openFile(toRel);
+    },
+    [inlineRenamePath, inlineRenameValue, openFile, refreshRoot]
+  );
+
+  const cancelInlineRename = useCallback(async () => {
+    const fromRel = inlineRenamePath;
+    if (!fromRel) return;
+
+    setInlineRenamePath(null);
+    setInlineRenameValue("");
+
+    try {
+      await workspaceDelete(fromRel);
+    } catch {
+    }
+    setSelectedPath(null);
+    await refreshRoot();
+  }, [inlineRenamePath, refreshRoot]);
+
+  const createNewTextFileInline = useCallback(async () => {
+    if (!workspace.root) {
+      await openFolder();
+      return;
+    }
+
+    const base = baseDirForCreate(selectedPath);
+    const dirKey = base || "";
+    const siblings = explorer[dirKey] ?? [];
+    const existing = new Set(siblings.map((x) => String(x.name || "").toLowerCase()));
+
+    const baseName = "New Text Document";
+    const pickName = (): string => {
+      const first = `${baseName}.txt`;
+      if (!existing.has(first.toLowerCase())) return first;
+      for (let i = 2; i <= 99; i++) {
+        const n = `${baseName} (${i}).txt`;
+        if (!existing.has(n.toLowerCase())) return n;
+      }
+      return `${baseName} (${Date.now()}).txt`;
+    };
+
+    const filename = pickName();
+    const rel = base ? `${base}/${filename}` : filename;
+
+    if (base) {
+      setExpandedDirs((prev) => {
+        const next = new Set(prev);
+        next.add(base);
+        return next;
+      });
+    }
+
+    await workspaceWriteFile(rel, "");
+    await refreshDir(base || undefined);
+    setSelectedPath(rel);
+    setInlineRenamePath(rel);
+    setInlineRenameValue(filename);
+  }, [baseDirForCreate, explorer, openFolder, refreshDir, selectedPath, workspace.root]);
+
   const createNewFolder = useCallback(async () => {
     if (!workspace.root) {
       await openFolder();
@@ -4876,95 +4903,6 @@ export default function AppShell() {
 
   return (
     <div className="h-full w-full bg-bg text-text">
-      {isSplashVisible ? (
-        <div
-          className={`fixed inset-0 z-[100] bg-black transition-opacity duration-500 ${
-            isSplashFading ? "pointer-events-none opacity-0" : "opacity-100"
-          }`}
-          onMouseDown={() => setIsSplashSkipMenuOpen(false)}
-        >
-          <video
-            className="h-full w-full object-cover"
-            ref={splashVideoRef}
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            poster="/logo_transparent_bigger.png"
-            onLoadedData={() => setIsSplashVideoReady(true)}
-            onCanPlay={() => setIsSplashVideoReady(true)}
-            onError={() => setIsSplashVideoError(true)}
-            onEnded={() => {
-              hideSplash();
-            }}
-          >
-            <source src="/loading-screen.mp4" type="video/mp4" />
-            <source src="/loading_screen.mp4" type="video/mp4" />
-          </video>
-
-          {!isSplashVideoReady && !isSplashVideoError ? (
-            <div className="pointer-events-none absolute inset-0 flex items-end justify-start p-4">
-              <div className="rounded-md border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white/80 backdrop-blur">
-                Loading…
-              </div>
-            </div>
-          ) : null}
-
-          {isSplashVideoError ? (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="max-w-[520px] rounded-xl border border-white/10 bg-black/50 p-5 text-center text-white backdrop-blur">
-                <div className="text-sm font-medium">Your system can’t play this video format.</div>
-                <div className="mt-1 text-[12px] text-white/70">
-                  Re-encode to H.264/AAC (MP4) for best compatibility.
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="absolute bottom-4 right-4" onMouseDown={(e) => e.stopPropagation()}>
-            <div className="relative">
-              <div className="inline-flex overflow-hidden rounded-md border border-white/10 bg-black/40 text-[12px] text-white backdrop-blur">
-                <button
-                  type="button"
-                  className="px-4 py-1.5 hover:bg-black/55"
-                  onClick={skipSplashOneTime}
-                >
-                  Skip
-                </button>
-                <button
-                  type="button"
-                  className="flex items-center px-2 py-1.5 hover:bg-black/55"
-                  onClick={() => setIsSplashSkipMenuOpen((v) => !v)}
-                  aria-label="Skip options"
-                >
-                  <span className="mx-1 h-4 w-px bg-white/10" />
-                  <ChevronDown className={`h-4 w-4 transition-transform ${isSplashSkipMenuOpen ? "rotate-180" : ""}`} />
-                </button>
-              </div>
-
-              {isSplashSkipMenuOpen ? (
-                <div className="absolute bottom-full right-0 mb-2 w-44 overflow-auto rounded-lg border border-white/10 bg-black/70 text-[12px] text-white shadow-xl backdrop-blur max-h-[320px]">
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-white/10"
-                    onClick={skipSplashOneTime}
-                  >
-                    Skip one time
-                  </button>
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-white/10"
-                    onClick={skipSplashAlways}
-                  >
-                    Always skip
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       <div className="grid h-full grid-rows-[36px_1fr_26px]">
         <header className="border-b border-border bg-panel">
           <div className="grid h-9 grid-cols-[1fr_auto_1fr] items-center px-2" data-menubar-root>
@@ -5833,10 +5771,16 @@ export default function AppShell() {
                 explorer={explorer}
                 expandedDirs={expandedDirs}
                 selectedPath={selectedPath}
+                inlineRenamePath={inlineRenamePath}
+                inlineRenameValue={inlineRenameValue}
+                onInlineRenameValue={setInlineRenameValue}
+                onInlineRenameCommit={() => void commitInlineRename({ openAfter: true })}
+                onInlineRenameCancel={() => void cancelInlineRename()}
                 onContextMenu={(info) => setExplorerMenu(info)}
                 showTooltipForEl={showTooltipForEl}
                 hideTooltip={hideTooltip}
                 onOpenFolder={() => void openFolder()}
+                onOpenStandaloneFile={() => void openStandaloneFile()}
                 onOpenRecent={(p) => void openRecent(p)}
                 onToggleDir={async (dir) => {
                   const next = new Set(expandedDirs);
@@ -5858,6 +5802,7 @@ export default function AppShell() {
                 onRefresh={() => void refreshRoot()}
                 onCreateNewFile={() => void createNewFile()}
                 onCreateNewFolder={() => void createNewFolder()}
+                onCreateNewTextFileInline={() => void createNewTextFileInline()}
               />
             ) : activity === "search" ? (
               <Panel title="Search">
@@ -5926,32 +5871,7 @@ export default function AppShell() {
               </div>
 
               <div className="min-h-0 flex-1 flex flex-col">
-                {!workspace.root ? (
-                  <WelcomeScreen
-                    recentWorkspaces={workspace.recent}
-                    recentFiles={recentFiles}
-                    onOpenFolder={() => void openFolder()}
-                    onOpenFile={() => void openStandaloneFile()}
-                    onOpenRecentWorkspace={(p) => void openRecent(p)}
-                    onOpenRecentFile={(p) => void openRecentFile(p)}
-                    onOpenChat={() => setIsChatDockOpen(true)}
-                    onOpenCommandPalette={() => setIsPaletteOpen(true)}
-                  />
-                ) : !activeTab ? (
-                  <WelcomeScreen
-                    recentWorkspaces={workspace.recent}
-                    recentFiles={recentFiles}
-                    onOpenFolder={() => void openFolder()}
-                    onOpenFile={() => void openStandaloneFile()}
-                    onOpenRecentWorkspace={(p) => void openRecent(p)}
-                    onOpenRecentFile={(p) => void openRecentFile(p)}
-                    onOpenChat={() => setIsChatDockOpen(true)}
-                    onOpenCommandPalette={() => setIsPaletteOpen(true)}
-                    title="POMPORA"
-                    subtitle="Getting started with Pompora"
-                    hint="Open a file from Explorer to start editing."
-                  />
-                ) : activeTab.path === SETTINGS_TAB_PATH ? (
+                {activeTab?.path === SETTINGS_TAB_PATH ? (
                   <div className="min-h-0 flex-1 overflow-auto">
                     <SettingsScreen
                       settings={settings}
@@ -5989,6 +5909,31 @@ export default function AppShell() {
                       debugResult={debugResult}
                     />
                   </div>
+                ) : !workspace.root ? (
+                  <WelcomeScreen
+                    recentWorkspaces={workspace.recent}
+                    recentFiles={recentFiles}
+                    onOpenFolder={() => void openFolder()}
+                    onOpenFile={() => void openStandaloneFile()}
+                    onOpenRecentWorkspace={(p) => void openRecent(p)}
+                    onOpenRecentFile={(p) => void openRecentFile(p)}
+                    onOpenChat={() => setIsChatDockOpen(true)}
+                    onOpenCommandPalette={() => setIsPaletteOpen(true)}
+                  />
+                ) : !activeTab ? (
+                  <WelcomeScreen
+                    recentWorkspaces={workspace.recent}
+                    recentFiles={recentFiles}
+                    onOpenFolder={() => void openFolder()}
+                    onOpenFile={() => void openStandaloneFile()}
+                    onOpenRecentWorkspace={(p) => void openRecent(p)}
+                    onOpenRecentFile={(p) => void openRecentFile(p)}
+                    onOpenChat={() => setIsChatDockOpen(true)}
+                    onOpenCommandPalette={() => setIsPaletteOpen(true)}
+                    title="POMPORA"
+                    subtitle="Getting started with Pompora"
+                    hint="Open a file from Explorer to start editing."
+                  />
                 ) : (
                   <>
                     <div className="min-h-0 flex-1 flex flex-col">
@@ -6847,7 +6792,7 @@ export default function AppShell() {
                       </div>
                     ) : (
                       <div className="flex min-h-[240px] flex-col items-center text-center">
-                        <img src="/logo_transparent_bigger.png" alt="Pompora" className="h-47 w-47 opacity-90" />
+                        <img src="/logo_transparent_bigger.png" alt="Pompora" className="h-28 w-28 opacity-90" />
                         <div className="mt-4 text-base font-semibold text-text">Pompora Code</div>
                         <div className="mt-1 max-w-[320px] text-sm text-muted">Build and improve your codebase - privately.</div>
                       </div>
@@ -7047,7 +6992,7 @@ export default function AppShell() {
           ) : null}
         </div>
 
-        <footer className="flex h-9 items-center justify-end border-t border-border bg-panel px-3 text-[11px] text-muted">
+        <footer className="flex h-[26px] items-center justify-end border-t border-border bg-panel px-3 text-[11px] text-muted">
           <div className="flex items-center gap-3">
             <button type="button" className="ws-footer-btn" onClick={() => {}}>
               {activeTab ? activeTab.path : "No file"}
@@ -7372,10 +7317,16 @@ function Explorer(props: {
   explorer: Record<string, DirEntryInfo[]>;
   expandedDirs: Set<string>;
   selectedPath: string | null;
+  inlineRenamePath: string | null;
+  inlineRenameValue: string;
+  onInlineRenameValue: (v: string) => void;
+  onInlineRenameCommit: () => void;
+  onInlineRenameCancel: () => void;
   onContextMenu: (info: { x: number; y: number; path: string; isDir: boolean }) => void;
   showTooltipForEl: (el: HTMLElement, text: string, align?: "tl" | "tr") => void;
   hideTooltip: () => void;
   onOpenFolder: () => void;
+  onOpenStandaloneFile: () => void;
   onOpenRecent: (p: string) => void;
   onToggleDir: (dir: string) => void;
   onSelect: (p: string) => void;
@@ -7383,6 +7334,7 @@ function Explorer(props: {
   onRefresh: () => void;
   onCreateNewFile: () => void;
   onCreateNewFolder: () => void;
+  onCreateNewTextFileInline: () => void;
 }) {
   if (!props.workspaceRoot) {
     return (
@@ -7391,13 +7343,14 @@ function Explorer(props: {
           title="No folder open"
           subtitle="Open a folder to browse files and start editing."
           onOpenFolder={props.onOpenFolder}
-          onOpenFile={undefined}
+          onOpenFile={props.onOpenStandaloneFile}
           recentWorkspaces={props.recent}
           recentFiles={[]}
           onOpenRecentWorkspace={props.onOpenRecent}
           onOpenRecentFile={undefined}
           onOpenChat={undefined}
           onOpenCommandPalette={undefined}
+          onCreateNewFile={props.onCreateNewTextFileInline}
           useBrandFont={false}
           compact
         />
@@ -7443,10 +7396,16 @@ function Explorer(props: {
       <div className="min-h-0 flex-1 overflow-auto p-1">
         <Tree
           prefix=""
+          depth={0}
           entries={[rootNode]}
           explorer={props.explorer}
           expandedDirs={props.expandedDirs}
           selectedPath={props.selectedPath}
+          inlineRenamePath={props.inlineRenamePath}
+          inlineRenameValue={props.inlineRenameValue}
+          onInlineRenameValue={props.onInlineRenameValue}
+          onInlineRenameCommit={props.onInlineRenameCommit}
+          onInlineRenameCancel={props.onInlineRenameCancel}
           onContextMenu={props.onContextMenu}
           workspaceRoot={props.workspaceRoot}
           showTooltipForEl={props.showTooltipForEl}
@@ -7462,10 +7421,16 @@ function Explorer(props: {
 
 function Tree(props: {
   prefix: string;
+  depth: number;
   entries: DirEntryInfo[];
   explorer: Record<string, DirEntryInfo[]>;
   expandedDirs: Set<string>;
   selectedPath: string | null;
+  inlineRenamePath: string | null;
+  inlineRenameValue: string;
+  onInlineRenameValue: (v: string) => void;
+  onInlineRenameCommit: () => void;
+  onInlineRenameCancel: () => void;
   onContextMenu: (info: { x: number; y: number; path: string; isDir: boolean }) => void;
   workspaceRoot: string | null;
   showTooltipForEl: (el: HTMLElement, text: string, align?: "tl" | "tr") => void;
@@ -7486,6 +7451,7 @@ function Tree(props: {
   return (
     <div className="space-y-0.5">
       {props.entries.map((e) => {
+        const indentPx = 8 + props.depth * 14;
         const isSelected = props.selectedPath === e.path;
         const rowCls = isSelected
           ? "bg-[rgb(var(--p-panel2))] text-text shadow-sm"
@@ -7498,7 +7464,8 @@ function Tree(props: {
             <div key={e.path}>
               <button
                 type="button"
-                className={`group relative flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
+                className={`group relative flex w-full items-center gap-2 rounded-none pr-2 py-1 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
+                style={{ paddingLeft: indentPx }}
                 onClick={() => {
                   props.onSelect(e.path);
                   props.onToggleDir(e.path);
@@ -7520,33 +7487,78 @@ function Tree(props: {
                 <span className={`relative top-[0.5px] truncate ${isRoot ? "font-medium text-text" : ""}`}>{e.name}</span>
               </button>
               {isExpanded ? (
-                <div className="ml-4 border-l border-border/60 pl-2">
-                  <Tree
-                    prefix={e.path}
-                    entries={children}
-                    explorer={props.explorer}
-                    expandedDirs={props.expandedDirs}
-                    selectedPath={props.selectedPath}
-                    onContextMenu={props.onContextMenu}
-                    workspaceRoot={props.workspaceRoot}
-                    showTooltipForEl={props.showTooltipForEl}
-                    hideTooltip={props.hideTooltip}
-                    onToggleDir={props.onToggleDir}
-                    onSelect={props.onSelect}
-                    onOpenFile={props.onOpenFile}
-                  />
-                </div>
+                <Tree
+                  prefix={e.path}
+                  depth={props.depth + 1}
+                  entries={children}
+                  explorer={props.explorer}
+                  expandedDirs={props.expandedDirs}
+                  selectedPath={props.selectedPath}
+                  inlineRenamePath={props.inlineRenamePath}
+                  inlineRenameValue={props.inlineRenameValue}
+                  onInlineRenameValue={props.onInlineRenameValue}
+                  onInlineRenameCommit={props.onInlineRenameCommit}
+                  onInlineRenameCancel={props.onInlineRenameCancel}
+                  onContextMenu={props.onContextMenu}
+                  workspaceRoot={props.workspaceRoot}
+                  showTooltipForEl={props.showTooltipForEl}
+                  hideTooltip={props.hideTooltip}
+                  onToggleDir={props.onToggleDir}
+                  onSelect={props.onSelect}
+                  onOpenFile={props.onOpenFile}
+                />
               ) : null}
             </div>
           );
         }
 
         const Icon = fileIconFor(e.path);
+        if (props.inlineRenamePath === e.path) {
+          return (
+            <div
+              key={e.path}
+              className={`group relative flex w-full items-center gap-2 rounded-none pr-2 py-1 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
+              style={{ paddingLeft: indentPx }}
+            >
+              <span className="inline-block w-4 shrink-0" />
+              <Icon className="h-4 w-4 shrink-0 text-muted" />
+              <input
+                className="min-w-0 flex-1 rounded border border-border bg-bg px-1 py-0.5 text-[13px] text-text outline-none focus-visible:border-accent"
+                autoFocus
+                value={props.inlineRenameValue}
+                onChange={(ev) => props.onInlineRenameValue(ev.currentTarget.value)}
+                onFocus={(ev) => {
+                  const v = ev.currentTarget.value;
+                  const dot = v.lastIndexOf(".");
+                  if (dot > 0) {
+                    ev.currentTarget.setSelectionRange(0, dot);
+                  } else {
+                    ev.currentTarget.select();
+                  }
+                }}
+                onKeyDown={(ev) => {
+                  if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    props.onInlineRenameCommit();
+                    return;
+                  }
+                  if (ev.key === "Escape") {
+                    ev.preventDefault();
+                    props.onInlineRenameCancel();
+                    return;
+                  }
+                }}
+                onBlur={() => props.onInlineRenameCommit()}
+              />
+            </div>
+          );
+        }
         return (
           <button
             key={e.path}
             type="button"
-            className={`group relative flex w-full items-center gap-2 rounded-md px-2 py-0.5 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
+            className={`group relative flex w-full items-center gap-2 rounded-none pr-2 py-1 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
+            style={{ paddingLeft: indentPx }}
             onMouseEnter={(ev) => {
               if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
               hoverTimerRef.current = window.setTimeout(() => {
@@ -7666,6 +7678,7 @@ function WelcomeScreen(props: {
   recentFiles?: string[];
   onOpenFolder: () => void;
   onOpenFile?: () => void;
+  onCreateNewFile?: () => void;
   onOpenRecentWorkspace: (p: string) => void;
   onOpenRecentFile?: (p: string) => void;
   onOpenChat?: () => void;
@@ -7732,7 +7745,7 @@ function WelcomeScreen(props: {
         </svg>
       ) : null}
 
-      <div className={`relative z-10 flex h-full w-full flex-col items-center ${isCompact ? "justify-start" : "justify-center"}`}>
+      <div className={`relative z-10 flex h-full w-full flex-col items-center justify-center`}>
         <div className={`w-full ${isCompact ? "px-2 py-2" : "px-6 py-6"}`}>
           <div className={`mx-auto w-full ${isCompact ? "max-w-none" : "max-w-[760px]"}`}>
             <div className="text-center">
@@ -7749,6 +7762,34 @@ function WelcomeScreen(props: {
               <div className={`${isCompact ? "mt-1 text-[10px]" : "mt-1 text-xs"} text-muted`}>{hint}</div>
             </div>
 
+            {isCompact ? (
+              <div className="mt-4 flex flex-col items-center gap-2">
+                <div className="flex w-full max-w-[260px] flex-col gap-2">
+                  <button type="button" className="ws-welcome-row" onClick={props.onOpenFolder}>
+                    <span className="truncate">Open Folder</span>
+                    <span className="ws-kbd">Ctrl+K Ctrl+O</span>
+                  </button>
+                  {props.onOpenFile ? (
+                    <button type="button" className="ws-welcome-row" onClick={props.onOpenFile}>
+                      <span className="truncate">Open File</span>
+                      <span className="ws-kbd">Ctrl+O</span>
+                    </button>
+                  ) : null}
+                </div>
+
+                {props.onCreateNewFile ? (
+                  <button
+                    type="button"
+                    className="mt-2 text-[12px] text-muted underline-offset-4 hover:underline hover:text-text"
+                    onClick={props.onCreateNewFile}
+                  >
+                    Create a new file
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+
+            {!isCompact ? (
             <div className={`${isCompact ? "mt-4" : "mt-7"} space-y-6`}>
               <section className="text-left">
                 <div className="ws-welcome-section-title">Quick actions</div>
@@ -7812,6 +7853,7 @@ function WelcomeScreen(props: {
               ) : null}
 
             </div>
+            ) : null}
           </div>
         </div>
       </div>

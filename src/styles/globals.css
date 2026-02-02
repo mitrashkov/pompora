@@ -76,6 +76,7 @@ html,
 body,
 #root {
   height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -162,6 +163,10 @@ body {
 
   .ws-icon-btn {
     @apply inline-flex items-center justify-center rounded-md p-1 text-muted hover:bg-bg hover:text-text;
+  }
+
+  .ws-footer-btn {
+    @apply inline-flex h-[20px] items-center gap-1 rounded px-2 text-[11px] leading-none text-muted hover:bg-bg hover:text-text;
   }
 
   .ws-toggle {
