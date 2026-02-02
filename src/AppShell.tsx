@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { editor as MonacoEditorNS } from "monaco-editor";
 import { listen } from "@tauri-apps/api/event";
@@ -25,6 +25,8 @@ import {
   FolderOpen,
   GitBranch,
   ListChecks,
+  Maximize2,
+  Minus,
   Pencil,
   Plus,
   TerminalSquare,
@@ -1080,7 +1082,7 @@ function tryParseEditsFromAssistantOutput(
 }
 
 function MenuSep() {
-  return <div className="my-1 h-px bg-border" />;
+  return <div className="my-1 h-px bg-transparent" />;
 }
 
 function MenuCheck(props: { checked?: boolean }) {
@@ -1293,10 +1295,13 @@ export default function AppShell() {
   const [tabs, setTabs] = useState<EditorTab[]>([]);
   const [activeTabPath, setActiveTabPath] = useState<string | null>(null);
 
+  const tabNavRef = useRef<{ history: string[]; index: number; suppress: boolean }>({ history: [], index: -1, suppress: false });
+  const [tabNavAvail, setTabNavAvail] = useState<{ back: boolean; forward: boolean }>({ back: false, forward: false });
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Array<{ path: string; line: number; text: string }>>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [pendingReveal, setPendingReveal] = useState<{ path: string; line: number } | null>(null);
+  const [pendingReveal, setPendingReveal] = useState<{ path: string; line: number; text: string } | null>(null);
 
   const [keyStatus, setKeyStatus] = useState<KeyStatus | null>(null);
   const [apiKeyDraft, setApiKeyDraft] = useState("");
@@ -3758,7 +3763,7 @@ export default function AppShell() {
         ed.focus();
         return;
       }
-      setPendingReveal({ path: activeTab.path, line: Math.max(1, lineNumber) });
+      setPendingReveal({ path: activeTab.path, line: Math.max(1, lineNumber), text: "" });
     },
     [activeTab]
   );
@@ -4203,6 +4208,53 @@ export default function AppShell() {
       window.close();
     }
   }, []);
+
+  const minimizeApp = useCallback(() => {
+    try {
+      void getCurrentWindow().minimize();
+    } catch {
+    }
+  }, []);
+
+  const toggleMaximizeApp = useCallback(() => {
+    try {
+      void getCurrentWindow().toggleMaximize();
+    } catch {
+    }
+  }, []);
+
+  const toggleFullscreenApp = useCallback(() => {
+    try {
+      void getCurrentWindow()
+        .isFullscreen()
+        .then((v) => getCurrentWindow().setFullscreen(!v))
+        .catch(() => {
+        });
+    } catch {
+    }
+  }, []);
+
+  const onHeaderMouseDown = useCallback((e: ReactMouseEvent<HTMLElement>) => {
+    if (e.button !== 0) return;
+    const t = e.target as HTMLElement | null;
+    if (!t) return;
+    if (t.closest('button,a,input,textarea,select,[data-no-drag="true"]')) return;
+    try {
+      void getCurrentWindow().startDragging();
+    } catch {
+    }
+  }, []);
+
+  const isMac = useMemo(() => /Mac|iPhone|iPad|iPod/.test(navigator.userAgent), []);
+
+  useEffect(() => {
+    if (isMac) return;
+    try {
+      const w = getCurrentWindow();
+      void w.setShadow(false);
+    } catch {
+    }
+  }, [isMac]);
 
   const toggleTheme = useCallback(() => {
     setSettingsState((s) => {
@@ -4896,6 +4948,64 @@ export default function AppShell() {
   }, [isQuickOpenOpen]);
 
   useEffect(() => {
+    const nav = tabNavRef.current;
+
+    const computeAvail = () => {
+      const isOpen = (p: string) => tabs.some((t) => t.path === p);
+      let iBack = nav.index - 1;
+      while (iBack >= 0 && !isOpen(nav.history[iBack]!)) iBack--;
+      let iFwd = nav.index + 1;
+      while (iFwd < nav.history.length && !isOpen(nav.history[iFwd]!)) iFwd++;
+      setTabNavAvail({ back: iBack >= 0, forward: iFwd < nav.history.length });
+    };
+
+    if (!activeTabPath) {
+      setTabNavAvail({ back: false, forward: false });
+      return;
+    }
+
+    if (nav.suppress) {
+      nav.suppress = false;
+      computeAvail();
+      return;
+    }
+
+    if (nav.index >= 0 && nav.history[nav.index] === activeTabPath) {
+      computeAvail();
+      return;
+    }
+
+    nav.history = nav.history.slice(0, Math.max(0, nav.index + 1));
+    nav.history.push(activeTabPath);
+    nav.index = nav.history.length - 1;
+    computeAvail();
+  }, [activeTabPath, tabs]);
+
+  const goBack = useCallback(() => {
+    const nav = tabNavRef.current;
+    const isOpen = (p: string) => tabs.some((t) => t.path === p);
+    let i = nav.index - 1;
+    while (i >= 0 && !isOpen(nav.history[i]!)) i--;
+    if (i < 0) return;
+    nav.index = i;
+    nav.suppress = true;
+    setActiveTabPath(nav.history[i]!);
+    setTabNavAvail({ back: i - 1 >= 0, forward: true });
+  }, [tabs]);
+
+  const goForward = useCallback(() => {
+    const nav = tabNavRef.current;
+    const isOpen = (p: string) => tabs.some((t) => t.path === p);
+    let i = nav.index + 1;
+    while (i < nav.history.length && !isOpen(nav.history[i]!)) i++;
+    if (i >= nav.history.length) return;
+    nav.index = i;
+    nav.suppress = true;
+    setActiveTabPath(nav.history[i]!);
+    setTabNavAvail({ back: true, forward: i + 1 < nav.history.length });
+  }, [tabs]);
+
+  useEffect(() => {
     setPaletteIndex(0);
   }, [paletteQuery]);
 
@@ -4903,17 +5013,63 @@ export default function AppShell() {
 
   return (
     <div className="h-full w-full bg-bg text-text">
-      <div className="grid h-full grid-rows-[36px_1fr_26px]">
-        <header className="border-b border-border bg-panel">
-          <div className="grid h-9 grid-cols-[1fr_auto_1fr] items-center px-2" data-menubar-root>
+      <div className="grid h-full grid-rows-[48px_1fr_26px]">
+        <header className="bg-bg" onMouseDown={onHeaderMouseDown}>
+          <div className="grid h-12 grid-cols-[1fr_auto_1fr] items-center px-2" data-menubar-root>
             <div className="flex min-w-0 items-center gap-2 justify-self-start">
-              <img src="/logo.png" alt="Pompora" className="h-5 w-5 shrink-0" />
+              {isMac ? (
+                <div className="mr-1 flex items-center gap-2" data-no-drag="true">
+                  <button
+                    type="button"
+                    aria-label="Close"
+                    className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-400"
+                    onClick={() => exitApp()}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Minimize"
+                    className="h-3 w-3 rounded-full bg-yellow-500 hover:bg-yellow-400"
+                    onClick={() => minimizeApp()}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Fullscreen"
+                    className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-400"
+                    onClick={() => toggleFullscreenApp()}
+                  />
+                </div>
+              ) : null}
 
-              <div className="flex items-center gap-1 text-xs text-muted">
+              <img src="/logo_navbar.png" alt="Pompora" className="h-15 w-12 shrink-0" />
+
+              <div className="ws-titlebar-pill" data-no-drag="true">
+                <button
+                  type="button"
+                  className="ws-titlebar-icon-btn"
+                  onClick={() => goBack()}
+                  aria-label="Back"
+                  disabled={!tabNavAvail.back}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  className="ws-titlebar-icon-btn"
+                  onClick={() => goForward()}
+                  aria-label="Forward"
+                  disabled={!tabNavAvail.forward}
+                >
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex min-w-0 items-center justify-self-center">
+              <div className="ws-titlebar-pill min-w-0 text-xs text-muted" data-no-drag="true">
                 <div className="relative">
                   <button
                     type="button"
-                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    className="ws-titlebar-menu-btn"
                     onMouseEnter={() => {
                       if (!anyMenubarOpen) return;
                       setIsFileMenuOpen(true);
@@ -4941,7 +5097,7 @@ export default function AppShell() {
                     File
                   </button>
                   {isFileMenuOpen ? (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="New Text File" shortcut="Ctrl+N" onClick={() => newUntitledFile()} />
                       <MenuItem label="New File" shortcut="Ctrl+Alt+Win+N" onClick={() => newUntitledFile()} />
                       <MenuItem label="New Window" shortcut="Ctrl+Shift+N" onClick={() => openNewWindow()} />
@@ -4959,7 +5115,7 @@ export default function AppShell() {
                         />
                         {isFileMenuRecentOpen ? (
                           <div
-                            className="absolute left-full top-0 z-50 ml-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                            className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
                             onMouseEnter={() => setIsFileMenuRecentOpen(true)}
                             onMouseLeave={() => setIsFileMenuRecentOpen(false)}
                           >
@@ -5013,7 +5169,7 @@ export default function AppShell() {
                 <div className="relative">
                   <button
                     type="button"
-                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    className="ws-titlebar-menu-btn"
                     onMouseEnter={() => {
                       if (!anyMenubarOpen) return;
                       setIsEditMenuOpen(true);
@@ -5041,7 +5197,7 @@ export default function AppShell() {
                     Edit
                   </button>
                   {isEditMenuOpen ? (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="Undo" shortcut="Ctrl+Z" onClick={() => notify({ kind: "info", title: "Undo", message: "Coming next." })} />
                       <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => notify({ kind: "info", title: "Redo", message: "Coming next." })} />
                       <MenuSep />
@@ -5091,7 +5247,7 @@ export default function AppShell() {
                 <div className="relative">
                   <button
                     type="button"
-                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    className="ws-titlebar-menu-btn"
                     onMouseEnter={() => {
                       if (!anyMenubarOpen) return;
                       setIsSelectionMenuOpen(true);
@@ -5119,7 +5275,7 @@ export default function AppShell() {
                     Selection
                   </button>
                   {isSelectionMenuOpen ? (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => notify({ kind: "info", title: "Select All", message: "Coming next." })} />
                       <MenuItem
                         label="Expand Selection"
@@ -5201,7 +5357,7 @@ export default function AppShell() {
                 <div className="relative">
                   <button
                     type="button"
-                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    className="ws-titlebar-menu-btn"
                     onMouseEnter={() => {
                       if (!anyMenubarOpen) return;
                       setIsViewMenuOpen(true);
@@ -5230,7 +5386,7 @@ export default function AppShell() {
                   </button>
                   {isViewMenuOpen ? (
                     <div
-                      className="absolute left-0 top-full z-50 mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                      className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
                       onMouseLeave={() => {
                         setViewMenuSub(null);
                         setViewAppearanceSub(null);
@@ -5249,7 +5405,7 @@ export default function AppShell() {
                           onClick={() => setViewMenuSub((v) => (v === "appearance" ? null : "appearance"))}
                         />
                         {viewMenuSub === "appearance" ? (
-                          <div className="absolute left-full top-0 z-50 ml-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                          <div className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                             <MenuItem label="Full Screen" shortcut="F11" onClick={() => notify({ kind: "info", title: "Full Screen", message: "Coming next." })} />
                             <MenuItem
                               label="Zen Mode"
@@ -5281,7 +5437,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "activityBarPosition" ? null : "activityBarPosition"))}
                               />
                               {viewAppearanceSub === "activityBarPosition" ? (
-                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
@@ -5299,7 +5455,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "secondaryActivityBarPosition" ? null : "secondaryActivityBarPosition"))}
                               />
                               {viewAppearanceSub === "secondaryActivityBarPosition" ? (
-                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
@@ -5317,7 +5473,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "panelPosition" ? null : "panelPosition"))}
                               />
                               {viewAppearanceSub === "panelPosition" ? (
-                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
                                   <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
                                   <MenuItem label="Right" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
@@ -5335,7 +5491,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "alignPanel" ? null : "alignPanel"))}
                               />
                               {viewAppearanceSub === "alignPanel" ? (
-                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Center" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
                                   <MenuItem label="Justify" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
                                   <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
@@ -5353,7 +5509,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "tabBar" ? null : "tabBar"))}
                               />
                               {viewAppearanceSub === "tabBar" ? (
-                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Multiple Tabs" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
                                   <MenuItem label="Single Tabs" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
@@ -5370,7 +5526,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "editorActionsPosition" ? null : "editorActionsPosition"))}
                               />
                               {viewAppearanceSub === "editorActionsPosition" ? (
-                                <div className="absolute right-full top-0 z-50 mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Tab Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
                                   <MenuItem label="Title Bar" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
@@ -5411,7 +5567,7 @@ export default function AppShell() {
                           onClick={() => setViewMenuSub((v) => (v === "editorLayout" ? null : "editorLayout"))}
                         />
                         {viewMenuSub === "editorLayout" ? (
-                          <div className="absolute left-full top-0 z-50 ml-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                          <div className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                             <MenuItem
                               label="Split Up"
                               shortcut="Ctrl+K Ctrl+\\"
@@ -5495,7 +5651,7 @@ export default function AppShell() {
                 <div className="relative">
                   <button
                     type="button"
-                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    className="ws-titlebar-menu-btn"
                     onMouseEnter={() => {
                       if (!anyMenubarOpen) return;
                       setIsRunMenuOpen(true);
@@ -5523,7 +5679,7 @@ export default function AppShell() {
                     Run
                   </button>
                   {isRunMenuOpen ? (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-72 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-72 overflow-hidden rounded-xl bg-panel p-1 shadow">
                       <MenuItem label="Start Debugging" shortcut="F5" onClick={() => notify({ kind: "info", title: "Start Debugging", message: "Coming next." })} />
                       <MenuItem
                         label="Run Without Debugging"
@@ -5547,7 +5703,7 @@ export default function AppShell() {
                 <div className="relative">
                   <button
                     type="button"
-                    className="rounded-md px-2 py-1 hover:bg-bg"
+                    className="ws-titlebar-menu-btn"
                     onMouseEnter={() => {
                       if (!anyMenubarOpen) return;
                       setIsTerminalMenuOpen(true);
@@ -5575,7 +5731,7 @@ export default function AppShell() {
                     Terminal
                   </button>
                   {isTerminalMenuOpen ? (
-                    <div className="absolute left-0 top-full z-50 mt-1 w-80 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-80 overflow-hidden rounded-xl bg-panel p-1 shadow">
                       <MenuItem
                         label="New Terminal"
                         shortcut="Ctrl+Shift+`"
@@ -5632,31 +5788,14 @@ export default function AppShell() {
                     </div>
                   ) : null}
                 </div>
-              </div>
-            </div>
 
-            <div className="mx-4 hidden min-w-0 items-center justify-self-center md:flex">
-              <div className="flex w-[520px] max-w-[42vw] items-center gap-1">
                 <button
                   type="button"
-                  className="ws-icon-btn"
-                  onClick={() => notify({ kind: "info", title: "Back", message: "Coming next." })}
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  className="ws-icon-btn"
-                  onClick={() => notify({ kind: "info", title: "Forward", message: "Coming next." })}
-                >
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  className="ws-input h-7 flex-1 cursor-pointer px-3 py-0 text-left text-[12px] text-muted"
+                  className="ws-titlebar-menu-btn inline-flex items-center gap-2"
                   onClick={() => setIsPaletteOpen(true)}
                 >
-                  Search or type a command…
+                  <Search className="h-4 w-4" />
+                  Quick Actions
                 </button>
               </div>
             </div>
@@ -5689,7 +5828,7 @@ export default function AppShell() {
                   </button>
 
                   {isAccountMenuOpen ? (
-                    <div className="absolute right-0 top-full z-[80] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-border bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute right-0 top-full z-[9999] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <div className="px-3 py-2">
                         <div className="text-xs font-semibold text-text">{authProfile.email || "Account"}</div>
                         <div className="mt-0.5 text-[11px] text-muted">Plan: {authCredits?.plan || authProfile.plan || "starter"}</div>
@@ -5739,15 +5878,44 @@ export default function AppShell() {
                 </button>
               )}
 
-              <button type="button" className="ws-icon-btn" onClick={() => openSettingsTab()}>
+              <button type="button" className="ws-titlebar-icon-btn" onClick={() => openSettingsTab()}>
                 <SettingsIcon className="h-4 w-4" />
               </button>
+
+              {!isMac ? (
+                <div className="ws-titlebar-pill ml-1" data-no-drag="true">
+                  <button
+                    type="button"
+                    className="ws-titlebar-window-btn"
+                    aria-label="Minimize"
+                    onClick={() => minimizeApp()}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="ws-titlebar-window-btn"
+                    aria-label="Maximize"
+                    onClick={() => toggleMaximizeApp()}
+                  >
+                    <Maximize2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    className="ws-titlebar-window-btn hover:bg-red-500/15 hover:text-red-300"
+                    aria-label="Close"
+                    onClick={() => exitApp()}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </header>
 
-        <div className="grid min-h-0 flex-1 overflow-hidden" style={{ gridTemplateColumns: mainGridTemplateColumns }}>
-          <aside className="min-w-0 border-r border-border bg-panel">
+        <div className="grid min-h-0 flex-1 gap-1.5 overflow-hidden bg-bg p-1.5" style={{ gridTemplateColumns: mainGridTemplateColumns }}>
+          <aside className="min-w-0 overflow-hidden rounded-2xl bg-panel">
             <div className="flex h-full flex-col items-center gap-2 py-2">
               <ActivityButton id="explorer" active={activity === "explorer"} onClick={setActivity} Icon={FolderOpen} />
               <ActivityButton id="search" active={activity === "search"} onClick={setActivity} Icon={Search} />
@@ -5756,7 +5924,7 @@ export default function AppShell() {
             </div>
           </aside>
 
-          <aside className="relative min-h-0 min-w-0 border-r border-border bg-panel">
+          <aside className="relative min-h-0 min-w-0 overflow-hidden rounded-2xl bg-panel">
             <div
               className="absolute right-0 top-0 z-20 h-full w-1 cursor-col-resize"
               onMouseDown={(e) => {
@@ -5829,7 +5997,7 @@ export default function AppShell() {
                           type="button"
                           className="w-full rounded border border-border bg-bg px-3 py-2 text-left text-sm text-muted hover:border-accent hover:text-text"
                           onClick={async () => {
-                            setPendingReveal({ path: m.path, line: m.line });
+                            setPendingReveal({ path: m.path, line: m.line, text: m.text });
                             await openFile(m.path);
                           }}
                         >
@@ -5851,9 +6019,9 @@ export default function AppShell() {
             ) : null}
           </aside>
 
-          <main className="min-h-0 min-w-0 bg-bg">
+          <main className="min-h-0 min-w-0 overflow-hidden rounded-2xl bg-panel">
             <div className="flex h-full min-h-0 flex-col">
-              <div className="flex h-10 items-center gap-1 border-b border-border bg-panel px-2">
+              <div className="flex h-10 items-center gap-1 bg-panel px-2">
                 <div className="flex min-w-0 flex-1 items-stretch gap-1 overflow-auto">
                   {tabs.map((t) => (
                     <TabButton
@@ -6084,7 +6252,7 @@ export default function AppShell() {
               </div>
 
               {isTerminalOpen ? (
-                <div className="relative border-t border-border bg-panel" style={{ height: terminalHeight }}>
+                <div className="relative bg-panel" style={{ height: terminalHeight }}>
                   <div
                     className="absolute left-0 top-0 z-20 h-1 w-full cursor-row-resize"
                     onMouseDown={(e) => {
@@ -6093,7 +6261,7 @@ export default function AppShell() {
                   />
 
                   <div className="flex h-full min-h-0 flex-col">
-                    <div className="flex items-center justify-between border-b border-border bg-panel px-2 py-1.5">
+                    <div className="flex items-center justify-between bg-panel px-2 py-1.5">
                       <div className="flex min-w-0 items-center gap-1">
                         {([
                           { id: "problems", label: "Problems" },
@@ -6162,7 +6330,7 @@ export default function AppShell() {
           </main>
 
           {isChatDockOpen ? (
-            <aside className="relative min-h-0 min-w-0 border-l border-border bg-panel">
+            <aside className="relative min-h-0 min-w-0 overflow-hidden rounded-2xl bg-panel">
               <div
                 className="absolute left-0 top-0 z-20 h-full w-1 cursor-col-resize"
                 onMouseDown={(e) => {
@@ -6271,7 +6439,7 @@ export default function AppShell() {
                   </div>
                 ) : null}
 
-                <div className="border-b border-border bg-panel px-3 py-2">
+                <div className="bg-panel px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="truncate text-[13px] font-normal text-[#a39d9d]">{activeChat.title}</div>
@@ -6295,12 +6463,12 @@ export default function AppShell() {
                           </button>
 
                           {isChatHistoryOpen ? (
-                            <div className="absolute right-0 top-full z-[70] mt-2 w-80 overflow-hidden rounded-2xl border border-border bg-panel shadow">
-                              <div className="flex items-center gap-2 border-b border-border/40 bg-bg px-3 py-2">
+                            <div className="absolute right-0 top-full z-[70] mt-2 w-80 overflow-hidden rounded-2xl bg-panel shadow">
+                              <div className="flex items-center gap-2 bg-bg px-3 py-2">
                                 <div className="flex min-w-0 flex-1 items-center gap-2">
                                   <Search className="h-4 w-4 text-muted" />
                                   <input
-                                    className="w-full bg-transparent text-[13px] text-text outline-none placeholder:text-muted"
+                                    className="w-full bg-transparent text-sm text-text placeholder:text-muted focus-visible:outline-none"
                                     placeholder="Search chats"
                                     value={chatHistoryQueryDraft}
                                     onChange={(e) => setChatHistoryQueryDraft(e.currentTarget.value)}
@@ -6311,51 +6479,51 @@ export default function AppShell() {
 
                               <div className="max-h-48 overflow-auto p-1">
                                 {chatHistorySessions.map((s) => {
-                                    return (
-                                      <button
-                                        key={s.id}
-                                        type="button"
-                                        className={`group relative flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-left focus-visible:outline-none hover:bg-bg ${
-                                          s.id === activeChatId ? "bg-bg" : ""
-                                        }`}
-                                        onClick={() => {
-                                          setActiveChatId(s.id);
-                                          setIsChatHistoryOpen(false);
-                                          window.setTimeout(() => chatComposerRef.current?.focus(), 0);
-                                        }}
-                                      >
-                                        <div className="min-w-0 flex-1">
-                                          <div className="truncate text-[12px] text-text">{s.title}</div>
-                                          <div className="truncate text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
-                                        </div>
+                                  return (
+                                    <button
+                                      key={s.id}
+                                      type="button"
+                                      className={`group relative flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-left focus-visible:outline-none hover:bg-bg ${
+                                        s.id === activeChatId ? "bg-bg" : ""
+                                      }`}
+                                      onClick={() => {
+                                        setActiveChatId(s.id);
+                                        setIsChatHistoryOpen(false);
+                                        window.setTimeout(() => chatComposerRef.current?.focus(), 0);
+                                      }}
+                                    >
+                                      <div className="min-w-0 flex-1">
+                                        <div className="truncate text-[12px] text-text">{s.title}</div>
+                                        <div className="truncate text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
+                                      </div>
 
-                                        <div className="flex shrink-0 items-center gap-1">
-                                          <button
-                                            type="button"
-                                            className="ws-icon-btn h-7 w-7 rounded-xl border border-border bg-bg"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              renameChatSession(s.id);
-                                            }}
-                                            aria-label="Rename chat"
-                                          >
-                                            <Pencil className="h-4 w-4" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            className="ws-icon-btn h-7 w-7 rounded-xl border border-border bg-bg"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              deleteChatSession(s.id);
-                                            }}
-                                            aria-label="Delete chat"
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </button>
-                                        </div>
-                                      </button>
-                                    );
-                                  })}
+                                      <div className="flex shrink-0 items-center gap-1">
+                                        <button
+                                          type="button"
+                                          className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            renameChatSession(s.id);
+                                          }}
+                                          aria-label="Rename chat"
+                                        >
+                                          <Pencil className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            deleteChatSession(s.id);
+                                          }}
+                                          aria-label="Delete chat"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
                               </div>
                             </div>
                           ) : null}
@@ -6729,7 +6897,7 @@ export default function AppShell() {
                                         </button>
 
                                         {runMenuOpenId === (m.id ?? "") ? (
-                                          <div className="absolute right-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
+                                          <div className="absolute right-0 top-full z-[9999] mt-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
                                             <MenuItem
                                               label="Run once"
                                               onClick={() => {
@@ -6792,15 +6960,91 @@ export default function AppShell() {
                       </div>
                     ) : (
                       <div className="flex min-h-[240px] flex-col items-center text-center">
-                        <img src="/logo_transparent_bigger.png" alt="Pompora" className="h-28 w-28 opacity-90" />
-                        <div className="mt-4 text-base font-semibold text-text">Pompora Code</div>
-                        <div className="mt-1 max-w-[320px] text-sm text-muted">Build and improve your codebase - privately.</div>
+                        <div className="mt-2 text-[22px] font-semibold tracking-tight text-text">Pompora Code</div>
+                        <div className="mt-1 max-w-[360px] text-sm leading-relaxed text-muted">Build and improve your codebase — privately.</div>
+
+                        {!authProfile ? (
+                          <div className="mt-5 w-full max-w-[360px]">
+                            <div className="rounded-2xl border border-border bg-bg/40 p-3 text-left">
+                              <div className="text-[12px] font-medium text-text">Log in to Pompora</div>
+                              <div className="mt-1 text-[12px] leading-relaxed text-muted">
+                                Sync your plan and credits, unlock Pompora-hosted models, and keep your settings consistent across devices.
+                              </div>
+                              <div className="mt-3 flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  className="ws-btn ws-btn-primary h-8 px-3"
+                                  disabled={isAuthBusy}
+                                  onClick={() => void beginDesktopAuthWithMode("login")}
+                                >
+                                  Log in
+                                </button>
+                                <button
+                                  type="button"
+                                  className="ws-btn ws-btn-secondary h-8 px-3"
+                                  disabled={isAuthBusy}
+                                  onClick={() => void beginDesktopAuthWithMode("signup")}
+                                >
+                                  Create account
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-5 w-full max-w-[420px]">
+                            <div className="grid grid-cols-1 gap-2">
+                              {[
+                                {
+                                  label: "Explain the current file",
+                                  prompt:
+                                    "Explain what the currently open file does. Summarize intent, key flows, and anything risky or confusing.",
+                                },
+                                {
+                                  label: "Find bugs & edge cases",
+                                  prompt:
+                                    "Review the current code and list potential bugs, edge cases, and footguns. Propose minimal fixes.",
+                                },
+                                {
+                                  label: "Refactor for clarity",
+                                  prompt:
+                                    "Refactor the current code for readability and maintainability. Keep behavior the same; propose small, safe steps.",
+                                },
+                                {
+                                  label: "Add a feature safely",
+                                  prompt:
+                                    "Help me add a small feature to the current file. Ask 2-3 clarifying questions first, then propose an implementation plan.",
+                                },
+                              ].map((s) => (
+                                <button
+                                  key={s.label}
+                                  type="button"
+                                  className={`ws-panel2 rounded-xl border border-border px-3 py-2 text-left transition-colors hover:bg-bg focus-visible:outline-none ${
+                                    canUseAi ? "" : "cursor-not-allowed opacity-60"
+                                  }`}
+                                  onClick={() => {
+                                    if (!canUseAi) {
+                                      openSettingsTab();
+                                      return;
+                                    }
+                                    setActiveChatDraft(s.prompt);
+                                    window.setTimeout(() => {
+                                      void sendChatRef.current?.();
+                                    }, 0);
+                                  }}
+                                >
+                                  <div className="text-[13px] font-medium text-text">{s.label}</div>
+                                  <div className="mt-0.5 text-[11px] text-muted">Sends with your selected model below ({providerLabel}).</div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                 </div>
 
                 <div className="bg-panel px-3 py-2">
-                  <div className="ws-panel2 rounded-md border border-border p-2">
+                  <div className="ws-panel2 rounded-md p-2">
                     <textarea
                       ref={chatComposerRef}
                       className="h-16 w-full resize-none bg-transparent px-2 py-1 text-sm font-normal text-muted outline-none placeholder:text-muted focus-visible:outline-none"
@@ -6855,7 +7099,7 @@ export default function AppShell() {
                           </button>
 
                           {isModelPickerOpen ? (
-                            <div className="absolute left-0 bottom-full z-50 mb-2 w-56 overflow-hidden rounded-xl border border-border bg-panel shadow">
+                            <div className="absolute left-0 bottom-full z-[9999] mb-2 w-56 overflow-hidden rounded-xl border border-border bg-panel shadow">
                               <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">Pompora</div>
 
                               {(["slow", "fast", "reasoning"] as const).map((mode) => {
@@ -6992,7 +7236,7 @@ export default function AppShell() {
           ) : null}
         </div>
 
-        <footer className="flex h-[26px] items-center justify-end border-t border-border bg-panel px-3 text-[11px] text-muted">
+        <footer className="flex h-[26px] items-center justify-end bg-bg px-3 text-[11px] text-muted">
           <div className="flex items-center gap-3">
             <button type="button" className="ws-footer-btn" onClick={() => {}}>
               {activeTab ? activeTab.path : "No file"}
@@ -7283,8 +7527,8 @@ function ActivityButton(props: {
   return (
     <button
       type="button"
-      className={`relative mx-auto flex h-9 w-9 items-center justify-center rounded-md ${
-        active ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+      className={`relative mx-auto flex h-9 w-9 items-center justify-center rounded-full transition-colors ${
+        active ? "bg-panel2 text-text" : "bg-panel text-muted hover:bg-panel2 hover:text-text"
       }`}
       onClick={() => onClick(id)}
       aria-current={active ? "page" : undefined}
@@ -7303,7 +7547,7 @@ function ActivityButton(props: {
 function Panel(props: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border bg-panel px-3 py-2 text-xs font-normal text-muted">
+      <div className="bg-panel px-3 py-2 text-xs font-normal text-muted">
         {props.title}
       </div>
       <div className="min-h-0 flex-1 overflow-auto p-2">{props.children}</div>

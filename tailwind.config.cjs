@@ -6,6 +6,7 @@ module.exports = {
       colors: {
         bg: "rgb(var(--p-bg) / <alpha-value>)",
         panel: "rgb(var(--p-panel) / <alpha-value>)",
+        panel2: "rgb(var(--p-panel2) / <alpha-value>)",
         text: "rgb(var(--p-text) / <alpha-value>)",
         muted: "rgb(var(--p-muted) / <alpha-value>)",
         border: "rgb(var(--p-border) / <alpha-value>)",
