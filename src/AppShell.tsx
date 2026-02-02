@@ -4203,7 +4203,9 @@ export default function AppShell() {
 
   const exitApp = useCallback(() => {
     try {
-      void getCurrentWindow().close();
+      void getCurrentWindow().close().catch(() => {
+        window.close();
+      });
     } catch {
       window.close();
     }
@@ -4211,14 +4213,16 @@ export default function AppShell() {
 
   const minimizeApp = useCallback(() => {
     try {
-      void getCurrentWindow().minimize();
+      void getCurrentWindow().minimize().catch(() => {
+      });
     } catch {
     }
   }, []);
 
   const toggleMaximizeApp = useCallback(() => {
     try {
-      void getCurrentWindow().toggleMaximize();
+      void getCurrentWindow().toggleMaximize().catch(() => {
+      });
     } catch {
     }
   }, []);
@@ -4240,7 +4244,8 @@ export default function AppShell() {
     if (!t) return;
     if (t.closest('button,a,input,textarea,select,[data-no-drag="true"]')) return;
     try {
-      void getCurrentWindow().startDragging();
+      void getCurrentWindow().startDragging().catch(() => {
+      });
     } catch {
     }
   }, []);
