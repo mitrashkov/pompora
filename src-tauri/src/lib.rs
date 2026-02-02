@@ -17,6 +17,11 @@ use windows::{
         Graphics::Dwm::{
             DwmSetWindowAttribute, DWMWA_BORDER_COLOR, DWMWA_VISIBLE_FRAME_BORDER_THICKNESS,
         },
+        UI::WindowsAndMessaging::{
+            GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_EXSTYLE, SWP_FRAMECHANGED,
+            SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, WS_EX_CLIENTEDGE,
+            WS_EX_DLGMODALFRAME, WS_EX_STATICEDGE, WS_EX_WINDOWEDGE,
+        },
     },
 };
 
@@ -49,6 +54,28 @@ fn apply_windows_border_fix<R: tauri::Runtime>(window: &tauri::webview::WebviewW
             (&thickness as *const u32) as *const std::ffi::c_void,
             std::mem::size_of::<u32>() as u32,
         );
+
+        // Clear edge extended styles that often render the visible 1px frame on borderless
+        // Windows while keeping the window resizable.
+        let ex_style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE) as u32;
+        let stripped = ex_style
+            & !(WS_EX_WINDOWEDGE.0 | WS_EX_CLIENTEDGE.0 | WS_EX_STATICEDGE.0 | WS_EX_DLGMODALFRAME.0);
+        if stripped != ex_style {
+            let _ = SetWindowLongPtrW(hwnd, GWL_EXSTYLE, stripped as isize);
+            let _ = SetWindowPos(
+                hwnd,
+                None,
+                0,
+                0,
+                0,
+                0,
+                SWP_NOMOVE
+                    | SWP_NOSIZE
+                    | SWP_NOZORDER
+                    | SWP_NOACTIVATE
+                    | SWP_FRAMECHANGED,
+            );
+        }
     }
 }
 
