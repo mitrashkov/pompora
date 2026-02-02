@@ -4257,9 +4257,9 @@ export default function AppShell() {
     if (isMac) return;
     try {
       const w = getCurrentWindow();
-      // On Windows, disabling shadow often leaves a thin system-drawn border.
-      // Keep the window shadow enabled there to avoid the outline.
-      void w.setShadow(isWindows).catch(() => {
+      // On Windows, the native window shadow/frame can appear as a thick outline.
+      // Disable shadow there to remove the outer border.
+      void w.setShadow(!isWindows).catch(() => {
       });
     } catch {
     }
