@@ -5,6 +5,9 @@ use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 
 #[cfg(windows)]
+use std::time::Duration;
+
+#[cfg(windows)]
 use raw_window_handle::{HasWindowHandle, RawWindowHandle};
 
 #[cfg(windows)]
@@ -13,6 +16,7 @@ use windows::{
         Foundation::HWND,
         Graphics::Dwm::{
             DwmExtendFrameIntoClientArea, DwmSetWindowAttribute, DWMWA_BORDER_COLOR,
+            DWMWA_VISIBLE_FRAME_BORDER_THICKNESS,
         },
         UI::Controls::MARGINS,
     },
@@ -37,6 +41,14 @@ fn apply_windows_border_fix<R: tauri::Runtime>(window: &tauri::webview::WebviewW
             hwnd,
             DWMWA_BORDER_COLOR,
             (&color_none as *const u32) as *const std::ffi::c_void,
+            std::mem::size_of::<u32>() as u32,
+        );
+
+        let thickness: u32 = 0;
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_VISIBLE_FRAME_BORDER_THICKNESS,
+            (&thickness as *const u32) as *const std::ffi::c_void,
             std::mem::size_of::<u32>() as u32,
         );
 
@@ -370,9 +382,32 @@ pub fn run() {
             {
                 if let Some(w) = app.get_webview_window("main") {
                     apply_windows_border_fix(&w);
+
+                    let app_handle = app.handle().clone();
+                    tauri::async_runtime::spawn(async move {
+                        tokio::time::sleep(Duration::from_millis(250)).await;
+                        if let Some(w) = app_handle.get_webview_window("main") {
+                            apply_windows_border_fix(&w);
+                        }
+                    });
                 }
             }
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            #[cfg(windows)]
+            {
+                match event {
+                    tauri::WindowEvent::Resized(_)
+                    | tauri::WindowEvent::ScaleFactorChanged { .. }
+                    | tauri::WindowEvent::Focused(true) => {
+                        if let Some(w) = window.app_handle().get_webview_window(window.label()) {
+                            apply_windows_border_fix(&w);
+                        }
+                    }
+                    _ => {}
+                }
+            }
         })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
