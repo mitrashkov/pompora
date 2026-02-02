@@ -3046,7 +3046,7 @@ export default function AppShell() {
     if (!p) return "Pick an AI provider from the model dropdown";
 
     if (p === "pompora") {
-      if (!authProfile) return "Log in to use Pompora AI";
+      if (!authProfile) return "Sign in to unlock Pompora AI";
       if (keyStatus?.is_configured !== true) return "Finish signing in to Pompora";
       return null;
     }
@@ -4254,7 +4254,8 @@ export default function AppShell() {
       const w = getCurrentWindow();
       // On Windows, disabling shadow often leaves a thin system-drawn border.
       // Keep the window shadow enabled there to avoid the outline.
-      void w.setShadow(isWindows);
+      void w.setShadow(isWindows).catch(() => {
+      });
     } catch {
     }
   }, [isMac, isWindows]);
@@ -6557,9 +6558,9 @@ export default function AppShell() {
 
                 <div
                   ref={chatScrollRef}
-                  className={`min-h-0 flex-1 overflow-auto px-3 py-3 ${canUseAi && !activeChat.messages.length ? "flex items-center justify-center" : ""}`}
+                  className={`min-h-0 flex-1 overflow-auto bg-panel px-3 py-3 ${canUseAi && !activeChat.messages.length ? "flex items-center justify-center" : ""}`}
                 >
-                  {aiBlockedReason ? (
+                  {aiBlockedReason && !(settings.active_provider === "pompora" && !authProfile) ? (
                     <div className="mb-3 rounded-lg border border-border bg-bg p-3 text-sm text-muted">
                       {aiBlockedReason}
                     </div>
@@ -7157,7 +7158,7 @@ export default function AppShell() {
                                         showTooltipForEl(
                                           e.currentTarget,
                                           lockedByAuth
-                                            ? "Log in to use Pompora AI"
+                                            ? "Sign in to unlock Pompora AI"
                                             : lockedByLink
                                               ? "Finish signing in to Pompora"
                                               : "Upgrade your plan to unlock this mode",
