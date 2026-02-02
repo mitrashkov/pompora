@@ -15,15 +15,7 @@ use windows::{
     Win32::{
         Foundation::HWND,
         Graphics::Dwm::{
-            DwmExtendFrameIntoClientArea, DwmSetWindowAttribute, DWMNCRP_DISABLED,
-            DWMNCRENDERINGPOLICY, DWMWA_ALLOW_NCPAINT, DWMWA_BORDER_COLOR,
-            DWMWA_NCRENDERING_POLICY, DWMWA_VISIBLE_FRAME_BORDER_THICKNESS,
-        },
-        UI::Controls::MARGINS,
-        UI::WindowsAndMessaging::{
-            GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, GWL_STYLE, SWP_FRAMECHANGED,
-            SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, WS_BORDER, WS_CAPTION,
-            WS_DLGFRAME,
+            DwmSetWindowAttribute, DWMWA_BORDER_COLOR, DWMWA_VISIBLE_FRAME_BORDER_THICKNESS,
         },
     },
 };
@@ -42,22 +34,6 @@ fn apply_windows_border_fix<R: tauri::Runtime>(window: &tauri::webview::WebviewW
     };
 
     unsafe {
-        let nc_policy: DWMNCRENDERINGPOLICY = DWMNCRP_DISABLED;
-        let _ = DwmSetWindowAttribute(
-            hwnd,
-            DWMWA_NCRENDERING_POLICY,
-            (&nc_policy as *const DWMNCRENDERINGPOLICY) as *const std::ffi::c_void,
-            std::mem::size_of::<DWMNCRENDERINGPOLICY>() as u32,
-        );
-
-        let allow_ncpaint: i32 = 0;
-        let _ = DwmSetWindowAttribute(
-            hwnd,
-            DWMWA_ALLOW_NCPAINT,
-            (&allow_ncpaint as *const i32) as *const std::ffi::c_void,
-            std::mem::size_of::<i32>() as u32,
-        );
-
         let color_none: u32 = 0xFFFFFFFE;
         let _ = DwmSetWindowAttribute(
             hwnd,
@@ -73,35 +49,6 @@ fn apply_windows_border_fix<R: tauri::Runtime>(window: &tauri::webview::WebviewW
             (&thickness as *const u32) as *const std::ffi::c_void,
             std::mem::size_of::<u32>() as u32,
         );
-
-        let margins = MARGINS {
-            cxLeftWidth: -1,
-            cxRightWidth: -1,
-            cyTopHeight: -1,
-            cyBottomHeight: -1,
-        };
-        let _ = DwmExtendFrameIntoClientArea(hwnd, &margins);
-
-        // Strip common border/caption styles that can still draw a 1px outline
-        // on undecorated windows (especially noticeable on left/right/bottom).
-        let style = GetWindowLongPtrW(hwnd, GWL_STYLE) as u32;
-        let stripped = style & !(WS_BORDER.0 | WS_DLGFRAME.0 | WS_CAPTION.0);
-        if stripped != style {
-            let _ = SetWindowLongPtrW(hwnd, GWL_STYLE, stripped as isize);
-            let _ = SetWindowPos(
-                hwnd,
-                None,
-                0,
-                0,
-                0,
-                0,
-                SWP_NOMOVE
-                    | SWP_NOSIZE
-                    | SWP_NOZORDER
-                    | SWP_NOACTIVATE
-                    | SWP_FRAMECHANGED,
-            );
-        }
     }
 }
 
