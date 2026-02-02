@@ -4246,15 +4246,18 @@ export default function AppShell() {
   }, []);
 
   const isMac = useMemo(() => /Mac|iPhone|iPad|iPod/.test(navigator.userAgent), []);
+  const isWindows = useMemo(() => /Windows/i.test(navigator.userAgent), []);
 
   useEffect(() => {
     if (isMac) return;
     try {
       const w = getCurrentWindow();
-      void w.setShadow(false);
+      // On Windows, disabling shadow often leaves a thin system-drawn border.
+      // Keep the window shadow enabled there to avoid the outline.
+      void w.setShadow(isWindows);
     } catch {
     }
-  }, [isMac]);
+  }, [isMac, isWindows]);
 
   const toggleTheme = useCallback(() => {
     setSettingsState((s) => {
@@ -6964,24 +6967,32 @@ export default function AppShell() {
                         <div className="mt-1 max-w-[360px] text-sm leading-relaxed text-muted">Build and improve your codebase — privately.</div>
 
                         {!authProfile ? (
-                          <div className="mt-5 w-full max-w-[360px]">
-                            <div className="rounded-2xl border border-border bg-bg/40 p-3 text-left">
-                              <div className="text-[12px] font-medium text-text">Log in to Pompora</div>
-                              <div className="mt-1 text-[12px] leading-relaxed text-muted">
-                                Sync your plan and credits, unlock Pompora-hosted models, and keep your settings consistent across devices.
+                          <div className="relative mt-6 w-full max-w-[420px]">
+                            <div className="pointer-events-none absolute inset-0 -z-10 rounded-[28px] bg-[radial-gradient(120%_80%_at_50%_0%,rgba(30,144,255,0.22)_0%,rgba(30,144,255,0)_58%)]" />
+                            <div className="rounded-[28px] border border-border/60 bg-panel/40 p-4 shadow-[0_16px_60px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                              <div className="flex flex-col items-center gap-3 text-center">
+                                <img src="/pompora_logo_transparent.png" alt="Pompora" className="h-12 w-12 opacity-90" />
+                                <div className="min-w-0">
+                                  <div className="text-[13px] font-semibold text-text">Sign in to unlock Pompora AI</div>
+                                  <div className="mt-1 text-[12px] leading-relaxed text-muted">
+                                    Use Pompora-hosted models, sync your plan & credits, and keep your setup consistent across devices.
+                                  </div>
+                                </div>
                               </div>
-                              <div className="mt-3 flex items-center gap-2">
+
+                              <div className="mt-4 grid grid-cols-2 gap-2">
                                 <button
                                   type="button"
-                                  className="ws-btn ws-btn-primary h-8 px-3"
+                                  className="group inline-flex h-9 items-center justify-center gap-2 rounded-2xl bg-accent px-3 text-[13px] font-medium text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                                   disabled={isAuthBusy}
                                   onClick={() => void beginDesktopAuthWithMode("login")}
                                 >
                                   Log in
+                                  <ChevronRight className="h-4 w-4 opacity-85" />
                                 </button>
                                 <button
                                   type="button"
-                                  className="ws-btn ws-btn-secondary h-8 px-3"
+                                  className="group inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-border/70 bg-bg/35 px-3 text-[13px] font-medium text-text backdrop-blur-sm transition-colors hover:bg-panel/50 disabled:opacity-50"
                                   disabled={isAuthBusy}
                                   onClick={() => void beginDesktopAuthWithMode("signup")}
                                 >
@@ -6995,22 +7006,26 @@ export default function AppShell() {
                             <div className="grid grid-cols-1 gap-2">
                               {[
                                 {
-                                  label: "Explain the current file",
+                                  label: "Explain current file",
+                                  Icon: FileText,
                                   prompt:
                                     "Explain what the currently open file does. Summarize intent, key flows, and anything risky or confusing.",
                                 },
                                 {
-                                  label: "Find bugs & edge cases",
+                                  label: "Find bugs",
+                                  Icon: AlertTriangle,
                                   prompt:
                                     "Review the current code and list potential bugs, edge cases, and footguns. Propose minimal fixes.",
                                 },
                                 {
-                                  label: "Refactor for clarity",
+                                  label: "Refactor",
+                                  Icon: Wand2,
                                   prompt:
                                     "Refactor the current code for readability and maintainability. Keep behavior the same; propose small, safe steps.",
                                 },
                                 {
-                                  label: "Add a feature safely",
+                                  label: "Add a feature",
+                                  Icon: Plus,
                                   prompt:
                                     "Help me add a small feature to the current file. Ask 2-3 clarifying questions first, then propose an implementation plan.",
                                 },
@@ -7018,7 +7033,7 @@ export default function AppShell() {
                                 <button
                                   key={s.label}
                                   type="button"
-                                  className={`ws-panel2 rounded-xl border border-border px-3 py-2 text-left transition-colors hover:bg-bg focus-visible:outline-none ${
+                                  className={`group flex w-full items-center justify-between gap-3 rounded-2xl border border-border/60 bg-bg/30 px-3 py-2 text-left backdrop-blur-sm transition-all hover:border-accent/50 hover:bg-panel/40 focus-visible:outline-none ${
                                     canUseAi ? "" : "cursor-not-allowed opacity-60"
                                   }`}
                                   onClick={() => {
@@ -7032,8 +7047,13 @@ export default function AppShell() {
                                     }, 0);
                                   }}
                                 >
-                                  <div className="text-[13px] font-medium text-text">{s.label}</div>
-                                  <div className="mt-0.5 text-[11px] text-muted">Sends with your selected model below ({providerLabel}).</div>
+                                  <div className="flex min-w-0 items-center gap-2">
+                                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[rgb(var(--p-panel2))]">
+                                      <s.Icon className="h-4 w-4 text-text" />
+                                    </span>
+                                    <span className="truncate text-[13px] font-medium text-text">{s.label}</span>
+                                  </div>
+                                  <ChevronRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5" />
                                 </button>
                               ))}
                             </div>
