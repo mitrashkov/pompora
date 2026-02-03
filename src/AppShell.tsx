@@ -473,6 +473,100 @@ function extractFileRefs(text: string): string[] {
   return out;
 }
 
+function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): string {
+  const root: { dirs: Map<string, any>; files: string[] } = { dirs: new Map(), files: [] };
+
+  for (const p0 of paths) {
+    const p = String(p0 || "").trim().replace(/^\.\//, "");
+    if (!p) continue;
+    const segs = p.split("/").filter(Boolean);
+    if (!segs.length) continue;
+    let node = root;
+    const depth = Math.min(segs.length, maxDepth);
+    for (let i = 0; i < depth - 1; i++) {
+      const name = segs[i]!;
+      let next = node.dirs.get(name);
+      if (!next) {
+        next = { dirs: new Map<string, any>(), files: [] as string[] };
+        node.dirs.set(name, next);
+      }
+      node = next;
+    }
+    const leaf = segs[Math.min(segs.length, maxDepth) - 1]!;
+    if (segs.length > maxDepth) {
+      let next = node.dirs.get(leaf);
+      if (!next) {
+        next = { dirs: new Map<string, any>(), files: [] as string[] };
+        node.dirs.set(leaf, next);
+      }
+    } else {
+      node.files.push(leaf);
+    }
+  }
+
+  const out: string[] = [];
+  const render = (node: { dirs: Map<string, any>; files: string[] }, prefix: string, level: number) => {
+    if (out.length >= maxLines) return;
+
+    const dirs = Array.from(node.dirs.keys()).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    const files = node.files.slice().sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+    for (const d of dirs) {
+      if (out.length >= maxLines) return;
+      out.push(`${prefix}${d}/`);
+      const child = node.dirs.get(d);
+      if (child && level + 1 < maxDepth) {
+        render(child, `${prefix}  `, level + 1);
+      }
+    }
+
+    for (const f of files) {
+      if (out.length >= maxLines) return;
+      out.push(`${prefix}${f}`);
+    }
+  };
+
+  render(root, "", 0);
+  if (paths.length && out.length >= maxLines) out.push("… (truncated)");
+  return out.join("\n");
+}
+
+function pickDefaultContextFiles(paths: string[], activePath?: string | null): string[] {
+  const set = new Set<string>();
+  const norm = (p: string) => String(p || "").trim().replace(/\\/g, "/").replace(/^\.\//, "");
+  const add = (p: string) => {
+    const k = norm(p);
+    if (!k) return;
+    if (!paths.includes(k)) return;
+    set.add(k);
+  };
+
+  if (activePath) add(activePath);
+
+  const preferred = [
+    "README.md",
+    "readme.md",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "tsconfig.json",
+    "vite.config.ts",
+    "next.config.ts",
+    "next.config.js",
+    "index.html",
+    "src/main.tsx",
+    "src/main.ts",
+    "src/App.tsx",
+    "src/AppShell.tsx",
+    "src-tauri/Cargo.toml",
+    "Cargo.toml",
+  ];
+  for (const p of preferred) add(p);
+
+  return Array.from(set).slice(0, 10);
+}
+
 function isLikelyDangerousCommand(cmd: string): boolean {
   const c = cmd.trim().toLowerCase();
   if (!c) return false;
@@ -4372,6 +4466,15 @@ export default function AppShell() {
       const base = [...previous, { role: "user" as const, content: text }];
       setActiveChatDraft("");
 
+      const workspaceFiles =
+        workspace.root && fileIndexRoot === workspace.root && fileIndex.length
+          ? fileIndex
+          : workspace.root
+            ? await workspaceListFiles(20000).catch(() => [])
+            : [];
+
+      const workspaceTree = workspaceFiles.length ? buildFileTreePreview(workspaceFiles, 420, 7) : "";
+
       const explicitRefs = workspace.root ? extractFileRefs(text) : [];
       const recentChangeFiles =
         workspace.root && activeChat.changeSet
@@ -4382,9 +4485,11 @@ export default function AppShell() {
           : [];
       const autoRefs = workspace.root && activeTab?.path ? [activeTab.path] : [];
 
+      const defaultRefs = workspace.root ? pickDefaultContextFiles(workspaceFiles, activeTab?.path) : [];
+
       const referencedFiles =
         workspace.root
-          ? Array.from(new Set([...explicitRefs, ...autoRefs, ...recentChangeFiles])).slice(0, 6)
+          ? Array.from(new Set([...explicitRefs, ...autoRefs, ...recentChangeFiles, ...defaultRefs])).slice(0, 12)
           : [];
       agentRunId = `es-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       activeEventStreamIdRef.current = agentRunId;
@@ -4435,12 +4540,42 @@ export default function AppShell() {
         .filter((m) => String(m.content || "").trim().length > 0)
         .filter((m) => !(m.role === "assistant" && m.kind === "run_request"));
 
+      const systemPrompt =
+        "You are a coding assistant inside an editor. Be direct and helpful.\n" +
+        "IMPORTANT: Respond ONLY with a single valid JSON object (no markdown, no code fences).\n" +
+        "Schema: {\"assistant_message\": string, \"edits\": [{\"op\": \"write\"|\"patch\"|\"delete\"|\"rename\"|\"run\", \"path\"?: string, \"content\"?: string, \"from\"?: string, \"to\"?: string}], \"summary\"?: string }.\n" +
+        "Never put code in assistant_message; code must only appear inside edits[].content.\n" +
+        "If you have no edits, return {\"assistant_message\": <answer>, \"edits\": []}.\n" +
+        "If a workspace is open, you already have the folder tree + file list + selected file contents; do not ask the user to provide the structure again unless absolutely necessary.\n";
+
       const aiMessages: AiChatMessage[] = [
-        {
-          role: "system",
-          content:
-            "You are Pompora, an autonomous agentic coding system operating inside a real codebase.\n\nOutput MUST be valid JSON only (no markdown), shaped as:\n{\n  \"assistant_message\": string,\n  \"events\": Array<{ type: \"message\" | \"state\" | \"file_edit\", content?: string, file?: string, added?: number, removed?: number, hidden?: boolean, ttlMs?: number }>,\n  \"edits\": AiEditOp[]\n}\n\nUI contract:\n- Do NOT output sections like THINK/PLAN/ACT/VERIFY/DONE.\n- Use short, natural chat lines in events (type=message).\n- Use type=state for brief micro-status (e.g. \"Analyzing…\", \"Making changes…\", \"Finalizing…\").\n- Never dump large code blocks into events.\n\nEditing rules:\n- Do not hallucinate files.\n- Prefer op='patch' with unified diff; keep patches minimal; do not replace whole files unless necessary.\n- Never patch lines that don't exist in the provided file context.\n- Use op='run' for commands; avoid destructive commands.\n- If you need more file context, return edits=[] and ask for specific file(s) in assistant_message.\n",
-        },
+        { role: "system", content: systemPrompt },
+        ...(workspace.root
+          ? ([
+              {
+                role: "system" as const,
+                content:
+                  "Workspace context:\n" +
+                  `- root: ${basename(workspace.root)}\n` +
+                  `- files_indexed: ${workspaceFiles.length}\n` +
+                  (workspaceTree ? "\nFolder tree (truncated):\n" + workspaceTree : ""),
+              },
+              ...(workspaceFiles.length
+                ? ([
+                    {
+                      role: "system" as const,
+                      content:
+                        "File list (relative; truncated):\n" +
+                        workspaceFiles
+                          .slice(0, 450)
+                          .map((p) => `- ${p}`)
+                          .join("\n") +
+                        (workspaceFiles.length > 450 ? "\n… (truncated)" : ""),
+                    },
+                  ] as AiChatMessage[])
+                : ([] as AiChatMessage[])),
+            ] as AiChatMessage[])
+          : ([] as AiChatMessage[])),
         ...(fileContexts.length
           ? ([
               {
@@ -4451,7 +4586,7 @@ export default function AppShell() {
                     .map((f) => `FILE: ${f.path}${f.truncated ? " (TRUNCATED)" : ""}\n---\n${f.content}\n---`)
                     .join("\n\n"),
               },
-            ] satisfies AiChatMessage[])
+            ] as AiChatMessage[])
           : ([] as AiChatMessage[])),
         ...(recentMetaLines.length
           ? ([
@@ -4459,7 +4594,7 @@ export default function AppShell() {
                 role: "system" as const,
                 content: "Recent IDE actions (already executed):\n" + recentMetaLines.map((l) => `- ${l}`).join("\n"),
               },
-            ] satisfies AiChatMessage[])
+            ] as AiChatMessage[])
           : ([] as AiChatMessage[])),
         ...conversationForModel.map((m) => ({ role: m.role, content: m.content })),
       ];
@@ -4573,10 +4708,13 @@ export default function AppShell() {
     activeChat.draft,
     activeChat.messages.length,
     activeChat.title,
+    activeTab,
     aiBlockedReason,
     authProfile,
     applyAiEditsNow,
     buildChangeSet,
+    fileIndex,
+    fileIndexRoot,
     friendlyAiError,
     keyStatus?.storage,
     notify,
@@ -4592,6 +4730,7 @@ export default function AppShell() {
     authGetCredits,
     settings.active_provider,
     settings.offline_mode,
+    uiPomporaThinking,
     workspace.root,
     appendEventStream,
     updateEventStream,
