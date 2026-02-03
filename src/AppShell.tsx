@@ -10,26 +10,20 @@ import {
   ArrowRight,
   ArrowUp,
   Bell,
-  Brain,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Check,
-  CheckCircle2,
-  CircleDashed,
-  Eye,
   FileCode,
   FileJson,
   FileText,
   Folder,
   FolderOpen,
   GitBranch,
-  ListChecks,
   Maximize2,
   Minus,
   Pencil,
   Plus,
-  TerminalSquare,
   RotateCw,
   Save,
   Search,
@@ -117,12 +111,12 @@ type AppNotification = {
   kind: "error" | "info";
 };
 
-type ChatUiMessage = {
+ type ChatUiMessage = {
   role: "user" | "assistant" | "meta";
   content: string;
   id?: string;
   rating?: "up" | "down" | null;
-  kind?: "run_request" | "activity" | "proposal" | "agent_run";
+  kind?: "run_request" | "activity" | "event_stream";
   run?: {
     cmd: string;
     status: "pending" | "running" | "done" | "canceled";
@@ -139,27 +133,21 @@ type ChatUiMessage = {
     collapsed?: boolean;
     progress?: { done: number; total: number; current?: string };
   };
-  proposal?: {
-    changeSetId: string;
-    title: string;
-    plan: string[];
-    risks: string[];
-    files: Array<{ path: string; kind: "write" | "delete" | "rename"; isNew?: boolean }>;
-    stats: { files: number; added: number; removed: number };
-  };
-  agentRun?: {
-    phase: "think" | "plan" | "act" | "verify" | "done";
+  eventStream?: {
     status: "running" | "done" | "error";
-    contextFiles: string[];
-    thinkText: string;
-    planItems: string[];
-    verifyText: string;
-    doneText: string;
-    actions: Array<{ id: string; label: string; status: "pending" | "running" | "done" | "error" }>;
-    output: string[];
-    collapsed: { think: boolean; plan: boolean; act: boolean; output: boolean; verify: boolean; done: boolean };
+    events: ChatEvent[];
   };
 };
+
+type ChatEventBase = {
+  id: string;
+  ts: number;
+};
+
+type ChatEvent =
+  | (ChatEventBase & { type: "message"; content: string })
+  | (ChatEventBase & { type: "state"; content: string; hidden?: boolean; ttlMs?: number })
+  | (ChatEventBase & { type: "file_edit"; file: string; added: number; removed: number });
 
 type TerminalCapture = {
   id: string;
@@ -171,6 +159,11 @@ type TerminalCapture = {
   maxEmitted: number;
   emit: (line: string) => void;
 };
+
+type AiEventInput =
+  | { type: "message"; content: string }
+  | { type: "state"; content: string; hidden?: boolean; ttlMs?: number }
+  | { type: "file_edit"; file: string; added: number; removed: number };
 
 function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: number; maxChars?: number }): string {
   const enabled = opts?.enabled !== false;
@@ -218,240 +211,188 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
   return safe.slice(0, n);
 }
 
-function AgentRunCard({
-  messageId,
-  ar,
-  onToggle,
-}: {
-  messageId: string;
-  ar: NonNullable<ChatUiMessage["agentRun"]>;
-  onToggle: (id: string, key: keyof NonNullable<ChatUiMessage["agentRun"]>["collapsed"]) => void;
-}) {
-  const phaseLabel =
-    ar.phase === "think"
-      ? "Think"
-      : ar.phase === "plan"
-        ? "Plan"
-        : ar.phase === "act"
-          ? "Act"
-          : ar.phase === "verify"
-            ? "Verify"
-            : "Done";
-
-  const phaseIcon =
-    ar.phase === "think"
-      ? Brain
-      : ar.phase === "plan"
-        ? ListChecks
-        : ar.phase === "act"
-          ? Wand2
-          : ar.phase === "verify"
-            ? Check
-            : CheckCircle2;
-
-  const PhaseIcon = phaseIcon;
-  const thinkTyped = useTypewriterText(ar.thinkText || (ar.status === "running" ? "Thinking…" : ""), { enabled: true, cps: 75 });
-  const verifyTyped = useTypewriterText(ar.verifyText || "", { enabled: true, cps: 85 });
-  const doneTyped = useTypewriterText(ar.doneText || "", { enabled: true, cps: 90 });
-
+function FileEditPill(props: { file: string; added: number; removed: number; onClick?: () => void }) {
   return (
-    <div className="ws-msg ws-msg-anim ws-msg-assistant">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[11px] text-muted">Agent</div>
-          <div className="mt-1 flex items-center gap-2 text-[13px] text-text">
-            <PhaseIcon className="h-4 w-4 text-muted" />
-            <span className="truncate">Pompora</span>
-          </div>
-        </div>
-        <div className="shrink-0 text-right">
-          <div className="flex items-center justify-end gap-2">
-            {ar.status === "running" ? (
-              <CircleDashed className="h-4 w-4 text-muted animate-spin" />
-            ) : ar.status === "done" ? (
-              <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-            ) : (
-              <AlertTriangle className="h-4 w-4 text-red-300" />
-            )}
-            <span
-              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${statusPillClass(
-                ar.status === "error" ? "error" : ar.status === "done" ? "done" : "running"
-              )}`}
-            >
-              {phaseLabel}
-            </span>
-          </div>
-        </div>
-      </div>
+    <button
+      type="button"
+      className="ws-step-pill hover:bg-bg hover:text-text transition-colors"
+      onClick={props.onClick}
+      title={props.file}
+    >
+      <FileCode className="h-4 w-4 text-muted" />
+      <span className="max-w-[44ch] truncate">{props.file}</span>
+      <span className="ml-1 text-emerald-300">+{props.added}</span>
+      <span className="ml-1 text-red-300">-{props.removed}</span>
+    </button>
+  );
+}
 
-      <div className="mt-3 space-y-2">
-        <div className="ws-agent-panel">
-          <button
-            type="button"
-            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
-            onClick={() => onToggle(messageId, "think")}
-          >
-            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-              <Brain className="h-4 w-4" />
-              Thinking
-            </span>
-            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.think ? "" : "rotate-180"}`} />
-          </button>
-          <div className={`ws-agent-panel-b ${ar.collapsed.think ? "" : "ws-agent-panel-b-open"}`}>
-            <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
-              {thinkTyped}
-              {ar.status === "running" ? <span className="ws-caret" /> : null}
-            </div>
-          </div>
-        </div>
-
-        <div className="ws-agent-panel">
-          <button
-            type="button"
-            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
-            onClick={() => onToggle(messageId, "plan")}
-          >
-            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-              <ListChecks className="h-4 w-4" />
-              Plan
-            </span>
-            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.plan ? "" : "rotate-180"}`} />
-          </button>
-          <div className={`ws-agent-panel-b ${ar.collapsed.plan ? "" : "ws-agent-panel-b-open"}`}>
-            <div className="px-2 pb-2">
-              {(ar.planItems ?? []).length ? (
-                <div className="space-y-1">
-                  {(ar.planItems ?? []).slice(0, 12).map((p, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-[12px] text-muted">
-                      <span className="ws-log-dot mt-1" />
-                      <span className="whitespace-pre-wrap break-words">{p}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-[12px] text-muted">No plan yet.</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="ws-agent-panel">
-          <button
-            type="button"
-            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
-            onClick={() => onToggle(messageId, "act")}
-          >
-            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-              <Wand2 className="h-4 w-4" />
-              Actions
-            </span>
-            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.act ? "" : "rotate-180"}`} />
-          </button>
-          <div className={`ws-agent-panel-b ${ar.collapsed.act ? "" : "ws-agent-panel-b-open"}`}>
-            <div className="px-2 pb-2">
-              {(ar.actions ?? []).length ? (
-                <div className="space-y-1">
-                  {(ar.actions ?? []).slice(-14).map((a) => (
-                    <div key={a.id} className="flex items-start gap-2 text-[12px] text-muted">
-                      <span className="mt-0.5">
-                        {a.status === "running" ? (
-                          <CircleDashed className="h-4 w-4 animate-spin" />
-                        ) : a.status === "done" ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                        ) : a.status === "error" ? (
-                          <AlertTriangle className="h-4 w-4 text-red-300" />
-                        ) : (
-                          <CircleDashed className="h-4 w-4" />
-                        )}
-                      </span>
-                      <span className="whitespace-pre-wrap break-words">{a.label}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-[12px] text-muted">No actions yet.</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="ws-agent-panel">
-          <button
-            type="button"
-            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
-            onClick={() => onToggle(messageId, "output")}
-          >
-            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-              <TerminalSquare className="h-4 w-4" />
-              Output
-            </span>
-            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.output ? "" : "rotate-180"}`} />
-          </button>
-          <div className={`ws-agent-panel-b ${ar.collapsed.output ? "" : "ws-agent-panel-b-open"}`}>
-            <div className="px-2 pb-2">
-              {(ar.output ?? []).length ? (
-                <div className="ws-terminal-log">
-                  {(ar.output ?? []).slice(-120).map((line, idx) => (
-                    <div key={idx} className="whitespace-pre-wrap break-words">
-                      {line}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-[12px] text-muted">No output.</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="ws-agent-panel">
-          <button
-            type="button"
-            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
-            onClick={() => onToggle(messageId, "verify")}
-          >
-            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-              <Check className="h-4 w-4" />
-              Verify
-            </span>
-            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.verify ? "" : "rotate-180"}`} />
-          </button>
-          <div className={`ws-agent-panel-b ${ar.collapsed.verify ? "" : "ws-agent-panel-b-open"}`}>
-            <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
-              {verifyTyped}
-            </div>
-          </div>
-        </div>
-
-        <div className="ws-agent-panel">
-          <button
-            type="button"
-            className="ws-agent-panel-h flex w-full items-center justify-between px-2 py-2 text-left"
-            onClick={() => onToggle(messageId, "done")}
-          >
-            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-              <CheckCircle2 className="h-4 w-4" />
-              Done
-            </span>
-            <ChevronDown className={`h-4 w-4 text-muted ${ar.collapsed.done ? "" : "rotate-180"}`} />
-          </button>
-          <div className={`ws-agent-panel-b ${ar.collapsed.done ? "" : "ws-agent-panel-b-open"}`}>
-            <div className="px-2 pb-2 text-[12px] text-muted whitespace-pre-wrap break-words">
-              {doneTyped}
-            </div>
-          </div>
-        </div>
-      </div>
+function EventStreamMessageBubble(props: { eventId: string; content: string; showCaret?: boolean }) {
+  const typed = useTypewriterText(props.content || "", { enabled: true, cps: 90 });
+  return (
+    <div key={props.eventId} className="ws-msg ws-msg-anim ws-msg-assistant whitespace-pre-wrap break-words">
+      {typed}
+      {props.showCaret ? <span className="ws-caret" /> : null}
     </div>
   );
 }
 
-function phaseRank(p: "think" | "plan" | "act" | "verify" | "done"): number {
-  if (p === "think") return 0;
-  if (p === "plan") return 1;
-  if (p === "act") return 2;
-  if (p === "verify") return 3;
-  return 4;
+function EventStreamStateLine(props: { eventId: string; content: string }) {
+  return (
+    <div key={props.eventId} className="px-1 text-[11px] text-muted whitespace-pre-wrap break-words">
+      {props.content}
+    </div>
+  );
+}
+
+function EventStreamCard(props: {
+  es: NonNullable<ChatUiMessage["eventStream"]>;
+  onOpenFileDiff?: (path: string) => void;
+}) {
+  const visible = (props.es.events ?? []).filter((e) => {
+    if (e.type === "state" && e.hidden) return false;
+    if (e.type === "state" && String(e.content || "").trim().toLowerCase() === "analyzing…") return false;
+    if (e.type === "state" && String(e.content || "").trim().toLowerCase() === "analyzing...") return false;
+    return true;
+  });
+
+  const hasAnyMessage = visible.some((e) => e.type === "message" && String((e as any).content || "").trim().length > 0);
+
+  return (
+    <div className="space-y-2">
+      {visible.map((e) => {
+        if (e.type === "message") {
+          const isRunningLast = props.es.status === "running" && e.id === visible[visible.length - 1]?.id;
+          return (
+            <EventStreamMessageBubble key={e.id} eventId={e.id} content={e.content || ""} showCaret={isRunningLast} />
+          );
+        }
+        if (e.type === "state") {
+          return <EventStreamStateLine key={e.id} eventId={e.id} content={e.content || ""} />;
+        }
+        return (
+          <div key={e.id}>
+            <FileEditPill file={e.file} added={e.added} removed={e.removed} onClick={() => props.onOpenFileDiff?.(e.file)} />
+          </div>
+        );
+      })}
+
+      {props.es.status === "running" && !hasAnyMessage ? (
+        <div className="ws-msg ws-msg-anim ws-msg-assistant inline-flex items-center px-3 py-2">
+          <span className="ws-presence-dots" aria-label="Thinking">
+            <span />
+            <span />
+            <span />
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
+  if (!Array.isArray(eventsRaw)) return [];
+  const out: AiEventInput[] = [];
+  for (const e of eventsRaw) {
+    if (!e || typeof e !== "object") continue;
+    const obj = e as Record<string, unknown>;
+    const type = typeof obj.type === "string" ? obj.type : "";
+    if (type === "message") {
+      const content = typeof obj.content === "string" ? obj.content.trim() : "";
+      if (content) out.push({ type: "message", content });
+      continue;
+    }
+    if (type === "state") {
+      const content = typeof obj.content === "string" ? obj.content.trim() : "";
+      if (!content) continue;
+      const hidden = typeof obj.hidden === "boolean" ? obj.hidden : undefined;
+      const ttlMs = typeof obj.ttlMs === "number" && Number.isFinite(obj.ttlMs) ? obj.ttlMs : undefined;
+      out.push({ type: "state", content, hidden, ttlMs });
+      continue;
+    }
+    if (type === "file_edit") {
+      const file = typeof obj.file === "string" ? obj.file.trim() : "";
+      if (!file) continue;
+      const added = typeof obj.added === "number" && Number.isFinite(obj.added) ? Math.max(0, Math.floor(obj.added)) : 0;
+      const removed = typeof obj.removed === "number" && Number.isFinite(obj.removed) ? Math.max(0, Math.floor(obj.removed)) : 0;
+      out.push({ type: "file_edit", file, added, removed });
+      continue;
+    }
+  }
+  return out.slice(0, 80);
+}
+
+function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
+  const now = typeof baseTs === "number" ? baseTs : Date.now();
+  return inputs.map((x, i) => {
+    const id = `ev-${now}-${i}-${Math.random().toString(16).slice(2)}`;
+    const ts = now + i;
+    if (x.type === "message") return { id, ts, type: "message", content: x.content };
+    if (x.type === "state") return { id, ts, type: "state", content: x.content, hidden: x.hidden, ttlMs: x.ttlMs };
+    return { id, ts, type: "file_edit", file: x.file, added: x.added, removed: x.removed };
+  });
+}
+
+ function migrateStoredChatMessage(raw: any): ChatUiMessage | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  if (raw.kind === "proposal") return null;
+
+  const role: ChatUiMessage["role"] = raw.role === "user" || raw.role === "assistant" || raw.role === "meta" ? raw.role : "assistant";
+  const base: ChatUiMessage = {
+    role,
+    content: typeof raw.content === "string" ? raw.content : "",
+    id: typeof raw.id === "string" ? raw.id : undefined,
+    rating: raw.rating === "up" || raw.rating === "down" || raw.rating === null ? raw.rating : undefined,
+    kind: raw.kind === "run_request" || raw.kind === "activity" || raw.kind === "event_stream" ? raw.kind : undefined,
+    run: raw.run && typeof raw.run === "object" ? raw.run : undefined,
+    activity: raw.activity && typeof raw.activity === "object" ? raw.activity : undefined,
+    eventStream: raw.eventStream && typeof raw.eventStream === "object" ? raw.eventStream : undefined,
+  };
+
+  const maybeAgentRun = raw.agentRun ?? raw.agent_run;
+  const isLegacyAgentRun = raw.kind === "agent_run" || Boolean(maybeAgentRun);
+  if (isLegacyAgentRun) {
+    const ar = (maybeAgentRun && typeof maybeAgentRun === "object" ? maybeAgentRun : {}) as any;
+    const legacyText = [ar.think, ar.plan, ar.act, ar.output, ar.verify, ar.done]
+      .filter((x: any) => typeof x === "string")
+      .map((s: string) => s.trim())
+      .filter(Boolean)
+      .join("\n\n");
+
+    const status: NonNullable<NonNullable<ChatUiMessage["eventStream"]>["status"]> =
+      ar.status === "running" ? "running" : ar.status === "error" ? "error" : "done";
+    const content = legacyText || base.content || "Ready.";
+    return {
+      ...base,
+      kind: "event_stream",
+      eventStream: {
+        status,
+        events: toChatEvents([{ type: "message", content }]),
+      },
+    };
+  }
+
+  if (base.kind === "event_stream" && base.eventStream && Array.isArray((base.eventStream as any).events)) {
+    const es = base.eventStream as any;
+    const status: "running" | "done" | "error" = es.status === "running" || es.status === "error" ? es.status : "done";
+    const rawEvents = es.events as any[];
+
+    const looksLikeChatEvents = rawEvents.every(
+      (e) => e && typeof e === "object" && typeof e.id === "string" && typeof e.ts === "number" && typeof e.type === "string"
+    );
+    const events: ChatEvent[] = looksLikeChatEvents
+      ? (rawEvents as ChatEvent[])
+      : toChatEvents(normalizeAiEventInputs(rawEvents));
+
+    return {
+      ...base,
+      kind: "event_stream",
+      eventStream: { status, events },
+    };
+  }
+
+  return base;
 }
 
 function clamp(n: number, min: number, max: number): number {
@@ -933,9 +874,22 @@ function computeStats(files: ChangeFile[]): { files: number; added: number; remo
   return { files: files.length, added, removed };
 }
 
+function computeFileEditStats(f: ChangeFile): { added: number; removed: number } {
+  const before = f.before ?? "";
+  const after = f.after ?? "";
+  const ops = diffLines(before, after);
+  let added = 0;
+  let removed = 0;
+  for (const op of ops) {
+    if (op.type === "add") added++;
+    if (op.type === "del") removed++;
+  }
+  return { added, removed };
+}
+
 function tryParseEditsFromAssistantOutput(
   raw: string
-): { message: string; edits: AiEditOp[]; think?: string; plan?: string[]; verify?: string; done?: string } | null {
+): { message: string; edits: AiEditOp[]; events?: ChatEvent[] } | null {
   const t = raw.trim();
   if (!t) return null;
 
@@ -1042,6 +996,7 @@ function tryParseEditsFromAssistantOutput(
       plan?: unknown;
       verify?: unknown;
       done?: unknown;
+      events?: unknown;
     };
     if (Array.isArray(obj.edits)) {
       const edits = obj.edits as AiEditOp[];
@@ -1050,32 +1005,24 @@ function tryParseEditsFromAssistantOutput(
         (typeof obj.summary === "string" ? obj.summary : null) ??
         "Proposed changes are ready.";
 
-      const think = typeof obj.think === "string" ? obj.think : undefined;
-      const verify = typeof obj.verify === "string" ? obj.verify : undefined;
-      const done = typeof obj.done === "string" ? obj.done : undefined;
+      const baseTs = Date.now();
+      const normalizedInputs = normalizeAiEventInputs(obj.events);
+      const events = normalizedInputs.length
+        ? toChatEvents(normalizedInputs, baseTs)
+        : toChatEvents([{ type: "message", content: String(msg).trim() }], baseTs);
 
-      let plan: string[] | undefined;
-      if (Array.isArray(obj.plan)) {
-        plan = (obj.plan as unknown[])
-          .map((x) => (typeof x === "string" ? x.trim() : ""))
-          .filter(Boolean)
-          .slice(0, 16);
-      } else if (typeof obj.plan === "string") {
-        plan = obj.plan
-          .split("\n")
-          .map((l) => l.replace(/^([-*]|\d+\.)\s+/, "").trim())
-          .filter(Boolean)
-          .slice(0, 16);
-      }
-
-      return { message: String(msg).trim(), edits, think, plan, verify, done };
+      return { message: String(msg).trim(), edits, events };
     }
   }
 
   // If the full JSON object is malformed/truncated, try extracting just the edits array.
   const fallbackEdits = extractEditsArray(t);
   if (fallbackEdits && fallbackEdits.length) {
-    return { message: "Proposed changes are ready.", edits: fallbackEdits };
+    return {
+      message: "Proposed changes are ready.",
+      edits: fallbackEdits,
+      events: toChatEvents([{ type: "message", content: "Proposed changes are ready." }]),
+    };
   }
 
   return null;
@@ -1335,7 +1282,9 @@ export default function AppShell() {
               title: typeof x.title === "string" ? x.title : "Chat",
               createdAt: typeof x.createdAt === "number" ? x.createdAt : now,
               updatedAt: typeof x.updatedAt === "number" ? x.updatedAt : now,
-              messages: Array.isArray(x.messages) ? (x.messages as ChatUiMessage[]) : ([] as ChatUiMessage[]),
+              messages: Array.isArray(x.messages)
+                ? (x.messages.map((m: any) => migrateStoredChatMessage(m)).filter(Boolean) as ChatUiMessage[])
+                : ([] as ChatUiMessage[]),
               logs: Array.isArray(x.logs) ? (x.logs as ChatLogEntry[]) : ([] as ChatLogEntry[]),
               draft: typeof x.draft === "string" ? x.draft : "",
               changeSet: (x.changeSet as ChangeSet | null) ?? null,
@@ -1494,7 +1443,7 @@ export default function AppShell() {
   const lastQueuedMetaRef = useRef<string>("");
   const logStreamIdRef = useRef<Record<string, string>>({});
 
-  const activeAgentRunIdRef = useRef<string | null>(null);
+  const activeEventStreamIdRef = useRef<string | null>(null);
 
   const termIdRef = useRef<string | null>(null);
   const termRef = useRef<XTermTerminal | null>(null);
@@ -1628,7 +1577,7 @@ export default function AppShell() {
     (input: Omit<ChatLogEntry, "id" | "ts"> & { id?: string; ts?: number }) => {
       const now = Date.now();
       const id = input.id ?? `log-${now}-${Math.random().toString(16).slice(2)}`;
-      const groupId = input.groupId ?? activeAgentRunIdRef.current ?? "session";
+      const groupId = input.groupId ?? activeEventStreamIdRef.current ?? "session";
       const entry: ChatLogEntry = {
         id,
         ts: input.ts ?? now,
@@ -1734,7 +1683,7 @@ export default function AppShell() {
       metaQueueRef.current.push(line);
       if (metaFlushTimerRef.current) return;
 
-      const groupId = activeAgentRunIdRef.current ?? "session";
+      const groupId = activeEventStreamIdRef.current ?? "session";
       const streamMap = logStreamIdRef.current;
 
       if (!streamMap[groupId]) {
@@ -2497,64 +2446,6 @@ export default function AppShell() {
     []
   );
 
-  const buildProposal = useCallback(
-    (assistantText: string, cs: ChangeSet, didSanitize: boolean): ChatUiMessage["proposal"] => {
-      const plan: string[] = [];
-      const lines = String(assistantText || "")
-        .split("\n")
-        .map((l) => l.trim())
-        .filter(Boolean);
-
-      let inPlan = false;
-      for (const l of lines) {
-        const lower = l.toLowerCase();
-        if (lower === "plan:" || lower === "plan" || lower.startsWith("plan:")) {
-          inPlan = true;
-          continue;
-        }
-        if (inPlan) {
-          if (lower.startsWith("notes") || lower.startsWith("result") || lower.startsWith("changes") || lower.startsWith("summary")) {
-            inPlan = false;
-            continue;
-          }
-          const item = l.replace(/^([-*]|\d+\.)\s+/, "").trim();
-          if (item) plan.push(item);
-          if (plan.length >= 6) break;
-        }
-      }
-
-      const files = cs.files
-        .map((f) => {
-          if (f.kind === "rename") {
-            const parts = f.path.split(" → ");
-            return { path: parts[1] ?? f.path, kind: "rename" as const, isNew: false };
-          }
-          return { path: f.path, kind: f.kind, isNew: f.kind === "write" ? f.before === null : false };
-        })
-        .slice(0, 30);
-
-      const risks: string[] = [];
-      if (didSanitize) risks.push("AI returned paths outside this workspace; paths were sanitized.");
-      const newFiles = cs.files.filter((f) => f.kind === "write" && f.before === null).length;
-      const deletes = cs.files.filter((f) => f.kind === "delete").length;
-      const renames = cs.files.filter((f) => f.kind === "rename").length;
-      if (cs.files.length > 8) risks.push(`Large scope: ${cs.files.length} files.`);
-      if (newFiles) risks.push(`Creates new files: ${newFiles}.`);
-      if (deletes) risks.push(`Deletes files: ${deletes}.`);
-      if (renames) risks.push(`Renames files: ${renames}.`);
-
-      return {
-        changeSetId: cs.id,
-        title: "Proposed changes",
-        plan,
-        risks,
-        files,
-        stats: cs.stats,
-      };
-    },
-    []
-  );
-
   const notify = useCallback(
     (n: Omit<AppNotification, "id">) => {
       if (n.kind !== "error") return;
@@ -3234,11 +3125,33 @@ export default function AppShell() {
     chatMessagesRef.current = activeChat.messages;
   }, [activeChat.messages]);
 
+  const chatScrollKey = useMemo(() => {
+    const msgs = (activeChat.messages ?? []).filter((m) => m.role !== "meta");
+    const last = msgs[msgs.length - 1];
+    if (!last) return "";
+    if (last.kind === "event_stream" && last.eventStream) {
+      const lastEv = last.eventStream.events?.[last.eventStream.events.length - 1];
+      return `${last.id ?? ""}:${last.eventStream.status}:${last.eventStream.events?.length ?? 0}:${lastEv?.id ?? ""}`;
+    }
+    return `${last.id ?? ""}:${(last.content ?? "").length}`;
+  }, [activeChat.messages]);
+
+  const chatStickToBottomRef = useRef(true);
+  const syncChatStickinessFromEl = useCallback((el: HTMLDivElement) => {
+    const dist = el.scrollHeight - (el.scrollTop + el.clientHeight);
+    chatStickToBottomRef.current = dist < 48;
+  }, []);
+
   useEffect(() => {
     const el = chatScrollRef.current;
     if (!el) return;
-    el.scrollTop = el.scrollHeight;
-  }, [activeChat.messages.length, chatBusy]);
+    if (!chatStickToBottomRef.current) return;
+    window.requestAnimationFrame(() => {
+      const el2 = chatScrollRef.current;
+      if (!el2) return;
+      el2.scrollTop = el2.scrollHeight;
+    });
+  }, [chatScrollKey, chatBusy]);
 
   useEffect(() => {
     return () => {
@@ -3256,32 +3169,6 @@ export default function AppShell() {
         next[index] = { ...m, rating: nextRating };
         return next;
       });
-    },
-    [setActiveChatMessages]
-  );
-
-  const startStreamingToMessageId = useCallback(
-    (id: string, fullText: string) => {
-      if (chatStreamTimerRef.current) window.clearInterval(chatStreamTimerRef.current);
-
-      const parts = fullText.match(/\S+\s*/g) ?? [fullText];
-      const step = fullText.length > 2400 ? 6 : fullText.length > 900 ? 4 : 2;
-      const tick = fullText.length > 2400 ? 36 : 30;
-      let i = 0;
-      let last = "";
-
-      chatStreamTimerRef.current = window.setInterval(() => {
-        i = Math.min(parts.length, i + step);
-        const nextText = parts.slice(0, i).join("");
-        if (nextText !== last) {
-          last = nextText;
-          setActiveChatMessages((prev) => prev.map((m) => (m.id === id ? { ...m, content: nextText } : m)));
-        }
-        if (i >= parts.length) {
-          if (chatStreamTimerRef.current) window.clearInterval(chatStreamTimerRef.current);
-          chatStreamTimerRef.current = null;
-        }
-      }, tick);
     },
     [setActiveChatMessages]
   );
@@ -3378,25 +3265,42 @@ export default function AppShell() {
 
   const [selectedChangePath, setSelectedChangePath] = useState<string | null>(null);
 
-  const [proposalPreviewOpen, setProposalPreviewOpen] = useState<Record<string, boolean>>({});
-
-  const updateAgentRun = useCallback(
-    (id: string, up: (prev: NonNullable<ChatUiMessage["agentRun"]>) => NonNullable<ChatUiMessage["agentRun"]>) => {
+  const updateEventStream = useCallback(
+    (
+      id: string,
+      up: (prev: NonNullable<ChatUiMessage["eventStream"]>) => NonNullable<ChatUiMessage["eventStream"]>
+    ) => {
       setActiveChatMessages((prev) =>
         prev.map((m) => {
-          if (m.id !== id || m.kind !== "agent_run" || !m.agentRun) return m;
-          return { ...m, agentRun: up(m.agentRun) };
+          if (m.id !== id || m.kind !== "event_stream" || !m.eventStream) return m;
+          return { ...m, eventStream: up(m.eventStream) };
         })
       );
     },
     [setActiveChatMessages]
   );
 
-  const toggleAgentRunSection = useCallback(
-    (id: string, key: keyof NonNullable<ChatUiMessage["agentRun"]>["collapsed"]) => {
-      updateAgentRun(id, (ar) => ({ ...ar, collapsed: { ...ar.collapsed, [key]: !ar.collapsed[key] } }));
+  const appendEventStream = useCallback(
+    (id: string, inputs: AiEventInput[]) => {
+      const now = Date.now();
+      const next = toChatEvents(inputs, now);
+      const ttlTargets = next.filter((e) => e.type === "state" && typeof e.ttlMs === "number" && !e.hidden) as Array<
+        ChatEventBase & { type: "state"; content: string; hidden?: boolean; ttlMs?: number }
+      >;
+
+      updateEventStream(id, (es) => ({ ...es, events: ([...(es.events ?? []), ...next] as ChatEvent[]).slice(-240) }));
+
+      for (const e of ttlTargets) {
+        const ttl = Math.max(150, Math.min(60000, Math.floor(e.ttlMs ?? 0)));
+        window.setTimeout(() => {
+          updateEventStream(id, (es) => ({
+            ...es,
+            events: (es.events ?? []).map((x) => (x.id === e.id && x.type === "state" ? { ...x, hidden: true } : x)),
+          }));
+        }, ttl);
+      }
     },
-    [updateAgentRun]
+    [updateEventStream]
   );
 
   const [isChangeSummaryOpen, setIsChangeSummaryOpen] = useState(false);
@@ -3407,7 +3311,6 @@ export default function AppShell() {
     if (id !== lastChangeSetIdRef.current) {
       lastChangeSetIdRef.current = id;
       setIsChangeSummaryOpen(false);
-      setProposalPreviewOpen({});
     }
   }, [activeChat.changeSet?.id]);
 
@@ -4483,37 +4386,25 @@ export default function AppShell() {
         workspace.root
           ? Array.from(new Set([...explicitRefs, ...autoRefs, ...recentChangeFiles])).slice(0, 6)
           : [];
-      agentRunId = `run-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      activeAgentRunIdRef.current = agentRunId;
+      agentRunId = `es-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      activeEventStreamIdRef.current = agentRunId;
 
-      const agentRunMessage: ChatUiMessage = {
+      const eventStreamMessage: ChatUiMessage = {
         id: agentRunId,
         role: "assistant",
         content: "",
-        kind: "agent_run",
-        agentRun: {
-          phase: "think",
+        kind: "event_stream",
+        eventStream: {
           status: "running",
-          contextFiles: referencedFiles,
-          thinkText: "",
-          planItems: [],
-          verifyText: "",
-          doneText: "",
-          actions: [],
-          output: [],
-          collapsed: { think: false, plan: false, act: false, output: true, verify: true, done: false },
+          events: [],
         },
       };
 
-      setActiveChatMessages([...base, agentRunMessage]);
+      setActiveChatMessages([...base, eventStreamMessage]);
 
       const fileContexts: Array<{ path: string; content: string; truncated: boolean }> = [];
       for (const p of referencedFiles) {
-        const actionId = `read:${p}`;
-        updateAgentRun(agentRunId, (ar) => ({
-          ...ar,
-          actions: ([...ar.actions, { id: actionId, label: `Read ${p}`, status: "running" as const }].slice(-40) as typeof ar.actions),
-        }));
+        appendEventStream(agentRunId, [{ type: "state", content: `Checking ${p}…`, ttlMs: 900 }]);
         try {
           const max = 12000;
           const pending =
@@ -4524,15 +4415,8 @@ export default function AppShell() {
           const content = pending ? String(pending.after || "") : await workspaceReadFile(p);
           const truncated = content.length > max;
           fileContexts.push({ path: p, content: truncated ? content.slice(0, max) : content, truncated });
-          updateAgentRun(agentRunId, (ar) => ({
-            ...ar,
-            actions: ar.actions.map((a) => (a.id === actionId ? { ...a, status: "done" } : a)),
-          }));
         } catch {
-          updateAgentRun(agentRunId, (ar) => ({
-            ...ar,
-            actions: ar.actions.map((a) => (a.id === actionId ? { ...a, status: "error" } : a)),
-          }));
+          appendEventStream(agentRunId, [{ type: "state", content: `Couldn’t read ${p}.`, ttlMs: 1200 }]);
         }
       }
 
@@ -4555,7 +4439,7 @@ export default function AppShell() {
         {
           role: "system",
           content:
-            "You are Pompora, an autonomous agentic coding system operating inside a real codebase. You MUST follow this workflow in order: THINK, PLAN, ACT, VERIFY, DONE. No skipping.\n\nOutput MUST be valid JSON only (no markdown), shaped as:\n{\n  \"assistant_message\": string,\n  \"think\": string,\n  \"plan\": string[],\n  \"verify\": string,\n  \"done\": string,\n  \"edits\": AiEditOp[]\n}\n\nRules:\n- Do not hallucinate files.\n- Prefer op='patch' with unified diff; keep patches minimal; do not replace whole files unless necessary.\n- Never patch lines that don't exist in the provided file context.\n- Use op='run' for commands; avoid destructive commands.\n- If you need more file context, return edits=[] and explain in assistant_message what file(s) to read.\n",
+            "You are Pompora, an autonomous agentic coding system operating inside a real codebase.\n\nOutput MUST be valid JSON only (no markdown), shaped as:\n{\n  \"assistant_message\": string,\n  \"events\": Array<{ type: \"message\" | \"state\" | \"file_edit\", content?: string, file?: string, added?: number, removed?: number, hidden?: boolean, ttlMs?: number }>,\n  \"edits\": AiEditOp[]\n}\n\nUI contract:\n- Do NOT output sections like THINK/PLAN/ACT/VERIFY/DONE.\n- Use short, natural chat lines in events (type=message).\n- Use type=state for brief micro-status (e.g. \"Analyzing…\", \"Making changes…\", \"Finalizing…\").\n- Never dump large code blocks into events.\n\nEditing rules:\n- Do not hallucinate files.\n- Prefer op='patch' with unified diff; keep patches minimal; do not replace whole files unless necessary.\n- Never patch lines that don't exist in the provided file context.\n- Use op='run' for commands; avoid destructive commands.\n- If you need more file context, return edits=[] and ask for specific file(s) in assistant_message.\n",
         },
         ...(fileContexts.length
           ? ([
@@ -4610,19 +4494,26 @@ export default function AppShell() {
       const rawOut = String(res.output ?? "");
       const assistantMsg = (parsedFromText?.message ?? rawOut.trim()).trim();
 
-      updateAgentRun(agentRunId, (ar) => ({
-        ...ar,
-        thinkText: String(parsedFromText?.think ?? "").trim(),
-        planItems: Array.isArray(parsedFromText?.plan) ? parsedFromText!.plan!.slice(0, 16) : ar.planItems,
-        verifyText: String(parsedFromText?.verify ?? "").trim(),
-        doneText: String(parsedFromText?.done ?? "").trim(),
-        phase: parsedFromText?.plan && parsedFromText.plan.length ? "plan" : "think",
+      const safeMsg = assistantMsg.length
+        ? looksLikeCodeDump(assistantMsg)
+          ? "I’m ready—tell me what you want to change and I’ll guide you step by step."
+          : assistantMsg
+        : "Ready.";
+
+      const eventsFromModel = parsedFromText?.events ?? null;
+      const parsedEvents = (eventsFromModel && eventsFromModel.length
+        ? eventsFromModel
+        : toChatEvents([{ type: "message", content: safeMsg || "Ready." }])) as ChatEvent[];
+
+      updateEventStream(agentRunId, (es) => ({
+        ...es,
+        events: ([...(es.events ?? []), ...parsedEvents] as ChatEvent[]).slice(-240),
       }));
 
       if (edits && edits.length) {
         setChatApplying(true);
 
-        updateAgentRun(agentRunId, (ar) => ({ ...ar, phase: phaseRank(ar.phase) < phaseRank("act") ? "act" : ar.phase }));
+        appendEventStream(agentRunId, [{ type: "state", content: "Making changes…", ttlMs: 1200 }]);
 
         try {
           const norm = normalizeAiEdits(edits, workspace.root);
@@ -4631,40 +4522,32 @@ export default function AppShell() {
           setIsChatDockOpen(true);
           setActiveChatChangeSet(changeSet);
 
+          const touchedFiles = changeSet.files
+            .filter((f) => f.kind === "write" && typeof f.path === "string")
+            .slice(0, 16)
+            .map((f) => {
+              const stats = computeFileEditStats(f);
+              return { path: f.path, added: stats.added, removed: stats.removed };
+            });
+          if (touchedFiles.length) {
+            appendEventStream(
+              agentRunId,
+              touchedFiles.map((f) => ({ type: "file_edit", file: f.path, added: f.added, removed: f.removed }))
+            );
+          }
+
           const first = changeSet.files.find((f) => f.kind === "write" && typeof f.path === "string") as ChangeFile | undefined;
           if (first?.kind === "write") {
             setSelectedChangePath(first.path);
             await openFile(first.path);
           }
-
-          const proposalId = `prop-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-          const proposal = buildProposal(assistantMsg, changeSet, norm.didSanitize);
-          setActiveChatMessages((prev) => [
-            ...prev,
-            {
-              id: proposalId,
-              role: "assistant",
-              content: "",
-              kind: "proposal",
-              proposal,
-            },
-          ]);
         } finally {
           setChatApplying(false);
         }
-      } else {
-        const safeMsg = assistantMsg.length
-          ? looksLikeCodeDump(assistantMsg)
-            ? "I’m ready—tell me what you want to change and I’ll guide you step by step."
-            : assistantMsg
-          : "Ready.";
 
-        updateAgentRun(agentRunId, (ar) => ({
-          ...ar,
-          phase: "done",
-          status: "done",
-          doneText: ar.doneText || safeMsg,
-        }));
+        updateEventStream(agentRunId, (es) => ({ ...es, status: "done" }));
+      } else {
+        updateEventStream(agentRunId, (es) => ({ ...es, status: "done" }));
       }
 
       // If the active provider is Pompora, credits can change per request.
@@ -4680,12 +4563,8 @@ export default function AppShell() {
       notify({ kind: "error", title: f.title, message: f.message });
 
       if (agentRunId) {
-        updateAgentRun(agentRunId, (ar) => ({
-          ...ar,
-          phase: "done",
-          status: "error",
-          doneText: ar.doneText || `${f.title}: ${f.message}`,
-        }));
+        appendEventStream(agentRunId, [{ type: "message", content: `${f.title}: ${f.message}` }]);
+        updateEventStream(agentRunId, (es) => ({ ...es, status: "error" }));
       }
     } finally {
       setChatBusy(false);
@@ -4698,7 +4577,6 @@ export default function AppShell() {
     authProfile,
     applyAiEditsNow,
     buildChangeSet,
-    buildProposal,
     friendlyAiError,
     keyStatus?.storage,
     notify,
@@ -4714,8 +4592,9 @@ export default function AppShell() {
     authGetCredits,
     settings.active_provider,
     settings.offline_mode,
-    startStreamingToMessageId,
     workspace.root,
+    appendEventStream,
+    updateEventStream,
   ]);
 
   const settingsProviderChoices = useMemo(
@@ -6564,6 +6443,9 @@ export default function AppShell() {
                 <div
                   ref={chatScrollRef}
                   className={`min-h-0 flex-1 overflow-auto bg-panel px-3 py-3 ${canUseAi && !activeChat.messages.length ? "flex items-center justify-center" : ""}`}
+                  onScroll={(e) => {
+                    syncChatStickinessFromEl(e.currentTarget);
+                  }}
                 >
                   {aiBlockedReason && !(settings.active_provider === "pompora" && !authProfile) ? (
                     <div className="mb-3 rounded-lg border border-border bg-bg p-3 text-sm text-muted">
@@ -6577,8 +6459,18 @@ export default function AppShell() {
                           return (
                             <div key={m.id ?? idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                               <div className="max-w-[92%]">
-                                {m.role === "assistant" && m.kind === "agent_run" && m.agentRun ? (
-                                  <AgentRunCard messageId={m.id ?? ""} ar={m.agentRun} onToggle={toggleAgentRunSection} />
+                                {m.role === "assistant" && m.kind === "event_stream" && m.eventStream ? (
+                                  <EventStreamCard
+                                    es={m.eventStream}
+                                    onOpenFileDiff={(path) => {
+                                      const cs = activeChat.changeSet;
+                                      if (cs && cs.files.some((f) => f.kind === "write" && f.path === path)) {
+                                        setIsChatDockOpen(true);
+                                        setSelectedChangePath(path);
+                                      }
+                                      void openFile(path);
+                                    }}
+                                  />
                                 ) : m.role === "assistant" && m.kind === "activity" && m.activity ? (
                                   <div className="ws-msg ws-msg-anim ws-msg-assistant">
                                     <div className="flex items-start justify-between gap-3">
@@ -6667,185 +6559,6 @@ export default function AppShell() {
                                         ) : null}
                                       </div>
                                     ) : null}
-                                  </div>
-                                ) : m.role === "assistant" && m.kind === "proposal" && m.proposal ? (
-                                  <div className="ws-msg ws-msg-anim ws-msg-assistant">
-                                    {(() => {
-                                      const cs = activeChat.changeSet;
-                                      const isCurrent = Boolean(cs && cs.id === m.proposal?.changeSetId);
-                                      const isApplied = Boolean(cs && cs.id === m.proposal?.changeSetId && cs.applied);
-                                      const hasProposalPlan = (m.proposal.plan ?? []).length > 0;
-                                      return (
-                                        <>
-                                          <div className="flex items-start justify-between gap-3">
-                                            <div className="min-w-0">
-                                              <div className="text-[11px] text-muted">Proposal</div>
-                                              <div className="mt-1 text-[13px] text-text">{m.proposal.title}</div>
-                                              <div className="mt-1 text-[11px] text-muted">
-                                                <span className="text-text">{m.proposal.stats.files} files</span>
-                                                <span className="ml-2 text-emerald-300">+{m.proposal.stats.added}</span>
-                                                <span className="ml-2 text-red-300">-{m.proposal.stats.removed}</span>
-                                              </div>
-                                            </div>
-                                            <div className="shrink-0 text-right">
-                                              <div className="text-[10px] text-muted">State</div>
-                                              <div className="mt-1 text-[11px] text-text">
-                                                {!isCurrent ? "outdated" : isApplied ? "applied" : "pending"}
-                                              </div>
-                                            </div>
-                                          </div>
-
-                                          {hasProposalPlan ? (
-                                            <div className="mt-3">
-                                              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Plan</div>
-                                              <div className="mt-1 space-y-1">
-                                                {(m.proposal.plan ?? []).slice(0, 6).map((p, idx) => (
-                                                  <div key={idx} className="flex items-start gap-2 text-[12px] text-muted">
-                                                    <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[rgb(var(--p-accent))]" />
-                                                    <span className="whitespace-pre-wrap break-words">{p}</span>
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            </div>
-                                          ) : null}
-
-                                          {(m.proposal.risks?.length ?? 0) > 0 ? (
-                                            <div className="mt-3">
-                                              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Warnings</div>
-                                              <div className="mt-1 space-y-1">
-                                                {(m.proposal.risks ?? []).slice(0, 6).map((r, idx) => (
-                                                  <div key={idx} className="text-[12px] text-muted whitespace-pre-wrap break-words">
-                                                    {r}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            </div>
-                                          ) : null}
-
-                                          <div className="mt-3">
-                                            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted">Files</div>
-                                            <div className="mt-1 max-h-52 overflow-auto rounded-lg border border-border bg-bg">
-                                              {(m.proposal.files ?? []).map((f, idx) => {
-                                                const badge = f.kind === "delete" ? "D" : f.kind === "rename" ? "R" : f.isNew ? "A" : "M";
-                                                const badgeCls =
-                                                  f.kind === "delete"
-                                                    ? "bg-red-500/15 text-red-300"
-                                                    : f.kind === "rename"
-                                                      ? "bg-sky-500/15 text-sky-300"
-                                                      : "bg-emerald-500/15 text-emerald-300";
-                                                const full = cs?.files.find((x) => x.kind === "write" && x.path === f.path) ?? null;
-                                                const canPreview = Boolean(full && full.kind === "write" && typeof full.before === "string" && typeof full.after === "string");
-                                                const isOpen = Boolean(proposalPreviewOpen[f.path]);
-                                                const FileIcon = fileIconFor(f.path);
-
-                                                return (
-                                                  <div key={`${f.kind}:${f.path}:${idx}`} className="border-b border-border/60 last:border-b-0">
-                                                    <div className="flex items-center justify-between gap-2 px-2 py-1.5">
-                                                      <button
-                                                        type="button"
-                                                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                                                        onClick={() => {
-                                                          if (f.kind === "write") void openFile(f.path);
-                                                        }}
-                                                      >
-                                                        <span className={`flex h-5 w-5 items-center justify-center rounded text-[11px] ${badgeCls}`}>{badge}</span>
-                                                        <FileIcon className="h-4 w-4 text-muted" />
-                                                        <span className="min-w-0 truncate text-[12px] text-text">{f.path}</span>
-                                                      </button>
-
-                                                      <div className="flex shrink-0 items-center gap-1">
-                                                        {f.kind === "write" && canPreview ? (
-                                                          <button
-                                                            type="button"
-                                                            className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]"
-                                                            onClick={() =>
-                                                              setProposalPreviewOpen((prev) => ({ ...prev, [f.path]: !Boolean(prev[f.path]) }))
-                                                            }
-                                                          >
-                                                            <Eye className="mr-1 inline-block h-3.5 w-3.5" />
-                                                            {isOpen ? "Hide" : "Preview"}
-                                                          </button>
-                                                        ) : null}
-
-                                                        {f.kind === "write" && isCurrent && !isApplied ? (
-                                                          <>
-                                                            <button
-                                                              type="button"
-                                                              className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]"
-                                                              disabled={chatApplying}
-                                                              onClick={() => void rejectFileChange(f.path)}
-                                                            >
-                                                              Reject
-                                                            </button>
-                                                            <button
-                                                              type="button"
-                                                              className="ws-btn ws-btn-primary h-6 px-2 text-[11px]"
-                                                              disabled={chatApplying}
-                                                              onClick={() => acceptFileChange(f.path)}
-                                                            >
-                                                              Apply
-                                                            </button>
-                                                          </>
-                                                        ) : null}
-                                                      </div>
-                                                    </div>
-
-                                                    {f.kind === "write" && canPreview ? (
-                                                      <div
-                                                        className={`overflow-hidden transition-[max-height,opacity] duration-300 ${
-                                                          isOpen ? "max-h-[360px] opacity-100" : "max-h-0 opacity-0"
-                                                        }`}
-                                                      >
-                                                        <div className="px-2 pb-2">
-                                                          <div className="rounded-lg border border-border bg-panel">
-                                                            <DiffEditor
-                                                              height="240px"
-                                                              theme={themeName}
-                                                              language={detectLanguage(f.path)}
-                                                              original={full?.before ?? ""}
-                                                              modified={full?.after ?? ""}
-                                                              options={{
-                                                                readOnly: true,
-                                                                renderSideBySide: false,
-                                                                minimap: { enabled: false },
-                                                                scrollBeyondLastLine: false,
-                                                                wordWrap: "on",
-                                                                automaticLayout: true,
-                                                                fontSize: 12,
-                                                                padding: { top: 8, bottom: 8 },
-                                                              }}
-                                                            />
-                                                          </div>
-                                                        </div>
-                                                      </div>
-                                                    ) : null}
-                                                  </div>
-                                                );
-                                              })}
-                                            </div>
-                                          </div>
-
-                                          <div className="mt-3 flex items-center justify-end gap-2">
-                                            <button
-                                              type="button"
-                                              className="ws-btn ws-btn-secondary h-7 px-2"
-                                              disabled={!isCurrent || chatApplying}
-                                              onClick={() => void rejectAllChanges()}
-                                            >
-                                              Discard
-                                            </button>
-                                            <button
-                                              type="button"
-                                              className="ws-btn h-7 border border-accent bg-accent px-2 text-white hover:opacity-90 disabled:opacity-50"
-                                              disabled={!isCurrent || isApplied || chatApplying}
-                                              onClick={() => acceptAllChanges()}
-                                            >
-                                              Apply
-                                            </button>
-                                          </div>
-                                        </>
-                                      );
-                                    })()}
                                   </div>
                                 ) : m.role === "assistant" && m.kind === "run_request" && m.run ? (
                                   <div className="ws-msg ws-msg-anim ws-msg-assistant" data-run-menu-root>

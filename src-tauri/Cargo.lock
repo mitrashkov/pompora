@@ -2944,6 +2944,7 @@ dependencies = [
  "once_cell",
  "portable-pty",
  "rand 0.8.5",
+ "raw-window-handle",
  "reqwest",
  "rfd 0.14.1",
  "ring",
@@ -2958,6 +2959,7 @@ dependencies = [
  "tokio-util",
  "urlencoding",
  "walkdir",
+ "windows",
 ]
 
 [[package]]

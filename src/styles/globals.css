@@ -574,6 +574,143 @@ body {
     animation-delay: 240ms;
   }
 
+  .ws-presence-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 10px;
+  }
+
+  .ws-presence-dots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: rgb(var(--p-text) / 0.72);
+    opacity: 0.35;
+    animation: wsTypingDot 850ms infinite;
+    box-shadow: 0 0 18px rgba(30, 144, 255, 0.08);
+  }
+
+  .ws-presence-dots span:nth-child(2) {
+    animation-delay: 120ms;
+  }
+
+  .ws-presence-dots span:nth-child(3) {
+    animation-delay: 240ms;
+  }
+
+  /* Modern chat card */
+  .ws-chat-card {
+    @apply w-full max-w-[720px] rounded-2xl border border-border/80 bg-panel/80 shadow-xl shadow-black/20 backdrop-blur-sm px-4 py-3;
+  }
+
+  .ws-chat-header {
+    @apply flex items-center gap-3 pb-2;
+  }
+
+  .ws-chat-avatar {
+    @apply flex h-8 w-8 items-center justify-center rounded-full bg-[rgb(var(--p-accent)/0.12)] text-[13px] font-semibold text-text border border-border/80;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  }
+
+  .ws-chat-name {
+    @apply text-[12px] font-semibold text-text;
+  }
+
+  .ws-chat-meta {
+    @apply text-[11px] text-muted;
+  }
+
+  .ws-timeline {
+    @apply relative mt-1 space-y-2;
+  }
+
+  .ws-timeline::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 16px;
+    bottom: 4px;
+    width: 1px;
+    background: rgba(var(--p-border), 0.7);
+  }
+
+  .ws-timeline-item {
+    @apply relative pl-8;
+  }
+
+  .ws-timeline-item::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 9px;
+    width: 7px;
+    height: 7px;
+    border-radius: 9999px;
+    background: rgb(var(--p-accent));
+    box-shadow: 0 0 12px rgba(var(--p-accent), 0.35);
+  }
+
+  .ws-timeline-msg {
+    @apply inline-block rounded-xl bg-[rgb(var(--p-panel2)/0.9)] px-3 py-2 text-[13px] text-text shadow-sm shadow-black/15;
+  }
+
+  .ws-timeline-state {
+    @apply text-[11px] text-muted px-1;
+  }
+
+  .ws-timeline-files {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .ws-file-pill {
+    @apply inline-flex items-center gap-2 rounded-lg border border-border/70 bg-[rgb(var(--p-panel2)/0.7)] px-2.5 py-1 text-[12px] text-text shadow-sm shadow-black/10;
+  }
+
+  .ws-file-pill .ws-diff-add {
+    @apply text-emerald-300;
+  }
+
+  .ws-file-pill .ws-diff-del {
+    @apply text-red-300;
+  }
+
+  .ws-proposal-card {
+    @apply w-full max-w-[720px] rounded-2xl border border-border/80 bg-panel/85 shadow-xl shadow-black/20 backdrop-blur px-4 py-3;
+  }
+
+  .ws-proposal-header {
+    @apply flex items-center justify-between gap-3;
+  }
+
+  .ws-proposal-badges {
+    @apply flex items-center gap-2 text-[11px] text-muted;
+  }
+
+  .ws-badge {
+    @apply inline-flex items-center gap-1 rounded-full border border-border/70 bg-[rgb(var(--p-panel2)/0.7)] px-2 py-1 text-[11px] text-muted;
+  }
+
+  .ws-badge-strong {
+    @apply inline-flex items-center gap-1 rounded-full bg-[rgb(var(--p-accent)/0.18)] px-2 py-1 text-[11px] text-text border border-border/60;
+  }
+
+  .ws-proposal-body {
+    @apply mt-3 grid gap-3 md:grid-cols-2;
+  }
+
+  .ws-proposal-list {
+    @apply space-y-2 text-[12px] text-muted;
+  }
+
+  .ws-proposal-files {
+    @apply mt-2 flex flex-wrap gap-2;
+  }
+
+  .ws-action-row {
+    @apply mt-4 flex flex-wrap items-center gap-2;
+  }
+
   .ws-log-panel {
     @apply w-full max-w-[92%] rounded-xl border border-border bg-panel;
     animation: wsFadeUp 160ms ease-out;
