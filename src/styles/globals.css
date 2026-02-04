@@ -40,6 +40,7 @@
   --p-bg: 26 25 28;
   --p-panel: 34 33 36;
   --p-panel2: 38 37 40;
+  --p-editor-bg: 30 29 32;
   --p-text: 255 255 255;
   --p-muted: 196 196 204;
   --p-border: 46 45 49;
@@ -64,6 +65,7 @@
   --p-bg: 248 250 252;
   --p-panel: 255 255 255;
   --p-panel2: 241 245 249;
+  --p-editor-bg: 255 255 255;
   --p-text: 16 22 32;
   --p-muted: 90 102 120;
   --p-border: 27 27 27;
@@ -83,7 +85,7 @@ body {
   margin: 0;
   background: rgb(var(--p-bg));
   color: rgb(var(--p-text));
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  font-family: "Geist Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overscroll-behavior: none;
@@ -106,6 +108,10 @@ body {
     background: rgb(var(--p-panel2));
   }
 
+  .ws-editor-surface {
+    background: rgb(var(--p-editor-bg));
+  }
+
   .ws-chip {
     @apply inline-flex items-center gap-1 rounded-md border border-border bg-bg px-2 py-0.5 text-[11px] text-muted;
   }
@@ -119,7 +125,7 @@ body {
   }
 
   .ws-brand-title {
-    font-family: "Perfograma", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    font-family: "Perfograma", "Geist Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     letter-spacing: 0.14em;
     text-shadow: 0 0 26px rgba(30, 144, 255, 0.14);
   }

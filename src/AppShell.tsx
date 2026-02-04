@@ -1878,7 +1878,7 @@ export default function AppShell() {
       const t = new XTermTerminal({
         fontSize: 12,
         fontFamily:
-          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+          '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
         cursorBlink: true,
         cursorStyle: "bar",
         cursorWidth: 2,
@@ -5036,7 +5036,92 @@ export default function AppShell() {
     setPaletteIndex(0);
   }, [paletteQuery]);
 
-  const themeName = settings.theme === "light" ? "vs" : "vs-dark";
+  const handleMonacoBeforeMount = useCallback((monaco: typeof import("monaco-editor")) => {
+    monaco.editor.defineTheme("pompora-dark", {
+      base: "vs-dark",
+      inherit: true,
+      rules: [
+        { token: "comment", foreground: "565F89", fontStyle: "italic" },
+        { token: "keyword", foreground: "7AA2F7" },
+        { token: "number", foreground: "FF9E64" },
+        { token: "string", foreground: "9ECE6A" },
+        { token: "type", foreground: "2AC3DE" },
+        { token: "function", foreground: "BB9AF7" },
+        { token: "tag", foreground: "F7768E" },
+        { token: "attribute.name", foreground: "E0AF68" },
+      ],
+      colors: {
+        "editor.background": "#1E1D20",
+        "editor.foreground": "#E6E6EA",
+        "editorLineNumber.foreground": "#5B5863",
+        "editorLineNumber.activeForeground": "#C8C7CF",
+        "editorCursor.foreground": "#60D6AA",
+        "editor.selectionBackground": "#2A4060",
+        "editor.inactiveSelectionBackground": "#242234",
+        "editor.lineHighlightBackground": "#232228",
+        "editorWhitespace.foreground": "#403E46",
+        "editorIndentGuide.background1": "#2C2B31",
+        "editorIndentGuide.activeBackground1": "#3B3A42",
+        "editorBracketMatch.background": "#2F3A32",
+        "editorBracketMatch.border": "#60D6AA",
+        "editor.findMatchBackground": "#3B2F1F",
+        "editor.findMatchHighlightBackground": "#2C261B",
+        "editorHoverWidget.background": "#2A292E",
+        "editorHoverWidget.border": "#2E2D31",
+        "editorSuggestWidget.background": "#2A292E",
+        "editorSuggestWidget.border": "#2E2D31",
+        "editorSuggestWidget.selectedBackground": "#2F3A54",
+        "scrollbarSlider.background": "#FFFFFF14",
+        "scrollbarSlider.hoverBackground": "#FFFFFF22",
+        "scrollbarSlider.activeBackground": "#FFFFFF2F",
+        "minimap.background": "#1E1D20",
+      },
+    });
+
+    monaco.editor.defineTheme("pompora-light", {
+      base: "vs",
+      inherit: true,
+      rules: [
+        { token: "comment", foreground: "6B7280", fontStyle: "italic" },
+        { token: "keyword", foreground: "2563EB" },
+        { token: "number", foreground: "B45309" },
+        { token: "string", foreground: "16A34A" },
+        { token: "type", foreground: "0E7490" },
+        { token: "function", foreground: "7C3AED" },
+        { token: "tag", foreground: "DC2626" },
+        { token: "attribute.name", foreground: "9A3412" },
+      ],
+      colors: {
+        "editor.background": "#FFFFFF",
+        "editor.foreground": "#0F172A",
+        "editorLineNumber.foreground": "#94A3B8",
+        "editorLineNumber.activeForeground": "#0F172A",
+        "editorCursor.foreground": "#059669",
+        "editor.selectionBackground": "#BFDBFE",
+        "editor.inactiveSelectionBackground": "#E2E8F0",
+        "editor.lineHighlightBackground": "#F8FAFC",
+        "editorWhitespace.foreground": "#CBD5E1",
+        "editorIndentGuide.background1": "#E2E8F0",
+        "editorIndentGuide.activeBackground1": "#CBD5E1",
+        "editorBracketMatch.background": "#DCFCE7",
+        "editorBracketMatch.border": "#059669",
+        "editor.findMatchBackground": "#FDE68A",
+        "editor.findMatchHighlightBackground": "#FEF3C7",
+        "editorHoverWidget.background": "#FFFFFF",
+        "editorHoverWidget.border": "#E2E8F0",
+        "editorSuggestWidget.background": "#FFFFFF",
+        "editorSuggestWidget.border": "#E2E8F0",
+        "editorSuggestWidget.selectedBackground": "#EFF6FF",
+        "scrollbarSlider.background": "#0F172A14",
+        "scrollbarSlider.hoverBackground": "#0F172A22",
+        "scrollbarSlider.activeBackground": "#0F172A2F",
+        "minimap.background": "#FFFFFF",
+      },
+    });
+  }, []);
+
+  const themeName = settings.theme === "light" ? "pompora-light" : "pompora-dark";
+  const isCoding = !!activeTab && activeTab.path !== SETTINGS_TAB_PATH;
 
   return (
     <div className="h-full w-full bg-bg text-text">
@@ -6046,9 +6131,9 @@ export default function AppShell() {
             ) : null}
           </aside>
 
-          <main className="min-h-0 min-w-0 overflow-hidden rounded-2xl bg-panel">
+          <main className={`min-h-0 min-w-0 overflow-hidden rounded-2xl ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
             <div className="flex h-full min-h-0 flex-col">
-              <div className="flex h-10 items-center gap-1 bg-panel px-2">
+              <div className={`flex h-10 items-center gap-1 px-2 ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
                 <div className="flex min-w-0 flex-1 items-stretch gap-1 overflow-auto">
                   {tabs.map((t) => (
                     <TabButton
@@ -6132,12 +6217,13 @@ export default function AppShell() {
                 ) : (
                   <>
                     <div className="min-h-0 flex-1 flex flex-col">
-                      <div className="relative min-h-0 flex-1">
+                      <div className="relative min-h-0 flex-1 ws-editor-surface">
                         {activeTabChangeFile ? (
                         <DiffEditor
                           height="100%"
                           theme={themeName}
                           language={activeTab.language}
+                          beforeMount={handleMonacoBeforeMount}
                           original={activeTabChangeFile.before ?? ""}
                           modified={typedEditorText !== null ? typedEditorText : (activeTabChangeFile.after ?? activeTab.content)}
                           onMount={(ed) => {
@@ -6156,10 +6242,15 @@ export default function AppShell() {
                             readOnly: true,
                             renderSideBySide: false,
                             fontSize: 13,
+                            fontFamily:
+                              '"JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                            fontLigatures: true,
                             minimap: { enabled: true },
                             scrollBeyondLastLine: false,
                             wordWrap: "on",
                             automaticLayout: true,
+                            smoothScrolling: true,
+                            cursorSmoothCaretAnimation: "on",
                             padding: { top: 8, bottom: 8 },
                           }}
                         />
@@ -6168,6 +6259,7 @@ export default function AppShell() {
                           height="100%"
                           theme={themeName}
                           language={activeTab.language}
+                          beforeMount={handleMonacoBeforeMount}
                           value={activeTab.content}
                           onChange={(v) => {
                             const next = v ?? "";
@@ -6192,10 +6284,15 @@ export default function AppShell() {
                           }}
                           options={{
                             fontSize: 13,
+                            fontFamily:
+                              '"JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                            fontLigatures: true,
                             minimap: { enabled: true },
                             scrollBeyondLastLine: false,
                             wordWrap: "on",
                             automaticLayout: true,
+                            smoothScrolling: true,
+                            cursorSmoothCaretAnimation: "on",
                             padding: { top: 8, bottom: 8 },
                           }}
                         />

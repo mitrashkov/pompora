@@ -1,8 +1,14 @@
 /** @type {import('tailwindcss').Config} */
+const defaultTheme = require("tailwindcss/defaultTheme");
+
 module.exports = {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["\"Geist Sans\"", ...defaultTheme.fontFamily.sans],
+        mono: ["\"Geist Mono\"", ...defaultTheme.fontFamily.mono],
+      },
       colors: {
         bg: "rgb(var(--p-bg) / <alpha-value>)",
         panel: "rgb(var(--p-panel) / <alpha-value>)",
