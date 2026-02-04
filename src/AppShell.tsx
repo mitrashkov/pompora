@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type ReactElement, type SVGProps } from "react";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { editor as MonacoEditorNS } from "monaco-editor";
 import { listen } from "@tauri-apps/api/event";
@@ -14,8 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  FileCode,
-  FileJson,
   FileText,
   Folder,
   FolderOpen,
@@ -219,7 +217,10 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
       onClick={props.onClick}
       title={props.file}
     >
-      <FileCode className="h-4 w-4 text-muted" />
+      {(() => {
+        const Icon = fileIconFor(props.file);
+        return <Icon className="h-4 w-4" />;
+      })()}
       <span className="max-w-[44ch] truncate">{props.file}</span>
       <span className="ml-1 text-emerald-300">+{props.added}</span>
       <span className="ml-1 text-red-300">-{props.removed}</span>
@@ -1132,6 +1133,7 @@ function MenuCheck(props: { checked?: boolean }) {
 
 function MenuItem(props: {
   label: string;
+  left?: React.ReactNode;
   shortcut?: string;
   right?: React.ReactNode;
   keepOpen?: boolean;
@@ -1153,6 +1155,7 @@ function MenuItem(props: {
       onMouseLeave={props.onMouseLeave}
     >
       <span className="flex min-w-0 items-center gap-2">
+        {props.left ? <span className="shrink-0 text-muted">{props.left}</span> : null}
         <span className="truncate">{props.label}</span>
       </span>
       <span className="flex items-center gap-2 text-[11px] text-muted">
@@ -1195,21 +1198,478 @@ function detectLanguage(path: string): string {
   if (ext === "jsx") return "javascript";
   if (ext === "json") return "json";
   if (ext === "css") return "css";
+  if (ext === "scss" || ext === "sass" || ext === "less") return "css";
   if (ext === "html") return "html";
   if (ext === "md") return "markdown";
+  if (ext === "mdx") return "markdown";
   if (ext === "rs") return "rust";
   if (ext === "toml") return "toml";
   if (ext === "yaml" || ext === "yml") return "yaml";
   return "plaintext";
 }
 
+const __extIconCache = new Map<string, (props: SVGProps<SVGSVGElement>) => ReactElement>();
+
+function __stableHue(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h % 360;
+}
+
+function __makeBadgeIcon(opts: { label: string; bg: string; fg?: string; border?: string }) {
+  const label = String(opts.label || "").toUpperCase();
+  const bg = opts.bg;
+  const fg = opts.fg ?? "#FFFFFF";
+  const border = opts.border ?? "rgba(255,255,255,0.16)";
+  const fontSize = label.length <= 2 ? 9 : label.length === 3 ? 7.5 : 6.4;
+  return function BadgeIcon(props: SVGProps<SVGSVGElement>) {
+    const { className, ...rest } = props;
+    return (
+      <svg
+        viewBox="0 0 24 24"
+        className={className}
+        aria-hidden
+        focusable={false}
+        shapeRendering="geometricPrecision"
+        {...rest}
+      >
+        <rect x="2" y="2" width="20" height="20" rx="5" fill={bg} />
+        <rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke={border} strokeWidth="1" />
+        <text
+          x="12"
+          y="12.25"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial'
+          fontSize={fontSize}
+          fontWeight="800"
+          fill={fg}
+          letterSpacing="0.4"
+        >
+          {label}
+        </text>
+      </svg>
+    );
+  };
+}
+
+const __ReactLogoIcon = function ReactLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#2563EB" />
+      <g fill="none" stroke="#61DAFB" strokeWidth="1.6" strokeLinecap="round">
+        <ellipse cx="12" cy="12" rx="9" ry="3.8" />
+        <ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(60 12 12)" />
+        <ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(120 12 12)" />
+      </g>
+      <circle cx="12" cy="12" r="1.6" fill="#61DAFB" />
+    </svg>
+  );
+};
+
+const __DocTileIcon = function DocTileIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#374151" />
+      <path d="M8 6.8h6.4L17.2 9.6V17a1.7 1.7 0 0 1-1.7 1.7H8A1.7 1.7 0 0 1 6.3 17V8.5A1.7 1.7 0 0 1 8 6.8z" fill="none" stroke="#ffffff" strokeOpacity="0.92" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M14.4 6.8V9.6h2.8" fill="none" stroke="#ffffff" strokeOpacity="0.92" strokeWidth="1.4" strokeLinejoin="round" />
+      <path d="M8.4 12.3h7.2" stroke="#ffffff" strokeOpacity="0.55" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M8.4 14.9h5.8" stroke="#ffffff" strokeOpacity="0.55" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  );
+};
+
+const __SettingsTileIcon = function SettingsTileIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#4B5563" />
+      <path
+        d="M12 7.2l1 .4.8-.8 1.3.7-.2 1.1 1 .7v1.5l-1 .7.2 1.1-1.3.7-.8-.8-1 .4-1-.4-.8.8-1.3-.7.2-1.1-1-.7V9.3l1-.7-.2-1.1 1.3-.7.8.8 1-.4z"
+        fill="none"
+        stroke="#ffffff"
+        strokeOpacity="0.92"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="2.2" fill="none" stroke="#ffffff" strokeOpacity="0.92" strokeWidth="1.4" />
+    </svg>
+  );
+};
+
+const __TsLogoIcon = function TsLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#3178C6" />
+      <text
+        x="12"
+        y="12.3"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial'
+        fontSize="9"
+        fontWeight="800"
+        fill="#ffffff"
+        letterSpacing="0.4"
+      >
+        TS
+      </text>
+    </svg>
+  );
+};
+
+const __JsLogoIcon = function JsLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#F7DF1E" />
+      <text
+        x="12"
+        y="12.3"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial'
+        fontSize="9"
+        fontWeight="900"
+        fill="#111827"
+        letterSpacing="0.3"
+      >
+        JS
+      </text>
+    </svg>
+  );
+};
+
+const __HtmlLogoIcon = function HtmlLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#E34F26" />
+      <path d="M7.2 6.4h9.6l-.9 10.9L12 18.7 8.1 17.3 7.2 6.4z" fill="#ffffff" fillOpacity="0.92" />
+      <path d="M12 17.5l3.2-1.1.7-8.9H12v10z" fill="#ffffff" fillOpacity="0.65" />
+      <text x="12" y="13.2" textAnchor="middle" fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial' fontSize="9.5" fontWeight="900" fill="#E34F26">
+        5
+      </text>
+    </svg>
+  );
+};
+
+const __CssLogoIcon = function CssLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#1572B6" />
+      <path d="M7.2 6.4h9.6l-.9 10.9L12 18.7 8.1 17.3 7.2 6.4z" fill="#ffffff" fillOpacity="0.92" />
+      <path d="M12 17.5l3.2-1.1.7-8.9H12v10z" fill="#ffffff" fillOpacity="0.65" />
+      <text x="12" y="13.2" textAnchor="middle" fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial' fontSize="9.5" fontWeight="900" fill="#1572B6">
+        3
+      </text>
+    </svg>
+  );
+};
+
+const __JsonLogoIcon = function JsonLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#111827" />
+      <path d="M10 7c-1.4 0-2.2 1-2.2 2.4v1.2c0 .7-.3 1.1-.9 1.4.6.3.9.7.9 1.4v1.2c0 1.4.8 2.4 2.2 2.4" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M14 7c1.4 0 2.2 1 2.2 2.4v1.2c0 .7.3 1.1.9 1.4-.6.3-.9.7-.9 1.4v1.2c0 1.4-.8 2.4-2.2 2.4" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="1" fill="#ffffff" />
+    </svg>
+  );
+};
+
+const __MarkdownLogoIcon = function MarkdownLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#111827" />
+      <path d="M6.7 16.2V9.2l2.4 2.8 2.4-2.8v7" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      <path d="M14.2 9.2v4.6" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M16.3 12.4l-2.1 2.4-2.1-2.4" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+};
+
+const __GitLogoIcon = function GitLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#F05032" />
+      <path d="M12 5.4 18.6 12 12 18.6 5.4 12 12 5.4z" fill="#ffffff" fillOpacity="0.14" />
+      <path d="M9.2 12.1l2.2 2.2" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M11.4 10V14.7" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M11.4 10c0-1 1.2-1.2 2-1.2" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="9.2" cy="12.1" r="1.2" fill="#ffffff" />
+      <circle cx="11.4" cy="10" r="1.2" fill="#ffffff" />
+      <circle cx="11.4" cy="14.7" r="1.2" fill="#ffffff" />
+      <circle cx="13.4" cy="8.8" r="1.2" fill="#ffffff" />
+    </svg>
+  );
+};
+
+const __NpmLogoIcon = function NpmLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#CB3837" />
+      <rect x="4" y="8" width="16" height="8" rx="1.5" fill="#ffffff" fillOpacity="0.14" />
+      <text
+        x="12"
+        y="12.3"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial'
+        fontSize="7.8"
+        fontWeight="900"
+        fill="#ffffff"
+        letterSpacing="0.3"
+      >
+        npm
+      </text>
+    </svg>
+  );
+};
+
+const __YarnLogoIcon = function YarnLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#2C8EBB" />
+      <path d="M8.1 8.2c.8 0 1.4.4 1.8 1.1l1.1 2.2 1.1-2.2c.4-.7 1-1.1 1.8-1.1 1.1 0 1.9.8 1.9 1.9 0 .4-.1.8-.3 1.1l-2.6 5.1c-.4.8-1.1 1.3-1.9 1.3s-1.5-.5-1.9-1.3L6.5 11.2c-.2-.3-.3-.7-.3-1.1 0-1.1.8-1.9 1.9-1.9z" fill="#ffffff" fillOpacity="0.95" />
+    </svg>
+  );
+};
+
+const __PnpmLogoIcon = function PnpmLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  const squares = [
+    [6.2, 6.2],
+    [10.2, 6.2],
+    [14.2, 6.2],
+    [6.2, 10.2],
+    [10.2, 10.2],
+    [14.2, 10.2],
+    [6.2, 14.2],
+    [10.2, 14.2],
+    [14.2, 14.2],
+  ] as const;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#111827" />
+      {squares.map(([x, y], i) => (
+        <rect key={i} x={x} y={y} width="3" height="3" rx="0.6" fill="#F69220" />
+      ))}
+    </svg>
+  );
+};
+
+const __ViteLogoIcon = function ViteLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#646CFF" />
+      <path d="M12 5.2 6.2 8 7.4 16.8 12 18.9l4.6-2.1L17.8 8 12 5.2z" fill="#ffffff" fillOpacity="0.18" />
+      <path d="M13.6 6.8 9.6 13.7h3l-1.8 4.5 5.2-7.1h-3L13.6 6.8z" fill="#FFEA83" />
+    </svg>
+  );
+};
+
+const __TailwindLogoIcon = function TailwindLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#0EA5E9" />
+      <path
+        d="M6.2 11.2c1.1-2.6 2.9-3.9 5.4-3.9 3.7 0 4.6 2.8 6.4 3.3 1.2.3 2.3-.1 3.4-1.4-1.1 2.6-2.9 3.9-5.4 3.9-3.7 0-4.6-2.8-6.4-3.3-1.2-.3-2.3.1-3.4 1.4z"
+        fill="#ffffff"
+        fillOpacity="0.95"
+      />
+      <path
+        d="M2.0 14.8c1.1-2.6 2.9-3.9 5.4-3.9 3.7 0 4.6 2.8 6.4 3.3 1.2.3 2.3-.1 3.4-1.4-1.1 2.6-2.9 3.9-5.4 3.9-3.7 0-4.6-2.8-6.4-3.3-1.2-.3-2.3.1-3.4 1.4z"
+        fill="#ffffff"
+        fillOpacity="0.78"
+      />
+    </svg>
+  );
+};
+
+const __TauriLogoIcon = function TauriLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#0B1220" />
+      <path d="M7.4 9.2c1.1-2.3 3.1-3.6 5.5-3.6 2.6 0 4.8 1.6 5.8 4.1" fill="none" stroke="#24C8DB" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M16.6 14.8c-1.1 2.3-3.1 3.6-5.5 3.6-2.6 0-4.8-1.6-5.8-4.1" fill="none" stroke="#FFC131" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="16.8" cy="9.4" r="1.4" fill="#24C8DB" />
+      <circle cx="7.2" cy="14.6" r="1.4" fill="#FFC131" />
+    </svg>
+  );
+};
+
+const __RustLogoIcon = function RustLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  const teeth = Array.from({ length: 12 }, (_, i) => i);
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#B7410E" />
+      {teeth.map((i) => (
+        <rect
+          key={i}
+          x="11.25"
+          y="1.55"
+          width="1.5"
+          height="3.1"
+          rx="0.6"
+          fill="#ffffff"
+          fillOpacity="0.92"
+          transform={`rotate(${i * 30} 12 12)`}
+        />
+      ))}
+      <circle cx="12" cy="12" r="7.6" fill="#ffffff" fillOpacity="0.92" />
+      <circle cx="12" cy="12" r="2.3" fill="#B7410E" fillOpacity="0.95" />
+      <circle cx="12" cy="12" r="5.3" fill="none" stroke="#B7410E" strokeOpacity="0.38" strokeWidth="1.1" />
+    </svg>
+  );
+};
+
+const __DockerLogoIcon = function DockerLogoIcon(props: SVGProps<SVGSVGElement>) {
+  const { className, ...rest } = props;
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
+      <rect x="2" y="2" width="20" height="20" rx="5" fill="#2496ED" />
+      <rect x="5" y="10" width="2.4" height="2.4" rx="0.4" fill="#ffffff" fillOpacity="0.92" />
+      <rect x="7.8" y="10" width="2.4" height="2.4" rx="0.4" fill="#ffffff" fillOpacity="0.92" />
+      <rect x="10.6" y="10" width="2.4" height="2.4" rx="0.4" fill="#ffffff" fillOpacity="0.92" />
+      <rect x="7.8" y="7.2" width="2.4" height="2.4" rx="0.4" fill="#ffffff" fillOpacity="0.92" />
+      <path
+        d="M4.3 13.5h10.9c.4 1.9 1.7 3.1 4.2 3.1 1.2 0 2.2-.3 3.1-1.1-.2 2.8-2.4 5-6.1 5H9.3c-3 0-5-1.7-5-4.8v-2.2z"
+        fill="#ffffff"
+        fillOpacity="0.92"
+      />
+      <path d="M18.6 12.3c.7-.8 1.5-1.2 2.5-1 .2.8 0 1.6-.7 2.4" fill="none" stroke="#ffffff" strokeOpacity="0.9" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="9.1" cy="15.7" r="0.6" fill="#2496ED" fillOpacity="0.95" />
+    </svg>
+  );
+};
+
+const __IconENV = __makeBadgeIcon({ label: "ENV", bg: "#16A34A" });
+const __IconYML = __makeBadgeIcon({ label: "YML", bg: "#CA8A04" });
+const __IconTOML = __makeBadgeIcon({ label: "TOML", bg: "#0EA5E9", fg: "#0B1220", border: "rgba(11,18,32,0.18)" });
+const __IconSH = __makeBadgeIcon({ label: "SH", bg: "#111827" });
+const __IconSQL = __makeBadgeIcon({ label: "SQL", bg: "#7C3AED" });
+const __IconPY = __makeBadgeIcon({ label: "PY", bg: "#3776AB" });
+const __IconGO = __makeBadgeIcon({ label: "GO", bg: "#00ADD8", fg: "#0B1220", border: "rgba(11,18,32,0.18)" });
+const __IconJAVA = __makeBadgeIcon({ label: "JAVA", bg: "#EA580C" });
+const __IconCPP = __makeBadgeIcon({ label: "C++", bg: "#1D4ED8" });
+const __IconC = __makeBadgeIcon({ label: "C", bg: "#2563EB" });
+const __IconESLint = __makeBadgeIcon({ label: "ESL", bg: "#4B32C3" });
+const __IconPrettier = __makeBadgeIcon({ label: "PR", bg: "#F7B93E", fg: "#111827", border: "rgba(17,24,39,0.18)" });
+const __IconLock = __makeBadgeIcon({ label: "LOCK", bg: "#6B7280" });
+
+function __extOrNameBadge(key: string) {
+  const k = String(key || "").trim().toLowerCase();
+  if (!k) return __DocTileIcon;
+  const cached = __extIconCache.get(k);
+  if (cached) return cached;
+  const hue = __stableHue(k);
+  const label = k.length <= 4 ? k.toUpperCase() : k.slice(0, 4).toUpperCase();
+  const bg = `hsl(${hue}, 74%, 44%)`;
+  const Comp = __makeBadgeIcon({ label, bg });
+  __extIconCache.set(k, Comp);
+  return Comp;
+}
+
 function fileIconFor(path: string) {
-  const lower = path.toLowerCase();
-  if (lower.endsWith(".json")) return FileJson;
-  if (lower.endsWith(".ts") || lower.endsWith(".tsx") || lower.endsWith(".js") || lower.endsWith(".jsx")) {
-    return FileCode;
+  const lower = String(path || "").replace(/\\/g, "/").toLowerCase();
+  if (!lower) return __DocTileIcon;
+
+  if (lower.startsWith("pompora:settings")) return __SettingsTileIcon;
+  if (lower.startsWith("pompora:")) return __DocTileIcon;
+  if (lower.startsWith("untitled:")) return __DocTileIcon;
+
+  const name = basename(lower);
+
+  if (name === "readme.md" || name === "license" || name === "license.md" || name === "copying") return __MarkdownLogoIcon;
+  if (name === ".env" || name.startsWith(".env.")) return __IconENV;
+
+  if (name === "package.json" || name === "package-lock.json" || name === "npm-shrinkwrap.json") return __NpmLogoIcon;
+  if (name === "yarn.lock") return __YarnLogoIcon;
+  if (name === "pnpm-lock.yaml") return __PnpmLogoIcon;
+
+  if (name === "cargo.toml" || name === "cargo.lock") return __RustLogoIcon;
+  if (name === "tauri.conf.json" || name === "tauri.conf.json5" || name === "tauri.toml") return __TauriLogoIcon;
+
+  if (name === "vite.config.ts" || name === "vite.config.js" || name === "vite.config.mjs" || name === "vite.config.cjs") return __ViteLogoIcon;
+  if (
+    name === "tailwind.config.js" ||
+    name === "tailwind.config.ts" ||
+    name === "postcss.config.js" ||
+    name === "postcss.config.cjs" ||
+    name === "postcss.config.mjs"
+  )
+    return __TailwindLogoIcon;
+  if (name === "eslint.config.js" || name === "eslint.config.mjs" || name === ".eslintrc" || name === ".eslintrc.json") return __IconESLint;
+  if (name === ".prettierrc" || name === ".prettierrc.json" || name === ".prettierrc.js" || name === "prettier.config.js") return __IconPrettier;
+  if (name === "dockerfile" || name.endsWith(".dockerfile") || name === "docker-compose.yml" || name === "docker-compose.yaml") return __DockerLogoIcon;
+  if (name === ".gitignore" || name === ".gitattributes" || name === ".gitmodules") return __GitLogoIcon;
+
+  const ext = name.includes(".") ? name.split(".").pop() ?? "" : "";
+
+  if (ext === "tsx" || ext === "jsx") return __ReactLogoIcon;
+  if (ext === "ts") return __TsLogoIcon;
+  if (ext === "js" || ext === "mjs" || ext === "cjs") return __JsLogoIcon;
+  if (ext === "html" || ext === "htm") return __HtmlLogoIcon;
+  if (ext === "css" || ext === "scss" || ext === "sass" || ext === "less") return __CssLogoIcon;
+  if (ext === "rs") return __RustLogoIcon;
+  if (ext === "md" || ext === "mdx" || ext === "markdown") return __MarkdownLogoIcon;
+  if (ext === "toml") return __IconTOML;
+  if (ext === "yaml" || ext === "yml") return __IconYML;
+  if (ext === "lock") return __IconLock;
+
+  if (ext === "json" || ext === "jsonc" || ext === "json5") return __JsonLogoIcon;
+  if (ext === "tsconfig" || ext === "tsbuildinfo") return __TsLogoIcon;
+
+  if (ext === "sh" || ext === "bash" || ext === "zsh" || ext === "fish") return __IconSH;
+  if (ext === "ps1" || ext === "bat" || ext === "cmd") return __extOrNameBadge(ext);
+  if (ext === "py") return __IconPY;
+  if (ext === "go") return __IconGO;
+  if (ext === "java") return __IconJAVA;
+  if (ext === "c") return __IconC;
+  if (ext === "cpp" || ext === "cc" || ext === "cxx" || ext === "hpp" || ext === "hh" || ext === "hxx" || ext === "h") return __IconCPP;
+  if (ext === "sql") return __IconSQL;
+
+  if (
+    ext === "png" ||
+    ext === "jpg" ||
+    ext === "jpeg" ||
+    ext === "gif" ||
+    ext === "webp" ||
+    ext === "svg" ||
+    ext === "ico" ||
+    ext === "bmp" ||
+    ext === "tiff" ||
+    ext === "heic" ||
+    ext === "heif"
+  )
+    return __extOrNameBadge(ext);
+
+  if (ext === "zip" || ext === "tar" || ext === "gz" || ext === "bz2" || ext === "xz" || ext === "7z" || ext === "rar") return __extOrNameBadge(ext);
+  if (ext === "mp3" || ext === "wav" || ext === "flac" || ext === "ogg" || ext === "m4a") return __extOrNameBadge(ext);
+  if (ext === "mp4" || ext === "mkv" || ext === "webm" || ext === "mov" || ext === "avi") return __extOrNameBadge(ext);
+  if (ext === "pdf") return __extOrNameBadge(ext);
+
+  if (!ext) {
+    if (name === "makefile") return __extOrNameBadge("mk");
+    if (name === "justfile") return __extOrNameBadge("just");
+    return __extOrNameBadge(name.slice(0, 4));
   }
-  return FileText;
+
+  return __extOrNameBadge(ext);
 }
 
 function statusPillClass(status: "pending" | "running" | "done" | "error"): string {
@@ -5243,7 +5703,10 @@ export default function AppShell() {
                             <MenuSep />
                             <div className="px-2 py-1 text-[11px] font-medium text-muted">Files</div>
                             {recentFiles.length ? (
-                              recentFiles.map((p) => <MenuItem key={p} label={p} onClick={() => void openRecentFile(p)} />)
+                              recentFiles.map((p) => {
+                                const Icon = fileIconFor(p);
+                                return <MenuItem key={p} label={p} left={<Icon className="h-3.5 w-3.5" />} onClick={() => void openRecentFile(p)} />;
+                              })
                             ) : (
                               <div className="px-2 py-1 text-xs text-muted">No recent files</div>
                             )}
@@ -6114,7 +6577,13 @@ export default function AppShell() {
                           }}
                         >
                           <div className="flex items-center justify-between gap-2">
-                            <span className="truncate text-text">{m.path}</span>
+                            <span className="flex min-w-0 items-center gap-2 truncate text-text">
+                              {(() => {
+                                const Icon = fileIconFor(m.path);
+                                return <Icon className="h-4 w-4 shrink-0" />;
+                              })()}
+                              <span className="min-w-0 flex-1 truncate">{m.path}</span>
+                            </span>
                             <span className="shrink-0 text-xs text-muted">{m.line}</span>
                           </div>
                           <div className="mt-1 truncate text-xs text-muted">{m.text}</div>
@@ -7429,7 +7898,13 @@ function QuickOpen(props: {
                 onMouseEnter={() => props.setIndex(i)}
                 onClick={() => props.onPick(p)}
               >
-                <span className="truncate">{p}</span>
+                <span className="flex min-w-0 items-center gap-2 truncate">
+                  {(() => {
+                    const Icon = fileIconFor(p);
+                    return <Icon className="h-4 w-4 shrink-0" />;
+                  })()}
+                  <span className="min-w-0 flex-1 truncate">{p}</span>
+                </span>
               </button>
             ))
           ) : (
@@ -7739,8 +8214,8 @@ function Tree(props: {
               className={`group relative flex w-full items-center gap-2 rounded-none pr-2 py-1 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
               style={{ paddingLeft: indentPx }}
             >
-              <span className="inline-block w-4 shrink-0" />
-              <Icon className="h-4 w-4 shrink-0 text-muted" />
+              <span className="inline-block w-[18px] shrink-0" />
+              <Icon className="h-[18px] w-[18px] shrink-0 text-muted" />
               <input
                 className="min-w-0 flex-1 rounded border border-border bg-bg px-1 py-0.5 text-[13px] text-text outline-none focus-visible:border-accent"
                 autoFocus
@@ -7808,8 +8283,8 @@ function Tree(props: {
               props.onContextMenu({ x: ev.clientX, y: ev.clientY, path: e.path, isDir: false });
             }}
           >
-            <span className="inline-block w-4 shrink-0" />
-            <Icon className="h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+            <span className="inline-block w-[18px] shrink-0" />
+            <Icon className="h-[18px] w-[18px] shrink-0 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text group-hover:brightness-110" />
             <span className="relative top-[0.5px] truncate">{e.name}</span>
           </button>
         );
@@ -7855,6 +8330,7 @@ function TabButton(props: {
   onActivate: () => void;
   onClose: () => void;
 }) {
+  const Icon = fileIconFor(props.tab.path);
   return (
     <div className="relative">
       <div
@@ -7868,6 +8344,7 @@ function TabButton(props: {
           if (e.key === "Enter") props.onActivate();
         }}
       >
+        <Icon className="h-4 w-4 shrink-0" />
         <span className="min-w-0 flex-1 truncate">{props.tab.name}</span>
         {props.tab.isDirty ? <span className="text-[10px] text-accent">●</span> : null}
         <button
@@ -8058,9 +8535,13 @@ function WelcomeScreen(props: {
                       <div className="mt-2 space-y-2">
                         {recentFiles.slice(0, 3).map((p) => {
                           const r = renderFileLabel(p);
+                          const Icon = fileIconFor(p);
                           return (
                             <button key={p} type="button" className="ws-welcome-row" onClick={() => props.onOpenRecentFile?.(p)}>
-                              <span className="min-w-0 flex-1 truncate">{r.name}</span>
+                              <span className="flex min-w-0 flex-1 items-center gap-2 truncate">
+                                <Icon className="h-4 w-4 shrink-0" />
+                                <span className="min-w-0 flex-1 truncate">{r.name}</span>
+                              </span>
                               <span className="ml-3 max-w-[56%] truncate text-[11px] text-muted">{r.detail}</span>
                             </button>
                           );
