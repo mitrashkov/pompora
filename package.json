@@ -10,6 +10,8 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@iconify/icons-simple-icons": "^1.2.74",
+    "@iconify/react": "^5.0.2",
     "@monaco-editor/react": "^4.7.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.4.2",

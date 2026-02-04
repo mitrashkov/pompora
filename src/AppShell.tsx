@@ -1,7 +1,35 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type ReactElement, type SVGProps } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type ReactElement } from "react";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { editor as MonacoEditorNS } from "monaco-editor";
 import { listen } from "@tauri-apps/api/event";
+import { Icon as IconifyIcon } from "@iconify/react";
+import siTypescript from "@iconify/icons-simple-icons/typescript";
+import siJavascript from "@iconify/icons-simple-icons/javascript";
+import siReact from "@iconify/icons-simple-icons/react";
+import siHtml5 from "@iconify/icons-simple-icons/html5";
+import siCss3 from "@iconify/icons-simple-icons/css3";
+import siJson from "@iconify/icons-simple-icons/json";
+import siMarkdown from "@iconify/icons-simple-icons/markdown";
+import siRust from "@iconify/icons-simple-icons/rust";
+import siDocker from "@iconify/icons-simple-icons/docker";
+import siGit from "@iconify/icons-simple-icons/git";
+import siNpm from "@iconify/icons-simple-icons/npm";
+import siYarn from "@iconify/icons-simple-icons/yarn";
+import siPnpm from "@iconify/icons-simple-icons/pnpm";
+import siVite from "@iconify/icons-simple-icons/vite";
+import siTailwindcss from "@iconify/icons-simple-icons/tailwindcss";
+import siTauri from "@iconify/icons-simple-icons/tauri";
+import siDotenv from "@iconify/icons-simple-icons/dotenv";
+import siYaml from "@iconify/icons-simple-icons/yaml";
+import siToml from "@iconify/icons-simple-icons/toml";
+import siEslint from "@iconify/icons-simple-icons/eslint";
+import siPrettier from "@iconify/icons-simple-icons/prettier";
+import siGnubash from "@iconify/icons-simple-icons/gnubash";
+import siPython from "@iconify/icons-simple-icons/python";
+import siGo from "@iconify/icons-simple-icons/go";
+import siJava from "@iconify/icons-simple-icons/openjdk";
+import siC from "@iconify/icons-simple-icons/c";
+import siCplusplus from "@iconify/icons-simple-icons/cplusplus";
 import { Terminal as XTermTerminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import {
@@ -1208,7 +1236,9 @@ function detectLanguage(path: string): string {
   return "plaintext";
 }
 
-const __extIconCache = new Map<string, (props: SVGProps<SVGSVGElement>) => ReactElement>();
+type __FileIcon = (props: { className?: string }) => ReactElement;
+
+const __extIconCache = new Map<string, __FileIcon>();
 
 function __stableHue(s: string): number {
   let h = 0;
@@ -1216,63 +1246,71 @@ function __stableHue(s: string): number {
   return h % 360;
 }
 
-function __makeBadgeIcon(opts: { label: string; bg: string; fg?: string; border?: string }) {
-  const label = String(opts.label || "").toUpperCase();
+function __stableHash(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function __makeIconifyTile(opts: { icon: any; bg: string; fg: string }) {
   const bg = opts.bg;
-  const fg = opts.fg ?? "#FFFFFF";
-  const border = opts.border ?? "rgba(255,255,255,0.16)";
-  const fontSize = label.length <= 2 ? 9 : label.length === 3 ? 7.5 : 6.4;
-  return function BadgeIcon(props: SVGProps<SVGSVGElement>) {
-    const { className, ...rest } = props;
+  const fg = opts.fg;
+  const icon = opts.icon;
+  return function IconifyTile(props: { className?: string }) {
+    const className = props.className ?? "";
     return (
-      <svg
-        viewBox="0 0 24 24"
-        className={className}
-        aria-hidden
-        focusable={false}
-        shapeRendering="geometricPrecision"
-        {...rest}
-      >
-        <rect x="2" y="2" width="20" height="20" rx="5" fill={bg} />
-        <rect x="2" y="2" width="20" height="20" rx="5" fill="none" stroke={border} strokeWidth="1" />
-        <text
-          x="12"
-          y="12.25"
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial'
-          fontSize={fontSize}
-          fontWeight="800"
-          fill={fg}
-          letterSpacing="0.4"
-        >
-          {label}
-        </text>
+      <span className={`${className} inline-flex items-center justify-center rounded-[6px]`} style={{ backgroundColor: bg }} aria-hidden>
+        <IconifyIcon icon={icon} className="h-[72%] w-[72%]" style={{ color: fg }} />
+      </span>
+    );
+  };
+}
+
+function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
+  const bg = opts.bg;
+  const fg = opts.fg ?? "rgba(255,255,255,0.92)";
+  const v = __stableHash(opts.seed) % 4;
+  return function PatternTile(props: { className?: string }) {
+    const className = props.className ?? "";
+    return (
+      <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} shapeRendering="geometricPrecision">
+        <rect x="0" y="0" width="24" height="24" rx="6" fill={bg} />
+        {v === 0 ? <path d="M4 18 18 4" stroke={fg} strokeOpacity="0.18" strokeWidth="2" strokeLinecap="round" /> : null}
+        {v === 1 ? (
+          <g fill={fg} fillOpacity="0.12">
+            <circle cx="7" cy="7" r="1.2" />
+            <circle cx="17" cy="7" r="1.2" />
+            <circle cx="7" cy="17" r="1.2" />
+            <circle cx="17" cy="17" r="1.2" />
+          </g>
+        ) : null}
+        {v === 2 ? <path d="M4.2 8.2h15.6" stroke={fg} strokeOpacity="0.16" strokeWidth="2" strokeLinecap="round" /> : null}
+        {v === 3 ? <path d="M8 20 20 8" stroke={fg} strokeOpacity="0.16" strokeWidth="2" strokeLinecap="round" /> : null}
+        <path
+          d="M8 6.7h7l2.3 2.3V17a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8.7a2 2 0 0 1 2-2z"
+          fill="none"
+          stroke={fg}
+          strokeWidth="1.35"
+          strokeLinejoin="round"
+        />
+        <path d="M15 6.7V9h2.3" fill="none" stroke={fg} strokeWidth="1.35" strokeLinejoin="round" />
+        <path d="M8.6 12.2h7" stroke={fg} strokeOpacity="0.55" strokeWidth="1.1" strokeLinecap="round" />
+        <path d="M8.6 14.9h5.2" stroke={fg} strokeOpacity="0.55" strokeWidth="1.1" strokeLinecap="round" />
       </svg>
     );
   };
 }
 
-const __ReactLogoIcon = function ReactLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#2563EB" />
-      <g fill="none" stroke="#61DAFB" strokeWidth="1.6" strokeLinecap="round">
-        <ellipse cx="12" cy="12" rx="9" ry="3.8" />
-        <ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(60 12 12)" />
-        <ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(120 12 12)" />
-      </g>
-      <circle cx="12" cy="12" r="1.6" fill="#61DAFB" />
-    </svg>
-  );
-};
+const __ReactLogoIcon = __makeIconifyTile({ icon: siReact, bg: "#111827", fg: "#61DAFB" });
 
-const __DocTileIcon = function DocTileIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
+const __DocTileIcon = function DocTileIcon(props: { className?: string }) {
+  const { className } = props;
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#374151" />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false}>
+      <rect x="0" y="0" width="24" height="24" rx="6" fill="#374151" />
       <path d="M8 6.8h6.4L17.2 9.6V17a1.7 1.7 0 0 1-1.7 1.7H8A1.7 1.7 0 0 1 6.3 17V8.5A1.7 1.7 0 0 1 8 6.8z" fill="none" stroke="#ffffff" strokeOpacity="0.92" strokeWidth="1.4" strokeLinejoin="round" />
       <path d="M14.4 6.8V9.6h2.8" fill="none" stroke="#ffffff" strokeOpacity="0.92" strokeWidth="1.4" strokeLinejoin="round" />
       <path d="M8.4 12.3h7.2" stroke="#ffffff" strokeOpacity="0.55" strokeWidth="1.2" strokeLinecap="round" />
@@ -1281,11 +1319,11 @@ const __DocTileIcon = function DocTileIcon(props: SVGProps<SVGSVGElement>) {
   );
 };
 
-const __SettingsTileIcon = function SettingsTileIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
+const __SettingsTileIcon = function SettingsTileIcon(props: { className?: string }) {
+  const { className } = props;
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#4B5563" />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false}>
+      <rect x="0" y="0" width="24" height="24" rx="6" fill="#4B5563" />
       <path
         d="M12 7.2l1 .4.8-.8 1.3.7-.2 1.1 1 .7v1.5l-1 .7.2 1.1-1.3.7-.8-.8-1 .4-1-.4-.8.8-1.3-.7.2-1.1-1-.7V9.3l1-.7-.2-1.1 1.3-.7.8.8 1-.4z"
         fill="none"
@@ -1299,277 +1337,35 @@ const __SettingsTileIcon = function SettingsTileIcon(props: SVGProps<SVGSVGEleme
   );
 };
 
-const __TsLogoIcon = function TsLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#3178C6" />
-      <text
-        x="12"
-        y="12.3"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial'
-        fontSize="9"
-        fontWeight="800"
-        fill="#ffffff"
-        letterSpacing="0.4"
-      >
-        TS
-      </text>
-    </svg>
-  );
-};
+const __TsLogoIcon = __makeIconifyTile({ icon: siTypescript, bg: "#3178C6", fg: "#ffffff" });
+const __JsLogoIcon = __makeIconifyTile({ icon: siJavascript, bg: "#F7DF1E", fg: "#111827" });
+const __HtmlLogoIcon = __makeIconifyTile({ icon: siHtml5, bg: "#E34F26", fg: "#ffffff" });
+const __CssLogoIcon = __makeIconifyTile({ icon: siCss3, bg: "#1572B6", fg: "#ffffff" });
+const __JsonLogoIcon = __makeIconifyTile({ icon: siJson, bg: "#111827", fg: "#ffffff" });
+const __MarkdownLogoIcon = __makeIconifyTile({ icon: siMarkdown, bg: "#111827", fg: "#ffffff" });
+const __GitLogoIcon = __makeIconifyTile({ icon: siGit, bg: "#F05032", fg: "#ffffff" });
+const __NpmLogoIcon = __makeIconifyTile({ icon: siNpm, bg: "#CB3837", fg: "#ffffff" });
+const __YarnLogoIcon = __makeIconifyTile({ icon: siYarn, bg: "#2C8EBB", fg: "#ffffff" });
+const __PnpmLogoIcon = __makeIconifyTile({ icon: siPnpm, bg: "#111827", fg: "#F69220" });
+const __ViteLogoIcon = __makeIconifyTile({ icon: siVite, bg: "#646CFF", fg: "#FFEA83" });
+const __TailwindLogoIcon = __makeIconifyTile({ icon: siTailwindcss, bg: "#0EA5E9", fg: "#ffffff" });
+const __TauriLogoIcon = __makeIconifyTile({ icon: siTauri, bg: "#0B1220", fg: "#ffffff" });
+const __RustLogoIcon = __makeIconifyTile({ icon: siRust, bg: "#B7410E", fg: "#ffffff" });
+const __DockerLogoIcon = __makeIconifyTile({ icon: siDocker, bg: "#2496ED", fg: "#ffffff" });
 
-const __JsLogoIcon = function JsLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#F7DF1E" />
-      <text
-        x="12"
-        y="12.3"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial'
-        fontSize="9"
-        fontWeight="900"
-        fill="#111827"
-        letterSpacing="0.3"
-      >
-        JS
-      </text>
-    </svg>
-  );
-};
-
-const __HtmlLogoIcon = function HtmlLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#E34F26" />
-      <path d="M7.2 6.4h9.6l-.9 10.9L12 18.7 8.1 17.3 7.2 6.4z" fill="#ffffff" fillOpacity="0.92" />
-      <path d="M12 17.5l3.2-1.1.7-8.9H12v10z" fill="#ffffff" fillOpacity="0.65" />
-      <text x="12" y="13.2" textAnchor="middle" fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial' fontSize="9.5" fontWeight="900" fill="#E34F26">
-        5
-      </text>
-    </svg>
-  );
-};
-
-const __CssLogoIcon = function CssLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#1572B6" />
-      <path d="M7.2 6.4h9.6l-.9 10.9L12 18.7 8.1 17.3 7.2 6.4z" fill="#ffffff" fillOpacity="0.92" />
-      <path d="M12 17.5l3.2-1.1.7-8.9H12v10z" fill="#ffffff" fillOpacity="0.65" />
-      <text x="12" y="13.2" textAnchor="middle" fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial' fontSize="9.5" fontWeight="900" fill="#1572B6">
-        3
-      </text>
-    </svg>
-  );
-};
-
-const __JsonLogoIcon = function JsonLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#111827" />
-      <path d="M10 7c-1.4 0-2.2 1-2.2 2.4v1.2c0 .7-.3 1.1-.9 1.4.6.3.9.7.9 1.4v1.2c0 1.4.8 2.4 2.2 2.4" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M14 7c1.4 0 2.2 1 2.2 2.4v1.2c0 .7.3 1.1.9 1.4-.6.3-.9.7-.9 1.4v1.2c0 1.4-.8 2.4-2.2 2.4" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-      <circle cx="12" cy="12" r="1" fill="#ffffff" />
-    </svg>
-  );
-};
-
-const __MarkdownLogoIcon = function MarkdownLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#111827" />
-      <path d="M6.7 16.2V9.2l2.4 2.8 2.4-2.8v7" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
-      <path d="M14.2 9.2v4.6" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M16.3 12.4l-2.1 2.4-2.1-2.4" fill="none" stroke="#ffffff" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
-  );
-};
-
-const __GitLogoIcon = function GitLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#F05032" />
-      <path d="M12 5.4 18.6 12 12 18.6 5.4 12 12 5.4z" fill="#ffffff" fillOpacity="0.14" />
-      <path d="M9.2 12.1l2.2 2.2" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M11.4 10V14.7" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M11.4 10c0-1 1.2-1.2 2-1.2" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" />
-      <circle cx="9.2" cy="12.1" r="1.2" fill="#ffffff" />
-      <circle cx="11.4" cy="10" r="1.2" fill="#ffffff" />
-      <circle cx="11.4" cy="14.7" r="1.2" fill="#ffffff" />
-      <circle cx="13.4" cy="8.8" r="1.2" fill="#ffffff" />
-    </svg>
-  );
-};
-
-const __NpmLogoIcon = function NpmLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#CB3837" />
-      <rect x="4" y="8" width="16" height="8" rx="1.5" fill="#ffffff" fillOpacity="0.14" />
-      <text
-        x="12"
-        y="12.3"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontFamily='ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial'
-        fontSize="7.8"
-        fontWeight="900"
-        fill="#ffffff"
-        letterSpacing="0.3"
-      >
-        npm
-      </text>
-    </svg>
-  );
-};
-
-const __YarnLogoIcon = function YarnLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#2C8EBB" />
-      <path d="M8.1 8.2c.8 0 1.4.4 1.8 1.1l1.1 2.2 1.1-2.2c.4-.7 1-1.1 1.8-1.1 1.1 0 1.9.8 1.9 1.9 0 .4-.1.8-.3 1.1l-2.6 5.1c-.4.8-1.1 1.3-1.9 1.3s-1.5-.5-1.9-1.3L6.5 11.2c-.2-.3-.3-.7-.3-1.1 0-1.1.8-1.9 1.9-1.9z" fill="#ffffff" fillOpacity="0.95" />
-    </svg>
-  );
-};
-
-const __PnpmLogoIcon = function PnpmLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  const squares = [
-    [6.2, 6.2],
-    [10.2, 6.2],
-    [14.2, 6.2],
-    [6.2, 10.2],
-    [10.2, 10.2],
-    [14.2, 10.2],
-    [6.2, 14.2],
-    [10.2, 14.2],
-    [14.2, 14.2],
-  ] as const;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#111827" />
-      {squares.map(([x, y], i) => (
-        <rect key={i} x={x} y={y} width="3" height="3" rx="0.6" fill="#F69220" />
-      ))}
-    </svg>
-  );
-};
-
-const __ViteLogoIcon = function ViteLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#646CFF" />
-      <path d="M12 5.2 6.2 8 7.4 16.8 12 18.9l4.6-2.1L17.8 8 12 5.2z" fill="#ffffff" fillOpacity="0.18" />
-      <path d="M13.6 6.8 9.6 13.7h3l-1.8 4.5 5.2-7.1h-3L13.6 6.8z" fill="#FFEA83" />
-    </svg>
-  );
-};
-
-const __TailwindLogoIcon = function TailwindLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#0EA5E9" />
-      <path
-        d="M6.2 11.2c1.1-2.6 2.9-3.9 5.4-3.9 3.7 0 4.6 2.8 6.4 3.3 1.2.3 2.3-.1 3.4-1.4-1.1 2.6-2.9 3.9-5.4 3.9-3.7 0-4.6-2.8-6.4-3.3-1.2-.3-2.3.1-3.4 1.4z"
-        fill="#ffffff"
-        fillOpacity="0.95"
-      />
-      <path
-        d="M2.0 14.8c1.1-2.6 2.9-3.9 5.4-3.9 3.7 0 4.6 2.8 6.4 3.3 1.2.3 2.3-.1 3.4-1.4-1.1 2.6-2.9 3.9-5.4 3.9-3.7 0-4.6-2.8-6.4-3.3-1.2-.3-2.3.1-3.4 1.4z"
-        fill="#ffffff"
-        fillOpacity="0.78"
-      />
-    </svg>
-  );
-};
-
-const __TauriLogoIcon = function TauriLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#0B1220" />
-      <path d="M7.4 9.2c1.1-2.3 3.1-3.6 5.5-3.6 2.6 0 4.8 1.6 5.8 4.1" fill="none" stroke="#24C8DB" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M16.6 14.8c-1.1 2.3-3.1 3.6-5.5 3.6-2.6 0-4.8-1.6-5.8-4.1" fill="none" stroke="#FFC131" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="16.8" cy="9.4" r="1.4" fill="#24C8DB" />
-      <circle cx="7.2" cy="14.6" r="1.4" fill="#FFC131" />
-    </svg>
-  );
-};
-
-const __RustLogoIcon = function RustLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  const teeth = Array.from({ length: 12 }, (_, i) => i);
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#B7410E" />
-      {teeth.map((i) => (
-        <rect
-          key={i}
-          x="11.25"
-          y="1.55"
-          width="1.5"
-          height="3.1"
-          rx="0.6"
-          fill="#ffffff"
-          fillOpacity="0.92"
-          transform={`rotate(${i * 30} 12 12)`}
-        />
-      ))}
-      <circle cx="12" cy="12" r="7.6" fill="#ffffff" fillOpacity="0.92" />
-      <circle cx="12" cy="12" r="2.3" fill="#B7410E" fillOpacity="0.95" />
-      <circle cx="12" cy="12" r="5.3" fill="none" stroke="#B7410E" strokeOpacity="0.38" strokeWidth="1.1" />
-    </svg>
-  );
-};
-
-const __DockerLogoIcon = function DockerLogoIcon(props: SVGProps<SVGSVGElement>) {
-  const { className, ...rest } = props;
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} {...rest}>
-      <rect x="2" y="2" width="20" height="20" rx="5" fill="#2496ED" />
-      <rect x="5" y="10" width="2.4" height="2.4" rx="0.4" fill="#ffffff" fillOpacity="0.92" />
-      <rect x="7.8" y="10" width="2.4" height="2.4" rx="0.4" fill="#ffffff" fillOpacity="0.92" />
-      <rect x="10.6" y="10" width="2.4" height="2.4" rx="0.4" fill="#ffffff" fillOpacity="0.92" />
-      <rect x="7.8" y="7.2" width="2.4" height="2.4" rx="0.4" fill="#ffffff" fillOpacity="0.92" />
-      <path
-        d="M4.3 13.5h10.9c.4 1.9 1.7 3.1 4.2 3.1 1.2 0 2.2-.3 3.1-1.1-.2 2.8-2.4 5-6.1 5H9.3c-3 0-5-1.7-5-4.8v-2.2z"
-        fill="#ffffff"
-        fillOpacity="0.92"
-      />
-      <path d="M18.6 12.3c.7-.8 1.5-1.2 2.5-1 .2.8 0 1.6-.7 2.4" fill="none" stroke="#ffffff" strokeOpacity="0.9" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="9.1" cy="15.7" r="0.6" fill="#2496ED" fillOpacity="0.95" />
-    </svg>
-  );
-};
-
-const __IconENV = __makeBadgeIcon({ label: "ENV", bg: "#16A34A" });
-const __IconYML = __makeBadgeIcon({ label: "YML", bg: "#CA8A04" });
-const __IconTOML = __makeBadgeIcon({ label: "TOML", bg: "#0EA5E9", fg: "#0B1220", border: "rgba(11,18,32,0.18)" });
-const __IconSH = __makeBadgeIcon({ label: "SH", bg: "#111827" });
-const __IconSQL = __makeBadgeIcon({ label: "SQL", bg: "#7C3AED" });
-const __IconPY = __makeBadgeIcon({ label: "PY", bg: "#3776AB" });
-const __IconGO = __makeBadgeIcon({ label: "GO", bg: "#00ADD8", fg: "#0B1220", border: "rgba(11,18,32,0.18)" });
-const __IconJAVA = __makeBadgeIcon({ label: "JAVA", bg: "#EA580C" });
-const __IconCPP = __makeBadgeIcon({ label: "C++", bg: "#1D4ED8" });
-const __IconC = __makeBadgeIcon({ label: "C", bg: "#2563EB" });
-const __IconESLint = __makeBadgeIcon({ label: "ESL", bg: "#4B32C3" });
-const __IconPrettier = __makeBadgeIcon({ label: "PR", bg: "#F7B93E", fg: "#111827", border: "rgba(17,24,39,0.18)" });
-const __IconLock = __makeBadgeIcon({ label: "LOCK", bg: "#6B7280" });
+const __IconENV = __makeIconifyTile({ icon: siDotenv, bg: "#16A34A", fg: "#ffffff" });
+const __IconYML = __makeIconifyTile({ icon: siYaml, bg: "#CA8A04", fg: "#ffffff" });
+const __IconTOML = __makeIconifyTile({ icon: siToml, bg: "#0EA5E9", fg: "#0B1220" });
+const __IconSH = __makeIconifyTile({ icon: siGnubash, bg: "#111827", fg: "#ffffff" });
+const __IconSQL = __makePatternTile({ bg: "#7C3AED", seed: "sql" });
+const __IconPY = __makeIconifyTile({ icon: siPython, bg: "#3776AB", fg: "#ffffff" });
+const __IconGO = __makeIconifyTile({ icon: siGo, bg: "#00ADD8", fg: "#0B1220" });
+const __IconJAVA = __makeIconifyTile({ icon: siJava, bg: "#EA580C", fg: "#ffffff" });
+const __IconCPP = __makeIconifyTile({ icon: siCplusplus, bg: "#1D4ED8", fg: "#ffffff" });
+const __IconC = __makeIconifyTile({ icon: siC, bg: "#2563EB", fg: "#ffffff" });
+const __IconESLint = __makeIconifyTile({ icon: siEslint, bg: "#4B32C3", fg: "#ffffff" });
+const __IconPrettier = __makeIconifyTile({ icon: siPrettier, bg: "#F7B93E", fg: "#111827" });
+const __IconLock = __makePatternTile({ bg: "#6B7280", seed: "lock" });
 
 function __extOrNameBadge(key: string) {
   const k = String(key || "").trim().toLowerCase();
@@ -1577,9 +1373,8 @@ function __extOrNameBadge(key: string) {
   const cached = __extIconCache.get(k);
   if (cached) return cached;
   const hue = __stableHue(k);
-  const label = k.length <= 4 ? k.toUpperCase() : k.slice(0, 4).toUpperCase();
   const bg = `hsl(${hue}, 74%, 44%)`;
-  const Comp = __makeBadgeIcon({ label, bg });
+  const Comp = __makePatternTile({ bg, seed: k });
   __extIconCache.set(k, Comp);
   return Comp;
 }
@@ -8149,7 +7944,7 @@ function Tree(props: {
         const isSelected = props.selectedPath === e.path;
         const rowCls = isSelected
           ? "bg-[rgb(var(--p-panel2))] text-text shadow-sm"
-          : "text-muted hover:bg-panel hover:text-text hover:translate-x-[1px] hover:-translate-y-[0.5px]";
+          : "text-muted hover:bg-panel hover:text-text";
         if (e.is_dir) {
           const isExpanded = props.expandedDirs.has(e.path);
           const children = props.explorer[e.path] ?? [];
@@ -8174,9 +7969,9 @@ function Tree(props: {
                   className={`h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-hover:text-text ${isExpanded ? "rotate-90" : ""}`}
                 />
                 {isRoot ? (
-                  <FolderOpen className="h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+                  <FolderOpen className="h-4 w-4 shrink-0 text-muted group-hover:text-text" />
                 ) : (
-                  <Folder className="h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text" />
+                  <Folder className="h-4 w-4 shrink-0 text-muted group-hover:text-text" />
                 )}
                 <span className={`relative top-[0.5px] truncate ${isRoot ? "font-medium text-text" : ""}`}>{e.name}</span>
               </button>
@@ -8284,7 +8079,7 @@ function Tree(props: {
             }}
           >
             <span className="inline-block w-[18px] shrink-0" />
-            <Icon className="h-[18px] w-[18px] shrink-0 text-muted transition-transform duration-150 group-hover:scale-[1.03] group-hover:text-text group-hover:brightness-110" />
+            <Icon className="h-[18px] w-[18px] shrink-0 text-muted group-hover:text-text" />
             <span className="relative top-[0.5px] truncate">{e.name}</span>
           </button>
         );
