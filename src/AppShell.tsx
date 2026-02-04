@@ -5124,7 +5124,7 @@ export default function AppShell() {
                     File
                   </button>
                   {isFileMenuOpen ? (
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="New Text File" shortcut="Ctrl+N" onClick={() => newUntitledFile()} />
                       <MenuItem label="New File" shortcut="Ctrl+Alt+Win+N" onClick={() => newUntitledFile()} />
                       <MenuItem label="New Window" shortcut="Ctrl+Shift+N" onClick={() => openNewWindow()} />
@@ -5142,7 +5142,7 @@ export default function AppShell() {
                         />
                         {isFileMenuRecentOpen ? (
                           <div
-                            className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                            className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
                             onMouseEnter={() => setIsFileMenuRecentOpen(true)}
                             onMouseLeave={() => setIsFileMenuRecentOpen(false)}
                           >
@@ -5224,7 +5224,7 @@ export default function AppShell() {
                     Edit
                   </button>
                   {isEditMenuOpen ? (
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="Undo" shortcut="Ctrl+Z" onClick={() => notify({ kind: "info", title: "Undo", message: "Coming next." })} />
                       <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => notify({ kind: "info", title: "Redo", message: "Coming next." })} />
                       <MenuSep />
@@ -5302,7 +5302,7 @@ export default function AppShell() {
                     Selection
                   </button>
                   {isSelectionMenuOpen ? (
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => notify({ kind: "info", title: "Select All", message: "Coming next." })} />
                       <MenuItem
                         label="Expand Selection"
@@ -5413,7 +5413,7 @@ export default function AppShell() {
                   </button>
                   {isViewMenuOpen ? (
                     <div
-                      className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                      className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
                       onMouseLeave={() => {
                         setViewMenuSub(null);
                         setViewAppearanceSub(null);
@@ -5432,7 +5432,7 @@ export default function AppShell() {
                           onClick={() => setViewMenuSub((v) => (v === "appearance" ? null : "appearance"))}
                         />
                         {viewMenuSub === "appearance" ? (
-                          <div className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                          <div className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                             <MenuItem label="Full Screen" shortcut="F11" onClick={() => notify({ kind: "info", title: "Full Screen", message: "Coming next." })} />
                             <MenuItem
                               label="Zen Mode"
@@ -5464,7 +5464,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "activityBarPosition" ? null : "activityBarPosition"))}
                               />
                               {viewAppearanceSub === "activityBarPosition" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
@@ -5482,7 +5482,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "secondaryActivityBarPosition" ? null : "secondaryActivityBarPosition"))}
                               />
                               {viewAppearanceSub === "secondaryActivityBarPosition" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
@@ -5500,7 +5500,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "panelPosition" ? null : "panelPosition"))}
                               />
                               {viewAppearanceSub === "panelPosition" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
                                   <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
                                   <MenuItem label="Right" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
@@ -5518,7 +5518,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "alignPanel" ? null : "alignPanel"))}
                               />
                               {viewAppearanceSub === "alignPanel" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Center" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
                                   <MenuItem label="Justify" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
                                   <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
@@ -5536,7 +5536,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "tabBar" ? null : "tabBar"))}
                               />
                               {viewAppearanceSub === "tabBar" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Multiple Tabs" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
                                   <MenuItem label="Single Tabs" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
@@ -5553,7 +5553,7 @@ export default function AppShell() {
                                 onClick={() => setViewAppearanceSub((v) => (v === "editorActionsPosition" ? null : "editorActionsPosition"))}
                               />
                               {viewAppearanceSub === "editorActionsPosition" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Tab Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
                                   <MenuItem label="Title Bar" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
@@ -5594,7 +5594,7 @@ export default function AppShell() {
                           onClick={() => setViewMenuSub((v) => (v === "editorLayout" ? null : "editorLayout"))}
                         />
                         {viewMenuSub === "editorLayout" ? (
-                          <div className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                          <div className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                             <MenuItem
                               label="Split Up"
                               shortcut="Ctrl+K Ctrl+\\"
@@ -5706,7 +5706,7 @@ export default function AppShell() {
                     Run
                   </button>
                   {isRunMenuOpen ? (
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-72 overflow-hidden rounded-xl bg-panel p-1 shadow">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-72 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow">
                       <MenuItem label="Start Debugging" shortcut="F5" onClick={() => notify({ kind: "info", title: "Start Debugging", message: "Coming next." })} />
                       <MenuItem
                         label="Run Without Debugging"
@@ -5758,7 +5758,7 @@ export default function AppShell() {
                     Terminal
                   </button>
                   {isTerminalMenuOpen ? (
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-80 overflow-hidden rounded-xl bg-panel p-1 shadow">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-80 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow">
                       <MenuItem
                         label="New Terminal"
                         shortcut="Ctrl+Shift+`"
@@ -5855,7 +5855,7 @@ export default function AppShell() {
                   </button>
 
                   {isAccountMenuOpen ? (
-                    <div className="absolute right-0 top-full z-[9999] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute right-0 top-full z-[9999] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <div className="px-3 py-2">
                         <div className="text-xs font-semibold text-text">{authProfile.email || "Account"}</div>
                         <div className="mt-0.5 text-[11px] text-muted">Plan: {authCredits?.plan || authProfile.plan || "starter"}</div>
