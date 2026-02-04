@@ -8152,13 +8152,6 @@ function TabButton(props: {
         >
           <X className="h-3.5 w-3.5" />
         </button>
-
-        <span
-          aria-hidden
-          className={`absolute bottom-0 left-2 right-2 h-px rounded bg-accent transition-opacity ${
-            props.active ? "opacity-100" : "opacity-0"
-          }`}
-        />
       </div>
     </div>
   );
