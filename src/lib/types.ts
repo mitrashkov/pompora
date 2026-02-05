@@ -35,6 +35,11 @@ export type EditorTab = {
   language: string;
   content: string;
   isDirty: boolean;
+  kind?: "text" | "image";
+  image?: {
+    mime: string;
+    url: string;
+  };
 };
 
 export type AuthProfile = {

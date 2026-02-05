@@ -14,6 +14,12 @@ pub struct DirEntryInfo {
     pub is_dir: bool,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileBase64 {
+    pub mime: String,
+    pub base64: String,
+}
+
 fn workspace_root_path() -> Result<PathBuf> {
     let s = settings::load()?;
     let root = s
@@ -153,6 +159,37 @@ pub fn workspace_list_files(max_files: usize) -> Result<Vec<String>> {
 pub fn workspace_read_file(rel_path: &str) -> Result<String> {
     let path = abs_path(rel_path, false)?;
     fs::read_to_string(&path).with_context(|| format!("read file: {}", path.display()))
+}
+
+fn guess_mime_from_path(rel_path: &str) -> &'static str {
+    let lower = rel_path.trim().replace('\\', "/").to_lowercase();
+    let name = lower.rsplit('/').next().unwrap_or("");
+    let ext = name.rsplit('.').next().unwrap_or("");
+
+    match ext {
+        "png" => "image/png",
+        "jpg" | "jpeg" | "jfif" => "image/jpeg",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "bmp" => "image/bmp",
+        "ico" => "image/x-icon",
+        "tif" | "tiff" => "image/tiff",
+        "svg" => "image/svg+xml",
+        "avif" => "image/avif",
+        "heic" => "image/heic",
+        "heif" => "image/heif",
+        _ => "application/octet-stream",
+    }
+}
+
+pub fn workspace_read_file_base64(rel_path: &str) -> Result<FileBase64> {
+    use base64::Engine as _;
+
+    let path = abs_path(rel_path, false)?;
+    let bytes = fs::read(&path).with_context(|| format!("read file bytes: {}", path.display()))?;
+    let mime = guess_mime_from_path(rel_path).to_string();
+    let base64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    Ok(FileBase64 { mime, base64 })
 }
 
 pub fn workspace_write_file(rel_path: &str, contents: &str) -> Result<()> {

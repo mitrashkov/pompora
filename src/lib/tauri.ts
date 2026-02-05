@@ -123,6 +123,15 @@ export async function workspaceReadFile(relPath: string): Promise<string> {
   return invoke<string>("workspace_read_file", { relPath });
 }
 
+export type FileBase64 = {
+  mime: string;
+  base64: string;
+};
+
+export async function workspaceReadFileBase64(relPath: string): Promise<FileBase64> {
+  return invoke<FileBase64>("workspace_read_file_base64", { relPath });
+}
+
 export async function workspaceWriteFile(relPath: string, contents: string): Promise<void> {
   await invoke("workspace_write_file", { relPath, contents });
 }

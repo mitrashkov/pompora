@@ -84,6 +84,11 @@ description = "Allows reading a file within the current workspace."
 commands.allow = ["workspace_read_file"]
 
 [[permission]]
+identifier = "allow-workspace-read-file-base64"
+description = "Allows reading a file within the current workspace as base64 (binary-safe)."
+commands.allow = ["workspace_read_file_base64"]
+
+[[permission]]
 identifier = "allow-workspace-write-file"
 description = "Allows writing a file within the current workspace."
 commands.allow = ["workspace_write_file"]
@@ -169,6 +174,7 @@ permissions = [
   "allow-workspace-list-dir",
   "allow-workspace-list-files",
   "allow-workspace-read-file",
+  "allow-workspace-read-file-base64",
   "allow-workspace-write-file",
   "allow-workspace-create-dir",
   "allow-workspace-delete",

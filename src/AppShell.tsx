@@ -83,6 +83,7 @@ import {
   workspaceListDir,
   workspaceListFiles,
   workspaceReadFile,
+  workspaceReadFileBase64,
   workspaceWriteFile,
   workspaceCreateDir,
   workspaceDelete,
@@ -190,6 +191,109 @@ type AiEventInput =
   | { type: "message"; content: string }
   | { type: "state"; content: string; hidden?: boolean; ttlMs?: number }
   | { type: "file_edit"; file: string; added: number; removed: number };
+
+function ImageTabView(props: {
+  tab: EditorTab;
+  onFit: () => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onReset: () => void;
+  onOpenAsText: () => void;
+  onRefresh: () => void;
+  onOpenExternal: () => void;
+  zoomLabel: string;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  onWheel: (e: React.WheelEvent) => void;
+  onPointerDown: (e: React.PointerEvent) => void;
+  onPointerMove: (e: React.PointerEvent) => void;
+  onPointerUp: (e: React.PointerEvent) => void;
+  onPointerCancel: (e: React.PointerEvent) => void;
+  transform: string;
+}) {
+  const url = props.tab.image?.url ?? "";
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setErr(null);
+  }, [props.tab.path, props.tab.image?.url]);
+
+  return (
+    <div className="absolute inset-0">
+      <div
+        ref={props.containerRef}
+        className="absolute inset-0 overflow-hidden bg-bg"
+        onWheel={props.onWheel}
+        onPointerDown={props.onPointerDown}
+        onPointerMove={props.onPointerMove}
+        onPointerUp={props.onPointerUp}
+        onPointerCancel={props.onPointerCancel}
+        style={{ touchAction: "none" }}
+      >
+        <div className="relative h-full w-full">
+          <div className="h-full w-full select-none" style={{ transform: props.transform, transformOrigin: "0 0" }}>
+            {url ? (
+              <img
+                src={url}
+                alt={props.tab.name}
+                draggable={false}
+                className="max-w-none"
+                style={{ imageRendering: "auto" }}
+                onError={() => setErr("This image format is not supported by the current webview.")}
+              />
+            ) : (
+              <div className="p-4 text-sm text-muted">No image data.</div>
+            )}
+          </div>
+
+          {err ? (
+            <div className="pointer-events-none absolute left-3 top-3 max-w-[min(520px,calc(100vw-32px))] rounded-xl border border-border bg-panel/95 p-3 text-sm text-muted">
+              <div className="text-text">Failed to display image</div>
+              <div className="mt-1">{err}</div>
+              <div className="mt-2">Try "Open as text" or use "Reload" after installing proper codecs.</div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center">
+        <div
+          className="pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-panel/80 px-2 py-1.5 shadow-xl backdrop-blur"
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerMove={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+          onPointerCancel={(e) => e.stopPropagation()}
+          onWheel={(e) => e.stopPropagation()}
+        >
+          <button type="button" className="ws-icon-btn" onClick={props.onFit} title="Fit">
+            <Maximize2 className="h-4 w-4" />
+          </button>
+          <button type="button" className="ws-icon-btn" onClick={props.onZoomOut} title="Zoom out">
+            <Minus className="h-4 w-4" />
+          </button>
+          <div className="px-1 text-[11px] text-muted tabular-nums min-w-[56px] text-center">{props.zoomLabel}</div>
+          <button type="button" className="ws-icon-btn" onClick={props.onZoomIn} title="Zoom in">
+            <Plus className="h-4 w-4" />
+          </button>
+          <button type="button" className="ws-icon-btn" onClick={props.onReset} title="Reset">
+            <RotateCw className="h-4 w-4" />
+          </button>
+
+          <div className="mx-1 h-5 w-px bg-border/70" />
+
+          <button type="button" className="ws-btn" onClick={props.onRefresh}>
+            Reload
+          </button>
+          <button type="button" className="ws-btn" onClick={props.onOpenExternal}>
+            External
+          </button>
+          <button type="button" className="ws-btn" onClick={props.onOpenAsText}>
+            Text
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: number; maxChars?: number }): string {
   const enabled = opts?.enabled !== false;
@@ -1234,6 +1338,49 @@ function detectLanguage(path: string): string {
   if (ext === "toml") return "toml";
   if (ext === "yaml" || ext === "yml") return "yaml";
   return "plaintext";
+}
+
+function isImagePath(path: string): boolean {
+  const lower = String(path || "")
+    .trim()
+    .replace(/\\/g, "/")
+    .toLowerCase();
+  const name = basename(lower);
+  const ext = name.includes(".") ? name.split(".").pop() ?? "" : "";
+  return (
+    ext === "png" ||
+    ext === "jpg" ||
+    ext === "jpeg" ||
+    ext === "gif" ||
+    ext === "webp" ||
+    ext === "bmp" ||
+    ext === "ico" ||
+    ext === "tiff" ||
+    ext === "tif" ||
+    ext === "svg" ||
+    ext === "avif" ||
+    ext === "heic" ||
+    ext === "heif"
+  );
+}
+
+function base64ToObjectUrl(mime: string, base64: string): string {
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const blob = new Blob([bytes], { type: mime || "application/octet-stream" });
+  return URL.createObjectURL(blob);
+}
+
+function revokeTabObjectUrl(tab: EditorTab | null | undefined) {
+  if (!tab) return;
+  if (tab.kind !== "image") return;
+  const url = tab.image?.url;
+  if (!url || !url.startsWith("blob:")) return;
+  try {
+    URL.revokeObjectURL(url);
+  } catch {
+  }
 }
 
 type __FileIcon = (props: { className?: string }) => ReactElement;
@@ -2936,6 +3083,160 @@ export default function AppShell() {
     [activeTabPath, tabs]
   );
 
+  const imageContainerRef = useRef<HTMLDivElement | null>(null);
+  const [imageNaturalSize, setImageNaturalSize] = useState<{ w: number; h: number } | null>(null);
+  const [imageScale, setImageScale] = useState(1);
+  const [imageOffset, setImageOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const imageDragRef = useRef<{ pointerId: number | null; startX: number; startY: number; baseX: number; baseY: number }>({
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    baseX: 0,
+    baseY: 0,
+  });
+  const lastImageAutoFitKeyRef = useRef<string>("");
+
+  useEffect(() => {
+    if (activeTab?.kind !== "image") return;
+    setImageNaturalSize(null);
+    setImageScale(1);
+    setImageOffset({ x: 0, y: 0 });
+  }, [activeTab?.kind, activeTab?.path]);
+
+  useEffect(() => {
+    if (activeTab?.kind !== "image") return;
+    const url = activeTab.image?.url;
+    if (!url) return;
+    let alive = true;
+    const img = new Image();
+    img.onload = () => {
+      if (!alive) return;
+      const w = img.naturalWidth || img.width || 0;
+      const h = img.naturalHeight || img.height || 0;
+      if (!w || !h) return;
+      setImageNaturalSize({ w, h });
+    };
+    img.src = url;
+    return () => {
+      alive = false;
+    };
+  }, [activeTab?.kind, activeTab?.image?.url]);
+
+  const clampScale = useCallback((s: number) => Math.max(0.05, Math.min(40, s)), []);
+
+  const setScaleAroundPoint = useCallback(
+    (nextScaleRaw: number, cx: number, cy: number) => {
+      const nextScale = clampScale(nextScaleRaw);
+      const prevScale = imageScale;
+      if (!prevScale || !Number.isFinite(prevScale)) return;
+      const wx = (cx - imageOffset.x) / prevScale;
+      const wy = (cy - imageOffset.y) / prevScale;
+      const nextX = cx - wx * nextScale;
+      const nextY = cy - wy * nextScale;
+      setImageScale(nextScale);
+      setImageOffset({ x: nextX, y: nextY });
+    },
+    [clampScale, imageOffset.x, imageOffset.y, imageScale]
+  );
+
+  const fitImageToView = useCallback(() => {
+    if (activeTab?.kind !== "image") return;
+    const el = imageContainerRef.current;
+    if (!el) return;
+    if (!imageNaturalSize) return;
+    const rect = el.getBoundingClientRect();
+    const cw = Math.max(1, rect.width);
+    const ch = Math.max(1, rect.height);
+    const pad = 16;
+    const sx = (cw - pad) / imageNaturalSize.w;
+    const sy = (ch - pad) / imageNaturalSize.h;
+    const s = clampScale(Math.min(sx, sy));
+    const x = (cw - imageNaturalSize.w * s) / 2;
+    const y = (ch - imageNaturalSize.h * s) / 2;
+    setImageScale(s);
+    setImageOffset({ x, y });
+  }, [activeTab?.kind, clampScale, imageNaturalSize]);
+
+  useEffect(() => {
+    if (activeTab?.kind !== "image") return;
+    if (!imageNaturalSize) return;
+    const key = `${activeTab.path}:${activeTab.image?.url ?? ""}:${imageNaturalSize.w}x${imageNaturalSize.h}`;
+    if (lastImageAutoFitKeyRef.current === key) return;
+    lastImageAutoFitKeyRef.current = key;
+    fitImageToView();
+  }, [activeTab?.kind, activeTab?.image?.url, activeTab?.path, fitImageToView, imageNaturalSize]);
+
+  const zoomImage = useCallback(
+    (mult: number) => {
+      if (activeTab?.kind !== "image") return;
+      const el = imageContainerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      setScaleAroundPoint(imageScale * mult, cx, cy);
+    },
+    [activeTab?.kind, imageScale, setScaleAroundPoint]
+  );
+
+  const resetImageView = useCallback(() => {
+    setImageScale(1);
+    setImageOffset({ x: 0, y: 0 });
+  }, []);
+
+  const onImageWheel = useCallback(
+    (e: React.WheelEvent) => {
+      if (activeTab?.kind !== "image") return;
+      const el = imageContainerRef.current;
+      if (!el) return;
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      const factor = Math.exp(-e.deltaY * 0.0015);
+      setScaleAroundPoint(imageScale * factor, cx, cy);
+    },
+    [activeTab?.kind, imageScale, setScaleAroundPoint]
+  );
+
+  const onImagePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (activeTab?.kind !== "image") return;
+      if (e.button !== 0) return;
+      const el = imageContainerRef.current;
+      if (!el) return;
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+      }
+      imageDragRef.current.pointerId = e.pointerId;
+      imageDragRef.current.startX = e.clientX;
+      imageDragRef.current.startY = e.clientY;
+      imageDragRef.current.baseX = imageOffset.x;
+      imageDragRef.current.baseY = imageOffset.y;
+    },
+    [activeTab?.kind, imageOffset.x, imageOffset.y]
+  );
+
+  const onImagePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (activeTab?.kind !== "image") return;
+      if (imageDragRef.current.pointerId !== e.pointerId) return;
+      const dx = e.clientX - imageDragRef.current.startX;
+      const dy = e.clientY - imageDragRef.current.startY;
+      setImageOffset({ x: imageDragRef.current.baseX + dx, y: imageDragRef.current.baseY + dy });
+    },
+    [activeTab?.kind]
+  );
+
+  const onImagePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (imageDragRef.current.pointerId !== e.pointerId) return;
+      imageDragRef.current.pointerId = null;
+    },
+    []
+  );
+
   const activeTabChangeFile = useMemo(() => {
     if (!activeTab) return null;
     const cs = activeChat.changeSet;
@@ -3027,13 +3328,14 @@ export default function AppShell() {
   const newUntitledFile = useCallback(() => {
     const n = untitledCounter;
     setUntitledCounter((x) => x + 1);
-    const path = `untitled:${Date.now()}:${n}`;
+    const path = `untitled:Untitled-${n}`;
     const tab: EditorTab = {
       path,
       name: `Untitled-${n}`,
       language: "plaintext",
       content: "",
       isDirty: true,
+      kind: "text",
     };
     setTabs((prev) => [...prev, tab]);
     setActiveTabPath(path);
@@ -3619,7 +3921,10 @@ export default function AppShell() {
         workspace_root: w.root,
         recent_workspaces: w.recent,
       }));
-      setTabs([]);
+      setTabs((prev) => {
+        prev.forEach(revokeTabObjectUrl);
+        return [];
+      });
       setActiveTabPath(null);
       await refreshRoot();
     } catch (e) {
@@ -3637,7 +3942,10 @@ export default function AppShell() {
         workspace_root: w.root,
         recent_workspaces: w.recent,
       }));
-      setTabs([]);
+      setTabs((prev) => {
+        prev.forEach(revokeTabObjectUrl);
+        return [];
+      });
       setActiveTabPath(null);
       await refreshRoot();
     },
@@ -3648,6 +3956,59 @@ export default function AppShell() {
     async (relPath: string) => {
       const norm = normalizeRelPath(relPath);
       if (!norm) return;
+
+      if (isImagePath(norm)) {
+        try {
+          const fb = await workspaceReadFileBase64(norm);
+          const url = base64ToObjectUrl(fb.mime, fb.base64);
+          const tab: EditorTab = {
+            path: norm,
+            name: basename(norm),
+            language: detectLanguage(norm),
+            content: "",
+            isDirty: false,
+            kind: "image",
+            image: { mime: fb.mime, url },
+          };
+
+          setTabs((prev) => {
+            const key = norm.toLowerCase();
+            const existing = prev.find((t) => String(t.path || "").replace(/\\/g, "/").toLowerCase() === key);
+            if (existing) {
+              if (existing.kind === "image") {
+                // We already have an image tab open; avoid leaking the newly created blob URL.
+                try {
+                  URL.revokeObjectURL(url);
+                } catch {
+                }
+                setActiveTabPath(existing.path);
+                return prev;
+              }
+
+              // If the file was previously opened as text, replace it with the image tab.
+              setActiveTabPath(norm);
+              return prev.map((t) => (t.path === existing.path ? tab : t));
+            }
+            setActiveTabPath(norm);
+            return [...prev, tab];
+          });
+
+          if (workspace.root) {
+            const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${norm}`;
+            rememberRecentFile(abs);
+          }
+        } catch (e) {
+          notifyRef.current?.({ kind: "error", title: "Open image failed", message: String(e) });
+          try {
+            if (workspace.root) {
+              const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${norm}`;
+              void openUrl(abs);
+            }
+          } catch {
+          }
+        }
+        return;
+      }
 
       let content = "";
       try {
@@ -3661,6 +4022,7 @@ export default function AppShell() {
         language: detectLanguage(norm),
         content,
         isDirty: false,
+        kind: "text",
       };
 
       setTabs((prev) => {
@@ -3681,6 +4043,65 @@ export default function AppShell() {
     },
     [rememberRecentFile, workspace.root]
   );
+
+  const openFileText = useCallback(
+    async (relPath: string) => {
+      const norm = normalizeRelPath(relPath);
+      if (!norm) return;
+
+      let content = "";
+      try {
+        content = await workspaceReadFile(norm);
+      } catch {
+        content = "";
+      }
+
+      setTabs((prev) => {
+        const existing = prev.find((t) => t.path === norm);
+        if (existing?.kind === "image" && existing.image?.url?.startsWith("blob:")) {
+          try {
+            URL.revokeObjectURL(existing.image.url);
+          } catch {
+          }
+        }
+        const without = prev.filter((t) => t.path !== norm);
+        const tab: EditorTab = {
+          path: norm,
+          name: basename(norm),
+          language: detectLanguage(norm),
+          content,
+          isDirty: false,
+          kind: "text",
+        };
+        return [...without, tab];
+      });
+      setActiveTabPath(norm);
+    },
+    []
+  );
+
+  const refreshImageTab = useCallback(async (relPath: string) => {
+    const norm = normalizeRelPath(relPath);
+    if (!norm) return;
+    try {
+      const fb = await workspaceReadFileBase64(norm);
+      const url = base64ToObjectUrl(fb.mime, fb.base64);
+      setTabs((prev) =>
+        prev.map((t) => {
+          if (t.path !== norm) return t;
+          if (t.kind === "image" && t.image?.url?.startsWith("blob:")) {
+            try {
+              URL.revokeObjectURL(t.image.url);
+            } catch {
+            }
+          }
+          return { ...t, kind: "image", image: { mime: fb.mime, url }, content: "", isDirty: false };
+        })
+      );
+    } catch (e) {
+      notifyRef.current?.({ kind: "error", title: "Reload image failed", message: String(e) });
+    }
+  }, []);
 
   const changeWriteFiles = useMemo(() => {
     const cs = activeChat.changeSet;
@@ -4046,7 +4467,10 @@ export default function AppShell() {
         recent_workspaces: w.recent,
       }));
 
-      setTabs([]);
+      setTabs((prev) => {
+        prev.forEach(revokeTabObjectUrl);
+        return [];
+      });
       setActiveTabPath(null);
       await refreshRoot();
 
@@ -4309,13 +4733,18 @@ export default function AppShell() {
     const target = selectedPath;
     await workspaceDelete(target);
 
-    setTabs((prev) =>
-      prev.filter((t) => {
+    setTabs((prev) => {
+      const prefix = target.endsWith("/") ? target : `${target}/`;
+      const next = prev.filter((t) => {
         if (t.path === target) return false;
-        const prefix = target.endsWith("/") ? target : `${target}/`;
         return !t.path.startsWith(prefix);
-      })
-    );
+      });
+      for (const t of prev) {
+        const removed = t.path === target || t.path.startsWith(prefix);
+        if (removed) revokeTabObjectUrl(t);
+      }
+      return next;
+    });
     setActiveTabPath((prev) => {
       if (!prev) return prev;
       if (prev === target) return null;
@@ -4368,6 +4797,12 @@ export default function AppShell() {
       let nextActive: string | null = activeTabPath;
       setTabs((prev) => {
         const tab = prev.find((t) => t.path === path);
+        if (tab?.kind === "image" && tab.image?.url?.startsWith("blob:")) {
+          try {
+            URL.revokeObjectURL(tab.image.url);
+          } catch {
+          }
+        }
         if (tab?.isDirty) {
           const ok = window.confirm(`Close \'${tab.name}\' without saving?`);
           if (!ok) return prev;
@@ -4386,6 +4821,7 @@ export default function AppShell() {
 
   const saveActiveFile = useCallback(async () => {
     if (!activeTab) return;
+    if (activeTab.kind === "image") return;
     if (activeTab.path.startsWith("untitled:")) {
       if (!workspace.root) {
         await openFolder();
@@ -4408,6 +4844,7 @@ export default function AppShell() {
   const saveAll = useCallback(async () => {
     const dirty = tabs.filter((t) => t.isDirty);
     for (const t of dirty) {
+      if (t.kind === "image") continue;
       if (t.path.startsWith("untitled:")) {
         setActiveTabPath(t.path);
         const name = window.prompt("Save As (relative path)", t.name);
@@ -4428,6 +4865,7 @@ export default function AppShell() {
 
   const saveAs = useCallback(async () => {
     if (!activeTab) return;
+    if (activeTab.kind === "image") return;
     if (!workspace.root) {
       await openFolder();
       if (!workspace.root) return;
@@ -4460,9 +4898,14 @@ export default function AppShell() {
       closeTab(activeTab.path);
       return;
     }
+
+    if (activeTab.kind === "image") {
+      await refreshImageTab(activeTab.path);
+      return;
+    }
     const content = await workspaceReadFile(activeTab.path);
     setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, content, isDirty: false } : t)));
-  }, [activeTab, closeTab]);
+  }, [activeTab, closeTab, refreshImageTab]);
 
   const saveWorkspaceAs = useCallback(async () => {
     if (!workspace.root) {
@@ -4503,7 +4946,10 @@ export default function AppShell() {
         workspace_root: w.root,
         recent_workspaces: w.recent,
       }));
-      setTabs([]);
+      setTabs((prev) => {
+        prev.forEach(revokeTabObjectUrl);
+        return [];
+      });
       setActiveTabPath(null);
       await refreshRoot();
       await openFile(basename(file));
@@ -4522,7 +4968,10 @@ export default function AppShell() {
       workspace_root: w.root,
       recent_workspaces: w.recent,
     }));
-    setTabs([]);
+    setTabs((prev) => {
+      prev.forEach(revokeTabObjectUrl);
+      return [];
+    });
     setActiveTabPath(null);
     setExplorer({});
     setExpandedDirs(new Set());
@@ -6569,6 +7018,34 @@ export default function AppShell() {
                     subtitle="Getting started with Pompora"
                     hint="Open a file from Explorer to start editing."
                   />
+                ) : activeTab.kind === "image" ? (
+                  <div className="relative min-h-0 flex-1 ws-editor-surface">
+                    <ImageTabView
+                      tab={activeTab}
+                      containerRef={imageContainerRef}
+                      transform={`translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageScale})`}
+                      zoomLabel={`${Math.round(imageScale * 100)}%`}
+                      onFit={() => fitImageToView()}
+                      onZoomIn={() => zoomImage(1.2)}
+                      onZoomOut={() => zoomImage(1 / 1.2)}
+                      onReset={() => resetImageView()}
+                      onRefresh={() => void refreshImageTab(activeTab.path)}
+                      onOpenExternal={() => {
+                        try {
+                          if (!workspace.root) return;
+                          const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${activeTab.path}`;
+                          void openUrl(abs);
+                        } catch {
+                        }
+                      }}
+                      onOpenAsText={() => void openFileText(activeTab.path)}
+                      onWheel={onImageWheel}
+                      onPointerDown={onImagePointerDown}
+                      onPointerMove={onImagePointerMove}
+                      onPointerUp={onImagePointerUp}
+                      onPointerCancel={onImagePointerUp}
+                    />
+                  </div>
                 ) : (
                   <>
                     <div className="min-h-0 flex-1 flex flex-col">
