@@ -14,6 +14,8 @@ pub struct AppSettings {
     #[serde(default)]
     pub pompora_thinking: Option<String>,
     #[serde(default)]
+    pub editor_cursor_blinking: Option<String>,
+    #[serde(default)]
     pub workspace_root: Option<String>,
     #[serde(default)]
     pub recent_workspaces: Vec<String>,
@@ -33,6 +35,7 @@ impl Default for AppSettings {
             offline_mode: false,
             active_provider: None,
             pompora_thinking: None,
+            editor_cursor_blinking: None,
             workspace_root: None,
             recent_workspaces: Vec::new(),
         }

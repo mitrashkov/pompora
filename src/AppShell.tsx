@@ -97,7 +97,7 @@ import {
   terminalKill,
 } from "./lib/tauri";
 import type { AiChatMessage, AiEditOp } from "./lib/tauri";
-import type { AppSettings, AuthProfile, CreditsResponse, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
+import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
 
 type ActivityId = "explorer" | "search" | "scm";
 
@@ -1474,6 +1474,58 @@ function statusPillClass(status: "pending" | "running" | "done" | "error"): stri
   return "bg-muted/10 text-muted border-border";
 }
 
+function __splitPathSegments(p: string): string[] {
+  const norm = String(p || "")
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "")
+    .replace(/\/+$/, "");
+  if (!norm) return [];
+  return norm.split("/").filter(Boolean);
+}
+
+function FooterBreadcrumb(props: {
+  workspaceLabel: string;
+  relPath: string | null;
+  fileIconPath: string | null;
+  expanded: boolean;
+  onToggleExpanded: () => void;
+}) {
+  const segments = useMemo(() => {
+    const segs = [props.workspaceLabel, ...__splitPathSegments(props.relPath ?? "")];
+    const full = segs.join(" > ");
+    const needsCollapse = !props.expanded && segs.length > 4 && full.length > 60;
+    if (!needsCollapse) return segs;
+    const tailCount = Math.min(3, Math.max(1, segs.length - 1));
+    return [segs[0]!, "...", ...segs.slice(-tailCount)];
+  }, [props.expanded, props.relPath, props.workspaceLabel]);
+
+  const Icon = props.fileIconPath ? fileIconFor(props.fileIconPath) : null;
+
+  return (
+    <div className="flex min-w-0 items-center gap-1">
+      {segments.map((seg, idx) => {
+        const isLast = idx === segments.length - 1;
+        const isDots = seg === "...";
+        return (
+          <div key={`${seg}:${idx}`} className="flex min-w-0 items-center gap-1">
+            {idx > 0 ? <span className="px-1 text-muted">&gt;</span> : null}
+            {isDots ? (
+              <button type="button" className="ws-footer-btn px-1" onClick={props.onToggleExpanded}>
+                ...
+              </button>
+            ) : (
+              <div className={`flex min-w-0 items-center gap-2 ${isLast ? "text-text" : "text-muted"}`}>
+                {isLast && Icon ? <Icon className="h-4 w-4 shrink-0" /> : null}
+                <span className="truncate">{seg}</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AppShell() {
   const CHAT_STORAGE_KEY = "pompora.chat_sessions.v1";
   const RUN_POLICY_KEY = "pompora.terminal_run_policy.v1";
@@ -1525,6 +1577,7 @@ export default function AppShell() {
     offline_mode: false,
     active_provider: null,
     pompora_thinking: null,
+    editor_cursor_blinking: "expand",
     workspace_root: null,
     recent_workspaces: [],
   });
@@ -1587,6 +1640,8 @@ export default function AppShell() {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [inlineRenamePath, setInlineRenamePath] = useState<string | null>(null);
   const [inlineRenameValue, setInlineRenameValue] = useState<string>("");
+
+  const [footerPathExpanded, setFooterPathExpanded] = useState(false);
 
   const [tabs, setTabs] = useState<EditorTab[]>([]);
   const [activeTabPath, setActiveTabPath] = useState<string | null>(null);
@@ -3011,6 +3066,7 @@ export default function AppShell() {
           ...prev,
           ...s,
           pompora_thinking: (s as AppSettings).pompora_thinking ?? prev.pompora_thinking ?? null,
+          editor_cursor_blinking: (s as AppSettings).editor_cursor_blinking ?? prev.editor_cursor_blinking ?? "expand",
           workspace_root: s.workspace_root ?? null,
           recent_workspaces: s.recent_workspaces ?? [],
           active_provider: migratedProvider ?? null,
@@ -3392,6 +3448,26 @@ export default function AppShell() {
     if (!root) return "No folder";
     return basename(root);
   }, [settings.workspace_root, workspace.root]);
+
+  const footerRelPath = useMemo(() => {
+    if (!workspace.root) return null;
+    const p = activeTab?.path ?? null;
+    if (p && (p.startsWith("pompora:") || p.startsWith("untitled:"))) return activeTab?.name ?? p;
+    if (p) return p;
+    if (selectedPath === "") return null;
+    return selectedPath;
+  }, [activeTab?.name, activeTab?.path, selectedPath, workspace.root]);
+
+  const footerFileIconPath = useMemo(() => {
+    if (!workspace.root) return null;
+    const p = activeTab?.path ?? null;
+    if (!p) return null;
+    return p;
+  }, [activeTab?.path, workspace.root]);
+
+  useEffect(() => {
+    setFooterPathExpanded(false);
+  }, [footerRelPath, workspace.root]);
 
   const canUseAi = useMemo(() => {
     return aiBlockedReason === null;
@@ -4524,6 +4600,20 @@ export default function AppShell() {
       return next;
     });
   }, [devConsoleError]);
+
+  const setCursorBlinking = useCallback(
+    async (v: CursorBlinking) => {
+      const next: AppSettings = { ...settings, editor_cursor_blinking: v };
+      setSettingsState(next);
+      try {
+        await settingsSet(next);
+      } catch (e) {
+        devConsoleError("Failed to save cursor blinking", e);
+        notify({ kind: "error", title: "Settings", message: `Failed to save cursor blinking: ${formatErr(e)}` });
+      }
+    },
+    [devConsoleError, formatErr, notify, settings]
+  );
 
   const changeProvider = useCallback(
     async (p: string | null) => {
@@ -6435,6 +6525,7 @@ export default function AppShell() {
                       workspaceLabel={workspaceLabel}
                       recentWorkspaces={workspace.recent}
                       onChangeTheme={(t: Theme) => setSettingsState((s) => ({ ...s, theme: t }))}
+                      onChangeCursorBlinking={(v) => void setCursorBlinking(v)}
                       onToggleOffline={toggleOfflineMode}
                       onChangeProvider={(p) => void changeProvider(p)}
                       onChangePomporaThinking={(t) => void setPomporaThinking(t)}
@@ -6514,7 +6605,8 @@ export default function AppShell() {
                             wordWrap: "on",
                             automaticLayout: true,
                             smoothScrolling: true,
-                            cursorSmoothCaretAnimation: "on",
+                            cursorSmoothCaretAnimation: "off",
+                            cursorBlinking: settings.editor_cursor_blinking ?? "expand",
                             padding: { top: 8, bottom: 8 },
                           }}
                         />
@@ -6556,7 +6648,8 @@ export default function AppShell() {
                             wordWrap: "on",
                             automaticLayout: true,
                             smoothScrolling: true,
-                            cursorSmoothCaretAnimation: "on",
+                            cursorSmoothCaretAnimation: "off",
+                            cursorBlinking: settings.editor_cursor_blinking ?? "expand",
                             padding: { top: 8, bottom: 8 },
                           }}
                         />
@@ -7475,11 +7568,20 @@ export default function AppShell() {
           ) : null}
         </div>
 
-        <footer className="flex h-[26px] items-center justify-end bg-bg px-3 text-[11px] text-muted">
+        <footer className="flex h-[26px] items-center justify-between gap-3 bg-bg px-3 text-[11px] text-muted">
+          <div className="min-w-0">
+            {workspace.root ? (
+              <FooterBreadcrumb
+                workspaceLabel={workspaceLabel}
+                relPath={footerRelPath}
+                fileIconPath={footerFileIconPath}
+                expanded={footerPathExpanded}
+                onToggleExpanded={() => setFooterPathExpanded((v) => !v)}
+              />
+            ) : null}
+          </div>
+
           <div className="flex items-center gap-3">
-            <button type="button" className="ws-footer-btn" onClick={() => {}}>
-              {activeTab ? activeTab.path : "No file"}
-            </button>
             {activeTab ? (
               <button type="button" className="ws-footer-btn" onClick={() => {}}>
                 {activeTab.language}
@@ -8439,6 +8541,7 @@ interface SettingsScreenProps {
   workspaceLabel: string;
   recentWorkspaces: string[];
   onChangeTheme: (t: Theme) => void;
+  onChangeCursorBlinking: (v: CursorBlinking) => void;
   onToggleOffline: () => void;
   onChangeProvider: (p: string | null) => void;
   onChangePomporaThinking: (t: string | null) => void;
@@ -8597,6 +8700,26 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
           <button type="button" className="ws-vscode-btn" onClick={props.onPickFolder}>
             Open Folder
           </button>
+        ),
+      },
+      {
+        id: "editor.cursorBlinking",
+        section: "appearance",
+        title: "Cursor Blinking",
+        description: "Control the cursor animation style.",
+        keywords: "cursor caret blinking animation",
+        renderControl: () => (
+          <Dropdown
+            value={props.settings.editor_cursor_blinking ?? "expand"}
+            options={[
+              { value: "blink", label: "Blink" },
+              { value: "smooth", label: "Smooth" },
+              { value: "phase", label: "Phase" },
+              { value: "expand", label: "Expand" },
+              { value: "solid", label: "Solid" },
+            ]}
+            onChange={(v) => props.onChangeCursorBlinking(v as CursorBlinking)}
+          />
         ),
       },
       {

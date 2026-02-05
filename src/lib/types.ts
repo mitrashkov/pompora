@@ -1,10 +1,13 @@
 export type Theme = "dark" | "light";
 
+export type CursorBlinking = "blink" | "smooth" | "phase" | "expand" | "solid";
+
 export type AppSettings = {
   theme: Theme;
   offline_mode: boolean;
   active_provider: string | null;
   pompora_thinking?: "slow" | "fast" | "reasoning" | string | null;
+  editor_cursor_blinking?: CursorBlinking;
   workspace_root: string | null;
   recent_workspaces: string[];
 };
