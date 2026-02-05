@@ -191,7 +191,7 @@ body {
   }
 
   .ws-footer-btn {
-    @apply inline-flex h-[20px] items-center gap-1 rounded px-2 text-[11px] leading-none text-muted hover:bg-panel2 hover:text-text;
+    @apply inline-flex h-[24px] items-center gap-1 rounded px-2 text-[12px] leading-none text-muted hover:bg-panel2 hover:text-text;
   }
 
   .ws-toggle {

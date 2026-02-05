@@ -1502,20 +1502,20 @@ function FooterBreadcrumb(props: {
   const Icon = props.fileIconPath ? fileIconFor(props.fileIconPath) : null;
 
   return (
-    <div className="flex min-w-0 items-center gap-1">
+    <div className="flex min-w-0 items-center gap-1 text-[12px] leading-none">
       {segments.map((seg, idx) => {
         const isLast = idx === segments.length - 1;
         const isDots = seg === "...";
         return (
           <div key={`${seg}:${idx}`} className="flex min-w-0 items-center gap-1">
-            {idx > 0 ? <span className="px-1 text-muted">&gt;</span> : null}
+            {idx > 0 ? <ChevronRight className="h-4 w-4 shrink-0 text-muted" /> : null}
             {isDots ? (
               <button type="button" className="ws-footer-btn px-1" onClick={props.onToggleExpanded}>
                 ...
               </button>
             ) : (
               <div className={`flex min-w-0 items-center gap-2 ${isLast ? "text-text" : "text-muted"}`}>
-                {isLast && Icon ? <Icon className="h-4 w-4 shrink-0" /> : null}
+                {isLast && Icon ? <Icon className="h-[18px] w-[18px] shrink-0" /> : null}
                 <span className="truncate">{seg}</span>
               </div>
             )}
@@ -5470,7 +5470,7 @@ export default function AppShell() {
 
   return (
     <div className="h-full w-full bg-bg text-text">
-      <div className="grid h-full grid-rows-[48px_1fr_26px]">
+      <div className="grid h-full grid-rows-[48px_1fr_32px]">
         <header className="bg-bg" onMouseDown={onHeaderMouseDown}>
           <div className="grid h-12 grid-cols-[1fr_auto_1fr] items-center px-2" data-menubar-root>
             <div className="flex min-w-0 items-center gap-2 justify-self-start">
@@ -7568,7 +7568,7 @@ export default function AppShell() {
           ) : null}
         </div>
 
-        <footer className="flex h-[26px] items-center justify-between gap-3 bg-bg px-3 text-[11px] text-muted">
+        <footer className="flex h-[32px] items-center justify-between gap-3 bg-bg px-3 text-[12px] leading-none text-muted">
           <div className="min-w-0">
             {workspace.root ? (
               <FooterBreadcrumb
