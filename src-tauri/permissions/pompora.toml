@@ -94,6 +94,11 @@ description = "Allows writing a file within the current workspace."
 commands.allow = ["workspace_write_file"]
 
 [[permission]]
+identifier = "allow-workspace-write-file-base64"
+description = "Allows writing a file within the current workspace from base64 data (binary-safe)."
+commands.allow = ["workspace_write_file_base64"]
+
+[[permission]]
 identifier = "allow-workspace-create-dir"
 description = "Allows creating a directory within the current workspace."
 commands.allow = ["workspace_create_dir"]
@@ -176,6 +181,7 @@ permissions = [
   "allow-workspace-read-file",
   "allow-workspace-read-file-base64",
   "allow-workspace-write-file",
+  "allow-workspace-write-file-base64",
   "allow-workspace-create-dir",
   "allow-workspace-delete",
   "allow-workspace-rename",

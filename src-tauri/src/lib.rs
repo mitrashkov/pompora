@@ -328,6 +328,11 @@ fn workspace_write_file(rel_path: String, contents: String) -> Result<(), String
 }
 
 #[tauri::command]
+fn workspace_write_file_base64(rel_path: String, base64: String) -> Result<(), String> {
+    fsops::workspace_write_file_base64(&rel_path, &base64).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn workspace_create_dir(rel_path: String) -> Result<(), String> {
     fsops::workspace_create_dir(&rel_path).map_err(|e| e.to_string())
 }
@@ -456,6 +461,7 @@ pub fn run() {
             workspace_read_file,
             workspace_read_file_base64,
             workspace_write_file,
+            workspace_write_file_base64,
             workspace_create_dir,
             workspace_delete,
             workspace_rename,

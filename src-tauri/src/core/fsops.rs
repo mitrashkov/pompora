@@ -201,6 +201,27 @@ pub fn workspace_write_file(rel_path: &str, contents: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn workspace_write_file_base64(rel_path: &str, base64: &str) -> Result<()> {
+    use base64::Engine as _;
+
+    let path = abs_path(rel_path, false)?;
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).with_context(|| format!("create dir: {}", parent.display()))?;
+    }
+
+    let trimmed = base64.trim();
+    let payload = if let Some((_, after)) = trimmed.split_once("base64,") {
+        after
+    } else {
+        trimmed
+    };
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(payload)
+        .with_context(|| "decode base64")?;
+    fs::write(&path, bytes).with_context(|| format!("write file bytes: {}", path.display()))?;
+    Ok(())
+}
+
 pub fn workspace_create_dir(rel_path: &str) -> Result<()> {
     let path = abs_path(rel_path, false)?;
     fs::create_dir_all(&path).with_context(|| format!("create dir: {}", path.display()))?;

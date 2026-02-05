@@ -39,6 +39,7 @@ export type EditorTab = {
   image?: {
     mime: string;
     url: string;
+    dataUrl?: string;
   };
 };
 

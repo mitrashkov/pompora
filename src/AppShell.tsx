@@ -85,6 +85,7 @@ import {
   workspaceReadFile,
   workspaceReadFileBase64,
   workspaceWriteFile,
+  workspaceWriteFileBase64,
   workspaceCreateDir,
   workspaceDelete,
   workspaceRename,
@@ -200,8 +201,11 @@ function ImageTabView(props: {
   onReset: () => void;
   onOpenAsText: () => void;
   onRefresh: () => void;
-  onOpenExternal: () => void;
   zoomLabel: string;
+  scale: number;
+  onSetScale: (s: number) => void;
+  offset: { x: number; y: number };
+  naturalSize: { w: number; h: number } | null;
   containerRef: React.RefObject<HTMLDivElement | null>;
   onWheel: (e: React.WheelEvent) => void;
   onPointerDown: (e: React.PointerEvent) => void;
@@ -217,78 +221,106 @@ function ImageTabView(props: {
     setErr(null);
   }, [props.tab.path, props.tab.image?.url]);
 
+  const stop = useCallback((e: any) => {
+    e.preventDefault?.();
+    e.stopPropagation?.();
+  }, []);
+
   return (
     <div className="absolute inset-0">
-      <div
-        ref={props.containerRef}
-        className="absolute inset-0 overflow-hidden bg-bg"
-        onWheel={props.onWheel}
-        onPointerDown={props.onPointerDown}
-        onPointerMove={props.onPointerMove}
-        onPointerUp={props.onPointerUp}
-        onPointerCancel={props.onPointerCancel}
-        style={{ touchAction: "none" }}
-      >
-        <div className="relative h-full w-full">
-          <div className="h-full w-full select-none" style={{ transform: props.transform, transformOrigin: "0 0" }}>
-            {url ? (
-              <img
-                src={url}
-                alt={props.tab.name}
-                draggable={false}
-                className="max-w-none"
-                style={{ imageRendering: "auto" }}
-                onError={() => setErr("This image format is not supported by the current webview.")}
-              />
-            ) : (
-              <div className="p-4 text-sm text-muted">No image data.</div>
-            )}
-          </div>
-
-          {err ? (
-            <div className="pointer-events-none absolute left-3 top-3 max-w-[min(520px,calc(100vw-32px))] rounded-xl border border-border bg-panel/95 p-3 text-sm text-muted">
-              <div className="text-text">Failed to display image</div>
-              <div className="mt-1">{err}</div>
-              <div className="mt-2">Try "Open as text" or use "Reload" after installing proper codecs.</div>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center">
+      <div className="relative h-full w-full">
         <div
-          className="pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-panel/80 px-2 py-1.5 shadow-xl backdrop-blur"
-          onPointerDown={(e) => e.stopPropagation()}
-          onPointerMove={(e) => e.stopPropagation()}
-          onPointerUp={(e) => e.stopPropagation()}
-          onPointerCancel={(e) => e.stopPropagation()}
-          onWheel={(e) => e.stopPropagation()}
+          ref={props.containerRef}
+          className="absolute inset-0 overflow-hidden bg-bg"
+          onWheel={props.onWheel}
+          onPointerDown={props.onPointerDown}
+          onPointerMove={props.onPointerMove}
+          onPointerUp={props.onPointerUp}
+          onPointerCancel={props.onPointerCancel}
+          style={{ touchAction: "none", cursor: "grab" }}
         >
-          <button type="button" className="ws-icon-btn" onClick={props.onFit} title="Fit">
-            <Maximize2 className="h-4 w-4" />
-          </button>
-          <button type="button" className="ws-icon-btn" onClick={props.onZoomOut} title="Zoom out">
-            <Minus className="h-4 w-4" />
-          </button>
-          <div className="px-1 text-[11px] text-muted tabular-nums min-w-[56px] text-center">{props.zoomLabel}</div>
-          <button type="button" className="ws-icon-btn" onClick={props.onZoomIn} title="Zoom in">
-            <Plus className="h-4 w-4" />
-          </button>
-          <button type="button" className="ws-icon-btn" onClick={props.onReset} title="Reset">
-            <RotateCw className="h-4 w-4" />
-          </button>
+          <div className="relative h-full w-full">
+            <div className="h-full w-full select-none" style={{ transform: props.transform, transformOrigin: "0 0" }}>
+              {url ? (
+                <div className="relative inline-block">
+                  <img
+                    src={url}
+                    alt={props.tab.name}
+                    draggable={false}
+                    className="max-w-none"
+                    style={{ imageRendering: "auto" }}
+                    onError={() => setErr("Your system can't decode this image format in the app viewer.")}
+                  />
+                </div>
+              ) : (
+                <div className="p-4 text-sm text-muted">No image data.</div>
+              )}
+            </div>
 
-          <div className="mx-1 h-5 w-px bg-border/70" />
+            {err || !url ? (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
+                <div className="pointer-events-auto w-full max-w-xl rounded-2xl border border-border bg-panel/90 p-5 shadow-2xl backdrop-blur">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 rounded-xl bg-bg p-2">
+                      <AlertTriangle className="h-5 w-5 text-muted" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-text">Can’t display this image</div>
+                      <div className="mt-1 text-sm text-muted">
+                        {err ? err : "The file didn’t load any image data. It may be empty, missing, or not accessible."}
+                      </div>
+                      <div className="mt-2 text-sm text-muted">
+                        You can reload the file, or open it as text. Some formats (like HEIC/AVIF) may require additional codecs.
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <button type="button" className="ws-btn" onClick={props.onRefresh}>
+                          Reload
+                        </button>
+                        <button type="button" className="ws-btn" onClick={props.onOpenAsText}>
+                          Open as Text
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
-          <button type="button" className="ws-btn" onClick={props.onRefresh}>
-            Reload
-          </button>
-          <button type="button" className="ws-btn" onClick={props.onOpenExternal}>
-            External
-          </button>
-          <button type="button" className="ws-btn" onClick={props.onOpenAsText}>
-            Text
-          </button>
+            <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center">
+              <div
+                className="pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-panel/80 px-2 py-1.5 shadow-xl backdrop-blur"
+                onPointerDown={stop}
+                onPointerMove={stop}
+                onPointerUp={stop}
+                onPointerCancel={stop}
+                onWheel={stop}
+                onMouseDown={stop}
+              >
+                <button type="button" className="ws-icon-btn" onClick={props.onFit} title="Fit">
+                  <Maximize2 className="h-4 w-4" />
+                </button>
+                <button type="button" className="ws-icon-btn" onClick={props.onZoomOut} title="Zoom out">
+                  <Minus className="h-4 w-4" />
+                </button>
+                <div className="px-1 text-[11px] text-muted tabular-nums min-w-[56px] text-center">{props.zoomLabel}</div>
+                <button type="button" className="ws-icon-btn" onClick={props.onZoomIn} title="Zoom in">
+                  <Plus className="h-4 w-4" />
+                </button>
+                <button type="button" className="ws-icon-btn" onClick={props.onReset} title="Reset">
+                  <RotateCw className="h-4 w-4" />
+                </button>
+
+                <div className="mx-1 h-5 w-px bg-border/70" />
+
+                <button type="button" className="ws-btn" onClick={props.onRefresh}>
+                  Reload
+                </button>
+                <button type="button" className="ws-btn" onClick={props.onOpenAsText}>
+                  Open as Text
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -310,8 +342,6 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
       return;
     }
 
-    // If text is streaming and only grows, keep the current cursor position.
-    // Otherwise restart typing from the beginning.
     setN((prev) => {
       const prevText = prevTextRef.current;
       if (safe.startsWith(prevText) && prev <= prevText.length) return prev;
@@ -3999,13 +4029,6 @@ export default function AppShell() {
           }
         } catch (e) {
           notifyRef.current?.({ kind: "error", title: "Open image failed", message: String(e) });
-          try {
-            if (workspace.root) {
-              const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${norm}`;
-              void openUrl(abs);
-            }
-          } catch {
-          }
         }
         return;
       }
@@ -4821,7 +4844,18 @@ export default function AppShell() {
 
   const saveActiveFile = useCallback(async () => {
     if (!activeTab) return;
-    if (activeTab.kind === "image") return;
+    if (activeTab.kind === "image") {
+      if (!activeTab.isDirty) return;
+      const dataUrl = activeTab.image?.dataUrl;
+      if (!dataUrl) {
+        notifyRef.current?.({ kind: "error", title: "Save image failed", message: "No edited image data to save." });
+        return;
+      }
+      await workspaceWriteFileBase64(activeTab.path, dataUrl);
+      setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, isDirty: false } : t)));
+      await refreshDir(activeTab.path.includes("/") ? activeTab.path.split("/").slice(0, -1).join("/") : undefined);
+      return;
+    }
     if (activeTab.path.startsWith("untitled:")) {
       if (!workspace.root) {
         await openFolder();
@@ -4844,7 +4878,13 @@ export default function AppShell() {
   const saveAll = useCallback(async () => {
     const dirty = tabs.filter((t) => t.isDirty);
     for (const t of dirty) {
-      if (t.kind === "image") continue;
+      if (t.kind === "image") {
+        const dataUrl = t.image?.dataUrl;
+        if (!dataUrl) continue;
+        await workspaceWriteFileBase64(t.path, dataUrl);
+        setTabs((prev) => prev.map((x) => (x.path === t.path ? { ...x, isDirty: false } : x)));
+        continue;
+      }
       if (t.path.startsWith("untitled:")) {
         setActiveTabPath(t.path);
         const name = window.prompt("Save As (relative path)", t.name);
@@ -4865,7 +4905,24 @@ export default function AppShell() {
 
   const saveAs = useCallback(async () => {
     if (!activeTab) return;
-    if (activeTab.kind === "image") return;
+    if (activeTab.kind === "image") {
+      if (!workspace.root) {
+        await openFolder();
+        if (!workspace.root) return;
+      }
+      const dataUrl = activeTab.image?.dataUrl;
+      if (!dataUrl) {
+        notifyRef.current?.({ kind: "error", title: "Export image failed", message: "No edited image data to export." });
+        return;
+      }
+      const name = window.prompt("Export Image As (relative path)", activeTab.name);
+      if (!name) return;
+      const rel = name.trim().replace(/\\/g, "/");
+      if (!rel) return;
+      await workspaceWriteFileBase64(rel, dataUrl);
+      await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
+      return;
+    }
     if (!workspace.root) {
       await openFolder();
       if (!workspace.root) return;
@@ -7025,19 +7082,25 @@ export default function AppShell() {
                       containerRef={imageContainerRef}
                       transform={`translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageScale})`}
                       zoomLabel={`${Math.round(imageScale * 100)}%`}
+                      scale={imageScale}
+                      offset={imageOffset}
+                      naturalSize={imageNaturalSize}
+                      onSetScale={(next) => {
+                        const el = imageContainerRef.current;
+                        if (!el) {
+                          setImageScale(next);
+                          return;
+                        }
+                        const rect = el.getBoundingClientRect();
+                        const cx = rect.width / 2;
+                        const cy = rect.height / 2;
+                        setScaleAroundPoint(next, cx, cy);
+                      }}
                       onFit={() => fitImageToView()}
                       onZoomIn={() => zoomImage(1.2)}
                       onZoomOut={() => zoomImage(1 / 1.2)}
                       onReset={() => resetImageView()}
                       onRefresh={() => void refreshImageTab(activeTab.path)}
-                      onOpenExternal={() => {
-                        try {
-                          if (!workspace.root) return;
-                          const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${activeTab.path}`;
-                          void openUrl(abs);
-                        } catch {
-                        }
-                      }}
                       onOpenAsText={() => void openFileText(activeTab.path)}
                       onWheel={onImageWheel}
                       onPointerDown={onImagePointerDown}

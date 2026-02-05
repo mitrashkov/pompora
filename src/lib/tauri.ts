@@ -136,6 +136,10 @@ export async function workspaceWriteFile(relPath: string, contents: string): Pro
   await invoke("workspace_write_file", { relPath, contents });
 }
 
+export async function workspaceWriteFileBase64(relPath: string, base64: string): Promise<void> {
+  await invoke("workspace_write_file_base64", { relPath, base64 });
+}
+
 export async function workspaceCreateDir(relPath: string): Promise<void> {
   await invoke("workspace_create_dir", { relPath });
 }
