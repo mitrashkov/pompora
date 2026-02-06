@@ -99,7 +99,7 @@ import {
   terminalKill,
   providerListModels,
 } from "./lib/tauri";
-import type { AiChatMessage, AiEditOp, ProviderModelInfo } from "./lib/tauri";
+import type { AiChatMessage, AiEditOp } from "./lib/tauri";
 import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
 
 type ActivityId = "explorer" | "search" | "scm";
@@ -1956,9 +1956,6 @@ export default function AppShell() {
   const [uiPomporaThinking, setUiPomporaThinking] = useState<"slow" | "fast" | "reasoning" | null>(null);
   const [providerModels, setProviderModels] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
   const [loadingModels, setLoadingModels] = useState<Record<string, boolean>>({});
-  const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
-  const [apiKeyInputs, setApiKeyInputs] = useState<Record<string, string>>({});
-  const [validatingKey, setValidatingKey] = useState<string | null>(null);
 
   const formatErr = useCallback((e: unknown): string => {
     if (e instanceof Error) {
@@ -3666,31 +3663,95 @@ export default function AppShell() {
     [authGetCredits, authWaitLogin, isAuthBusy, notify, safeOpenUrl, settings.active_provider]
   );
 
-  // Additional effect to refresh key status when showKeySaved is true
+  // Additional effect to refresh key status and load models when showKeySaved is true
   useEffect(() => {
+    // #region agent log
+    fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3668',message:'showKeySaved effect triggered',data:{showKeySaved,activeProvider:settings.active_provider},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     if (showKeySaved && settings.active_provider) {
-      providerKeyStatus(settings.active_provider)
-        .then((v) => {
+      const providerId = settings.active_provider;
+      providerKeyStatus(providerId)
+        .then(async (v) => {
+          // #region agent log
+          fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3673',message:'Key status retrieved',data:{isConfigured:v.is_configured,provider:providerId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
           setKeyStatus(v);
+          // Load models if key is now configured
+          if (v.is_configured && providerId !== "pompora") {
+            // Refresh key statuses first - use hardcoded list to avoid dependency issue
+            const targets = ["openai", "anthropic", "gemini", "deepseek", "groq", "mistral", "together", "perplexity", "openrouter", "xai", "cohere", "custom", "pompora"];
+            const out: Record<string, KeyStatus | null> = {};
+            await Promise.all(
+              targets.map(async (id) => {
+                try {
+                  out[id] = await providerKeyStatus(id);
+                } catch {
+                  out[id] = null;
+                }
+              })
+            );
+            setProviderKeyStatuses(out);
+            
+            // Then load models
+            const providerId = settings.active_provider;
+            if (providerId) {
+              // #region agent log
+              fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3689',message:'About to load models',data:{provider:providerId,isLoading:loadingModels[providerId],hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+              // #endregion
+              if (!loadingModels[providerId]) {
+                setLoadingModels((prev) => ({ ...prev, [providerId]: true }));
+                try {
+                  // #region agent log
+                  fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3692',message:'Calling providerListModels',data:{provider:providerId,hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                  // #endregion
+                  const models = await providerListModels({
+                    provider: providerId,
+                    encryptionPassword: encryptionPasswordDraft || undefined,
+                  });
+                  // #region agent log
+                  fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3696',message:'Models loaded successfully',data:{provider:providerId,modelCount:models.length,models:models.slice(0,3).map(m=>m.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                  // #endregion
+                  setProviderModels((prev) => ({ ...prev, [providerId]: models }));
+                } catch (e) {
+                  // #region agent log
+                  fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3698',message:'Failed to load models',data:{provider:providerId,error:String(e),errorType:typeof e},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                  // #endregion
+                  console.warn(`Failed to load models for ${providerId}:`, e);
+                } finally {
+                  setLoadingModels((prev => {
+                    const next = { ...prev };
+                    delete next[providerId];
+                    return next;
+                  }));
+                }
+              }
+            }
+          }
         })
         .catch((e: unknown) => {
           setSecretsError(String(e));
         });
     }
-  }, [showKeySaved, settings.active_provider]);
+  }, [showKeySaved, settings.active_provider, loadingModels, encryptionPasswordDraft]);
 
   const providerChoices = useMemo(
     () =>
       [
-        { id: "pompora", label: "Pompora", api: false },
-        { id: "openai", label: "GPT-4o mini", api: true },
-        { id: "anthropic", label: "Claude 3.5 Sonnet", api: true },
-        { id: "gemini", label: "Gemini Flash", api: true },
-        { id: "deepseek", label: "DeepSeek Chat", api: true },
-        { id: "groq", label: "Groq Llama", api: true },
-        { id: "ollama", label: "Ollama", api: false },
-        { id: "lmstudio", label: "LM Studio", api: false },
-        { id: "custom", label: "Custom", api: true },
+        { id: "pompora", label: "Pompora", api: false, category: "premium" },
+        { id: "openai", label: "OpenAI", api: true, category: "cloud" },
+        { id: "anthropic", label: "Anthropic", api: true, category: "cloud" },
+        { id: "gemini", label: "Google Gemini", api: true, category: "cloud" },
+        { id: "deepseek", label: "DeepSeek", api: true, category: "cloud" },
+        { id: "groq", label: "Groq", api: true, category: "cloud" },
+        { id: "mistral", label: "Mistral AI", api: true, category: "cloud" },
+        { id: "together", label: "Together AI", api: true, category: "cloud" },
+        { id: "perplexity", label: "Perplexity", api: true, category: "cloud" },
+        { id: "openrouter", label: "OpenRouter", api: true, category: "cloud" },
+        { id: "xai", label: "xAI (Grok)", api: true, category: "cloud" },
+        { id: "cohere", label: "Cohere", api: true, category: "cloud" },
+        { id: "ollama", label: "Ollama", api: false, category: "local" },
+        { id: "lmstudio", label: "LM Studio", api: false, category: "local" },
+        { id: "custom", label: "Custom Endpoint", api: true, category: "custom" },
       ] as const,
     []
   );
@@ -3783,18 +3844,42 @@ export default function AppShell() {
   }, [providerChoices]);
 
   const loadProviderModels = useCallback(async (providerId: string) => {
-    if (loadingModels[providerId] || providerModels[providerId]) return;
+    // #region agent log
+    fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3824',message:'loadProviderModels called',data:{providerId,isLoading:loadingModels[providerId],hasCachedModels:!!providerModels[providerId],hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    // Don't reload if already loading, but allow reloading if models exist (in case key was updated)
+    if (loadingModels[providerId]) {
+      // #region agent log
+      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3826',message:'loadProviderModels early return',data:{providerId,reason:'already loading'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      return;
+    }
     
     setLoadingModels((prev) => ({ ...prev, [providerId]: true }));
     try {
+      // #region agent log
+      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3830',message:'Calling providerListModels from loadProviderModels',data:{providerId,hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       const models = await providerListModels({
         provider: providerId,
         encryptionPassword: encryptionPasswordDraft || undefined,
       });
+      // #region agent log
+      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3834',message:'Models loaded in loadProviderModels',data:{providerId,modelCount:models.length,models:models.slice(0,3).map(m=>m.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       setProviderModels((prev) => ({ ...prev, [providerId]: models }));
     } catch (e) {
+      // #region agent log
+      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3836',message:'Error in loadProviderModels',data:{providerId,error:String(e),errorType:typeof e,stack:e instanceof Error?e.stack:undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       // Silently fail - provider might not support model listing or key not configured
       console.warn(`Failed to load models for ${providerId}:`, e);
+      // Clear models if loading failed (might be invalid key)
+      setProviderModels((prev) => {
+        const next = { ...prev };
+        delete next[providerId];
+        return next;
+      });
     } finally {
       setLoadingModels((prev => {
         const next = { ...prev };
@@ -3802,61 +3887,8 @@ export default function AppShell() {
         return next;
       }));
     }
-  }, [loadingModels, providerModels, encryptionPasswordDraft]);
+  }, [loadingModels, encryptionPasswordDraft]);
 
-  const handleSaveApiKey = useCallback(async (providerId: string) => {
-    const key = apiKeyInputs[providerId]?.trim();
-    if (!key) return;
-
-    setValidatingKey(providerId);
-    try {
-      await providerKeySet({
-        provider: providerId,
-        apiKey: key,
-        encryptionPassword: encryptionPasswordDraft || undefined,
-      });
-      setApiKeyInputs((prev) => {
-        const next = { ...prev };
-        delete next[providerId];
-        return next;
-      });
-      await refreshProviderKeyStatuses();
-      await loadProviderModels(providerId);
-      notify("API key saved successfully");
-    } catch (e) {
-      notify(`Failed to save API key: ${formatErr(e)}`, "error");
-    } finally {
-      setValidatingKey(null);
-    }
-  }, [apiKeyInputs, encryptionPasswordDraft, refreshProviderKeyStatuses, loadProviderModels, notify, formatErr]);
-
-  const handleRemoveApiKey = useCallback(async (providerId: string) => {
-    try {
-      await providerKeyClear(providerId);
-      setProviderModels((prev) => {
-        const next = { ...prev };
-        delete next[providerId];
-        return next;
-      });
-      await refreshProviderKeyStatuses();
-      notify("API key removed");
-    } catch (e) {
-      notify(`Failed to remove API key: ${formatErr(e)}`, "error");
-    }
-  }, [refreshProviderKeyStatuses, notify, formatErr]);
-
-  const handleSelectModel = useCallback(async (providerId: string, modelId: string) => {
-    const next = { ...settings, active_provider: providerId, active_model: modelId };
-    setSettingsState(next);
-    try {
-      await settingsSet(next);
-      setIsModelPickerOpen(false);
-      notify(`Selected ${modelId}`);
-    } catch (e) {
-      devConsoleError("Failed to save model selection", e);
-      setSettingsState(settings);
-    }
-  }, [settings, notify, devConsoleError]);
 
   const chatContextUsage = useMemo(() => {
     return { used: 0, total: 0, pct: 0 };
@@ -3902,10 +3934,9 @@ export default function AppShell() {
     const onDown = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
       if (!t) return;
-      // Don't close if clicking inside the model picker or expanded provider sections
-      if (t.closest("[data-model-picker-root]") || t.closest("[data-provider-expanded]")) return;
+      // Don't close if clicking inside the model picker
+      if (t.closest("[data-model-picker-root]")) return;
       setIsModelPickerOpen(false);
-      setExpandedProvider(null);
     };
     window.addEventListener("mousedown", onDown);
     return () => window.removeEventListener("mousedown", onDown);
@@ -5370,12 +5401,18 @@ export default function AppShell() {
   );
 
   const handleStoreKey = useCallback(async () => {
+    // #region agent log
+    fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:5379',message:'handleStoreKey called',data:{activeProvider:settings.active_provider,hasApiKeyDraft:!!apiKeyDraft.trim(),hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     if (!settings.active_provider) return;
     if (settings.active_provider === "pompora") return;
     if (!apiKeyDraft.trim()) return;
     setIsKeyOperationInProgress(true);
     setSecretsError(null);
     try {
+      // #region agent log
+      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:5386',message:'Saving API key',data:{provider:settings.active_provider,keyLength:apiKeyDraft.trim().length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       await providerKeySet({
         provider: settings.active_provider,
         apiKey: apiKeyDraft.trim(),
@@ -5383,14 +5420,27 @@ export default function AppShell() {
       });
       setShowKeySaved(true);
       setTimeout(() => setShowKeySaved(false), 2000);
-      setKeyStatus(await providerKeyStatus(settings.active_provider));
+      const newKeyStatus = await providerKeyStatus(settings.active_provider);
+      // #region agent log
+      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:5379',message:'Key status after save',data:{provider:settings.active_provider,isConfigured:newKeyStatus.is_configured},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      setKeyStatus(newKeyStatus);
+      
+      // Load models after saving API key
+      if (newKeyStatus.is_configured) {
+        // #region agent log
+        fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:5383',message:'About to load models after key save',data:{provider:settings.active_provider},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
+        await refreshProviderKeyStatuses();
+        await loadProviderModels(settings.active_provider);
+      }
     } catch (e) {
       devConsoleError(e);
       setSecretsError(String(e));
     } finally {
       setIsKeyOperationInProgress(false);
     }
-  }, [apiKeyDraft, devConsoleError, encryptionPasswordDraft, settings.active_provider]);
+  }, [apiKeyDraft, devConsoleError, encryptionPasswordDraft, settings.active_provider, refreshProviderKeyStatuses, loadProviderModels]);
 
   const clearProviderKey = useCallback(async () => {
     if (!settings.active_provider) return;
@@ -7223,6 +7273,20 @@ export default function AppShell() {
                       showKeyCleared={showKeyCleared}
                       onDebugGemini={handleDebugGemini}
                       debugResult={debugResult}
+                      providerModels={providerModels}
+                      loadingModels={loadingModels}
+                      onLoadModels={(providerId) => void loadProviderModels(providerId)}
+                      onSelectModel={async (providerId, modelId) => {
+                        const next = { ...settings, active_provider: providerId, active_model: modelId };
+                        setSettingsState(next);
+                        try {
+                          await settingsSet(next);
+                          notify({ kind: "info", title: "Model Selected", message: `Selected ${modelId}` });
+                        } catch (e) {
+                          devConsoleError("Failed to save model selection", e);
+                          setSettingsState(settings);
+                        }
+                      }}
                     />
                   </div>
                 ) : !workspace.root ? (
@@ -8146,8 +8210,11 @@ export default function AppShell() {
                           </button>
 
                           {isModelPickerOpen ? (
-                            <div className="absolute left-0 bottom-full z-[9999] mb-2 w-56 overflow-hidden rounded-xl border border-border bg-panel shadow" data-model-picker-root>
-                              <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">Pompora</div>
+                            <div className="absolute left-0 bottom-full z-[9999] mb-2 w-64 max-h-[480px] overflow-hidden rounded-xl border border-border bg-panel shadow-lg" data-model-picker-root>
+                              <div className="sticky top-0 z-10 border-b border-border bg-panel px-3 py-1.5">
+                                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">Pompora</div>
+                              </div>
+                              <div className="max-h-[200px] overflow-y-auto">
 
                               {(["slow", "fast", "reasoning"] as const).map((mode) => {
                                 const pomporaSt = providerKeyStatuses["pompora"];
@@ -8199,139 +8266,68 @@ export default function AppShell() {
                                   </button>
                                 );
                               })}
+                              </div>
 
-                              <div className="border-t border-border" />
-                              <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">BYOK</div>
-
-                              {providerChoices
+                              <div className="sticky top-0 z-10 border-t border-border bg-panel px-3 py-1.5">
+                                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">Bring Your Own Key</div>
+                              </div>
+                              <div className="max-h-[240px] overflow-y-auto">
+                                {providerChoices
                                 .filter((p) => p.id !== "pompora")
                                 .map((p) => {
                                   const st = providerKeyStatuses[p.id];
                                   const missingKey = p.api ? st?.is_configured !== true : false;
-                                  const isExpanded = expandedProvider === p.id;
-                                  const models = providerModels[p.id] || [];
-                                  const isLoading = loadingModels[p.id];
                                   const isActive = (settings.active_provider ?? "") === p.id;
                                   const activeModel = isActive ? (settings.active_model ?? null) : null;
-                                  const apiKeyValue = apiKeyInputs[p.id] ?? "";
-                                  const isSavingKey = validatingKey === p.id;
 
                                   return (
-                                    <div key={p.id}>
-                                      <button
-                                        type="button"
-                                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[rgb(var(--p-panel2))] ${
-                                          isActive ? "bg-[rgb(var(--p-panel2))]" : ""
-                                        } ${missingKey ? "text-muted opacity-60" : "text-text"}`}
-                                        onClick={async () => {
-                                          if (isExpanded) {
-                                            setExpandedProvider(null);
-                                          } else {
-                                            setExpandedProvider(p.id);
-                                            if (p.api && !missingKey && models.length === 0) {
-                                              await loadProviderModels(p.id);
-                                            }
-                                            if (!isActive) {
-                                              await changeProvider(p.id);
-                                            }
-                                          }
-                                        }}
-                                        onMouseEnter={(e) => {
-                                          if (missingKey && !isExpanded) {
-                                            showTooltipForEl(e.currentTarget, "Click to add API key and select model", "tr");
-                                          }
-                                        }}
-                                        onMouseLeave={hideTooltip}
-                                      >
-                                        <div className="flex min-w-0 flex-1 items-center gap-2">
-                                          <span className={p.api ? "" : "text-muted"}>{p.label}</span>
-                                          {activeModel && (
-                                            <span className="truncate text-xs text-muted">• {activeModel}</span>
-                                          )}
-                                        </div>
-                                        <ChevronDown className={`h-3 w-3 shrink-0 text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                                      </button>
-
-                                      {isExpanded && (
-                                        <div className="border-t border-border bg-[rgb(var(--p-bg))]" data-provider-expanded>
-                                          {p.api && (
-                                            <div className="p-2 space-y-2">
-                                              {missingKey ? (
-                                                <div className="space-y-2">
-                                                  <input
-                                                    type="password"
-                                                    placeholder="Enter API key"
-                                                    value={apiKeyValue}
-                                                    onChange={(e) => setApiKeyInputs((prev) => ({ ...prev, [p.id]: e.target.value }))}
-                                                    className="w-full rounded border border-border bg-bg px-2 py-1.5 text-xs text-text placeholder:text-muted focus:border-accent focus:outline-none"
-                                                    onKeyDown={(e) => {
-                                                      if (e.key === "Enter" && apiKeyValue.trim()) {
-                                                        void handleSaveApiKey(p.id);
-                                                      }
-                                                    }}
-                                                    autoFocus
-                                                  />
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => void handleSaveApiKey(p.id)}
-                                                    disabled={!apiKeyValue.trim() || isSavingKey}
-                                                    className="w-full rounded bg-accent px-2 py-1.5 text-xs text-bg hover:bg-accent/90 disabled:opacity-50"
-                                                  >
-                                                    {isSavingKey ? "Saving..." : "Save API Key"}
-                                                  </button>
-                                                </div>
-                                              ) : (
-                                                <div className="flex items-center justify-between">
-                                                  <span className="text-xs text-muted">API key configured</span>
-                                                  <button
-                                                    type="button"
-                                                    onClick={() => void handleRemoveApiKey(p.id)}
-                                                    className="text-xs text-danger hover:text-danger/80"
-                                                  >
-                                                    Remove
-                                                  </button>
-                                                </div>
-                                              )}
-                                            </div>
-                                          )}
-
-                                          {!p.api || !missingKey ? (
-                                            <div className="max-h-48 space-y-1 overflow-auto p-2">
-                                              {isLoading ? (
-                                                <div className="px-2 py-1 text-xs text-muted">Loading models...</div>
-                                              ) : models.length > 0 ? (
-                                                models.map((model) => {
-                                                  const isSelected = activeModel === model.id;
-                                                  return (
-                                                    <button
-                                                      key={model.id}
-                                                      type="button"
-                                                      onClick={() => void handleSelectModel(p.id, model.id)}
-                                                      className={`w-full rounded px-2 py-1.5 text-left text-xs transition-colors ${
-                                                        isSelected
-                                                          ? "bg-accent/20 text-text"
-                                                          : "text-muted hover:bg-[rgb(var(--p-panel2))] hover:text-text"
-                                                      }`}
-                                                    >
-                                                      <div className="truncate">{model.name || model.id}</div>
-                                                      {model.name && (
-                                                        <div className="truncate text-[10px] text-muted">{model.id}</div>
-                                                      )}
-                                                    </button>
-                                                  );
-                                                })
-                                              ) : (
-                                                <div className="px-2 py-1 text-xs text-muted">
-                                                  {p.api ? "No models available. Check API key." : "No models found"}
-                                                </div>
-                                              )}
-                                            </div>
-                                          ) : null}
-                                        </div>
-                                      )}
-                                    </div>
+                                    <button
+                                      key={p.id}
+                                      type="button"
+                                      className={`flex w-full items-center justify-between px-2.5 py-1.5 text-left text-xs transition-colors border-b border-border/30 last:border-0 ${
+                                        isActive ? "bg-accent/10 text-text" : "text-muted hover:bg-[rgb(var(--p-panel2))] hover:text-text"
+                                      } ${missingKey ? "opacity-60" : ""}`}
+                                      onClick={async () => {
+                                        if (missingKey) {
+                                          // Redirect to settings to add API key
+                                          openSettingsTab();
+                                          setIsModelPickerOpen(false);
+                                          return;
+                                        }
+                                        
+                                        // Select provider and load models if needed
+                                        if (!isActive) {
+                                          await changeProvider(p.id);
+                                        }
+                                        
+                                        // Load models if not already loaded
+                                        if (!providerModels[p.id] && !loadingModels[p.id]) {
+                                          await loadProviderModels(p.id);
+                                        }
+                                        
+                                        setIsModelPickerOpen(false);
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        if (missingKey) {
+                                          showTooltipForEl(e.currentTarget, "Add API key in Settings (Ctrl+,)", "tr");
+                                        }
+                                      }}
+                                      onMouseLeave={hideTooltip}
+                                    >
+                                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                                        <span className="truncate font-medium">{p.label}</span>
+                                        {activeModel && (
+                                          <span className="truncate text-[10px] text-muted/70">• {activeModel.split('/').pop()?.split(':').pop() || activeModel}</span>
+                                        )}
+                                        {missingKey && (
+                                          <span className="text-[10px] text-danger/70">(key)</span>
+                                        )}
+                                      </div>
+                                      {missingKey && <span className="text-[10px] text-muted/60">→</span>}
+                                    </button>
                                   );
                                 })}
+                              </div>
                             </div>
                           ) : null}
                         </div>
@@ -9374,11 +9370,16 @@ interface SettingsScreenProps {
   showKeyCleared: boolean;
   onDebugGemini: () => void;
   debugResult: string | null;
+  providerModels: Record<string, Array<{ id: string; name?: string | null }>>;
+  loadingModels: Record<string, boolean>;
+  onLoadModels: (providerId: string) => void;
+  onSelectModel: (providerId: string, modelId: string) => void;
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
+  const [modelSearchQueries, setModelSearchQueries] = useState<Record<string, string>>({});
 
   const sectionList = useMemo(
     () =>
@@ -9572,16 +9573,123 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
               description: "Paste your API key for the selected provider.",
               keywords: "api key security",
               renderControl: () => (
-                <input
-                  className="ws-vscode-input"
-                  placeholder="Paste your API key"
-                  value={props.apiKeyDraft}
-                  autoComplete="off"
-                  spellCheck={false}
-                  onChange={(e) => props.onApiKeyDraft(e.target.value)}
-                />
+                <div className="space-y-2">
+                  <input
+                    className="ws-vscode-input"
+                    placeholder="Paste your API key"
+                    value={props.apiKeyDraft}
+                    autoComplete="off"
+                    spellCheck={false}
+                    onChange={(e) => props.onApiKeyDraft(e.target.value)}
+                  />
+                  {props.keyStatus?.is_configured && (
+                    <div className="flex items-center gap-2 text-xs text-muted">
+                      <span className="text-green-500">✓</span>
+                      <span>API key configured</span>
+                    </div>
+                  )}
+                </div>
               ),
             },
+            ...(props.keyStatus?.is_configured
+              ? [
+                  {
+                    id: "ai.model",
+                    section: "ai" as const,
+                    title: "AI: Model",
+                    description: "Select which model to use for this provider.",
+                    keywords: "model ai provider",
+                    renderControl: () => {
+                      const providerId = props.settings.active_provider;
+                      if (!providerId) return null;
+                      
+                      const models = props.providerModels[providerId] || [];
+                      const isLoading = props.loadingModels[providerId];
+                      const selectedModel = props.settings.active_model;
+                      const searchQuery = modelSearchQueries[providerId] || "";
+                      const filteredModels = searchQuery
+                        ? models.filter((m) => {
+                            const name = (m.name || "").toLowerCase();
+                            const id = m.id.toLowerCase();
+                            const query = searchQuery.toLowerCase();
+                            return name.includes(query) || id.includes(query);
+                          })
+                        : models;
+
+                      // Load models if not loaded yet
+                      if (!isLoading && models.length === 0 && providerId) {
+                        setTimeout(() => props.onLoadModels(providerId), 100);
+                      }
+
+                      return (
+                        <div className="space-y-2">
+                          {models.length > 0 && (
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                placeholder="Search models..."
+                                value={searchQuery}
+                                onChange={(e) => setModelSearchQueries((prev) => ({ ...prev, [providerId]: e.target.value }))}
+                                className="ws-vscode-input"
+                              />
+                              <div className="max-h-64 overflow-y-auto rounded border border-border bg-bg">
+                                {isLoading ? (
+                                  <div className="p-4 text-center text-sm text-muted">Loading models...</div>
+                                ) : filteredModels.length > 0 ? (
+                                  filteredModels.map((model) => {
+                                    const isSelected = selectedModel === model.id;
+                                    const displayName = model.name || model.id.split('/').pop()?.split(':').pop() || model.id;
+                                    const shortId = model.id.length > 50 ? `${model.id.substring(0, 47)}...` : model.id;
+                                    
+                                    return (
+                                      <button
+                                        key={model.id}
+                                        type="button"
+                                        onClick={() => props.onSelectModel(providerId, model.id)}
+                                        className={`w-full px-3 py-2 text-left text-sm transition-colors border-b border-border/30 last:border-0 ${
+                                          isSelected
+                                            ? "bg-accent/15 text-text"
+                                            : "text-muted hover:bg-[rgb(var(--p-panel2))] hover:text-text"
+                                        }`}
+                                      >
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="min-w-0 flex-1">
+                                            <div className="font-medium truncate">{displayName}</div>
+                                            {model.name && model.id !== displayName && (
+                                              <div className="text-xs text-muted/70 truncate mt-0.5">{shortId}</div>
+                                            )}
+                                          </div>
+                                          {isSelected && (
+                                            <Check className="h-4 w-4 shrink-0 text-accent" />
+                                          )}
+                                        </div>
+                                      </button>
+                                    );
+                                  })
+                                ) : (
+                                  <div className="p-4 text-center text-sm text-muted">
+                                    {searchQuery ? "No models match your search" : "No models available"}
+                                  </div>
+                                )}
+                              </div>
+                              {selectedModel && (
+                                <div className="text-xs text-muted">
+                                  Selected: <span className="font-medium text-text">{selectedModel.split('/').pop()?.split(':').pop() || selectedModel}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {!isLoading && models.length === 0 && (
+                            <div className="text-xs text-muted">
+                              Models will appear here after saving your API key.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    },
+                  },
+                ]
+              : []),
           ] satisfies SettingItem[])
         : ([] as SettingItem[])),
       {
@@ -9603,7 +9711,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
         ),
       },
     ],
-    [props]
+    [props, modelSearchQueries]
   );
 
   const filteredItems = useMemo(() => {

@@ -144,12 +144,71 @@ pub async fn openrouter_list_models() -> Result<Vec<OpenRouterModelInfo>> {
 }
 
 pub async fn provider_list_models(provider: &str, encryption_password: Option<&str>) -> Result<Vec<ProviderModelInfo>> {
+    // #region agent log
+    let log_msg = serde_json::json!({
+        "location": "ai.rs:146",
+        "message": "provider_list_models called",
+        "data": {
+            "provider": provider,
+            "has_encryption_password": encryption_password.is_some()
+        },
+        "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+        "sessionId": "debug-session",
+        "runId": "run1",
+        "hypothesisId": "E"
+    });
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+        use std::io::Write;
+        let _ = writeln!(file, "{}", log_msg);
+    }
+    // #endregion
+    
     let (base_url, _default_model, needs_auth) = get_provider_info(provider)?;
     
     let api_key = if needs_auth {
         match secrets::provider_key_get(provider, encryption_password) {
-            Ok(key) => key,
-            Err(_) => return Err(anyhow!("API key not configured for provider: {provider}")),
+            Ok(key) => {
+                // #region agent log
+                let log_msg = serde_json::json!({
+                    "location": "ai.rs:152",
+                    "message": "API key retrieved",
+                    "data": {
+                        "provider": provider,
+                        "key_length": key.len()
+                    },
+                    "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E"
+                });
+                if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                    use std::io::Write;
+                    let _ = writeln!(file, "{}", log_msg);
+                }
+                // #endregion
+                key
+            },
+            Err(e) => {
+                // #region agent log
+                let log_msg = serde_json::json!({
+                    "location": "ai.rs:167",
+                    "message": "Failed to get API key",
+                    "data": {
+                        "provider": provider,
+                        "error": format!("{}", e)
+                    },
+                    "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E"
+                });
+                if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                    use std::io::Write;
+                    let _ = writeln!(file, "{}", log_msg);
+                }
+                // #endregion
+                return Err(anyhow!("API key not configured for provider: {provider}"));
+            },
         }
     } else {
         String::new()
@@ -159,9 +218,29 @@ pub async fn provider_list_models(provider: &str, encryption_password: Option<&s
 
     // Handle different provider APIs
     match provider {
-        "openai" | "groq" | "deepseek" | "custom" => {
+        "openai" | "groq" | "deepseek" | "mistral" | "together" | "xai" | "cohere" | "custom" => {
             // OpenAI-compatible API
             let url = format!("{}/models", base_url.trim_end_matches('/'));
+            // #region agent log
+            let log_msg = serde_json::json!({
+                "location": "ai.rs:162",
+                "message": "Making OpenAI-compatible models request",
+                "data": {
+                    "provider": provider,
+                    "url": url,
+                    "needs_auth": needs_auth,
+                    "has_api_key": !api_key.is_empty()
+                },
+                "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E"
+            });
+            if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                use std::io::Write;
+                let _ = writeln!(file, "{}", log_msg);
+            }
+            // #endregion
             let mut request = client.get(&url);
             if needs_auth && !api_key.is_empty() {
                 request = request.bearer_auth(&api_key);
@@ -178,26 +257,167 @@ pub async fn provider_list_models(provider: &str, encryption_password: Option<&s
                 .await
                 .with_context(|| "Failed to read models response")?;
 
+            // #region agent log
+            let log_msg = serde_json::json!({
+                "location": "ai.rs:185",
+                "message": "Models API response received",
+                "data": {
+                    "provider": provider,
+                    "status": status.as_u16(),
+                    "body_length": body.len(),
+                    "is_success": status.is_success()
+                },
+                "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E"
+            });
+            if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                use std::io::Write;
+                let _ = writeln!(file, "{}", log_msg);
+            }
+            // #endregion
+
             if !status.is_success() {
+                // #region agent log
+                let log_msg = serde_json::json!({
+                    "location": "ai.rs:200",
+                    "message": "Models API request failed",
+                    "data": {
+                        "provider": provider,
+                        "status": status.as_u16(),
+                        "error_body": shorten_for_error(&body)
+                    },
+                    "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E"
+                });
+                if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                    use std::io::Write;
+                    let _ = writeln!(file, "{}", log_msg);
+                }
+                // #endregion
                 return Err(anyhow!("Models request failed (status {status}): {}", shorten_for_error(&body)));
             }
 
             let parsed: OpenAIModelsResponse = serde_json::from_str(&body)
                 .with_context(|| format!("Invalid models JSON response: {}", shorten_for_error(&body)))?;
             
-            Ok(parsed.data.into_iter().map(|m| ProviderModelInfo {
+            let models: Vec<ProviderModelInfo> = parsed.data.into_iter().map(|m| ProviderModelInfo {
                 id: m.id,
                 name: m.owned_by,
-            }).collect())
+            }).collect();
+            
+            // #region agent log
+            let log_msg = serde_json::json!({
+                "location": "ai.rs:215",
+                "message": "Models parsed successfully",
+                "data": {
+                    "provider": provider,
+                    "model_count": models.len(),
+                    "model_ids": models.iter().take(3).map(|m| &m.id).collect::<Vec<_>>()
+                },
+                "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E"
+            });
+            if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                use std::io::Write;
+                let _ = writeln!(file, "{}", log_msg);
+            }
+            // #endregion
+            
+            Ok(models)
         }
         "anthropic" => {
-            // Anthropic doesn't have a public models endpoint, return common models
+            // Anthropic doesn't have a public models endpoint, return comprehensive model list
             Ok(vec![
-                ProviderModelInfo { id: "claude-3-5-sonnet-20241022".to_string(), name: Some("Claude 3.5 Sonnet".to_string()) },
+                ProviderModelInfo { id: "claude-3-5-sonnet-20241022".to_string(), name: Some("Claude 3.5 Sonnet (Latest)".to_string()) },
+                ProviderModelInfo { id: "claude-3-5-sonnet-20240620".to_string(), name: Some("Claude 3.5 Sonnet".to_string()) },
                 ProviderModelInfo { id: "claude-3-opus-20240229".to_string(), name: Some("Claude 3 Opus".to_string()) },
                 ProviderModelInfo { id: "claude-3-sonnet-20240229".to_string(), name: Some("Claude 3 Sonnet".to_string()) },
                 ProviderModelInfo { id: "claude-3-haiku-20240307".to_string(), name: Some("Claude 3 Haiku".to_string()) },
             ])
+        }
+        "openrouter" => {
+            // OpenRouter has its own endpoint
+            let url = "https://openrouter.ai/api/v1/models";
+            let mut request = client.get(url);
+            if !api_key.is_empty() {
+                request = request.bearer_auth(&api_key);
+            }
+            
+            let response = request
+                .send()
+                .await
+                .with_context(|| format!("OpenRouter models request failed"))?;
+
+            let status = response.status();
+            let body = response
+                .text()
+                .await
+                .with_context(|| "Failed to read OpenRouter models response")?;
+
+            if !status.is_success() {
+                return Err(anyhow!("OpenRouter models request failed (status {status}): {}", shorten_for_error(&body)));
+            }
+
+            let parsed: serde_json::Value = serde_json::from_str(&body)
+                .with_context(|| format!("Invalid OpenRouter models JSON response: {}", shorten_for_error(&body)))?;
+            
+            let mut models = Vec::new();
+            if let Some(data) = parsed.get("data").and_then(|d| d.as_array()) {
+                for model in data {
+                    if let Some(id) = model.get("id").and_then(|i| i.as_str()) {
+                        let name = model.get("name").and_then(|n| n.as_str()).map(|s| s.to_string());
+                        models.push(ProviderModelInfo {
+                            id: id.to_string(),
+                            name,
+                        });
+                    }
+                }
+            }
+            Ok(models)
+        }
+        "perplexity" => {
+            // Perplexity uses OpenAI-compatible format but different endpoint
+            let url = format!("{}/models", base_url.trim_end_matches('/'));
+            let mut request = client.get(&url);
+            if needs_auth && !api_key.is_empty() {
+                request = request.bearer_auth(&api_key);
+            }
+            
+            let response = request
+                .send()
+                .await
+                .with_context(|| format!("Perplexity models request failed to: {url}"))?;
+
+            let status = response.status();
+            let body = response
+                .text()
+                .await
+                .with_context(|| "Failed to read Perplexity models response")?;
+
+            if !status.is_success() {
+                // Fallback to known models
+                return Ok(vec![
+                    ProviderModelInfo { id: "llama-3.1-sonar-large-128k-online".to_string(), name: Some("Sonar Large (Online)".to_string()) },
+                    ProviderModelInfo { id: "llama-3.1-sonar-small-128k-online".to_string(), name: Some("Sonar Small (Online)".to_string()) },
+                    ProviderModelInfo { id: "llama-3.1-sonar-huge-128k-online".to_string(), name: Some("Sonar Huge (Online)".to_string()) },
+                    ProviderModelInfo { id: "llama-3.1-sonar-large-128k-chat".to_string(), name: Some("Sonar Large (Chat)".to_string()) },
+                    ProviderModelInfo { id: "llama-3.1-sonar-small-128k-chat".to_string(), name: Some("Sonar Small (Chat)".to_string()) },
+                ]);
+            }
+
+            let parsed: OpenAIModelsResponse = serde_json::from_str(&body)
+                .with_context(|| format!("Invalid Perplexity models JSON response: {}", shorten_for_error(&body)))?;
+            
+            Ok(parsed.data.into_iter().map(|m| ProviderModelInfo {
+                id: m.id,
+                name: m.owned_by,
+            }).collect())
         }
         "gemini" => {
             // Gemini models endpoint
@@ -362,6 +582,12 @@ fn get_provider_info(provider: &str) -> Result<(String, String, bool)> {
         "groq" => Ok(("https://api.groq.com/openai/v1".to_string(), "llama-3.1-70b-versatile".to_string(), true)),
         "deepseek" => Ok(("https://api.deepseek.com/v1".to_string(), "deepseek-chat".to_string(), true)),
         "gemini" => Ok(("https://generativelanguage.googleapis.com/v1beta".to_string(), "gemini-flash-latest".to_string(), true)),
+        "mistral" => Ok(("https://api.mistral.ai/v1".to_string(), "mistral-medium".to_string(), true)),
+        "together" => Ok(("https://api.together.xyz/v1".to_string(), "meta-llama/Llama-3-70b-chat-hf".to_string(), true)),
+        "perplexity" => Ok(("https://api.perplexity.ai".to_string(), "llama-3.1-sonar-small-128k-online".to_string(), true)),
+        "openrouter" => Ok(("https://openrouter.ai/api/v1".to_string(), "openai/gpt-4o-mini".to_string(), true)),
+        "xai" => Ok(("https://api.x.ai/v1".to_string(), "grok-beta".to_string(), true)),
+        "cohere" => Ok(("https://api.cohere.ai/v1".to_string(), "command-r-plus".to_string(), true)),
         "pompora" => Ok(("https://ai.pompora.dev/v1".to_string(), "pompora".to_string(), true)),
         "ollama" => Ok(("http://127.0.0.1:11434/v1".to_string(), "llama3.2".to_string(), false)),
         "lmstudio" => Ok(("http://127.0.0.1:1234/v1".to_string(), "local-model".to_string(), false)),
@@ -648,8 +874,13 @@ async fn request_chat_completion(
         
         let mut request = client.post(&url).json(&request_body);
         
-        if needs_auth && !api_key.is_empty() {
-            request = request.bearer_auth(api_key);
+        if provider == "anthropic" {
+            // Anthropic uses different header format
+            request = request
+                .header("anthropic-version", "2023-06-01")
+                .header("x-api-key", &api_key);
+        } else if needs_auth && !api_key.is_empty() {
+            request = request.bearer_auth(&api_key);
         }
 
         if provider == "openrouter" {
