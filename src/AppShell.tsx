@@ -6993,8 +6993,8 @@ export default function AppShell() {
 
           <main className={`min-h-0 min-w-0 overflow-hidden rounded-2xl ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
             <div className="flex h-full min-h-0 flex-col">
-              <div className={`flex h-10 items-center gap-1 px-2 ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
-                <div className="ws-tabs-scroll flex min-w-0 flex-1 items-stretch gap-1 overflow-auto">
+              <div className={`flex h-11 items-center gap-1 px-2 ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
+                <div className="ws-tabs-scroll flex min-w-0 flex-1 items-stretch gap-1 overflow-auto pb-1">
                   {tabs.map((t) => (
                     <TabButton
                       key={t.path}
