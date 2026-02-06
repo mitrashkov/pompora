@@ -381,6 +381,11 @@ async fn openrouter_list_models() -> Result<Vec<ai::OpenRouterModelInfo>, String
 }
 
 #[tauri::command]
+async fn provider_list_models(provider: String, encryption_password: Option<String>) -> Result<Vec<ai::ProviderModelInfo>, String> {
+    ai::provider_list_models(&provider, encryption_password.as_deref()).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 async fn ai_run_action(
     action: String,
     rel_path: Option<String>,
@@ -470,6 +475,7 @@ pub fn run() {
             ai_chat,
             ai_chat_with_model,
             openrouter_list_models,
+            provider_list_models,
             terminal_start,
             terminal_write,
             terminal_resize,

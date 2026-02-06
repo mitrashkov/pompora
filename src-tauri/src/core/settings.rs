@@ -12,6 +12,8 @@ pub struct AppSettings {
     pub offline_mode: bool,
     pub active_provider: Option<String>,
     #[serde(default)]
+    pub active_model: Option<String>,
+    #[serde(default)]
     pub pompora_thinking: Option<String>,
     #[serde(default)]
     pub editor_cursor_blinking: Option<String>,
@@ -34,6 +36,7 @@ impl Default for AppSettings {
             theme: Theme::Dark,
             offline_mode: false,
             active_provider: None,
+            active_model: None,
             pompora_thinking: None,
             editor_cursor_blinking: None,
             workspace_root: None,

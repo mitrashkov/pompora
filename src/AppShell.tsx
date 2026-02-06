@@ -97,8 +97,9 @@ import {
   terminalWrite,
   terminalResize,
   terminalKill,
+  providerListModels,
 } from "./lib/tauri";
-import type { AiChatMessage, AiEditOp } from "./lib/tauri";
+import type { AiChatMessage, AiEditOp, ProviderModelInfo } from "./lib/tauri";
 import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
 
 type ActivityId = "explorer" | "search" | "scm";
@@ -1753,6 +1754,7 @@ export default function AppShell() {
     theme: "dark",
     offline_mode: false,
     active_provider: null,
+    active_model: null,
     pompora_thinking: null,
     editor_cursor_blinking: "expand",
     workspace_root: null,
@@ -1952,6 +1954,11 @@ export default function AppShell() {
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
   const [uiPomporaThinking, setUiPomporaThinking] = useState<"slow" | "fast" | "reasoning" | null>(null);
+  const [providerModels, setProviderModels] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
+  const [loadingModels, setLoadingModels] = useState<Record<string, boolean>>({});
+  const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
+  const [apiKeyInputs, setApiKeyInputs] = useState<Record<string, string>>({});
+  const [validatingKey, setValidatingKey] = useState<string | null>(null);
 
   const formatErr = useCallback((e: unknown): string => {
     if (e instanceof Error) {
@@ -3450,6 +3457,7 @@ export default function AppShell() {
           workspace_root: s.workspace_root ?? null,
           recent_workspaces: s.recent_workspaces ?? [],
           active_provider: migratedProvider ?? null,
+          active_model: (s as AppSettings).active_model ?? null,
         }));
         setWorkspaceState(w);
       })
@@ -3696,8 +3704,14 @@ export default function AppShell() {
       return `Pompora ${label}`;
     }
     const found = providerChoices.find((x) => x.id === p);
-    return found?.label ?? p;
-  }, [providerChoices, settings.active_provider, settings.pompora_thinking, uiPomporaThinking]);
+    const baseLabel = found?.label ?? p;
+    if (settings.active_model) {
+      const model = providerModels[p]?.find((m) => m.id === settings.active_model);
+      const modelName = model?.name || settings.active_model;
+      return `${baseLabel} • ${modelName}`;
+    }
+    return baseLabel;
+  }, [providerChoices, settings.active_provider, settings.active_model, settings.pompora_thinking, uiPomporaThinking, providerModels]);
 
   const activeProviderMissingKey = useMemo(() => {
     const p = settings.active_provider;
@@ -3768,6 +3782,82 @@ export default function AppShell() {
     setProviderKeyStatuses(out);
   }, [providerChoices]);
 
+  const loadProviderModels = useCallback(async (providerId: string) => {
+    if (loadingModels[providerId] || providerModels[providerId]) return;
+    
+    setLoadingModels((prev) => ({ ...prev, [providerId]: true }));
+    try {
+      const models = await providerListModels({
+        provider: providerId,
+        encryptionPassword: encryptionPasswordDraft || undefined,
+      });
+      setProviderModels((prev) => ({ ...prev, [providerId]: models }));
+    } catch (e) {
+      // Silently fail - provider might not support model listing or key not configured
+      console.warn(`Failed to load models for ${providerId}:`, e);
+    } finally {
+      setLoadingModels((prev => {
+        const next = { ...prev };
+        delete next[providerId];
+        return next;
+      }));
+    }
+  }, [loadingModels, providerModels, encryptionPasswordDraft]);
+
+  const handleSaveApiKey = useCallback(async (providerId: string) => {
+    const key = apiKeyInputs[providerId]?.trim();
+    if (!key) return;
+
+    setValidatingKey(providerId);
+    try {
+      await providerKeySet({
+        provider: providerId,
+        apiKey: key,
+        encryptionPassword: encryptionPasswordDraft || undefined,
+      });
+      setApiKeyInputs((prev) => {
+        const next = { ...prev };
+        delete next[providerId];
+        return next;
+      });
+      await refreshProviderKeyStatuses();
+      await loadProviderModels(providerId);
+      notify("API key saved successfully");
+    } catch (e) {
+      notify(`Failed to save API key: ${formatErr(e)}`, "error");
+    } finally {
+      setValidatingKey(null);
+    }
+  }, [apiKeyInputs, encryptionPasswordDraft, refreshProviderKeyStatuses, loadProviderModels, notify, formatErr]);
+
+  const handleRemoveApiKey = useCallback(async (providerId: string) => {
+    try {
+      await providerKeyClear(providerId);
+      setProviderModels((prev) => {
+        const next = { ...prev };
+        delete next[providerId];
+        return next;
+      });
+      await refreshProviderKeyStatuses();
+      notify("API key removed");
+    } catch (e) {
+      notify(`Failed to remove API key: ${formatErr(e)}`, "error");
+    }
+  }, [refreshProviderKeyStatuses, notify, formatErr]);
+
+  const handleSelectModel = useCallback(async (providerId: string, modelId: string) => {
+    const next = { ...settings, active_provider: providerId, active_model: modelId };
+    setSettingsState(next);
+    try {
+      await settingsSet(next);
+      setIsModelPickerOpen(false);
+      notify(`Selected ${modelId}`);
+    } catch (e) {
+      devConsoleError("Failed to save model selection", e);
+      setSettingsState(settings);
+    }
+  }, [settings, notify, devConsoleError]);
+
   const chatContextUsage = useMemo(() => {
     return { used: 0, total: 0, pct: 0 };
   }, []);
@@ -3812,7 +3902,10 @@ export default function AppShell() {
     const onDown = (e: MouseEvent) => {
       const t = e.target as HTMLElement | null;
       if (!t) return;
-      if (!t.closest("[data-model-picker-root]")) setIsModelPickerOpen(false);
+      // Don't close if clicking inside the model picker or expanded provider sections
+      if (t.closest("[data-model-picker-root]") || t.closest("[data-provider-expanded]")) return;
+      setIsModelPickerOpen(false);
+      setExpandedProvider(null);
     };
     window.addEventListener("mousedown", onDown);
     return () => window.removeEventListener("mousedown", onDown);
@@ -5176,13 +5269,19 @@ export default function AppShell() {
       setShowKeySaved(false);
       setShowKeyCleared(false);
 
-      const next = { ...settings, active_provider: p };
+      const next = { ...settings, active_provider: p, active_model: p ? settings.active_model : null };
       setSettingsState(next);
 
       try {
         await settingsSet(next);
         if (p) {
-          setKeyStatus(await providerKeyStatus(p));
+          const keyStatus = await providerKeyStatus(p);
+          setKeyStatus(keyStatus);
+          // Load models if key is configured
+          const provider = providerChoices.find((x) => x.id === p);
+          if (provider?.api && keyStatus.is_configured) {
+            await loadProviderModels(p);
+          }
         }
       } catch (e) {
         devConsoleError("Failed to save provider selection", e);
@@ -5193,7 +5292,7 @@ export default function AppShell() {
         }
       }
     },
-    [devConsoleError, settings]
+    [devConsoleError, settings, providerChoices, loadProviderModels]
   );
 
   const saveSettingsNow = useCallback(async () => {
@@ -8047,7 +8146,7 @@ export default function AppShell() {
                           </button>
 
                           {isModelPickerOpen ? (
-                            <div className="absolute left-0 bottom-full z-[9999] mb-2 w-56 overflow-hidden rounded-xl border border-border bg-panel shadow">
+                            <div className="absolute left-0 bottom-full z-[9999] mb-2 w-56 overflow-hidden rounded-xl border border-border bg-panel shadow" data-model-picker-root>
                               <div className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">Pompora</div>
 
                               {(["slow", "fast", "reasoning"] as const).map((mode) => {
@@ -8109,27 +8208,128 @@ export default function AppShell() {
                                 .map((p) => {
                                   const st = providerKeyStatuses[p.id];
                                   const missingKey = p.api ? st?.is_configured !== true : false;
+                                  const isExpanded = expandedProvider === p.id;
+                                  const models = providerModels[p.id] || [];
+                                  const isLoading = loadingModels[p.id];
+                                  const isActive = (settings.active_provider ?? "") === p.id;
+                                  const activeModel = isActive ? (settings.active_model ?? null) : null;
+                                  const apiKeyValue = apiKeyInputs[p.id] ?? "";
+                                  const isSavingKey = validatingKey === p.id;
+
                                   return (
-                                    <button
-                                      key={p.id}
-                                      type="button"
-                                      className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[rgb(var(--p-panel2))] ${
-                                        (settings.active_provider ?? "") === p.id ? "bg-[rgb(var(--p-panel2))]" : ""
-                                      } ${missingKey ? "text-muted opacity-60" : "text-text"}`}
-                                      onClick={() => {
-                                        void changeProvider(p.id);
-                                        setIsModelPickerOpen(false);
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        if (missingKey) {
-                                          showTooltipForEl(e.currentTarget, "Add an API key in Settings (Ctrl+,)", "tr");
-                                        }
-                                      }}
-                                      onMouseLeave={hideTooltip}
-                                    >
-                                      <span className={p.api ? "" : "text-muted"}>{p.label}</span>
-                                      <span className="text-xs text-muted">{p.api ? (missingKey ? "API key" : "API") : "Local"}</span>
-                                    </button>
+                                    <div key={p.id}>
+                                      <button
+                                        type="button"
+                                        className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[rgb(var(--p-panel2))] ${
+                                          isActive ? "bg-[rgb(var(--p-panel2))]" : ""
+                                        } ${missingKey ? "text-muted opacity-60" : "text-text"}`}
+                                        onClick={async () => {
+                                          if (isExpanded) {
+                                            setExpandedProvider(null);
+                                          } else {
+                                            setExpandedProvider(p.id);
+                                            if (p.api && !missingKey && models.length === 0) {
+                                              await loadProviderModels(p.id);
+                                            }
+                                            if (!isActive) {
+                                              await changeProvider(p.id);
+                                            }
+                                          }
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          if (missingKey && !isExpanded) {
+                                            showTooltipForEl(e.currentTarget, "Click to add API key and select model", "tr");
+                                          }
+                                        }}
+                                        onMouseLeave={hideTooltip}
+                                      >
+                                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                                          <span className={p.api ? "" : "text-muted"}>{p.label}</span>
+                                          {activeModel && (
+                                            <span className="truncate text-xs text-muted">• {activeModel}</span>
+                                          )}
+                                        </div>
+                                        <ChevronDown className={`h-3 w-3 shrink-0 text-muted transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                      </button>
+
+                                      {isExpanded && (
+                                        <div className="border-t border-border bg-[rgb(var(--p-bg))]" data-provider-expanded>
+                                          {p.api && (
+                                            <div className="p-2 space-y-2">
+                                              {missingKey ? (
+                                                <div className="space-y-2">
+                                                  <input
+                                                    type="password"
+                                                    placeholder="Enter API key"
+                                                    value={apiKeyValue}
+                                                    onChange={(e) => setApiKeyInputs((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                                                    className="w-full rounded border border-border bg-bg px-2 py-1.5 text-xs text-text placeholder:text-muted focus:border-accent focus:outline-none"
+                                                    onKeyDown={(e) => {
+                                                      if (e.key === "Enter" && apiKeyValue.trim()) {
+                                                        void handleSaveApiKey(p.id);
+                                                      }
+                                                    }}
+                                                    autoFocus
+                                                  />
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => void handleSaveApiKey(p.id)}
+                                                    disabled={!apiKeyValue.trim() || isSavingKey}
+                                                    className="w-full rounded bg-accent px-2 py-1.5 text-xs text-bg hover:bg-accent/90 disabled:opacity-50"
+                                                  >
+                                                    {isSavingKey ? "Saving..." : "Save API Key"}
+                                                  </button>
+                                                </div>
+                                              ) : (
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-xs text-muted">API key configured</span>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => void handleRemoveApiKey(p.id)}
+                                                    className="text-xs text-danger hover:text-danger/80"
+                                                  >
+                                                    Remove
+                                                  </button>
+                                                </div>
+                                              )}
+                                            </div>
+                                          )}
+
+                                          {!p.api || !missingKey ? (
+                                            <div className="max-h-48 space-y-1 overflow-auto p-2">
+                                              {isLoading ? (
+                                                <div className="px-2 py-1 text-xs text-muted">Loading models...</div>
+                                              ) : models.length > 0 ? (
+                                                models.map((model) => {
+                                                  const isSelected = activeModel === model.id;
+                                                  return (
+                                                    <button
+                                                      key={model.id}
+                                                      type="button"
+                                                      onClick={() => void handleSelectModel(p.id, model.id)}
+                                                      className={`w-full rounded px-2 py-1.5 text-left text-xs transition-colors ${
+                                                        isSelected
+                                                          ? "bg-accent/20 text-text"
+                                                          : "text-muted hover:bg-[rgb(var(--p-panel2))] hover:text-text"
+                                                      }`}
+                                                    >
+                                                      <div className="truncate">{model.name || model.id}</div>
+                                                      {model.name && (
+                                                        <div className="truncate text-[10px] text-muted">{model.id}</div>
+                                                      )}
+                                                    </button>
+                                                  );
+                                                })
+                                              ) : (
+                                                <div className="px-2 py-1 text-xs text-muted">
+                                                  {p.api ? "No models available. Check API key." : "No models found"}
+                                                </div>
+                                              )}
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                      )}
+                                    </div>
                                   );
                                 })}
                             </div>

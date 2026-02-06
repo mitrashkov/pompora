@@ -143,6 +143,140 @@ pub async fn openrouter_list_models() -> Result<Vec<OpenRouterModelInfo>> {
     Ok(parsed.data)
 }
 
+pub async fn provider_list_models(provider: &str, encryption_password: Option<&str>) -> Result<Vec<ProviderModelInfo>> {
+    let (base_url, _default_model, needs_auth) = get_provider_info(provider)?;
+    
+    let api_key = if needs_auth {
+        match secrets::provider_key_get(provider, encryption_password) {
+            Ok(key) => key,
+            Err(_) => return Err(anyhow!("API key not configured for provider: {provider}")),
+        }
+    } else {
+        String::new()
+    };
+
+    let client = reqwest::Client::new();
+
+    // Handle different provider APIs
+    match provider {
+        "openai" | "groq" | "deepseek" | "custom" => {
+            // OpenAI-compatible API
+            let url = format!("{}/models", base_url.trim_end_matches('/'));
+            let mut request = client.get(&url);
+            if needs_auth && !api_key.is_empty() {
+                request = request.bearer_auth(&api_key);
+            }
+            
+            let response = request
+                .send()
+                .await
+                .with_context(|| format!("Models request failed to: {url}"))?;
+
+            let status = response.status();
+            let body = response
+                .text()
+                .await
+                .with_context(|| "Failed to read models response")?;
+
+            if !status.is_success() {
+                return Err(anyhow!("Models request failed (status {status}): {}", shorten_for_error(&body)));
+            }
+
+            let parsed: OpenAIModelsResponse = serde_json::from_str(&body)
+                .with_context(|| format!("Invalid models JSON response: {}", shorten_for_error(&body)))?;
+            
+            Ok(parsed.data.into_iter().map(|m| ProviderModelInfo {
+                id: m.id,
+                name: m.owned_by,
+            }).collect())
+        }
+        "anthropic" => {
+            // Anthropic doesn't have a public models endpoint, return common models
+            Ok(vec![
+                ProviderModelInfo { id: "claude-3-5-sonnet-20241022".to_string(), name: Some("Claude 3.5 Sonnet".to_string()) },
+                ProviderModelInfo { id: "claude-3-opus-20240229".to_string(), name: Some("Claude 3 Opus".to_string()) },
+                ProviderModelInfo { id: "claude-3-sonnet-20240229".to_string(), name: Some("Claude 3 Sonnet".to_string()) },
+                ProviderModelInfo { id: "claude-3-haiku-20240307".to_string(), name: Some("Claude 3 Haiku".to_string()) },
+            ])
+        }
+        "gemini" => {
+            // Gemini models endpoint
+            let url = format!("{}/models?key={}", base_url.trim_end_matches('/'), api_key);
+            let response = client
+                .get(&url)
+                .send()
+                .await
+                .with_context(|| format!("Gemini models request failed to: {url}"))?;
+
+            let status = response.status();
+            let body = response
+                .text()
+                .await
+                .with_context(|| "Failed to read Gemini models response")?;
+
+            if !status.is_success() {
+                return Err(anyhow!("Gemini models request failed (status {status}): {}", shorten_for_error(&body)));
+            }
+
+            let parsed: serde_json::Value = serde_json::from_str(&body)
+                .with_context(|| format!("Invalid Gemini models JSON response: {}", shorten_for_error(&body)))?;
+            
+            let mut models = Vec::new();
+            if let Some(models_array) = parsed.get("models").and_then(|m| m.as_array()) {
+                for model in models_array {
+                    if let Some(id) = model.get("name").and_then(|n| n.as_str()) {
+                        let display_name = model.get("displayName").and_then(|n| n.as_str()).map(|s| s.to_string());
+                        models.push(ProviderModelInfo {
+                            id: id.to_string(),
+                            name: display_name,
+                        });
+                    }
+                }
+            }
+            Ok(models)
+        }
+        "ollama" | "lmstudio" => {
+            // Local providers - try to fetch models
+            let url = format!("{}/models", base_url.trim_end_matches('/'));
+            let response = client
+                .get(&url)
+                .send()
+                .await;
+
+            match response {
+                Ok(resp) if resp.status().is_success() => {
+                    let body = resp.text().await.unwrap_or_default();
+                    if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) {
+                        let mut models = Vec::new();
+                        if let Some(models_array) = parsed.get("data").or_else(|| parsed.get("models")).and_then(|m| m.as_array()) {
+                            for model in models_array {
+                                if let Some(id) = model.get("id").or_else(|| model.get("name")).and_then(|n| n.as_str()) {
+                                    models.push(ProviderModelInfo {
+                                        id: id.to_string(),
+                                        name: None,
+                                    });
+                                }
+                            }
+                        }
+                        if !models.is_empty() {
+                            return Ok(models);
+                        }
+                    }
+                }
+                _ => {}
+            }
+            
+            // Fallback to default models
+            Ok(vec![
+                ProviderModelInfo { id: "llama3.2".to_string(), name: Some("Llama 3.2".to_string()) },
+                ProviderModelInfo { id: "llama3".to_string(), name: Some("Llama 3".to_string()) },
+                ProviderModelInfo { id: "mistral".to_string(), name: Some("Mistral".to_string()) },
+            ])
+        }
+        _ => Err(anyhow!("Provider not supported for model listing: {provider}")),
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMessage {
     pub role: String,
@@ -178,6 +312,29 @@ pub struct OpenRouterModelInfo {
 struct OpenRouterModelsResponse {
     #[serde(default)]
     data: Vec<OpenRouterModelInfo>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProviderModelInfo {
+    pub id: String,
+    pub name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct OpenAIModelsResponse {
+    #[serde(default)]
+    data: Vec<OpenAIModelData>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct OpenAIModelData {
+    pub id: String,
+    #[serde(default)]
+    pub object: Option<String>,
+    #[serde(default)]
+    pub created: Option<u64>,
+    #[serde(default)]
+    pub owned_by: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -336,10 +493,27 @@ async fn request_chat_completion(
     thinking: Option<&str>,
 ) -> Result<String> {
     let (base_url, mut model, needs_auth) = get_provider_info(provider)?;
+    
+    // Use model_override if provided, otherwise check settings for active_model
     if let Some(m) = model_override {
         let t = m.trim();
         if !t.is_empty() {
             model = t.to_string();
+        }
+    } else {
+        // Check settings for active_model
+        let s = settings::load().ok();
+        if let Some(settings) = s {
+            if let Some(active_prov) = &settings.active_provider {
+                if active_prov == provider {
+                    if let Some(active_mod) = &settings.active_model {
+                        let t = active_mod.trim();
+                        if !t.is_empty() {
+                            model = t.to_string();
+                        }
+                    }
+                }
+            }
         }
     }
     

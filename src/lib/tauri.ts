@@ -55,8 +55,23 @@ export type OpenRouterModelInfo = {
   id: string;
 };
 
+export type ProviderModelInfo = {
+  id: string;
+  name?: string | null;
+};
+
 export async function openrouterListModels(): Promise<OpenRouterModelInfo[]> {
   return invoke<OpenRouterModelInfo[]>("openrouter_list_models", {});
+}
+
+export async function providerListModels(args: {
+  provider: string;
+  encryptionPassword?: string;
+}): Promise<ProviderModelInfo[]> {
+  return invoke<ProviderModelInfo[]>("provider_list_models", {
+    provider: args.provider,
+    encryptionPassword: args.encryptionPassword ?? null,
+  });
 }
 
 export async function providerKeyClear(provider: string): Promise<void> {

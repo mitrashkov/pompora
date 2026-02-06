@@ -6,6 +6,7 @@ export type AppSettings = {
   theme: Theme;
   offline_mode: boolean;
   active_provider: string | null;
+  active_model?: string | null;
   pompora_thinking?: "slow" | "fast" | "reasoning" | string | null;
   editor_cursor_blinking?: CursorBlinking;
   workspace_root: string | null;
