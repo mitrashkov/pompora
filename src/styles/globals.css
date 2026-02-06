@@ -60,9 +60,11 @@
 }
 
 .ws-tabs-scroll {
-  scrollbar-gutter: stable;
+  scrollbar-gutter: stable both-edges;
   scrollbar-width: thin;
   scrollbar-color: rgb(var(--p-border)) transparent;
+  padding-bottom: 8px;
+  margin-bottom: -8px;
 }
 
 .ws-tabs-scroll::-webkit-scrollbar {
