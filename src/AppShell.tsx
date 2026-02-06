@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type ReactElement } from "react";
+import React, { Component, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type ReactElement } from "react";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { editor as MonacoEditorNS } from "monaco-editor";
 import { listen } from "@tauri-apps/api/event";
@@ -33,6 +33,7 @@ import siCplusplus from "@iconify/icons-simple-icons/cplusplus";
 import { Terminal as XTermTerminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import {
+  AlertCircle,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
@@ -50,6 +51,7 @@ import {
   Minus,
   Pencil,
   Plus,
+  RefreshCw,
   RotateCw,
   Save,
   Search,
@@ -59,6 +61,7 @@ import {
   Trash2,
   ThumbsDown,
   ThumbsUp,
+  User,
   Wand2,
   X,
   Palette,
@@ -103,6 +106,187 @@ import type { AiChatMessage, AiEditOp } from "./lib/tauri";
 import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
 
 type ActivityId = "explorer" | "search" | "scm";
+
+const ProviderModelPicker = React.memo(function ProviderModelPicker(p: {
+  providerId: string;
+  models: Array<{ id: string; name?: string | null }>;
+  isLoading: boolean;
+  selectedModel: string | null;
+  searchQuery: string;
+  onSearchQueryChange: (next: string) => void;
+  keyStatus: KeyStatus | null;
+  encryptionPasswordDraft: string;
+  onLoadModels: (providerId: string) => void;
+  onSelectModel: (providerId: string, modelId: string) => void;
+  error: string | null;
+}) {
+  const {
+    providerId,
+    models,
+    isLoading,
+    selectedModel,
+    searchQuery,
+    onSearchQueryChange,
+    keyStatus,
+    encryptionPasswordDraft,
+    onLoadModels,
+    onSelectModel,
+    error,
+  } = p;
+
+  const filteredModels = searchQuery
+    ? models.filter((m) => {
+        const name = (m.name || "").toLowerCase();
+        const id = m.id.toLowerCase();
+        const query = searchQuery.toLowerCase();
+        return name.includes(query) || id.includes(query);
+      })
+    : models;
+
+  const canLoadEncrypted = !(keyStatus?.storage === "encryptedfile" && !encryptionPasswordDraft.trim());
+
+  const modelLoadAttempted = useRef<Record<string, boolean>>({});
+  useEffect(() => {
+    if (!canLoadEncrypted) return;
+    if (!isLoading && models.length === 0 && providerId && !modelLoadAttempted.current[providerId]) {
+      modelLoadAttempted.current[providerId] = true;
+      onLoadModels(providerId);
+    }
+  }, [canLoadEncrypted, isLoading, models.length, onLoadModels, providerId]);
+
+  return (
+    <div className="space-y-3">
+      {!canLoadEncrypted ? (
+        <div className="rounded-lg border border-border/60 bg-panel/30 px-3 py-2 text-xs text-muted">
+          Enter your encryption password to load stored models.
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
+          <input
+            type="text"
+            placeholder="Search models..."
+            value={searchQuery}
+            onChange={(e) => onSearchQueryChange(e.currentTarget.value)}
+            className="ws-vscode-input pl-8"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            modelLoadAttempted.current[providerId] = false;
+            onLoadModels(providerId);
+          }}
+          disabled={isLoading || !canLoadEncrypted}
+          className="ws-vscode-btn p-1.5"
+          title="Refresh models"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+        </button>
+      </div>
+
+      <div className="max-h-72 overflow-y-auto rounded-lg border border-border/60 bg-panel/30">
+        {isLoading ? (
+          <div className="p-6 text-center">
+            <RefreshCw className="mx-auto mb-2 h-5 w-5 animate-spin text-accent" />
+            <p className="text-sm text-muted">Loading models...</p>
+          </div>
+        ) : filteredModels.length > 0 ? (
+          <div className="divide-y divide-border/30">
+            {filteredModels.map((model) => {
+              const isSelected = selectedModel === model.id;
+              const displayName = model.name || model.id.split("/").pop()?.split(":").pop() || model.id;
+              const provider = model.id.split("/")[0] || "";
+
+              return (
+                <button
+                  key={model.id}
+                  type="button"
+                  onClick={() => onSelectModel(providerId, model.id)}
+                  className={`w-full px-3 py-2.5 text-left transition-all duration-150 ${
+                    isSelected
+                      ? "bg-accent/10 border-l-2 border-l-accent"
+                      : "hover:bg-panel/50 border-l-2 border-l-transparent"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className={`truncate text-sm font-medium ${isSelected ? "text-text" : "text-muted"}`}>{displayName}</div>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <span className="rounded bg-panel/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted/60">
+                          {provider}
+                        </span>
+                        {model.name && model.id !== displayName && (
+                          <span className="truncate text-xs text-muted/50">
+                            {model.id.length > 40 ? `${model.id.substring(0, 37)}...` : model.id}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {isSelected ? (
+                      <div className="flex items-center gap-1.5 text-accent">
+                        <Check className="h-4 w-4" />
+                        <span className="text-xs font-medium">Active</span>
+                      </div>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-6 text-center">
+            {searchQuery ? (
+              <>
+                <Search className="mx-auto mb-2 h-5 w-5 text-muted/40" />
+                <p className="text-sm text-muted">No models match your search</p>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="mx-auto mb-2 h-5 w-5 text-muted/40" />
+                <p className="text-sm text-muted">No models available</p>
+                <p className="mt-1 text-xs text-muted/50">Save a valid API key and try refreshing</p>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {selectedModel ? (
+        <div className="flex items-center justify-between rounded-lg border border-accent/20 bg-accent/5 px-3 py-2">
+          <div className="min-w-0">
+            <span className="text-xs text-muted/70">Active Model</span>
+            <p className="truncate text-sm font-medium text-text">
+              {selectedModel.split("/").pop()?.split(":").pop() || selectedModel}
+            </p>
+          </div>
+          <div className="h-2 w-2 rounded-full bg-accent shadow-[0_0_8px_rgba(30,144,255,0.5)]" />
+        </div>
+      ) : null}
+
+      {models.length > 0 ? (
+        <div className="flex items-center justify-between px-1 text-xs text-muted/60">
+          <span>
+            {filteredModels.length} of {models.length} models
+          </span>
+          {searchQuery ? (
+            <button type="button" onClick={() => onSearchQueryChange("")} className="hover:text-text">
+              Clear search
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+});
 
 type ChatLogEntry = {
   id: string;
@@ -1956,6 +2140,7 @@ export default function AppShell() {
   const [uiPomporaThinking, setUiPomporaThinking] = useState<"slow" | "fast" | "reasoning" | null>(null);
   const [providerModels, setProviderModels] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
   const [loadingModels, setLoadingModels] = useState<Record<string, boolean>>({});
+  const [providerModelsError, setProviderModelsError] = useState<Record<string, string | null>>({});
 
   const formatErr = useCallback((e: unknown): string => {
     if (e instanceof Error) {
@@ -3874,6 +4059,12 @@ export default function AppShell() {
       // #endregion
       // Silently fail - provider might not support model listing or key not configured
       console.warn(`Failed to load models for ${providerId}:`, e);
+      notify({
+        kind: "error",
+        title: "Models",
+        message: `Failed to load models for ${providerId}: ${formatErr(e)}`,
+      });
+      setProviderModelsError((prev) => ({ ...prev, [providerId]: formatErr(e) }));
       // Clear models if loading failed (might be invalid key)
       setProviderModels((prev) => {
         const next = { ...prev };
@@ -3887,7 +4078,7 @@ export default function AppShell() {
         return next;
       }));
     }
-  }, [loadingModels, encryptionPasswordDraft]);
+  }, [loadingModels, encryptionPasswordDraft, formatErr, notify]);
 
 
   const chatContextUsage = useMemo(() => {
@@ -5785,7 +5976,7 @@ export default function AppShell() {
   ]);
 
   const settingsProviderChoices = useMemo(
-    () => providerChoices.filter((p) => p.id !== "pompora"),
+    () => providerChoices,
     [providerChoices]
   );
 
@@ -7238,56 +7429,59 @@ export default function AppShell() {
               <div className="min-h-0 flex-1 flex flex-col">
                 {activeTab?.path === SETTINGS_TAB_PATH ? (
                   <div className="min-h-0 flex-1 overflow-auto">
-                    <SettingsScreen
-                      settings={settings}
-                      authProfile={authProfile}
-                      authCredits={authCredits}
-                      isAuthBusy={isAuthBusy}
-                      providerLabel={providerLabel}
-                      keyStatus={keyStatus}
-                      providerChoices={settingsProviderChoices}
-                      apiKeyDraft={apiKeyDraft}
-                      encryptionPasswordDraft={encryptionPasswordDraft}
-                      secretsError={secretsError}
-                      isSavingSettings={isSavingSettings}
-                      isTogglingOffline={isTogglingOffline}
-                      isKeyOperationInProgress={isKeyOperationInProgress}
-                      isSettingsLoaded={isSettingsLoaded}
-                      workspaceLabel={workspaceLabel}
-                      recentWorkspaces={workspace.recent}
-                      onChangeTheme={(t: Theme) => setSettingsState((s) => ({ ...s, theme: t }))}
-                      onChangeCursorBlinking={(v) => void setCursorBlinking(v)}
-                      onToggleOffline={toggleOfflineMode}
-                      onChangeProvider={(p) => void changeProvider(p)}
-                      onChangePomporaThinking={(t) => void setPomporaThinking(t)}
-                      onPickFolder={() => void openFolder()}
-                      onOpenRecent={(p) => void openRecent(p)}
-                      onApiKeyDraft={setApiKeyDraft}
-                      onEncryptionPasswordDraft={setEncryptionPasswordDraft}
-                      onStoreKey={handleStoreKey}
-                      onClearKey={clearProviderKey}
-                      onLoginToPompora={() => void beginDesktopAuthWithMode("login")}
-                      onSignupToPompora={() => void beginDesktopAuthWithMode("signup")}
-                      onSaveSettings={saveSettingsNow}
-                      showKeySaved={showKeySaved}
-                      showKeyCleared={showKeyCleared}
-                      onDebugGemini={handleDebugGemini}
-                      debugResult={debugResult}
-                      providerModels={providerModels}
-                      loadingModels={loadingModels}
-                      onLoadModels={(providerId) => void loadProviderModels(providerId)}
-                      onSelectModel={async (providerId, modelId) => {
-                        const next = { ...settings, active_provider: providerId, active_model: modelId };
-                        setSettingsState(next);
-                        try {
-                          await settingsSet(next);
-                          notify({ kind: "info", title: "Model Selected", message: `Selected ${modelId}` });
-                        } catch (e) {
-                          devConsoleError("Failed to save model selection", e);
-                          setSettingsState(settings);
-                        }
-                      }}
-                    />
+                    <SettingsErrorBoundary>
+                      <SettingsScreen
+                        settings={settings}
+                        authProfile={authProfile}
+                        authCredits={authCredits}
+                        isAuthBusy={isAuthBusy}
+                        providerLabel={providerLabel}
+                        keyStatus={keyStatus}
+                        providerChoices={settingsProviderChoices}
+                        apiKeyDraft={apiKeyDraft}
+                        encryptionPasswordDraft={encryptionPasswordDraft}
+                        secretsError={secretsError}
+                        isSavingSettings={isSavingSettings}
+                        isTogglingOffline={isTogglingOffline}
+                        isKeyOperationInProgress={isKeyOperationInProgress}
+                        isSettingsLoaded={isSettingsLoaded}
+                        workspaceLabel={workspaceLabel}
+                        recentWorkspaces={workspace.recent}
+                        onChangeTheme={(t: Theme) => setSettingsState((s) => ({ ...s, theme: t }))}
+                        onChangeCursorBlinking={(v) => void setCursorBlinking(v)}
+                        onToggleOffline={toggleOfflineMode}
+                        onChangeProvider={(p) => void changeProvider(p)}
+                        onChangePomporaThinking={(t) => void setPomporaThinking(t)}
+                        onPickFolder={() => void openFolder()}
+                        onOpenRecent={(p) => void openRecent(p)}
+                        onApiKeyDraft={setApiKeyDraft}
+                        onEncryptionPasswordDraft={setEncryptionPasswordDraft}
+                        onStoreKey={handleStoreKey}
+                        onClearKey={clearProviderKey}
+                        onLoginToPompora={() => void beginDesktopAuthWithMode("login")}
+                        onSignupToPompora={() => void beginDesktopAuthWithMode("signup")}
+                        onSaveSettings={saveSettingsNow}
+                        showKeySaved={showKeySaved}
+                        showKeyCleared={showKeyCleared}
+                        onDebugGemini={handleDebugGemini}
+                        debugResult={debugResult}
+                        providerModels={providerModels}
+                        loadingModels={loadingModels}
+                        providerModelsError={providerModelsError}
+                        onLoadModels={(providerId) => void loadProviderModels(providerId)}
+                        onSelectModel={async (providerId, modelId) => {
+                          const next = { ...settings, active_provider: providerId, active_model: modelId };
+                          setSettingsState(next);
+                          try {
+                            await settingsSet(next);
+                            notify({ kind: "info", title: "Model Selected", message: `Selected ${modelId}` });
+                          } catch (e) {
+                            devConsoleError("Failed to save model selection", e);
+                            setSettingsState(settings);
+                          }
+                        }}
+                      />
+                    </SettingsErrorBoundary>
                   </div>
                 ) : !workspace.root ? (
                   <WelcomeScreen
@@ -9372,8 +9566,37 @@ interface SettingsScreenProps {
   debugResult: string | null;
   providerModels: Record<string, Array<{ id: string; name?: string | null }>>;
   loadingModels: Record<string, boolean>;
+  providerModelsError: Record<string, string | null>;
   onLoadModels: (providerId: string) => void;
   onSelectModel: (providerId: string, modelId: string) => void;
+}
+
+class SettingsErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: unknown }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: unknown) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      const msg = this.state.error instanceof Error ? this.state.error.message : String(this.state.error);
+      return (
+        <div className="p-6">
+          <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+            Settings crashed: {msg}
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
@@ -9391,8 +9614,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       ] as const,
     []
   );
-
-  const providerStatusLabel = props.keyStatus?.is_configured ? "Configured" : "Not configured";
 
   type SectionId = (typeof sectionList)[number]["id"];
   const [activeSection, setActiveSection] = useState<SectionId>("workspace");
@@ -9454,6 +9675,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       return () => window.removeEventListener("mousedown", onDown);
     }, [open]);
 
+    if (!p.options.length) {
+      return (
+        <div ref={wrapRef} className={`relative ${p.widthClassName ?? ""}`.trim()}>
+          <button type="button" className="ws-vscode-dropdown-btn opacity-60" disabled>
+            <span className="truncate">No options</span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-muted" />
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div ref={wrapRef} className={`relative ${p.widthClassName ?? ""}`.trim()}>
         <button
@@ -9507,209 +9739,156 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
   const settingsItems = useMemo<SettingItem[]>(
     () => [
-      {
-        id: "workspace.folder",
-        section: "workspace",
-        title: "Workspace Folder",
-        description: "Choose the folder you want to work in.",
-        keywords: "workspace folder open",
-        renderControl: () => (
-          <button type="button" className="ws-vscode-btn" onClick={props.onPickFolder}>
-            Open Folder
-          </button>
-        ),
-      },
-      {
-        id: "editor.cursorBlinking",
-        section: "appearance",
-        title: "Cursor Blinking",
-        description: "Control the cursor animation style.",
-        keywords: "cursor caret blinking animation",
-        renderControl: () => (
-          <Dropdown
-            value={props.settings.editor_cursor_blinking ?? "expand"}
-            options={[
-              { value: "blink", label: "Blink" },
-              { value: "smooth", label: "Smooth" },
-              { value: "phase", label: "Phase" },
-              { value: "expand", label: "Expand" },
-              { value: "solid", label: "Solid" },
-            ]}
-            onChange={(v) => props.onChangeCursorBlinking(v as CursorBlinking)}
-          />
-        ),
-      },
-      {
-        id: "appearance.theme",
-        section: "appearance",
-        title: "Theme",
-        description: "Choose the color theme.",
-        keywords: "theme dark light appearance",
-        renderControl: () => (
-          <Dropdown
-            value={props.settings.theme}
-            options={[
-              { value: "dark", label: "Dark" },
-              { value: "light", label: "Light" },
-            ]}
-            onChange={(v) => props.onChangeTheme(v as Theme)}
-          />
-        ),
-      },
-      {
-        id: "ai.offline",
-        section: "ai",
-        title: "AI: Offline Mode",
-        description: "Disable all network AI calls.",
-        keywords: "offline ai network",
-        renderControl: () => <Switch checked={props.settings.offline_mode} onChange={() => props.onToggleOffline()} disabled={props.isTogglingOffline} />,
-      },
-      ...(props.settings.active_provider && props.settings.active_provider !== "pompora"
-        ? ([
-            {
-              id: "ai.apiKey",
-              section: "ai" as const,
-              title: "AI: API Key",
-              description: "Paste your API key for the selected provider.",
-              keywords: "api key security",
-              renderControl: () => (
-                <div className="space-y-2">
-                  <input
-                    className="ws-vscode-input"
-                    placeholder="Paste your API key"
-                    value={props.apiKeyDraft}
-                    autoComplete="off"
-                    spellCheck={false}
-                    onChange={(e) => props.onApiKeyDraft(e.target.value)}
-                  />
-                  {props.keyStatus?.is_configured && (
-                    <div className="flex items-center gap-2 text-xs text-muted">
-                      <span className="text-green-500">✓</span>
-                      <span>API key configured</span>
-                    </div>
-                  )}
+    {
+      id: "workspace.folder",
+      section: "workspace",
+      title: "Workspace Folder",
+      description: "Choose the folder you want to work in.",
+      keywords: "workspace folder open",
+      renderControl: () => (
+        <button type="button" className="ws-vscode-btn" onClick={props.onPickFolder}>
+          Open Folder
+        </button>
+      ),
+    },
+    {
+      id: "editor.cursorBlinking",
+      section: "appearance",
+      title: "Cursor Blinking",
+      description: "Control the cursor animation style.",
+      keywords: "cursor caret blinking animation",
+      renderControl: () => (
+        <Dropdown
+          value={props.settings.editor_cursor_blinking ?? "expand"}
+          options={[
+            { value: "blink", label: "Blink" },
+            { value: "smooth", label: "Smooth" },
+            { value: "phase", label: "Phase" },
+            { value: "expand", label: "Expand" },
+            { value: "solid", label: "Solid" },
+          ]}
+          onChange={(v) => props.onChangeCursorBlinking(v as CursorBlinking)}
+        />
+      ),
+    },
+    {
+      id: "appearance.theme",
+      section: "appearance",
+      title: "Theme",
+      description: "Choose the color theme.",
+      keywords: "theme dark light appearance",
+      renderControl: () => (
+        <Dropdown
+          value={props.settings.theme}
+          options={[
+            { value: "dark", label: "Dark" },
+            { value: "light", label: "Light" },
+          ]}
+          onChange={(v) => props.onChangeTheme(v as Theme)}
+        />
+      ),
+    },
+    {
+      id: "ai.provider",
+      section: "ai",
+      title: "AI: Provider",
+      description: "Choose your AI provider.",
+      keywords: "provider ai model",
+      renderControl: () => (
+        <Dropdown
+          value={props.settings.active_provider ?? "pompora"}
+          options={props.providerChoices.map((p) => ({ value: p.id, label: p.label }))}
+          onChange={(v) => props.onChangeProvider(v === "pompora" ? null : v)}
+        />
+      ),
+    },
+    {
+      id: "ai.offline",
+      section: "ai",
+      title: "AI: Offline Mode",
+      description: "Disable all network AI calls.",
+      keywords: "offline ai network",
+      renderControl: () => <Switch checked={props.settings.offline_mode} onChange={() => props.onToggleOffline()} disabled={props.isTogglingOffline} />,
+    },
+    ...(props.settings.active_provider && props.settings.active_provider !== "pompora"
+      ? [
+        {
+          id: "ai.apiKey",
+          section: "ai" as const,
+          title: "AI: API Key",
+          description: "Paste your API key for the selected provider.",
+          keywords: "api key security",
+          renderControl: () => (
+            <div className="space-y-2">
+              <input
+                className="ws-vscode-input"
+                placeholder="Paste your API key"
+                value={props.apiKeyDraft}
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(e) => props.onApiKeyDraft(e.target.value)}
+              />
+              {props.keyStatus?.is_configured && (
+                <div className="flex items-center gap-2 text-xs text-muted">
+                  <span className="text-green-500">✓</span>
+                  <span>API key configured</span>
                 </div>
-              ),
-            },
-            ...(props.keyStatus?.is_configured
-              ? [
-                  {
-                    id: "ai.model",
-                    section: "ai" as const,
-                    title: "AI: Model",
-                    description: "Select which model to use for this provider.",
-                    keywords: "model ai provider",
-                    renderControl: () => {
-                      const providerId = props.settings.active_provider;
-                      if (!providerId) return null;
-                      
-                      const models = props.providerModels[providerId] || [];
-                      const isLoading = props.loadingModels[providerId];
-                      const selectedModel = props.settings.active_model;
-                      const searchQuery = modelSearchQueries[providerId] || "";
-                      const filteredModels = searchQuery
-                        ? models.filter((m) => {
-                            const name = (m.name || "").toLowerCase();
-                            const id = m.id.toLowerCase();
-                            const query = searchQuery.toLowerCase();
-                            return name.includes(query) || id.includes(query);
-                          })
-                        : models;
+              )}
+            </div>
+          ),
+        },
+        {
+          id: "ai.model",
+          section: "ai" as const,
+          title: "AI: Model",
+          description: "Select which model to use for this provider.",
+          keywords: "model ai provider",
+          renderControl: () => {
+            const providerId = props.settings.active_provider;
+            if (!providerId) return null;
+            if (props.keyStatus?.is_configured !== true) {
+              return <div className="text-xs text-muted">Save an API key to load models.</div>;
+            }
 
-                      // Load models if not loaded yet
-                      if (!isLoading && models.length === 0 && providerId) {
-                        setTimeout(() => props.onLoadModels(providerId), 100);
-                      }
-
-                      return (
-                        <div className="space-y-2">
-                          {models.length > 0 && (
-                            <div className="space-y-2">
-                              <input
-                                type="text"
-                                placeholder="Search models..."
-                                value={searchQuery}
-                                onChange={(e) => setModelSearchQueries((prev) => ({ ...prev, [providerId]: e.target.value }))}
-                                className="ws-vscode-input"
-                              />
-                              <div className="max-h-64 overflow-y-auto rounded border border-border bg-bg">
-                                {isLoading ? (
-                                  <div className="p-4 text-center text-sm text-muted">Loading models...</div>
-                                ) : filteredModels.length > 0 ? (
-                                  filteredModels.map((model) => {
-                                    const isSelected = selectedModel === model.id;
-                                    const displayName = model.name || model.id.split('/').pop()?.split(':').pop() || model.id;
-                                    const shortId = model.id.length > 50 ? `${model.id.substring(0, 47)}...` : model.id;
-                                    
-                                    return (
-                                      <button
-                                        key={model.id}
-                                        type="button"
-                                        onClick={() => props.onSelectModel(providerId, model.id)}
-                                        className={`w-full px-3 py-2 text-left text-sm transition-colors border-b border-border/30 last:border-0 ${
-                                          isSelected
-                                            ? "bg-accent/15 text-text"
-                                            : "text-muted hover:bg-[rgb(var(--p-panel2))] hover:text-text"
-                                        }`}
-                                      >
-                                        <div className="flex items-start justify-between gap-2">
-                                          <div className="min-w-0 flex-1">
-                                            <div className="font-medium truncate">{displayName}</div>
-                                            {model.name && model.id !== displayName && (
-                                              <div className="text-xs text-muted/70 truncate mt-0.5">{shortId}</div>
-                                            )}
-                                          </div>
-                                          {isSelected && (
-                                            <Check className="h-4 w-4 shrink-0 text-accent" />
-                                          )}
-                                        </div>
-                                      </button>
-                                    );
-                                  })
-                                ) : (
-                                  <div className="p-4 text-center text-sm text-muted">
-                                    {searchQuery ? "No models match your search" : "No models available"}
-                                  </div>
-                                )}
-                              </div>
-                              {selectedModel && (
-                                <div className="text-xs text-muted">
-                                  Selected: <span className="font-medium text-text">{selectedModel.split('/').pop()?.split(':').pop() || selectedModel}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          {!isLoading && models.length === 0 && (
-                            <div className="text-xs text-muted">
-                              Models will appear here after saving your API key.
-                            </div>
-                          )}
-                        </div>
-                      );
-                    },
-                  },
-                ]
-              : []),
-          ] satisfies SettingItem[])
-        : ([] as SettingItem[])),
-      {
-        id: "ai.encryption",
-        section: "ai",
-        title: "Encryption Password",
-        description: "Optional extra protection for secrets storage.",
-        keywords: "encryption password security",
-        renderControl: () => (
-          <input
-            className="ws-vscode-input"
-            placeholder="Optional encryption password"
-            type={props.encryptionPasswordDraft ? "text" : "password"}
-            value={props.encryptionPasswordDraft}
-            autoComplete="off"
-            spellCheck={false}
-            onChange={(e) => props.onEncryptionPasswordDraft(e.target.value)}
-          />
-        ),
-      },
+            return (
+              <div className="w-full">
+                <ProviderModelPicker
+                  providerId={providerId}
+                  models={props.providerModels[providerId] || []}
+                  isLoading={!!props.loadingModels[providerId]}
+                  selectedModel={props.settings.active_model ?? null}
+                  searchQuery={modelSearchQueries[providerId] || ""}
+                  onSearchQueryChange={(next) => setModelSearchQueries((prev) => ({ ...prev, [providerId]: next }))}
+                  keyStatus={props.keyStatus}
+                  encryptionPasswordDraft={props.encryptionPasswordDraft}
+                  onLoadModels={props.onLoadModels}
+                  onSelectModel={props.onSelectModel}
+                  error={props.providerModelsError[providerId] || null}
+                />
+              </div>
+            );
+          },
+        },
+      ] as SettingItem[]
+      : []),
+    {
+      id: "ai.encryption",
+      section: "ai",
+      title: "Encryption Password",
+      description: "Optional extra protection for secrets storage.",
+      keywords: "encryption password security",
+      renderControl: () => (
+        <input
+          className="ws-vscode-input"
+          placeholder="Optional encryption password"
+          type={props.encryptionPasswordDraft ? "text" : "password"}
+          value={props.encryptionPasswordDraft}
+          autoComplete="off"
+          spellCheck={false}
+          onChange={(e) => props.onEncryptionPasswordDraft(e.target.value)}
+        />
+      ),
+    },
     ],
     [props, modelSearchQueries]
   );
@@ -9725,124 +9904,214 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
   return (
     <div className="flex h-full flex-col bg-bg">
-      <div className="border-b border-border bg-panel px-4 py-3">
+      {/* Improved Header */}
+      <div className="border-b border-border bg-panel px-6 py-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <SettingsIcon className="h-4 w-4 text-muted" />
-            <div className="text-sm font-semibold text-text">Settings</div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 border border-accent/20">
+              <SettingsIcon className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-text">Settings</div>
+              <div className="text-xs text-muted">Configure your workspace and preferences</div>
+            </div>
           </div>
 
           <button
             type="button"
-            className="ws-vscode-btn ws-vscode-btn-primary"
+            className="ws-vscode-btn ws-vscode-btn-primary px-4"
             onClick={props.onSaveSettings}
             disabled={!props.isSettingsLoaded || props.isSavingSettings}
           >
-            <Save className="h-4 w-4" />
-            Save Settings
+            {props.isSavingSettings ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Changes
+              </>
+            )}
           </button>
         </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="grid h-full grid-cols-[260px_1fr]">
-          <aside className="min-w-0 border-r border-border bg-panel">
+        <div className="grid h-full grid-cols-[280px_1fr]">
+          {/* Improved Sidebar */}
+          <aside className="min-w-0 border-r border-border bg-panel/50">
             <div className="flex h-full flex-col">
-              <div className="min-h-0 flex-1 overflow-auto px-2 pb-3 pt-4">
-                <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">User</div>
-                <div className="space-y-0.5">
-                  {sectionList.map((s) => {
-                    const isActive = !q && s.id === activeSection;
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        className={`ws-vscode-nav-item ${isActive ? "ws-vscode-nav-item-active" : ""}`}
-                        onClick={() => {
-                          setActiveSection(s.id);
-                          setQuery("");
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <s.icon className="h-4 w-4" />
-                          <span className="truncate">{s.label}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
+              <div className="min-h-0 flex-1 overflow-auto px-3 py-4">
+                <div className="mb-4">
+                  <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted/70">
+                    Categories
+                  </div>
+                  <div className="space-y-1">
+                    {sectionList.map((s) => {
+                      const isActive = !q && s.id === activeSection;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          className={`group relative w-full rounded-xl px-3 py-2.5 text-left transition-all duration-150 ${
+                            isActive
+                              ? "bg-accent/10 text-text"
+                              : "text-muted hover:bg-panel hover:text-text"
+                          }`}
+                          onClick={() => {
+                            setActiveSection(s.id);
+                            setQuery("");
+                          }}
+                        >
+                          {isActive && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-accent" />
+                          )}
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                              isActive ? "bg-accent/20" : "bg-panel group-hover:bg-panel2"
+                            }`}>
+                              <s.icon className={`h-4 w-4 ${isActive ? "text-accent" : ""}`} />
+                            </div>
+                            <span className="text-sm font-medium">{s.label}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
           </aside>
 
+          {/* Improved Main Content */}
           <main className="min-w-0 overflow-auto bg-bg">
-            <div className="mx-auto w-full max-w-[980px] p-4">
-              <div className="mb-3">
+            <div className="mx-auto w-full max-w-[900px] p-6">
+              {/* Improved Search */}
+              <div className="mb-6">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                   <input
-                    className="ws-vscode-search pl-9"
-                    placeholder="Search settings"
+                    className="w-full rounded-xl border border-border/60 bg-panel/30 px-3 py-2.5 pl-10 text-sm text-text outline-none placeholder:text-muted transition-all hover:border-accent/40 focus-visible:border-accent focus-visible:bg-panel"
+                    placeholder="Search settings..."
                     value={query}
                     onChange={(e) => setQuery(e.currentTarget.value)}
                   />
                 </div>
               </div>
 
-              <div className="mb-3">
-                <div className="text-sm font-semibold text-text">{q ? "Search results" : sectionMeta[activeSection].title}</div>
-                <div className="mt-1 text-xs text-muted">
-                  {q ? `Showing ${filteredItems.length} setting(s)` : sectionMeta[activeSection].description}
-                </div>
+              {/* Section Header */}
+              <div className="mb-5">
+                <h2 className="text-lg font-semibold text-text">{q ? "Search results" : sectionMeta[activeSection].title}</h2>
+                <p className="mt-1 text-sm text-muted">
+                  {q ? `Found ${filteredItems.length} setting(s)` : sectionMeta[activeSection].description}
+                </p>
               </div>
 
-              <div className="ws-vscode-settings">
+              {/* Improved Settings List */}
+              <div className="space-y-3">
                 {filteredItems.length ? (
                   filteredItems.map((it) => (
-                    <div key={it.id} className="ws-vscode-setting-row">
-                      <div className="min-w-0">
-                        <div className="text-sm text-text">{it.title}</div>
-                        <div className="mt-0.5 text-xs text-muted">{it.description}</div>
+                    <div
+                      key={it.id}
+                      className="group rounded-xl border border-border/60 bg-panel/30 p-4 transition-all hover:border-accent/40 hover:bg-panel/50"
+                    >
+                      <div className="grid gap-4 md:grid-cols-[1fr_320px] md:items-start">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-medium text-text">{it.title}</div>
+                          </div>
+                          <div className="mt-1 text-xs leading-relaxed text-muted">{it.description}</div>
+                        </div>
+                        <div className="min-w-0 md:flex md:w-[320px] md:justify-end">{it.renderControl()}</div>
                       </div>
-                      <div className="ws-vscode-setting-control">{it.renderControl()}</div>
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-sm text-muted">No settings found.</div>
+                  <div className="rounded-xl border border-border/60 bg-panel/30 p-8 text-center">
+                    <Search className="mx-auto h-8 w-8 text-muted/40 mb-3" />
+                    <p className="text-sm text-muted">No settings found matching your search.</p>
+                  </div>
                 )}
               </div>
 
+              {/* Recent Workspaces Section */}
               {activeSection === "workspace" && !q ? (
-                <div className="mt-4">
-                  <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Recent workspaces</div>
+                <div className="mt-6">
+                  <h3 className="mb-3 text-sm font-semibold text-text">Recent Workspaces</h3>
                   {props.recentWorkspaces.length ? (
-                    <div className="ws-vscode-settings">
+                    <div className="space-y-2">
                       {props.recentWorkspaces.slice(0, 12).map((p) => (
-                        <button key={p} type="button" className="ws-vscode-list-row" onClick={() => props.onOpenRecent(p)}>
-                          <span className="truncate">{p}</span>
+                        <button
+                          key={p}
+                          type="button"
+                          className="group flex w-full items-center gap-3 rounded-xl border border-border/60 bg-panel/30 px-4 py-3 text-left transition-all hover:border-accent/40 hover:bg-panel/50"
+                          onClick={() => props.onOpenRecent(p)}
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-panel group-hover:bg-panel2">
+                            <Folder className="h-4 w-4 text-muted" />
+                          </div>
+                          <span className="text-sm text-muted group-hover:text-text truncate">{p}</span>
                         </button>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-sm text-muted">No recent workspaces.</div>
+                    <div className="rounded-xl border border-border/60 bg-panel/30 p-6 text-center">
+                      <FolderOpen className="mx-auto h-8 w-8 text-muted/40 mb-2" />
+                      <p className="text-sm text-muted">No recent workspaces</p>
+                    </div>
                   )}
                 </div>
               ) : null}
 
+              {/* AI Section Footer */}
               {activeSection === "ai" && !q ? (
-                <div className="mt-3 space-y-3">
-                  <div className="text-xs text-muted">Status: {providerStatusLabel}</div>
+                <div className="mt-6 space-y-4">
+                  {/* Provider Status Card */}
+                  <div className="rounded-xl border border-border/60 bg-panel/30 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                        props.keyStatus?.is_configured
+                          ? "bg-emerald-500/10 border border-emerald-500/20"
+                          : "bg-amber-500/10 border border-amber-500/20"
+                      }`}>
+                        {props.keyStatus?.is_configured ? (
+                          <Check className="h-5 w-5 text-emerald-500" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-amber-500" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-text">
+                          {props.keyStatus?.is_configured ? "API Key Configured" : "API Key Not Configured"}
+                        </div>
+                        <div className="text-xs text-muted">
+                          {props.keyStatus?.is_configured
+                            ? "Your API key is ready to use"
+                            : "Add an API key above to start using AI features"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
                   {props.settings.active_provider === "pompora" && !props.authProfile ? (
-                    <div className="rounded-xl border border-border bg-panel p-3">
-                      <div className="text-sm font-semibold text-text">Connect to Pompora</div>
-                      <div className="mt-1 text-xs text-muted">
-                        Log in to sync your plan and credits across devices.
+                    <div className="rounded-xl border border-border/60 bg-panel/30 p-4">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 border border-accent/20">
+                          <User className="h-5 w-5 text-accent" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-text">Connect to Pompora</div>
+                          <div className="text-xs text-muted">
+                            Log in to sync your plan and credits across devices.
+                          </div>
+                        </div>
                       </div>
-                      <div className="mt-3 grid gap-2">
+                      <div className="grid gap-2">
                         <button
                           type="button"
-                          className="ws-vscode-btn ws-vscode-btn-primary w-full rounded-none"
+                          className="ws-vscode-btn ws-vscode-btn-primary"
                           onClick={props.onLoginToPompora}
                           disabled={props.isAuthBusy}
                         >
@@ -9850,7 +10119,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                         </button>
                         <button
                           type="button"
-                          className="ws-vscode-btn w-full rounded-none"
+                          className="ws-vscode-btn ws-vscode-btn-ghost"
                           onClick={props.onSignupToPompora}
                           disabled={props.isAuthBusy}
                         >
@@ -9860,14 +10129,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                     </div>
                   ) : null}
 
-                  {props.secretsError ? <div className="ws-vscode-error">{props.secretsError}</div> : null}
+                  {props.secretsError ? (
+                    <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+                      {props.secretsError}
+                    </div>
+                  ) : null}
 
+                  {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2">
                     {props.settings.active_provider && props.settings.active_provider !== "pompora" ? (
                       <>
                         <button
                           type="button"
-                          className="ws-vscode-btn"
+                          className="ws-vscode-btn ws-vscode-btn-primary"
                           onClick={props.onStoreKey}
                           disabled={
                             !props.isSettingsLoaded ||
@@ -9876,6 +10150,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                             !props.settings.active_provider
                           }
                         >
+                          <Save className="h-4 w-4" />
                           Save Key
                         </button>
                         <button
@@ -9884,50 +10159,91 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                           onClick={props.onClearKey}
                           disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.settings.active_provider}
                         >
+                          <Trash2 className="h-4 w-4" />
                           Clear Key
                         </button>
                       </>
                     ) : null}
                     <div className="flex-1" />
                     <button type="button" className="ws-vscode-btn" onClick={props.onDebugGemini}>
+                      <RefreshCw className="h-4 w-4" />
                       Test AI
                     </button>
                   </div>
-                  {props.debugResult ? <pre className="ws-vscode-pre">{props.debugResult}</pre> : null}
+
+                  {props.debugResult ? (
+                    <div className="rounded-xl border border-border/60 bg-panel/30 p-4">
+                      <div className="text-xs font-medium text-muted mb-2">Debug Result</div>
+                      <pre className="text-xs text-text overflow-auto max-h-32">{props.debugResult}</pre>
+                    </div>
+                  ) : null}
 
                   {props.settings.active_provider === "pompora" && props.authProfile ? (
-                    <div className="overflow-hidden rounded-xl border border-border bg-panel">
-                      <div className="border-b border-border px-4 py-3">
-                        <div className="text-sm font-semibold text-text">Pompora account</div>
-                        <div className="mt-1 text-xs text-muted">Plan: {props.authCredits?.plan || props.authProfile.plan || "starter"}</div>
+                    <div className="rounded-xl border border-border/60 bg-panel/30 overflow-hidden">
+                      <div className="border-b border-border/60 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 border border-accent/20">
+                            <User className="h-5 w-5 text-accent" />
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold text-text">Pompora Account</div>
+                            <div className="text-xs text-muted">Plan: {props.authCredits?.plan || props.authProfile.plan || "starter"}</div>
+                          </div>
+                        </div>
                       </div>
 
                       {props.authCredits ? (
-                        <div className="space-y-2 p-3 text-xs text-muted">
+                        <div className="p-4 space-y-3">
                           <div className="flex items-center justify-between gap-3">
-                            <span>Slow credits</span>
-                            <span className="shrink-0 text-text">
+                            <span className="text-sm text-muted">Slow credits</span>
+                            <span className="shrink-0 text-sm font-medium text-text">
                               {props.authCredits.slow.remaining} / {props.authCredits.slow.limit}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between gap-3">
-                            <span>Fast credits (today)</span>
-                            <span className="shrink-0 text-text">
+                          <div className="w-full h-1.5 bg-panel rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-accent rounded-full transition-all"
+                              style={{
+                                width: `${(props.authCredits.slow.remaining / Math.max(props.authCredits.slow.limit, 1)) * 100}%`
+                              }}
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3 pt-2">
+                            <span className="text-sm text-muted">Fast credits (today)</span>
+                            <span className="shrink-0 text-sm font-medium text-text">
                               {props.authCredits.fast.remaining_today} / {props.authCredits.fast.daily_cap}
                             </span>
                           </div>
-                          <div className="flex items-center justify-between gap-3">
-                            <span>Fast credits (month)</span>
-                            <span className="shrink-0 text-text">
+                          <div className="w-full h-1.5 bg-panel rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-accent2 rounded-full transition-all"
+                              style={{
+                                width: `${(props.authCredits.fast.remaining_today / Math.max(props.authCredits.fast.daily_cap, 1)) * 100}%`
+                              }}
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3 pt-2">
+                            <span className="text-sm text-muted">Fast credits (month)</span>
+                            <span className="shrink-0 text-sm font-medium text-text">
                               {props.authCredits.fast.remaining_month} / {props.authCredits.fast.limit_month}
                             </span>
                           </div>
+                          <div className="w-full h-1.5 bg-panel rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-accent2/70 rounded-full transition-all"
+                              style={{
+                                width: `${(props.authCredits.fast.remaining_month / Math.max(props.authCredits.fast.limit_month, 1)) * 100}%`
+                              }}
+                            />
+                          </div>
                         </div>
                       ) : (
-                        <div className="p-3 text-xs text-muted">Fetching credits…</div>
+                        <div className="p-4 text-sm text-muted">Fetching credits...</div>
                       )}
 
-                      <div className="border-t border-border p-3">
+                      <div className="border-t border-border/60 p-3">
                         <button
                           type="button"
                           className="ws-vscode-btn ws-vscode-btn-primary w-full rounded-none"
