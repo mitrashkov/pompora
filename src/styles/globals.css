@@ -59,6 +59,33 @@
   scrollbar-gutter: stable;
 }
 
+.ws-tabs-scroll {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--p-border)) transparent;
+}
+
+.ws-tabs-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.ws-tabs-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ws-tabs-scroll::-webkit-scrollbar-thumb {
+  background: rgb(var(--p-border));
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.ws-tabs-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgb(var(--p-muted) / 0.55);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
 :root[data-theme="light"] {
   color-scheme: light;
 
