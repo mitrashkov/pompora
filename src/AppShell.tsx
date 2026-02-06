@@ -1823,8 +1823,56 @@ export default function AppShell() {
   const [tabs, setTabs] = useState<EditorTab[]>([]);
   const [activeTabPath, setActiveTabPath] = useState<string | null>(null);
 
+  const tabsScrollRef = useRef<HTMLDivElement | null>(null);
+  const tabsIndicatorHideTimerRef = useRef<number | null>(null);
+  const [tabsIndicator, setTabsIndicator] = useState<{ visible: boolean; leftPx: number; widthPx: number }>({
+    visible: false,
+    leftPx: 0,
+    widthPx: 0,
+  });
+
   const tabNavRef = useRef<{ history: string[]; index: number; suppress: boolean }>({ history: [], index: -1, suppress: false });
   const [tabNavAvail, setTabNavAvail] = useState<{ back: boolean; forward: boolean }>({ back: false, forward: false });
+
+  const updateTabsIndicator = useCallback(() => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+
+    const cw = el.clientWidth;
+    const sw = el.scrollWidth;
+    if (!cw || sw <= cw) {
+      setTabsIndicator((prev) => (prev.visible || prev.widthPx !== 0 ? { visible: false, leftPx: 0, widthPx: 0 } : prev));
+      return;
+    }
+
+    const maxLeft = sw - cw;
+    const t = maxLeft > 0 ? el.scrollLeft / maxLeft : 0;
+
+    const minW = 22;
+    const maxW = 64;
+    const w = Math.max(minW, Math.min(maxW, Math.round((cw * cw) / sw)));
+    const left = Math.round(t * Math.max(0, cw - w));
+
+    setTabsIndicator({ visible: true, leftPx: left, widthPx: w });
+
+    if (tabsIndicatorHideTimerRef.current) window.clearTimeout(tabsIndicatorHideTimerRef.current);
+    tabsIndicatorHideTimerRef.current = window.setTimeout(() => {
+      setTabsIndicator((prev) => ({ ...prev, visible: false }));
+      tabsIndicatorHideTimerRef.current = null;
+    }, 650);
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => updateTabsIndicator();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [updateTabsIndicator]);
+
+  useEffect(() => {
+    return () => {
+      if (tabsIndicatorHideTimerRef.current) window.clearTimeout(tabsIndicatorHideTimerRef.current);
+    };
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Array<{ path: string; line: number; text: string }>>([]);
@@ -6994,16 +7042,44 @@ export default function AppShell() {
           <main className={`min-h-0 min-w-0 overflow-hidden rounded-2xl ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
             <div className="flex h-full min-h-0 flex-col">
               <div className={`flex h-14 items-center gap-1 px-2 ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
-                <div className="ws-tabs-scroll flex min-w-0 flex-1 items-center gap-1 overflow-auto">
-                  {tabs.map((t) => (
-                    <TabButton
-                      key={t.path}
-                      tab={t}
-                      active={t.path === activeTabPath}
-                      onActivate={() => setActiveTabPath(t.path)}
-                      onClose={() => closeTab(t.path)}
+                <div className="relative min-w-0 flex-1">
+                  <div
+                    ref={tabsScrollRef}
+                    className="ws-tabs-scroll flex min-w-0 items-center gap-1 overflow-auto"
+                    onScroll={() => updateTabsIndicator()}
+                    onWheel={(e) => {
+                      const el = tabsScrollRef.current;
+                      if (!el) return;
+                      const canScroll = el.scrollWidth > el.clientWidth;
+                      if (!canScroll) return;
+
+                      const dy = e.deltaY;
+                      const dx = e.deltaX;
+                      const next = el.scrollLeft + (Math.abs(dx) > Math.abs(dy) ? dx : dy);
+                      if (next !== el.scrollLeft) {
+                        e.preventDefault();
+                        el.scrollLeft = next;
+                        updateTabsIndicator();
+                      }
+                    }}
+                  >
+                    {tabs.map((t) => (
+                      <TabButton
+                        key={t.path}
+                        tab={t}
+                        active={t.path === activeTabPath}
+                        onActivate={() => setActiveTabPath(t.path)}
+                        onClose={() => closeTab(t.path)}
+                      />
+                    ))}
+                  </div>
+
+                  <div className={`ws-tabs-indicator ${tabsIndicator.visible ? "ws-tabs-indicator-on" : ""}`} aria-hidden>
+                    <div
+                      className="ws-tabs-indicator-thumb"
+                      style={{ width: `${tabsIndicator.widthPx}px`, transform: `translateX(${tabsIndicator.leftPx}px)` }}
                     />
-                  ))}
+                  </div>
                 </div>
                 <button type="button" className="ws-icon-btn" onClick={() => void openFolder()}>
                   <Plus className="h-4 w-4" />

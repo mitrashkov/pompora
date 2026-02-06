@@ -61,14 +61,11 @@
 
 .ws-tabs-scroll {
   scrollbar-gutter: stable both-edges;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(var(--p-border)) transparent;
-  padding-bottom: 8px;
-  margin-bottom: -8px;
+  scrollbar-width: none;
 }
 
 .ws-tabs-scroll::-webkit-scrollbar {
-  height: 8px;
+  height: 0px;
 }
 
 .ws-tabs-scroll::-webkit-scrollbar-track {
@@ -76,16 +73,29 @@
 }
 
 .ws-tabs-scroll::-webkit-scrollbar-thumb {
-  background: rgb(var(--p-border));
-  border-radius: 9999px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  background: transparent;
 }
 
-.ws-tabs-scroll:hover::-webkit-scrollbar-thumb {
+.ws-tabs-indicator {
+  pointer-events: none;
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 2px;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.ws-tabs-indicator-on {
+  opacity: 1;
+}
+
+.ws-tabs-indicator-thumb {
+  height: 2px;
+  border-radius: 9999px;
   background: rgb(var(--p-muted) / 0.55);
-  border: 2px solid transparent;
-  background-clip: content-box;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.12);
 }
 
 :root[data-theme="light"] {
