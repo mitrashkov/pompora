@@ -139,6 +139,11 @@ description = "Allows listing OpenRouter models (used for the free model picker 
 commands.allow = ["openrouter_list_models"]
 
 [[permission]]
+identifier = "allow-provider-list-models"
+description = "Allows listing models for a provider (used for the model picker UI)."
+commands.allow = ["provider_list_models"]
+
+[[permission]]
 identifier = "allow-terminal-start"
 description = "Allows starting a PTY-backed terminal session."
 commands.allow = ["terminal_start"]
@@ -190,6 +195,7 @@ permissions = [
   "allow-ai-chat",
   "allow-ai-chat-with-model",
   "allow-openrouter-list-models",
+  "allow-provider-list-models",
   "allow-terminal-start",
   "allow-terminal-write",
   "allow-terminal-resize",

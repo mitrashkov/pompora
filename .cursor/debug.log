@@ -11043,3 +11043,5 @@
 {"location":"AppShell.tsx:3836","message":"Error in loadProviderModels","data":{"providerId":"gemini","error":"provider_list_models not allowed. Command not found","errorType":"string"},"timestamp":1770415653047,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
 {"location":"AppShell.tsx:3668","message":"showKeySaved effect triggered","data":{"showKeySaved":false,"activeProvider":"gemini"},"timestamp":1770415653050,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
 {"location":"AppShell.tsx:3668","message":"showKeySaved effect triggered","data":{"showKeySaved":false,"activeProvider":"gemini"},"timestamp":1770415653154,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"data":{"has_encryption_password":false,"provider":"gemini"},"hypothesisId":"E","location":"ai.rs:146","message":"provider_list_models called","runId":"run1","sessionId":"debug-session","timestamp":1770466459348}
+{"data":{"key_length":39,"provider":"gemini"},"hypothesisId":"E","location":"ai.rs:152","message":"API key retrieved","runId":"run1","sessionId":"debug-session","timestamp":1770466459350}
