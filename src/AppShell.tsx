@@ -5491,7 +5491,12 @@ export default function AppShell() {
       setShowKeySaved(false);
       setShowKeyCleared(false);
 
-      const next = { ...settings, active_provider: p, active_model: p ? settings.active_model : null };
+      const next = {
+        ...settings,
+        active_provider: p,
+        // If the provider changes, the previously selected model may be invalid for the new provider.
+        active_model: p && p === settings.active_provider ? settings.active_model : null,
+      };
       setSettingsState(next);
 
       try {

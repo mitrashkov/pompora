@@ -435,6 +435,12 @@ pub async fn provider_list_models(provider: &str, encryption_password: Option<&s
                 .with_context(|| "Failed to read Gemini models response")?;
 
             if !status.is_success() {
+                if status.as_u16() == 401 || status.as_u16() == 403 {
+                    return Err(anyhow!(
+                        "Gemini authorization failed: your API key is invalid, missing permissions, or the API is not enabled for your project. ({status}) {}",
+                        shorten_for_error(&body)
+                    ));
+                }
                 return Err(anyhow!("Gemini models request failed (status {status}): {}", shorten_for_error(&body)));
             }
 
@@ -444,12 +450,23 @@ pub async fn provider_list_models(provider: &str, encryption_password: Option<&s
             let mut models = Vec::new();
             if let Some(models_array) = parsed.get("models").and_then(|m| m.as_array()) {
                 for model in models_array {
-                    if let Some(id) = model.get("name").and_then(|n| n.as_str()) {
+                    let supported = model
+                        .get("supportedGenerationMethods")
+                        .and_then(|m| m.as_array())
+                        .map(|arr| {
+                            arr.iter()
+                                .filter_map(|v| v.as_str())
+                                .any(|s| s.eq_ignore_ascii_case("generateContent"))
+                        })
+                        .unwrap_or(true);
+                    if !supported {
+                        continue;
+                    }
+
+                    if let Some(raw_name) = model.get("name").and_then(|n| n.as_str()) {
+                        let id = raw_name.strip_prefix("models/").unwrap_or(raw_name).to_string();
                         let display_name = model.get("displayName").and_then(|n| n.as_str()).map(|s| s.to_string());
-                        models.push(ProviderModelInfo {
-                            id: id.to_string(),
-                            name: display_name,
-                        });
+                        models.push(ProviderModelInfo { id, name: display_name });
                     }
                 }
             }
@@ -581,7 +598,7 @@ fn get_provider_info(provider: &str) -> Result<(String, String, bool)> {
         "anthropic" => Ok(("https://api.anthropic.com/v1".to_string(), "claude-3-5-sonnet-20241022".to_string(), true)),
         "groq" => Ok(("https://api.groq.com/openai/v1".to_string(), "llama-3.1-70b-versatile".to_string(), true)),
         "deepseek" => Ok(("https://api.deepseek.com/v1".to_string(), "deepseek-chat".to_string(), true)),
-        "gemini" => Ok(("https://generativelanguage.googleapis.com/v1beta".to_string(), "gemini-flash-latest".to_string(), true)),
+        "gemini" => Ok(("https://generativelanguage.googleapis.com/v1beta".to_string(), "gemini-1.5-flash".to_string(), true)),
         "mistral" => Ok(("https://api.mistral.ai/v1".to_string(), "mistral-medium".to_string(), true)),
         "together" => Ok(("https://api.together.xyz/v1".to_string(), "meta-llama/Llama-3-70b-chat-hf".to_string(), true)),
         "perplexity" => Ok(("https://api.perplexity.ai".to_string(), "llama-3.1-sonar-small-128k-online".to_string(), true)),
@@ -824,7 +841,9 @@ async fn request_chat_completion(
 
     let response_text = if provider == "gemini" {
         // Gemini uses different API format
-        let url = format!("{}/models/{}:generateContent?key={}", base_url, model, api_key);
+        let model_path = model.trim();
+        let model_path = model_path.strip_prefix("models/").unwrap_or(model_path);
+        let url = format!("{}/models/{}:generateContent?key={}", base_url.trim_end_matches('/'), model_path, api_key);
         
         let gemini_messages: Vec<serde_json::Value> = messages.iter().map(|msg| {
             json!({
