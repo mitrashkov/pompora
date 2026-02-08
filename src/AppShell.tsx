@@ -2251,6 +2251,28 @@ export default function AppShell() {
     }
   }, []);
 
+  const shortAiProviderErr = useCallback((raw: string): string => {
+    const msg = raw.trim();
+    if (!msg) return msg;
+
+    if (/Incorrect API key provided/i.test(msg) || /invalid[_\s-]*api[_\s-]*key/i.test(msg)) {
+      return "Invalid API key";
+    }
+
+    const m = msg.match(/status\s+(\d+)/i);
+    const status = m ? Number(m[1]) : null;
+    if (status === 401 || status === 403) return "Authorization failed";
+    if (status === 429) return "Rate limited";
+    if (status === 402) return "Payment required";
+
+    if (/Unauthorized/i.test(msg)) return "Unauthorized";
+    if (/rate limit/i.test(msg)) return "Rate limited";
+    if (/timeout/i.test(msg)) return "Request timed out";
+
+    const firstLine = msg.split(/\r?\n/)[0]?.trim() ?? msg;
+    return firstLine.length > 140 ? `${firstLine.slice(0, 137)}...` : firstLine;
+  }, []);
+
   const hasChatHistory = useMemo(() => {
     return chatSessions.some((s) => s.messages.some((m) => m.role === "user"));
   }, [chatSessions]);
@@ -4153,12 +4175,13 @@ export default function AppShell() {
       // #endregion
       // Silently fail - provider might not support model listing or key not configured
       console.warn(`Failed to load models for ${providerId}:`, e);
+      const errText = shortAiProviderErr(formatErr(e));
       notify({
         kind: "error",
         title: "Models",
-        message: `Failed to load models for ${providerId}: ${formatErr(e)}`,
+        message: `Failed to load models for ${providerId}: ${errText}`,
       });
-      setProviderModelsError((prev) => ({ ...prev, [providerId]: formatErr(e) }));
+      setProviderModelsError((prev) => ({ ...prev, [providerId]: errText }));
       // Clear models if loading failed (might be invalid key)
       setProviderModels((prev) => {
         const next = { ...prev };
@@ -4172,7 +4195,7 @@ export default function AppShell() {
         return next;
       }));
     }
-  }, [loadingModels, encryptionPasswordDraft, formatErr, notify]);
+  }, [loadingModels, encryptionPasswordDraft, formatErr, notify, shortAiProviderErr]);
 
 
   const chatContextUsage = useMemo(() => {
