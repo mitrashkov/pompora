@@ -3966,16 +3966,10 @@ export default function AppShell() {
 
   // Additional effect to refresh key status and load models when showKeySaved is true
   useEffect(() => {
-    // #region agent log
-    fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3668',message:'showKeySaved effect triggered',data:{showKeySaved,activeProvider:settings.active_provider},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     if (showKeySaved && settings.active_provider) {
       const providerId = settings.active_provider;
       providerKeyStatus(providerId)
         .then(async (v) => {
-          // #region agent log
-          fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3673',message:'Key status retrieved',data:{isConfigured:v.is_configured,provider:providerId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
           setKeyStatus(v);
           // Load models if key is now configured
           if (v.is_configured && providerId !== "pompora") {
@@ -3996,27 +3990,15 @@ export default function AppShell() {
             // Then load models
             const providerId = settings.active_provider;
             if (providerId) {
-              // #region agent log
-              fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3689',message:'About to load models',data:{provider:providerId,isLoading:loadingModels[providerId],hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-              // #endregion
               if (!loadingModels[providerId]) {
                 setLoadingModels((prev) => ({ ...prev, [providerId]: true }));
                 try {
-                  // #region agent log
-                  fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3692',message:'Calling providerListModels',data:{provider:providerId,hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                  // #endregion
                   const models = await providerListModels({
                     provider: providerId,
                     encryptionPassword: encryptionPasswordDraft || undefined,
                   });
-                  // #region agent log
-                  fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3696',message:'Models loaded successfully',data:{provider:providerId,modelCount:models.length,models:models.slice(0,3).map(m=>m.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                  // #endregion
                   setProviderModels((prev) => ({ ...prev, [providerId]: models }));
                 } catch (e) {
-                  // #region agent log
-                  fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3698',message:'Failed to load models',data:{provider:providerId,error:String(e),errorType:typeof e},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                  // #endregion
                   console.warn(`Failed to load models for ${providerId}:`, e);
                 } finally {
                   setLoadingModels((prev => {
@@ -4145,34 +4127,19 @@ export default function AppShell() {
   }, [providerChoices]);
 
   const loadProviderModels = useCallback(async (providerId: string) => {
-    // #region agent log
-    fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3824',message:'loadProviderModels called',data:{providerId,isLoading:loadingModels[providerId],hasCachedModels:!!providerModels[providerId],hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     // Don't reload if already loading, but allow reloading if models exist (in case key was updated)
     if (loadingModels[providerId]) {
-      // #region agent log
-      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3826',message:'loadProviderModels early return',data:{providerId,reason:'already loading'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return;
     }
     
     setLoadingModels((prev) => ({ ...prev, [providerId]: true }));
     try {
-      // #region agent log
-      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3830',message:'Calling providerListModels from loadProviderModels',data:{providerId,hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       const models = await providerListModels({
         provider: providerId,
         encryptionPassword: encryptionPasswordDraft || undefined,
       });
-      // #region agent log
-      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3834',message:'Models loaded in loadProviderModels',data:{providerId,modelCount:models.length,models:models.slice(0,3).map(m=>m.id)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       setProviderModels((prev) => ({ ...prev, [providerId]: models }));
     } catch (e) {
-      // #region agent log
-      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:3836',message:'Error in loadProviderModels',data:{providerId,error:String(e),errorType:typeof e,stack:e instanceof Error?e.stack:undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       // Silently fail - provider might not support model listing or key not configured
       console.warn(`Failed to load models for ${providerId}:`, e);
       const errText = shortAiProviderErr(formatErr(e));
@@ -5714,18 +5681,12 @@ export default function AppShell() {
   );
 
   const handleStoreKey = useCallback(async () => {
-    // #region agent log
-    fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:5379',message:'handleStoreKey called',data:{activeProvider:settings.active_provider,hasApiKeyDraft:!!apiKeyDraft.trim(),hasEncryptionPassword:!!encryptionPasswordDraft},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     if (!settings.active_provider) return;
     if (settings.active_provider === "pompora") return;
     if (!apiKeyDraft.trim()) return;
     setIsKeyOperationInProgress(true);
     setSecretsError(null);
     try {
-      // #region agent log
-      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:5386',message:'Saving API key',data:{provider:settings.active_provider,keyLength:apiKeyDraft.trim().length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       await providerKeySet({
         provider: settings.active_provider,
         apiKey: apiKeyDraft.trim(),
@@ -5734,16 +5695,9 @@ export default function AppShell() {
       setShowKeySaved(true);
       setTimeout(() => setShowKeySaved(false), 2000);
       const newKeyStatus = await providerKeyStatus(settings.active_provider);
-      // #region agent log
-      fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:5379',message:'Key status after save',data:{provider:settings.active_provider,isConfigured:newKeyStatus.is_configured},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       setKeyStatus(newKeyStatus);
-      
       // Load models after saving API key
       if (newKeyStatus.is_configured) {
-        // #region agent log
-        fetch('http://localhost:7243/ingest/5a545e30-af30-4def-b557-135ffec5128b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AppShell.tsx:5383',message:'About to load models after key save',data:{provider:settings.active_provider},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         await refreshProviderKeyStatuses();
         await loadProviderModels(settings.active_provider);
       }
@@ -5827,14 +5781,13 @@ export default function AppShell() {
       const base = [...previous, { role: "user" as const, content: text }];
       setActiveChatDraft("");
 
-      const workspaceFiles =
-        workspace.root && fileIndexRoot === workspace.root && fileIndex.length
-          ? fileIndex
-          : workspace.root
-            ? await workspaceListFiles(20000).catch(() => [])
-            : [];
+      const hasCachedIndex = Boolean(workspace.root && fileIndexRoot === workspace.root && fileIndex.length);
+      const workspaceFiles = hasCachedIndex ? fileIndex : [];
+      if (workspace.root && !hasCachedIndex) {
+        void ensureFileIndex();
+      }
 
-      const workspaceTree = workspaceFiles.length ? buildFileTreePreview(workspaceFiles, 420, 7) : "";
+      const workspaceTree = workspaceFiles.length ? buildFileTreePreview(workspaceFiles, 240, 7) : "";
 
       const explicitRefs = workspace.root ? extractFileRefs(text) : [];
       const recentChangeFiles =
@@ -5872,7 +5825,7 @@ export default function AppShell() {
       for (const p of referencedFiles) {
         appendEventStream(agentRunId, [{ type: "state", content: `Checking ${p}…`, ttlMs: 900 }]);
         try {
-          const max = 12000;
+          const max = 8000;
           const pending =
             activeChat.changeSet?.files.find(
               (f) => f.kind === "write" && f.path === p && typeof f.after === "string"
@@ -5928,10 +5881,10 @@ export default function AppShell() {
                       content:
                         "File list (relative; truncated):\n" +
                         workspaceFiles
-                          .slice(0, 450)
+                          .slice(0, 220)
                           .map((p) => `- ${p}`)
                           .join("\n") +
-                        (workspaceFiles.length > 450 ? "\n… (truncated)" : ""),
+                        (workspaceFiles.length > 220 ? "\n… (truncated)" : ""),
                     },
                   ] as AiChatMessage[])
                 : ([] as AiChatMessage[])),
@@ -6074,6 +6027,7 @@ export default function AppShell() {
     authProfile,
     applyAiEditsNow,
     buildChangeSet,
+    ensureFileIndex,
     fileIndex,
     fileIndexRoot,
     friendlyAiError,
