@@ -9683,10 +9683,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   const sectionList = useMemo(
     () =>
       [
-        { id: "common", label: "Commonly Used", icon: Star },
-        { id: "workspace", label: "Workspace", icon: FolderOpen },
-        { id: "appearance", label: "Appearance", icon: Palette },
-        { id: "ai", label: "AI", icon: Wand2 },
+        { id: "common", label: "Commonly Used" },
+        { id: "workspace", label: "Workspace" },
+        { id: "appearance", label: "Appearance" },
+        { id: "ai", label: "AI" },
       ] as const,
     []
   );
@@ -9756,7 +9756,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
         <div ref={wrapRef} className={`relative ${p.widthClassName ?? ""}`.trim()}>
           <button type="button" className="ws-vscode-dropdown-btn opacity-60" disabled>
             <span className="truncate">No options</span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-muted" />
           </button>
         </div>
       );
@@ -9771,7 +9770,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
           aria-expanded={open}
         >
           <span className="truncate">{active?.label ?? ""}</span>
-          <ChevronDown className={`h-4 w-4 shrink-0 text-muted transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
 
         {open ? (
@@ -9984,9 +9982,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       <div className="border-b border-border bg-panel px-6 py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 border border-accent/20">
-              <SettingsIcon className="h-5 w-5 text-accent" />
-            </div>
             <div>
               <div className="text-sm font-semibold text-text">Settings</div>
               <div className="text-xs text-muted">Configure your workspace and preferences</div>
@@ -10000,40 +9995,34 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
             disabled={!props.isSettingsLoaded || props.isSavingSettings}
           >
             {props.isSavingSettings ? (
-              <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Saving...
-              </>
+              <>Saving...</>
             ) : (
-              <>
-                <Save className="h-4 w-4" />
-                Save Changes
-              </>
+              <>Save Changes</>
             )}
           </button>
         </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="grid h-full grid-cols-[280px_1fr]">
+        <div className="grid h-full grid-cols-1 md:grid-cols-[260px_1fr]">
           {/* Improved Sidebar */}
-          <aside className="min-w-0 border-r border-border bg-panel/50">
+          <aside className="min-w-0 border-b border-border bg-panel/50 md:border-b-0 md:border-r">
             <div className="flex h-full flex-col">
-              <div className="min-h-0 flex-1 overflow-auto px-3 py-4">
+              <div className="min-h-0 flex-1 overflow-auto px-3 py-3 md:py-4">
                 <div className="mb-4">
                   <div className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted/70">
                     Categories
                   </div>
-                  <div className="space-y-1">
+                  <div className="flex gap-1 overflow-auto md:block md:space-y-1 md:overflow-visible">
                     {sectionList.map((s) => {
                       const isActive = !q && s.id === activeSection;
                       return (
                         <button
                           key={s.id}
                           type="button"
-                          className={`group relative w-full rounded-xl px-3 py-2.5 text-left transition-all duration-150 ${
+                          className={`group relative shrink-0 rounded-md px-3 py-2.5 text-left text-sm font-medium transition-all duration-150 md:w-full ${
                             isActive
-                              ? "bg-accent/10 text-text"
+                              ? "bg-accent/15 text-text"
                               : "text-muted hover:bg-panel hover:text-text"
                           }`}
                           onClick={() => {
@@ -10041,17 +10030,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                             setQuery("");
                           }}
                         >
-                          {isActive && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-accent" />
-                          )}
-                          <div className="flex items-center gap-3">
-                            <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                              isActive ? "bg-accent/20" : "bg-panel group-hover:bg-panel2"
-                            }`}>
-                              <s.icon className={`h-4 w-4 ${isActive ? "text-accent" : ""}`} />
-                            </div>
-                            <span className="text-sm font-medium">{s.label}</span>
-                          </div>
+                          <span className="whitespace-nowrap md:whitespace-normal">{s.label}</span>
                         </button>
                       );
                     })}
@@ -10063,14 +10042,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
           {/* Improved Main Content */}
           <main className="min-w-0 overflow-auto bg-bg">
-            <div className="mx-auto w-full max-w-[900px] p-6">
+            <div className="mx-auto w-full max-w-[820px] p-4 md:p-6">
               {/* Improved Search */}
               <div className="mb-6">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-accent" />
                   <input
-                    className="w-full rounded-xl border border-border/60 bg-panel/30 px-3 py-2.5 pl-10 text-sm text-text outline-none placeholder:text-muted transition-all hover:border-accent/40 focus-visible:border-accent focus-visible:bg-panel"
-                    placeholder="Search settings..."
+                    className="w-full rounded-xl border border-accent/40 bg-accent/10 px-3 py-2.5 pl-10 text-sm text-text outline-none placeholder:text-muted transition-all hover:border-accent/70 focus-visible:border-accent focus-visible:bg-panel"
+                    placeholder="Search settings"
                     value={query}
                     onChange={(e) => setQuery(e.currentTarget.value)}
                   />
@@ -10093,20 +10072,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                       key={it.id}
                       className="group rounded-xl border border-border/60 bg-panel/30 p-4 transition-all hover:border-accent/40 hover:bg-panel/50"
                     >
-                      <div className="grid gap-4 md:grid-cols-[1fr_320px] md:items-start">
+                      <div className="grid gap-4 md:grid-cols-[1fr_320px] md:items-center">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <div className="text-sm font-medium text-text">{it.title}</div>
                           </div>
                           <div className="mt-1 text-xs leading-relaxed text-muted">{it.description}</div>
                         </div>
-                        <div className="min-w-0 md:flex md:w-[320px] md:justify-end">{it.renderControl()}</div>
+                        <div className="min-w-0 flex justify-center md:w-[320px] md:justify-end md:items-center">{it.renderControl()}</div>
                       </div>
                     </div>
                   ))
                 ) : (
                   <div className="rounded-xl border border-border/60 bg-panel/30 p-8 text-center">
-                    <Search className="mx-auto h-8 w-8 text-muted/40 mb-3" />
                     <p className="text-sm text-muted">No settings found matching your search.</p>
                   </div>
                 )}
@@ -10125,16 +10103,12 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                           className="group flex w-full items-center gap-3 rounded-xl border border-border/60 bg-panel/30 px-4 py-3 text-left transition-all hover:border-accent/40 hover:bg-panel/50"
                           onClick={() => props.onOpenRecent(p)}
                         >
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-panel group-hover:bg-panel2">
-                            <Folder className="h-4 w-4 text-muted" />
-                          </div>
                           <span className="text-sm text-muted group-hover:text-text truncate">{p}</span>
                         </button>
                       ))}
                     </div>
                   ) : (
                     <div className="rounded-xl border border-border/60 bg-panel/30 p-6 text-center">
-                      <FolderOpen className="mx-auto h-8 w-8 text-muted/40 mb-2" />
                       <p className="text-sm text-muted">No recent workspaces</p>
                     </div>
                   )}
@@ -10146,27 +10120,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                 <div className="mt-6 space-y-4">
                   {/* Provider Status Card */}
                   <div className="rounded-xl border border-border/60 bg-panel/30 p-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                        props.keyStatus?.is_configured
-                          ? "bg-emerald-500/10 border border-emerald-500/20"
-                          : "bg-amber-500/10 border border-amber-500/20"
-                      }`}>
-                        {props.keyStatus?.is_configured ? (
-                          <Check className="h-5 w-5 text-emerald-500" />
-                        ) : (
-                          <AlertCircle className="h-5 w-5 text-amber-500" />
-                        )}
+                    <div>
+                      <div className="text-sm font-medium text-text">
+                        {props.keyStatus?.is_configured ? "API Key Configured" : "API Key Not Configured"}
                       </div>
-                      <div>
-                        <div className="text-sm font-medium text-text">
-                          {props.keyStatus?.is_configured ? "API Key Configured" : "API Key Not Configured"}
-                        </div>
-                        <div className="text-xs text-muted">
-                          {props.keyStatus?.is_configured
-                            ? "Your API key is ready to use"
-                            : "Add an API key above to start using AI features"}
-                        </div>
+                      <div className="text-xs text-muted">
+                        {props.keyStatus?.is_configured
+                          ? "Your API key is ready to use"
+                          : "Add an API key above to start using AI features"}
                       </div>
                     </div>
                   </div>
@@ -10174,9 +10135,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                   {props.settings.active_provider === "pompora" && !props.authProfile ? (
                     <div className="rounded-xl border border-border/60 bg-panel/30 p-4">
                       <div className="flex items-center gap-3 mb-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 border border-accent/20">
-                          <User className="h-5 w-5 text-accent" />
-                        </div>
                         <div>
                           <div className="text-sm font-semibold text-text">Connect to Pompora</div>
                           <div className="text-xs text-muted">
@@ -10226,7 +10184,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                             !props.settings.active_provider
                           }
                         >
-                          <Save className="h-4 w-4" />
                           Save Key
                         </button>
                         <button
@@ -10235,16 +10192,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                           onClick={props.onClearKey}
                           disabled={!props.isSettingsLoaded || props.isKeyOperationInProgress || !props.settings.active_provider}
                         >
-                          <Trash2 className="h-4 w-4" />
                           Clear Key
                         </button>
                       </>
                     ) : null}
                     <div className="flex-1" />
-                    <button type="button" className="ws-vscode-btn" onClick={props.onDebugGemini}>
-                      <RefreshCw className="h-4 w-4" />
-                      Test AI
-                    </button>
                   </div>
 
                   {props.debugResult ? (
@@ -10258,9 +10210,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                     <div className="rounded-xl border border-border/60 bg-panel/30 overflow-hidden">
                       <div className="border-b border-border/60 px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10 border border-accent/20">
-                            <User className="h-5 w-5 text-accent" />
-                          </div>
                           <div>
                             <div className="text-sm font-semibold text-text">Pompora Account</div>
                             <div className="text-xs text-muted">Plan: {props.authCredits?.plan || props.authProfile.plan || "starter"}</div>
