@@ -3,6 +3,56 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use super::{secrets, settings};
 
+fn normalize_model_id(id: &str) -> String {
+    id.trim().to_string()
+}
+
+fn is_likely_chat_model(provider: &str, model_id: &str) -> bool {
+    let id = model_id.trim().to_lowercase();
+    if id.is_empty() {
+        return false;
+    }
+
+    // Common non-chat model families (avoid listing models the app cannot use).
+    let blocked_substrings = [
+        "embedding",
+        "embeddings",
+        "moderation",
+        "omni-moderation",
+        "whisper",
+        "tts",
+        "transcribe",
+        "translation",
+        "realtime",
+        "audio",
+        "vision",
+        "dall-e",
+        "dalle",
+        "image",
+        "img",
+        "rerank",
+        "rank",
+    ];
+
+    if blocked_substrings.iter().any(|s| id.contains(s)) {
+        // Allow a few known chat models that happen to contain some substrings.
+        // (Currently none needed.)
+        return false;
+    }
+
+    match provider {
+        // OpenAI-compatible: keep only chat-capable families.
+        "openai" | "custom" => id.starts_with("gpt-") || id.starts_with("o1") || id.starts_with("o3"),
+        "openrouter" => {
+            // OpenRouter ids are like "openai/gpt-4o" or "anthropic/claude-3.5...".
+            // We already blocked obvious non-chat types above.
+            true
+        }
+        // Together/Groq/Mistral/DeepSeek/etc are almost exclusively chat/completions models.
+        _ => true,
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiRunResult {
     pub output: String,
@@ -304,10 +354,18 @@ pub async fn provider_list_models(provider: &str, encryption_password: Option<&s
             let parsed: OpenAIModelsResponse = serde_json::from_str(&body)
                 .with_context(|| format!("Invalid models JSON response: {}", shorten_for_error(&body)))?;
             
-            let models: Vec<ProviderModelInfo> = parsed.data.into_iter().map(|m| ProviderModelInfo {
-                id: m.id,
-                name: m.owned_by,
-            }).collect();
+            let mut models: Vec<ProviderModelInfo> = parsed
+                .data
+                .into_iter()
+                .map(|m| ProviderModelInfo {
+                    id: normalize_model_id(&m.id),
+                    name: m.owned_by,
+                })
+                .filter(|m| is_likely_chat_model(provider, &m.id))
+                .collect();
+
+            models.sort_by(|a, b| a.id.cmp(&b.id));
+            models.dedup_by(|a, b| a.id == b.id);
             
             // #region agent log
             let log_msg = serde_json::json!({
@@ -373,12 +431,19 @@ pub async fn provider_list_models(provider: &str, encryption_password: Option<&s
                     if let Some(id) = model.get("id").and_then(|i| i.as_str()) {
                         let name = model.get("name").and_then(|n| n.as_str()).map(|s| s.to_string());
                         models.push(ProviderModelInfo {
-                            id: id.to_string(),
+                            id: normalize_model_id(id),
                             name,
                         });
                     }
                 }
             }
+
+            let mut models = models
+                .into_iter()
+                .filter(|m| is_likely_chat_model(provider, &m.id))
+                .collect::<Vec<_>>();
+            models.sort_by(|a, b| a.id.cmp(&b.id));
+            models.dedup_by(|a, b| a.id == b.id);
             Ok(models)
         }
         "perplexity" => {
@@ -915,13 +980,66 @@ async fn request_chat_completion(
             .with_context(|| format!("API request failed to: {url}"))?;
 
         let status = response.status();
+        let retry_after = response
+            .headers()
+            .get("retry-after")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_string());
         let body = response
             .text()
             .await
             .with_context(|| "Failed to read response text")?;
 
         if !status.is_success() {
-            return Err(anyhow!("API request failed (status {status}): {url}\n{body}"));
+            // OpenAI returns 429 both for real rate limits and for "insufficient_quota".
+            if provider == "openai" || provider == "custom" {
+                if status.as_u16() == 429 {
+                    // Try to parse the error payload.
+                    if let Ok(v) = serde_json::from_str::<serde_json::Value>(&body) {
+                        let code = v
+                            .get("error")
+                            .and_then(|e| e.get("code"))
+                            .and_then(|c| c.as_str())
+                            .unwrap_or("");
+                        let err_type = v
+                            .get("error")
+                            .and_then(|e| e.get("type"))
+                            .and_then(|c| c.as_str())
+                            .unwrap_or("");
+                        let msg = v
+                            .get("error")
+                            .and_then(|e| e.get("message"))
+                            .and_then(|m| m.as_str())
+                            .unwrap_or("");
+
+                        if code.eq_ignore_ascii_case("insufficient_quota") {
+                            return Err(anyhow!(
+                                "OpenAI quota exhausted: your API key has no available credits / billing is not enabled. OpenAI returned 429 insufficient_quota. {}",
+                                shorten_for_error(msg)
+                            ));
+                        }
+
+                        if err_type.eq_ignore_ascii_case("rate_limit_exceeded") || msg.to_lowercase().contains("rate limit") {
+                            if let Some(ra) = retry_after {
+                                return Err(anyhow!(
+                                    "OpenAI rate limited: wait {ra}s and try again. {}",
+                                    shorten_for_error(msg)
+                                ));
+                            }
+                            return Err(anyhow!("OpenAI rate limited: {}", shorten_for_error(msg)));
+                        }
+                    }
+
+                    if let Some(ra) = retry_after {
+                        return Err(anyhow!(
+                            "OpenAI returned 429: you may be rate limited. Retry after {ra}s. {}",
+                            shorten_for_error(&body)
+                        ));
+                    }
+                }
+            }
+
+            return Err(anyhow!("API request failed (status {status}): {url}\n{}", shorten_for_error(&body)));
         }
 
         body

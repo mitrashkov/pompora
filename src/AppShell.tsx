@@ -107,6 +107,37 @@ import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntr
 
 type ActivityId = "explorer" | "search" | "scm";
 
+function isFreeTierModel(providerId: string, modelId: string): boolean {
+  const prov = (providerId || "").trim().toLowerCase();
+  const id = (modelId || "").trim().toLowerCase();
+  if (!prov || !id) return false;
+
+  if (prov === "groq") {
+    return true;
+  }
+
+  if (prov === "gemini") {
+    return (
+      id.startsWith("gemini-") ||
+      id.startsWith("gemini-2.5-flash") ||
+      id.startsWith("gemini-2.5-flash-lite") ||
+      id.startsWith("gemini-2.0-flash") ||
+      id.startsWith("gemini-2.0-flash-lite") ||
+      id.startsWith("gemini-1.5-flash")
+    );
+  }
+
+  if (prov === "openrouter") {
+    return false;
+  }
+
+  if (prov === "openai" || prov === "anthropic" || prov === "mistral" || prov === "together" || prov === "deepseek" || prov === "xai" || prov === "cohere" || prov === "perplexity") {
+    return false;
+  }
+
+  return false;
+}
+
 const ProviderModelPicker = React.memo(function ProviderModelPicker(p: {
   providerId: string;
   models: Array<{ id: string; name?: string | null }>;
@@ -142,6 +173,16 @@ const ProviderModelPicker = React.memo(function ProviderModelPicker(p: {
         return name.includes(query) || id.includes(query);
       })
     : models;
+
+  const [freeModels, paidModels] = useMemo(() => {
+    const free: Array<{ id: string; name?: string | null }> = [];
+    const paid: Array<{ id: string; name?: string | null }> = [];
+    for (const m of filteredModels) {
+      if (isFreeTierModel(providerId, m.id)) free.push(m);
+      else paid.push(m);
+    }
+    return [free, paid] as const;
+  }, [filteredModels, providerId]);
 
   const canLoadEncrypted = !(keyStatus?.storage === "encryptedfile" && !encryptionPasswordDraft.trim());
 
@@ -201,7 +242,60 @@ const ProviderModelPicker = React.memo(function ProviderModelPicker(p: {
           </div>
         ) : filteredModels.length > 0 ? (
           <div className="divide-y divide-border/30">
-            {filteredModels.map((model) => {
+            {freeModels.length ? (
+              <div className="border-b border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-200">Free tier / trial</div>
+                <div className="mt-0.5 text-[11px] text-emerald-200/70">May still have limits</div>
+              </div>
+            ) : null}
+            {freeModels.map((model) => {
+              const isSelected = selectedModel === model.id;
+              const displayName = model.name || model.id.split("/").pop()?.split(":").pop() || model.id;
+              const provider = model.id.split("/")[0] || "";
+
+              return (
+                <button
+                  key={model.id}
+                  type="button"
+                  onClick={() => onSelectModel(providerId, model.id)}
+                  className={`w-full px-3 py-2.5 text-left transition-all duration-150 ${
+                    isSelected
+                      ? "bg-accent/10 border-l-2 border-l-accent"
+                      : "hover:bg-panel/50 border-l-2 border-l-transparent"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className={`truncate text-sm font-medium ${isSelected ? "text-text" : "text-muted"}`}>{displayName}</div>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <span className="rounded bg-panel/60 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-muted/60">
+                          {provider}
+                        </span>
+                        {model.name && model.id !== displayName && (
+                          <span className="truncate text-xs text-muted/50">
+                            {model.id.length > 40 ? `${model.id.substring(0, 37)}...` : model.id}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {isSelected ? (
+                      <div className="flex items-center gap-1.5 text-accent">
+                        <Check className="h-4 w-4" />
+                        <span className="text-xs font-medium">Active</span>
+                      </div>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+
+            {paidModels.length ? (
+              <div className="border-b border-amber-500/20 bg-amber-500/10 px-3 py-2">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-200">Pay-as-you-go / paid</div>
+                <div className="mt-0.5 text-[11px] text-amber-200/70">Requires billing / credits</div>
+              </div>
+            ) : null}
+            {paidModels.map((model) => {
               const isSelected = selectedModel === model.id;
               const displayName = model.name || model.id.split("/").pop()?.split(":").pop() || model.id;
               const provider = model.id.split("/")[0] || "";
