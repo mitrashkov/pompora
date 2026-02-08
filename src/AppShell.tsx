@@ -10046,9 +10046,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
               {/* Improved Search */}
               <div className="mb-6">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-accent" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted/70" />
                   <input
-                    className="w-full rounded-xl border border-accent/40 bg-[#222124] px-3 py-2.5 pl-10 text-sm text-text outline-none placeholder:text-muted transition-all hover:border-accent/70 focus-visible:border-accent focus-visible:bg-panel"
+                    className="w-full rounded-xl border border-border/60 bg-[#222124] px-3 py-2.5 pl-10 text-sm text-text outline-none placeholder:text-muted transition-all hover:border-border focus-visible:border-border/80 focus-visible:bg-[#1f1e21]"
                     placeholder="Search settings"
                     value={query}
                     onChange={(e) => setQuery(e.currentTarget.value)}
