@@ -9990,7 +9990,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
           <button
             type="button"
-            className="ws-vscode-btn ws-vscode-btn-primary px-4"
+            className="ws-vscode-btn ws-vscode-btn-primary px-4 text-white"
             onClick={props.onSaveSettings}
             disabled={!props.isSettingsLoaded || props.isSavingSettings}
           >
@@ -10048,7 +10048,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-accent" />
                   <input
-                    className="w-full rounded-xl border border-accent/40 bg-accent/10 px-3 py-2.5 pl-10 text-sm text-text outline-none placeholder:text-muted transition-all hover:border-accent/70 focus-visible:border-accent focus-visible:bg-panel"
+                    className="w-full rounded-xl border border-accent/40 bg-[#222124] px-3 py-2.5 pl-10 text-sm text-text outline-none placeholder:text-muted transition-all hover:border-accent/70 focus-visible:border-accent focus-visible:bg-panel"
                     placeholder="Search settings"
                     value={query}
                     onChange={(e) => setQuery(e.currentTarget.value)}
@@ -10175,7 +10175,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                       <>
                         <button
                           type="button"
-                          className="ws-vscode-btn ws-vscode-btn-primary"
+                          className="ws-vscode-btn ws-vscode-btn-primary text-white"
                           onClick={props.onStoreKey}
                           disabled={
                             !props.isSettingsLoaded ||
