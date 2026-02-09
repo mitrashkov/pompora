@@ -10059,6 +10059,121 @@ interface SettingsScreenProps {
   onSelectModel: (providerId: string, modelId: string) => void;
 }
 
+function __clampInt(n: number, min: number, max: number): number {
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, Math.trunc(n)));
+}
+
+function __toHexByte(n: number): string {
+  return __clampInt(n, 0, 255).toString(16).padStart(2, "0").toUpperCase();
+}
+
+function __parseHexColor(raw: string): { hex: string; r: number; g: number; b: number; a: number } | null {
+  const s = String(raw || "").trim();
+  const m = s.match(/^#?([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/);
+  if (!m?.[1]) return null;
+  const h = m[1].toUpperCase();
+  const r = Number.parseInt(h.slice(0, 2), 16);
+  const g = Number.parseInt(h.slice(2, 4), 16);
+  const b = Number.parseInt(h.slice(4, 6), 16);
+  const a = h.length === 8 ? Number.parseInt(h.slice(6, 8), 16) : 255;
+  const hex = `#${h.length === 6 ? h : h}`;
+  return { hex, r, g, b, a };
+}
+
+function __rgbaToHex(r: number, g: number, b: number, a?: number): string {
+  const aa = a === undefined ? 255 : __clampInt(a, 0, 255);
+  const base = `#${__toHexByte(r)}${__toHexByte(g)}${__toHexByte(b)}`;
+  return aa === 255 ? base : `${base}${__toHexByte(aa)}`;
+}
+
+function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: number } | null {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  const m = s.match(/^rgba?\(([^)]+)\)$/i);
+  const inner = (m?.[1] ?? s).trim();
+  const parts = inner
+    .split(/[,\s]+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+  if (parts.length < 3) return null;
+  const r = Number(parts[0]);
+  const g = Number(parts[1]);
+  const b = Number(parts[2]);
+  if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) return null;
+  if (parts.length >= 4) {
+    const aRaw = parts[3] ?? "";
+    const aNum = Number(aRaw);
+    if (Number.isFinite(aNum)) {
+      const a = aNum <= 1 ? __clampInt(aNum * 255, 0, 255) : __clampInt(aNum, 0, 255);
+      return { r: __clampInt(r, 0, 255), g: __clampInt(g, 0, 255), b: __clampInt(b, 0, 255), a };
+    }
+  }
+  return { r: __clampInt(r, 0, 255), g: __clampInt(g, 0, 255), b: __clampInt(b, 0, 255) };
+}
+
+function __rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
+  const rr = __clampInt(r, 0, 255) / 255;
+  const gg = __clampInt(g, 0, 255) / 255;
+  const bb = __clampInt(b, 0, 255) / 255;
+
+  const max = Math.max(rr, gg, bb);
+  const min = Math.min(rr, gg, bb);
+  const d = max - min;
+
+  let h = 0;
+  if (d !== 0) {
+    if (max === rr) h = ((gg - bb) / d) % 6;
+    else if (max === gg) h = (bb - rr) / d + 2;
+    else h = (rr - gg) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  const s = max === 0 ? 0 : d / max;
+  const v = max;
+  return { h, s, v };
+}
+
+function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b: number } {
+  const hh = ((Number.isFinite(h) ? h : 0) % 360 + 360) % 360;
+  const ss = Math.max(0, Math.min(1, Number.isFinite(s) ? s : 0));
+  const vv = Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
+
+  const c = vv * ss;
+  const x = c * (1 - Math.abs(((hh / 60) % 2) - 1));
+  const m = vv - c;
+
+  let r1 = 0;
+  let g1 = 0;
+  let b1 = 0;
+  if (hh < 60) {
+    r1 = c;
+    g1 = x;
+  } else if (hh < 120) {
+    r1 = x;
+    g1 = c;
+  } else if (hh < 180) {
+    g1 = c;
+    b1 = x;
+  } else if (hh < 240) {
+    g1 = x;
+    b1 = c;
+  } else if (hh < 300) {
+    r1 = x;
+    b1 = c;
+  } else {
+    r1 = c;
+    b1 = x;
+  }
+
+  return {
+    r: __clampInt((r1 + m) * 255, 0, 255),
+    g: __clampInt((g1 + m) * 255, 0, 255),
+    b: __clampInt((b1 + m) * 255, 0, 255),
+  };
+}
+
 class SettingsErrorBoundary extends Component<
   { children: React.ReactNode },
   { hasError: boolean; error: unknown }
@@ -10091,6 +10206,434 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const [modelSearchQueries, setModelSearchQueries] = useState<Record<string, string>>({});
+
+  const ColorPicker = (p: {
+    label: string;
+    value: string | null | undefined;
+    placeholder: string;
+    defaultSwatch: string;
+    onChange: (hex: string | null) => void;
+  }) => {
+    const [open, setOpen] = useState(false);
+    const wrapRef = useRef<HTMLDivElement | null>(null);
+    const triggerRef = useRef<HTMLButtonElement | null>(null);
+    const popoverRef = useRef<HTMLDivElement | null>(null);
+    const parsed = __parseHexColor(String(p.value ?? "").trim());
+    const activeHex = parsed?.hex ?? null;
+    const swatch = activeHex ? (activeHex.length === 9 ? activeHex.slice(0, 7) : activeHex) : p.defaultSwatch;
+    const activeAlpha = parsed?.a ?? 255;
+
+    const [popoverPos, setPopoverPos] = useState<{ left: number; top: number } | null>(null);
+
+    // Preview state for temporary changes while dragging
+    const [previewHex, setPreviewHex] = useState<string>(String(p.value ?? "").trim());
+    const [hexDraft, setHexDraft] = useState<string>(String(p.value ?? "").trim());
+    const [rgbDraft, setRgbDraft] = useState<string>(() => {
+      if (!parsed) return "";
+      const { r, g, b, a } = parsed;
+      return a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 100) / 100})`;
+    });
+
+    const [hsv, setHsv] = useState<{ h: number; s: number; v: number }>(() => {
+      if (!parsed) return { h: 150, s: 0.56, v: 0.84 };
+      return __rgbToHsv(parsed.r, parsed.g, parsed.b);
+    });
+
+    // Get current parsed color (from preview if open, otherwise from actual value)
+    const currentParsed = __parseHexColor(open ? previewHex : String(p.value ?? "").trim());
+    const currentHex = currentParsed?.hex ?? null;
+    const currentSwatch = currentHex ? (currentHex.length === 9 ? currentHex.slice(0, 7) : currentHex) : p.defaultSwatch;
+    const currentAlpha = currentParsed?.a ?? 255;
+
+    useEffect(() => {
+      const next = String(p.value ?? "").trim();
+      setHexDraft(next);
+      setPreviewHex(next);
+      const px = __parseHexColor(next);
+      if (!px) {
+        setRgbDraft("");
+        return;
+      }
+      const { r, g, b, a } = px;
+      setRgbDraft(a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 100) / 100})`);
+      setHsv(__rgbToHsv(r, g, b));
+    }, [p.value]);
+
+    // Apply preview changes when closing (only if not cancelled)
+    useEffect(() => {
+      if (!open) {
+        // Reset preview to current value when opening
+        setPreviewHex(String(p.value ?? "").trim());
+      }
+    }, [open]);
+
+    useEffect(() => {
+      if (!open) return;
+      const onDown = (e: MouseEvent) => {
+        const t = e.target as Node | null;
+        if (!t) return;
+        if (wrapRef.current?.contains(t)) return;
+        setOpen(false);
+      };
+      setTimeout(() => {
+        window.addEventListener("mousedown", onDown);
+      }, 0);
+      return () => window.removeEventListener("mousedown", onDown);
+    }, [open]);
+
+    useEffect(() => {
+      if (!open) return;
+      let raf = 0;
+      const place = () => {
+        const trig = triggerRef.current;
+        const pop = popoverRef.current;
+        if (!trig || !pop) return;
+
+        const t = trig.getBoundingClientRect();
+        const pRect = pop.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const pad = 10;
+
+        const candidates = [
+          { left: t.left, top: t.bottom + 8 },
+          { left: t.right - pRect.width, top: t.bottom + 8 },
+          { left: t.left, top: t.top - pRect.height - 8 },
+          { left: t.right - pRect.width, top: t.top - pRect.height - 8 },
+          { left: t.right + 8, top: t.top },
+          { left: t.left - pRect.width - 8, top: t.top },
+        ];
+
+        const score = (pos: { left: number; top: number }) => {
+          const cl = Math.max(pad, Math.min(vw - pad - pRect.width, pos.left));
+          const ct = Math.max(pad, Math.min(vh - pad - pRect.height, pos.top));
+          const visibleW = Math.max(0, Math.min(vw - pad, cl + pRect.width) - Math.max(pad, cl));
+          const visibleH = Math.max(0, Math.min(vh - pad, ct + pRect.height) - Math.max(pad, ct));
+          const area = visibleW * visibleH;
+          const dy = Math.abs((ct + pRect.height / 2) - (t.top + t.height / 2));
+          const dx = Math.abs((cl + pRect.width / 2) - (t.left + t.width / 2));
+          return area - (dx + dy) * 0.1;
+        };
+
+        let best = candidates[0]!;
+        let bestScore = score(best);
+        for (const c of candidates.slice(1)) {
+          const s = score(c);
+          if (s > bestScore) {
+            best = c;
+            bestScore = s;
+          }
+        }
+
+        const left = Math.max(pad, Math.min(vw - pad - pRect.width, best.left));
+        const top = Math.max(pad, Math.min(vh - pad - pRect.height, best.top));
+        setPopoverPos({ left, top });
+      };
+
+      raf = window.requestAnimationFrame(place);
+      window.addEventListener("resize", place);
+      window.addEventListener("scroll", place, true);
+      return () => {
+        window.cancelAnimationFrame(raf);
+        window.removeEventListener("resize", place);
+        window.removeEventListener("scroll", place, true);
+      };
+    }, [open]);
+
+    const commitHex = useCallback(
+      (raw: string) => {
+        const px = __parseHexColor(raw);
+        if (!px) return;
+        setPreviewHex(px.hex);
+        setHexDraft(px.hex);
+        const { r, g, b, a } = px;
+        setRgbDraft(a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 100) / 100})`);
+        setHsv(__rgbToHsv(r, g, b));
+      },
+      []
+    );
+
+    const commitRgb = useCallback(
+      (raw: string) => {
+        const pr = __parseRgbLike(raw);
+        if (!pr) return;
+        const hex = __rgbaToHex(pr.r, pr.g, pr.b, pr.a);
+        setPreviewHex(hex);
+        setHexDraft(hex);
+        setRgbDraft(raw);
+        setHsv(__rgbToHsv(pr.r, pr.g, pr.b));
+      },
+      []
+    );
+
+    const commitHsv = useCallback(
+      (next: { h: number; s: number; v: number }) => {
+        const rgb = __hsvToRgb(next.h, next.s, next.v);
+        const hex = __rgbaToHex(rgb.r, rgb.g, rgb.b, currentAlpha);
+        setPreviewHex(hex);
+        setHexDraft(hex);
+        const { r, g, b, a } = __parseHexColor(hex) || { r: 0, g: 0, b: 0, a: 255 };
+        setRgbDraft(a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 100) / 100})`);
+      },
+      [currentAlpha]
+    );
+
+    const svRef = useRef<HTMLDivElement | null>(null);
+    const hueRef = useRef<HTMLInputElement | null>(null);
+
+    const onPickSV = useCallback(
+      (clientX: number, clientY: number) => {
+        const el = svRef.current;
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        const x = Math.max(0, Math.min(1, (clientX - r.left) / Math.max(1, r.width)));
+        const y = Math.max(0, Math.min(1, (clientY - r.top) / Math.max(1, r.height)));
+        const next = { ...hsv, s: x, v: 1 - y };
+        setHsv(next);
+        commitHsv(next);
+      },
+      [commitHsv, hsv]
+    );
+
+    const onSVPointerDown = useCallback(
+      (e: React.PointerEvent) => {
+        e.preventDefault();
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        onPickSV(e.clientX, e.clientY);
+      },
+      [onPickSV]
+    );
+
+    const onSVPointerMove = useCallback(
+      (e: React.PointerEvent) => {
+        if (!(e.buttons & 1)) return;
+        e.preventDefault();
+        onPickSV(e.clientX, e.clientY);
+      },
+      [onPickSV]
+    );
+
+    return (
+      <div ref={wrapRef} className="relative flex items-center justify-end gap-2">
+        <button
+          type="button"
+          className="flex items-center gap-2 rounded-xl border border-border bg-bg px-3 py-2 text-xs text-muted hover:border-accent/60 hover:text-text"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          ref={triggerRef}
+        >
+          <span className="h-4 w-4 rounded border border-border" style={{ background: swatch }} />
+          <span className="max-w-[120px] truncate">{activeHex ?? "Default"}</span>
+        </button>
+
+        <button type="button" className="ws-vscode-btn" onClick={() => p.onChange(null)}>
+          Reset
+        </button>
+
+        {open ? (
+          <div
+            ref={popoverRef}
+            className="fixed z-50 w-[360px] overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl"
+            style={{ left: popoverPos?.left ?? -9999, top: popoverPos?.top ?? -9999 }}
+          >
+            <div className="flex items-start justify-between gap-3 border-b border-border p-3">
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-text">{p.label}</div>
+                <div className="mt-0.5 text-[11px] text-muted">Paste HEX or RGB(A). We’ll convert automatically.</div>
+              </div>
+              <button type="button" className="ws-icon-btn" onClick={() => setOpen(false)} aria-label="Close">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl border border-border" style={{ background: currentSwatch }} />
+                  <div className="min-w-0">
+                    <div className="text-[11px] font-medium text-muted">Active</div>
+                    <div className="truncate text-xs text-text">{currentHex ?? "Default"}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <div
+                  ref={svRef}
+                  className="relative h-[180px] w-full overflow-hidden rounded-2xl border border-border"
+                  style={{ background: `hsl(${Math.round(hsv.h)}, 100%, 50%)` }}
+                  onPointerDown={onSVPointerDown}
+                  onPointerMove={onSVPointerMove}
+                >
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to right, #FFFFFF, rgba(255,255,255,0))" }} />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #000000, rgba(0,0,0,0))" }} />
+                  <div
+                    className="absolute h-4 w-4 -translate-x-2 -translate-y-2 rounded-full border border-white shadow-[0_0_0_2px_rgba(0,0,0,0.35)]"
+                    style={{ left: `${hsv.s * 100}%`, top: `${(1 - hsv.v) * 100}%` }}
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <div className="text-[11px] font-medium text-muted">Hue</div>
+                  <input
+                    ref={hueRef}
+                    type="range"
+                    min={0}
+                    max={360}
+                    value={Math.round(hsv.h)}
+                    onChange={(e) => {
+                      const h = Number(e.currentTarget.value);
+                      const next = { ...hsv, h };
+                      setHsv(next);
+                      commitHsv(next);
+                    }}
+                    className="mt-1 h-2 w-full cursor-pointer appearance-none rounded-full"
+                    style={{
+                      background:
+                        "linear-gradient(to right, #FF0000 0%, #FFFF00 16%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%)",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-2">
+                <div>
+                  <div className="text-[11px] font-medium text-muted">HEX</div>
+                  <input
+                    className="mt-1 w-full rounded-xl border border-border bg-bg px-3 py-2 text-xs text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    placeholder={p.placeholder}
+                    value={hexDraft}
+                    spellCheck={false}
+                    onChange={(e) => setHexDraft(e.currentTarget.value)}
+                    onBlur={() => commitHex(hexDraft)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitHex(hexDraft);
+                      }
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <div className="text-[11px] font-medium text-muted">RGB Values</div>
+                  <div className="mt-1 grid grid-cols-3 gap-2">
+                    <div>
+                      <div className="text-[10px] text-muted mb-1">R</div>
+                      <input
+                        type="number"
+                        min="0"
+                        max="255"
+                        className="w-full rounded-xl border border-border bg-bg px-2 py-1.5 text-xs text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+                        placeholder="0-255"
+                        value={currentParsed?.r ?? ""}
+                        spellCheck={false}
+                        onChange={(e) => {
+                          const val = parseInt(e.currentTarget.value) || 0;
+                          const clamped = Math.max(0, Math.min(255, val));
+                          const g = currentParsed?.g ?? 0;
+                          const b = currentParsed?.b ?? 0;
+                          const a = currentParsed?.a ?? 255;
+                          const hex = __rgbaToHex(clamped, g, b, a);
+                          setPreviewHex(hex);
+                          setHexDraft(hex);
+                          setRgbDraft(a === 255 ? `rgb(${clamped}, ${g}, ${b})` : `rgba(${clamped}, ${g}, ${b}, ${Math.round((a / 255) * 100) / 100})`);
+                          setHsv(__rgbToHsv(clamped, g, b));
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-muted mb-1">G</div>
+                      <input
+                        type="number"
+                        min="0"
+                        max="255"
+                        className="w-full rounded-xl border border-border bg-bg px-2 py-1.5 text-xs text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+                        placeholder="0-255"
+                        value={currentParsed?.g ?? ""}
+                        spellCheck={false}
+                        onChange={(e) => {
+                          const val = parseInt(e.currentTarget.value) || 0;
+                          const r = currentParsed?.r ?? 0;
+                          const clamped = Math.max(0, Math.min(255, val));
+                          const b = currentParsed?.b ?? 0;
+                          const a = currentParsed?.a ?? 255;
+                          const hex = __rgbaToHex(r, clamped, b, a);
+                          setPreviewHex(hex);
+                          setHexDraft(hex);
+                          setRgbDraft(a === 255 ? `rgb(${r}, ${clamped}, ${b})` : `rgba(${r}, ${clamped}, ${b}, ${Math.round((a / 255) * 100) / 100})`);
+                          setHsv(__rgbToHsv(r, clamped, b));
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-muted mb-1">B</div>
+                      <input
+                        type="number"
+                        min="0"
+                        max="255"
+                        className="w-full rounded-xl border border-border bg-bg px-2 py-1.5 text-xs text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+                        placeholder="0-255"
+                        value={currentParsed?.b ?? ""}
+                        spellCheck={false}
+                        onChange={(e) => {
+                          const val = parseInt(e.currentTarget.value) || 0;
+                          const r = currentParsed?.r ?? 0;
+                          const g = currentParsed?.g ?? 0;
+                          const clamped = Math.max(0, Math.min(255, val));
+                          const a = currentParsed?.a ?? 255;
+                          const hex = __rgbaToHex(r, g, clamped, a);
+                          setPreviewHex(hex);
+                          setHexDraft(hex);
+                          setRgbDraft(a === 255 ? `rgb(${r}, ${g}, ${clamped})` : `rgba(${r}, ${g}, ${clamped}, ${Math.round((a / 255) * 100) / 100})`);
+                          setHsv(__rgbToHsv(r, g, clamped));
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-[11px] font-medium text-muted">RGB / RGBA (legacy)</div>
+                  <input
+                    className="mt-1 w-full rounded-xl border border-border bg-bg px-3 py-2 text-xs text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+                    placeholder="rgb(96, 214, 170) or rgba(96, 214, 170, 0.8)"
+                    value={rgbDraft}
+                    spellCheck={false}
+                    onChange={(e) => setRgbDraft(e.currentTarget.value)}
+                    onBlur={() => commitRgb(rgbDraft)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitRgb(rgbDraft);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between">
+                <div className="text-[11px] text-muted">Tip: alpha can be `#RRGGBBAA` or `rgba(..., 0.5)`</div>
+                <button
+                  type="button"
+                  className="ws-btn h-8 border border-accent bg-accent px-3 text-xs text-white hover:opacity-90"
+                  onClick={() => {
+                    const px = __parseHexColor(previewHex);
+                    if (px) {
+                      p.onChange(px.hex);
+                    }
+                    setOpen(false);
+                  }}
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   const sectionList = useMemo(
     () =>
@@ -10252,32 +10795,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       description: "Customize the active line highlight in the editor.",
       keywords: "line highlight editor current line color",
       renderControl: () => {
-        const current = String(props.settings.editor_line_highlight_color ?? "").trim();
-        const isHex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(current);
-        const value = isHex ? current : "";
-
         return (
-          <div className="flex items-center justify-end gap-2">
-            <input
-              type="color"
-              className="h-8 w-10 cursor-pointer rounded border border-border bg-bg"
-              value={value && value.length === 9 ? value.slice(0, 7) : value || "#232228"}
-              onChange={(e) => {
-                const next = e.currentTarget.value;
-                props.onChangeLineHighlightColor(next);
-              }}
-            />
-            <input
-              className="ws-vscode-input w-[140px]"
-              placeholder="#232228"
-              value={current}
-              spellCheck={false}
-              onChange={(e) => props.onChangeLineHighlightColor(e.currentTarget.value)}
-            />
-            <button type="button" className="ws-vscode-btn" onClick={() => props.onChangeLineHighlightColor(null)}>
-              Reset
-            </button>
-          </div>
+          <ColorPicker
+            label="Line highlight"
+            value={props.settings.editor_line_highlight_color ?? null}
+            placeholder="#232228"
+            defaultSwatch="#232228"
+            onChange={(hex) => props.onChangeLineHighlightColor(hex)}
+          />
         );
       },
     },
@@ -10288,32 +10813,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       description: "Customize the editor caret (cursor) color.",
       keywords: "cursor caret color",
       renderControl: () => {
-        const current = String(props.settings.editor_cursor_color ?? "").trim();
-        const isHex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(current);
-        const value = isHex ? current : "";
-
         return (
-          <div className="flex items-center justify-end gap-2">
-            <input
-              type="color"
-              className="h-8 w-10 cursor-pointer rounded border border-border bg-bg"
-              value={value && value.length === 9 ? value.slice(0, 7) : value || "#60d6aa"}
-              onChange={(e) => {
-                const next = e.currentTarget.value;
-                props.onChangeCursorColor(next);
-              }}
-            />
-            <input
-              className="ws-vscode-input w-[140px]"
-              placeholder="#60D6AA"
-              value={current}
-              spellCheck={false}
-              onChange={(e) => props.onChangeCursorColor(e.currentTarget.value)}
-            />
-            <button type="button" className="ws-vscode-btn" onClick={() => props.onChangeCursorColor(null)}>
-              Reset
-            </button>
-          </div>
+          <ColorPicker
+            label="Cursor"
+            value={props.settings.editor_cursor_color ?? null}
+            placeholder="#60D6AA"
+            defaultSwatch="#60D6AA"
+            onChange={(hex) => props.onChangeCursorColor(hex)}
+          />
         );
       },
     },
