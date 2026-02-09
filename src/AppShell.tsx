@@ -9683,7 +9683,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   const sectionList = useMemo(
     () =>
       [
-        { id: "common", label: "Commonly Used" },
         { id: "workspace", label: "Workspace" },
         { id: "appearance", label: "Appearance" },
         { id: "ai", label: "AI" },
@@ -9696,7 +9695,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
   const sectionMeta = useMemo(() => {
     const map: Record<SectionId, { title: string; description: string }> = {
-      common: { title: "Commonly Used", description: "Frequently changed settings" },
       workspace: { title: "Workspace", description: "Workspace folder and recent workspaces" },
       appearance: { title: "Appearance", description: "Theme" },
       ai: { title: "AI", description: "Provider and offline mode" },
@@ -9717,16 +9715,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
     renderControl: () => ReactNode;
     keywords?: string;
   };
-
-  const commonIds = useMemo(
-    () =>
-      new Set<string>([
-        "workspace.folder",
-        "appearance.theme",
-        "ai.offline",
-      ]),
-    []
-  );
 
   const Dropdown = (p: {
     value: string;
@@ -9969,12 +9957,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
   const filteredItems = useMemo(() => {
     if (!q) {
-      if (activeSection === "common") return settingsItems.filter((x) => commonIds.has(x.id));
       return settingsItems.filter((x) => x.section === activeSection);
     }
     const qq = q.toLowerCase();
     return settingsItems.filter((x) => `${x.title} ${x.description} ${x.keywords ?? ""}`.toLowerCase().includes(qq));
-  }, [activeSection, commonIds, q, settingsItems]);
+  }, [activeSection, q, settingsItems]);
 
   return (
     <div className="flex h-full flex-col bg-bg">
