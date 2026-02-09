@@ -2012,6 +2012,45 @@ export default function AppShell() {
   const [isGoToLineOpen, setIsGoToLineOpen] = useState(false);
   const [goToLineValue, setGoToLineValue] = useState("");
 
+  const [savePathDialog, setSavePathDialog] = useState<null | {
+    title: string;
+    subtitle?: string;
+    placeholder?: string;
+    value: string;
+    extensions?: string[];
+    defaultExtension?: string;
+    enforceExtension?: boolean;
+    resolve: (value: string | null) => void;
+  }>(null);
+
+  const requestRelativePath = useCallback(
+    (
+      title: string,
+      initialValue: string,
+      options?: {
+        subtitle?: string;
+        placeholder?: string;
+        extensions?: string[];
+        defaultExtension?: string;
+        enforceExtension?: boolean;
+      }
+    ) => {
+      return new Promise<string | null>((resolve) => {
+        setSavePathDialog({
+          title,
+          subtitle: options?.subtitle,
+          placeholder: options?.placeholder,
+          value: initialValue,
+          extensions: options?.extensions,
+          defaultExtension: options?.defaultExtension,
+          enforceExtension: options?.enforceExtension,
+          resolve,
+        });
+      });
+    },
+    []
+  );
+
   const [runPolicy, setRunPolicy] = useState<"ask" | "always">(() => {
     try {
       const raw = window.localStorage.getItem(RUN_POLICY_KEY);
@@ -2047,6 +2086,8 @@ export default function AppShell() {
     active_model: null,
     pompora_thinking: null,
     editor_cursor_blinking: "expand",
+    editor_line_highlight_color: null,
+    editor_cursor_color: null,
     workspace_root: null,
     recent_workspaces: [],
   });
@@ -2056,6 +2097,8 @@ export default function AppShell() {
   const [isTogglingOffline, setIsTogglingOffline] = useState(false);
 
   const [workspace, setWorkspaceState] = useState<WorkspaceInfo>({ root: null, recent: [] });
+
+  const monacoRef = useRef<typeof import("monaco-editor") | null>(null);
 
   const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
   const [isFileMenuRecentOpen, setIsFileMenuRecentOpen] = useState(false);
@@ -3773,6 +3816,8 @@ export default function AppShell() {
           ...s,
           pompora_thinking: (s as AppSettings).pompora_thinking ?? prev.pompora_thinking ?? null,
           editor_cursor_blinking: (s as AppSettings).editor_cursor_blinking ?? prev.editor_cursor_blinking ?? "expand",
+          editor_line_highlight_color: (s as AppSettings).editor_line_highlight_color ?? prev.editor_line_highlight_color ?? null,
+          editor_cursor_color: (s as AppSettings).editor_cursor_color ?? prev.editor_cursor_color ?? null,
           workspace_root: s.workspace_root ?? null,
           recent_workspaces: s.recent_workspaces ?? [],
           active_provider: migratedProvider ?? null,
@@ -5329,7 +5374,11 @@ export default function AppShell() {
         await openFolder();
         if (!workspace.root) return;
       }
-      const name = window.prompt("Save As (relative path)", activeTab.name);
+      const name = await requestRelativePath("Save As", activeTab.name, {
+        subtitle: "Save relative to the workspace root",
+        placeholder: "folder/file",
+        extensions: ["txt", "md", "json", "ts", "tsx", "js", "jsx", "css", "html"],
+      });
       if (!name) return;
       const rel = name.trim().replace(/\\/g, "/");
       if (!rel) return;
@@ -5341,7 +5390,7 @@ export default function AppShell() {
     await workspaceWriteFile(activeTab.path, activeTab.content);
     setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, isDirty: false } : t)));
     await refreshDir(activeTab.path.includes("/") ? activeTab.path.split("/").slice(0, -1).join("/") : undefined);
-  }, [activeTab, openFolder, refreshDir, workspace.root]);
+  }, [activeTab, openFolder, refreshDir, requestRelativePath, workspace.root]);
 
   const saveAll = useCallback(async () => {
     const dirty = tabs.filter((t) => t.isDirty);
@@ -5355,7 +5404,11 @@ export default function AppShell() {
       }
       if (t.path.startsWith("untitled:")) {
         setActiveTabPath(t.path);
-        const name = window.prompt("Save As (relative path)", t.name);
+        const name = await requestRelativePath("Save As", t.name, {
+          subtitle: "Save relative to the workspace root",
+          placeholder: "folder/file",
+          extensions: ["txt", "md", "json", "ts", "tsx", "js", "jsx", "css", "html"],
+        });
         if (!name) continue;
         const rel = name.trim().replace(/\\/g, "/");
         if (!rel) continue;
@@ -5369,7 +5422,7 @@ export default function AppShell() {
       await workspaceWriteFile(t.path, t.content);
       setTabs((prev) => prev.map((x) => (x.path === t.path ? { ...x, isDirty: false } : x)));
     }
-  }, [tabs]);
+  }, [requestRelativePath, tabs]);
 
   const saveAs = useCallback(async () => {
     if (!activeTab) return;
@@ -5383,7 +5436,13 @@ export default function AppShell() {
         notifyRef.current?.({ kind: "error", title: "Export image failed", message: "No edited image data to export." });
         return;
       }
-      const name = window.prompt("Export Image As (relative path)", activeTab.name);
+      const name = await requestRelativePath("Export image", activeTab.name, {
+        subtitle: "Export relative to the workspace root",
+        placeholder: "folder/image",
+        extensions: ["png", "jpg", "webp"],
+        defaultExtension: "png",
+        enforceExtension: true,
+      });
       if (!name) return;
       const rel = name.trim().replace(/\\/g, "/");
       if (!rel) return;
@@ -5395,7 +5454,11 @@ export default function AppShell() {
       await openFolder();
       if (!workspace.root) return;
     }
-    const name = window.prompt("Save As (relative path)", activeTab.name);
+    const name = await requestRelativePath("Save As", activeTab.name, {
+      subtitle: "Save relative to the workspace root",
+      placeholder: "folder/file",
+      extensions: ["txt", "md", "json", "ts", "tsx", "js", "jsx", "css", "html"],
+    });
     if (!name) return;
     const rel = name.trim().replace(/\\/g, "/");
     if (!rel) return;
@@ -5413,7 +5476,7 @@ export default function AppShell() {
     });
     setActiveTabPath(rel);
     await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
-  }, [activeTab, openFolder, refreshDir, workspace.root]);
+  }, [activeTab, openFolder, refreshDir, requestRelativePath, workspace.root]);
 
   const revertFile = useCallback(async () => {
     if (!activeTab) return;
@@ -5437,28 +5500,40 @@ export default function AppShell() {
       window.alert("No folder is open. Open a folder first.");
       return;
     }
-    const name = window.prompt("Save Workspace As (file name)", "pompora-workspace.json");
+    const name = await requestRelativePath("Save workspace as", "pompora-workspace.json", {
+      subtitle: "Workspace files are JSON",
+      placeholder: "pompora-workspace",
+      extensions: ["json"],
+      defaultExtension: "json",
+      enforceExtension: true,
+    });
     if (!name) return;
     const rel = name.trim().replace(/\\/g, "/");
     if (!rel) return;
     const payload = JSON.stringify({ folders: [workspace.root] }, null, 2);
     await workspaceWriteFile(rel, payload);
     await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
-  }, [refreshDir, workspace.root]);
+  }, [refreshDir, requestRelativePath, workspace.root]);
 
   const duplicateWorkspace = useCallback(async () => {
     if (!workspace.root) {
       window.alert("No folder is open. Open a folder first.");
       return;
     }
-    const name = window.prompt("Duplicate Workspace As (file name)", "pompora-workspace-copy.json");
+    const name = await requestRelativePath("Duplicate workspace as", "pompora-workspace-copy.json", {
+      subtitle: "Workspace files are JSON",
+      placeholder: "pompora-workspace-copy",
+      extensions: ["json"],
+      defaultExtension: "json",
+      enforceExtension: true,
+    });
     if (!name) return;
     const rel = name.trim().replace(/\\/g, "/");
     if (!rel) return;
     const payload = JSON.stringify({ folders: [workspace.root] }, null, 2);
     await workspaceWriteFile(rel, payload);
     await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
-  }, [refreshDir, workspace.root]);
+  }, [refreshDir, requestRelativePath, workspace.root]);
 
   const openRecentFile = useCallback(
     async (absPath: string) => {
@@ -5584,6 +5659,34 @@ export default function AppShell() {
       } catch (e) {
         devConsoleError("Failed to save cursor blinking", e);
         notify({ kind: "error", title: "Settings", message: `Failed to save cursor blinking: ${formatErr(e)}` });
+      }
+    },
+    [devConsoleError, formatErr, notify, settings]
+  );
+
+  const setLineHighlightColor = useCallback(
+    async (hex: string | null) => {
+      const next: AppSettings = { ...settings, editor_line_highlight_color: hex };
+      setSettingsState(next);
+      try {
+        await settingsSet(next);
+      } catch (e) {
+        devConsoleError("Failed to save line highlight color", e);
+        notify({ kind: "error", title: "Settings", message: `Failed to save line highlight color: ${formatErr(e)}` });
+      }
+    },
+    [devConsoleError, formatErr, notify, settings]
+  );
+
+  const setCursorColor = useCallback(
+    async (hex: string | null) => {
+      const next: AppSettings = { ...settings, editor_cursor_color: hex };
+      setSettingsState(next);
+      try {
+        await settingsSet(next);
+      } catch (e) {
+        devConsoleError("Failed to save cursor color", e);
+        notify({ kind: "error", title: "Settings", message: `Failed to save cursor color: ${formatErr(e)}` });
       }
     },
     [devConsoleError, formatErr, notify, settings]
@@ -6372,7 +6475,21 @@ export default function AppShell() {
     setPaletteIndex(0);
   }, [paletteQuery]);
 
-  const handleMonacoBeforeMount = useCallback((monaco: typeof import("monaco-editor")) => {
+  const applyMonacoThemes = useCallback((
+    monaco: typeof import("monaco-editor"),
+    lineHighlightColor: string | null,
+    cursorColor: string | null
+  ) => {
+    const rawLine = String(lineHighlightColor ?? "").trim();
+    const isLineHex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(rawLine);
+    const darkLine = isLineHex ? rawLine : "#232228";
+    const lightLine = isLineHex ? rawLine : "#F8FAFC";
+
+    const rawCursor = String(cursorColor ?? "").trim();
+    const isCursorHex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(rawCursor);
+    const darkCursor = isCursorHex ? rawCursor : "#60D6AA";
+    const lightCursor = isCursorHex ? rawCursor : "#059669";
+
     monaco.editor.defineTheme("pompora-dark", {
       base: "vs-dark",
       inherit: true,
@@ -6391,10 +6508,10 @@ export default function AppShell() {
         "editor.foreground": "#E6E6EA",
         "editorLineNumber.foreground": "#5B5863",
         "editorLineNumber.activeForeground": "#C8C7CF",
-        "editorCursor.foreground": "#60D6AA",
+        "editorCursor.foreground": darkCursor,
         "editor.selectionBackground": "#2A4060",
         "editor.inactiveSelectionBackground": "#242234",
-        "editor.lineHighlightBackground": "#232228",
+        "editor.lineHighlightBackground": darkLine,
         "editorWhitespace.foreground": "#403E46",
         "editorIndentGuide.background1": "#2C2B31",
         "editorIndentGuide.activeBackground1": "#3B3A42",
@@ -6432,10 +6549,10 @@ export default function AppShell() {
         "editor.foreground": "#0F172A",
         "editorLineNumber.foreground": "#94A3B8",
         "editorLineNumber.activeForeground": "#0F172A",
-        "editorCursor.foreground": "#059669",
+        "editorCursor.foreground": lightCursor,
         "editor.selectionBackground": "#BFDBFE",
         "editor.inactiveSelectionBackground": "#E2E8F0",
-        "editor.lineHighlightBackground": "#F8FAFC",
+        "editor.lineHighlightBackground": lightLine,
         "editorWhitespace.foreground": "#CBD5E1",
         "editorIndentGuide.background1": "#E2E8F0",
         "editorIndentGuide.activeBackground1": "#CBD5E1",
@@ -6455,6 +6572,24 @@ export default function AppShell() {
       },
     });
   }, []);
+
+  const handleMonacoBeforeMount = useCallback(
+    (monaco: typeof import("monaco-editor")) => {
+      monacoRef.current = monaco;
+      applyMonacoThemes(monaco, settings.editor_line_highlight_color ?? null, settings.editor_cursor_color ?? null);
+    },
+    [applyMonacoThemes, settings.editor_cursor_color, settings.editor_line_highlight_color]
+  );
+
+  useEffect(() => {
+    const monaco = monacoRef.current;
+    if (!monaco) return;
+    applyMonacoThemes(monaco, settings.editor_line_highlight_color ?? null, settings.editor_cursor_color ?? null);
+    try {
+      monaco.editor.setTheme(settings.theme === "light" ? "pompora-light" : "pompora-dark");
+    } catch {
+    }
+  }, [applyMonacoThemes, settings.editor_cursor_color, settings.editor_line_highlight_color, settings.theme]);
 
   const themeName = settings.theme === "light" ? "pompora-light" : "pompora-dark";
   const isCoding = !!activeTab && activeTab.path !== SETTINGS_TAB_PATH;
@@ -7598,6 +7733,8 @@ export default function AppShell() {
                         recentWorkspaces={workspace.recent}
                         onChangeTheme={(t: Theme) => setSettingsState((s) => ({ ...s, theme: t }))}
                         onChangeCursorBlinking={(v) => void setCursorBlinking(v)}
+                        onChangeLineHighlightColor={(hex) => void setLineHighlightColor(hex)}
+                        onChangeCursorColor={(hex) => void setCursorColor(hex)}
                         onToggleOffline={toggleOfflineMode}
                         onChangeProvider={(p) => void changeProvider(p)}
                         onChangePomporaThinking={(t) => void setPomporaThinking(t)}
@@ -8807,6 +8944,29 @@ export default function AppShell() {
         />
       ) : null}
 
+      {savePathDialog ? (
+        <SavePathDialog
+          title={savePathDialog.title}
+          subtitle={savePathDialog.subtitle}
+          placeholder={savePathDialog.placeholder}
+          value={savePathDialog.value}
+          setValue={(v) => setSavePathDialog((prev) => (prev ? { ...prev, value: v } : prev))}
+          extensions={savePathDialog.extensions}
+          defaultExtension={savePathDialog.defaultExtension}
+          enforceExtension={savePathDialog.enforceExtension}
+          onClose={() => {
+            const r = savePathDialog.resolve;
+            setSavePathDialog(null);
+            r(null);
+          }}
+          onSubmit={(value) => {
+            const r = savePathDialog.resolve;
+            setSavePathDialog(null);
+            r(value);
+          }}
+        />
+      ) : null}
+
       {explorerMenu ? (
         <ContextMenu
           x={explorerMenu.x}
@@ -9013,6 +9173,183 @@ function GoToLine(props: {
           >
             Go
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SavePathDialog(props: {
+  title: string;
+  subtitle?: string;
+  placeholder?: string;
+  value: string;
+  setValue: (v: string) => void;
+  extensions?: string[];
+  defaultExtension?: string;
+  enforceExtension?: boolean;
+  onClose: () => void;
+  onSubmit: (value: string) => void;
+}) {
+  const extensions = useMemo(() => {
+    const exts = (props.extensions ?? []).map((x) => String(x || "").trim().replace(/^\./, "").toLowerCase()).filter(Boolean);
+    return Array.from(new Set(exts));
+  }, [props.extensions]);
+
+  const inferExtFromValue = useCallback(
+    (v: string): string | null => {
+      const val = String(v || "").trim();
+      const base = val.split("/").pop() || "";
+      const m = base.match(/\.([a-zA-Z0-9]+)$/);
+      if (!m?.[1]) return null;
+      const ext = m[1].toLowerCase();
+      if (extensions.length && !extensions.includes(ext)) return null;
+      return ext;
+    },
+    [extensions]
+  );
+
+  const [selectedExt, setSelectedExt] = useState<string>(() => {
+    const fromValue = inferExtFromValue(props.value);
+    if (fromValue) return fromValue;
+    const def = String(props.defaultExtension || "").trim().replace(/^\./, "").toLowerCase();
+    if (def && (!extensions.length || extensions.includes(def))) return def;
+    return extensions[0] ?? "";
+  });
+
+  useEffect(() => {
+    const fromValue = inferExtFromValue(props.value);
+    if (fromValue) {
+      setSelectedExt(fromValue);
+      return;
+    }
+    const def = String(props.defaultExtension || "").trim().replace(/^\./, "").toLowerCase();
+    if (def && (!extensions.length || extensions.includes(def))) {
+      setSelectedExt(def);
+      return;
+    }
+    if (extensions.length && !selectedExt) setSelectedExt(extensions[0]!);
+  }, [extensions, inferExtFromValue, props.defaultExtension, props.value, selectedExt]);
+
+  const normalize = useCallback(
+    (raw: string): string | null => {
+      const trimmed = String(raw || "").trim();
+      if (!trimmed) return null;
+
+      const norm = trimmed.replace(/\\/g, "/");
+      if (!extensions.length || !selectedExt) return norm;
+
+      const base = norm.split("/").pop() ?? "";
+      const hasExt = /\.[a-zA-Z0-9]+$/.test(base);
+      if (!hasExt) return `${norm}.${selectedExt}`;
+
+      if (props.enforceExtension) {
+        return norm.replace(/\.[a-zA-Z0-9]+$/, `.${selectedExt}`);
+      }
+
+      return norm;
+    },
+    [extensions.length, props.enforceExtension, selectedExt]
+  );
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        props.onClose();
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const v = normalize(props.value);
+        if (v) props.onSubmit(v);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [normalize, props]);
+
+  const normalizedPreview = normalize(props.value);
+  const isValid = !!normalizedPreview;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+      <div
+        className="mx-auto mt-20 w-[640px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="border-b border-border p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-text">{props.title}</div>
+              {props.subtitle ? <div className="mt-0.5 text-xs text-muted">{props.subtitle}</div> : null}
+            </div>
+            <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4">
+          <div className="text-xs font-medium text-muted">File name (relative)</div>
+          <div className="mt-2 flex items-stretch gap-2">
+            <input
+              className="h-10 w-full rounded-xl border border-border bg-bg px-3 text-sm text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+              placeholder={props.placeholder ?? "folder/file"}
+              autoFocus
+              value={props.value}
+              onChange={(e) => props.setValue(e.currentTarget.value)}
+            />
+            {extensions.length ? (
+              <div className="flex h-10 items-center gap-2 rounded-xl border border-border bg-bg px-3">
+                <span className="text-xs text-muted">.</span>
+                <select
+                  className="bg-transparent text-sm text-text focus:outline-none"
+                  value={selectedExt}
+                  onChange={(e) => setSelectedExt(e.currentTarget.value)}
+                >
+                  {extensions.map((ext) => (
+                    <option key={ext} value={ext}>
+                      {ext}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-2 text-xs">
+            {isValid ? (
+              <span className="text-muted">
+                Will save as <span className="text-text">{normalizedPreview}</span>
+              </span>
+            ) : (
+              <span className="text-red-300">Enter a file name</span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 p-4">
+          <div className="text-xs text-muted">Enter to confirm • Esc to cancel</div>
+          <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="ws-btn ws-btn-secondary h-9 px-4"
+            onClick={props.onClose}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={!isValid}
+            className="ws-btn h-9 border border-accent bg-accent px-4 text-white hover:opacity-90 disabled:opacity-50"
+            onClick={() => {
+              const v = normalize(props.value);
+              if (v) props.onSubmit(v);
+            }}
+          >
+            OK
+          </button>
+          </div>
         </div>
       </div>
     </div>
@@ -9697,6 +10034,8 @@ interface SettingsScreenProps {
   recentWorkspaces: string[];
   onChangeTheme: (t: Theme) => void;
   onChangeCursorBlinking: (v: CursorBlinking) => void;
+  onChangeLineHighlightColor: (hex: string | null) => void;
+  onChangeCursorColor: (hex: string | null) => void;
   onToggleOffline: () => void;
   onChangeProvider: (p: string | null) => void;
   onChangePomporaThinking: (t: string | null) => void;
@@ -9905,6 +10244,78 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
           onChange={(v) => props.onChangeCursorBlinking(v as CursorBlinking)}
         />
       ),
+    },
+    {
+      id: "editor.lineHighlightColor",
+      section: "appearance",
+      title: "Line Highlight Color",
+      description: "Customize the active line highlight in the editor.",
+      keywords: "line highlight editor current line color",
+      renderControl: () => {
+        const current = String(props.settings.editor_line_highlight_color ?? "").trim();
+        const isHex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(current);
+        const value = isHex ? current : "";
+
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <input
+              type="color"
+              className="h-8 w-10 cursor-pointer rounded border border-border bg-bg"
+              value={value && value.length === 9 ? value.slice(0, 7) : value || "#232228"}
+              onChange={(e) => {
+                const next = e.currentTarget.value;
+                props.onChangeLineHighlightColor(next);
+              }}
+            />
+            <input
+              className="ws-vscode-input w-[140px]"
+              placeholder="#232228"
+              value={current}
+              spellCheck={false}
+              onChange={(e) => props.onChangeLineHighlightColor(e.currentTarget.value)}
+            />
+            <button type="button" className="ws-vscode-btn" onClick={() => props.onChangeLineHighlightColor(null)}>
+              Reset
+            </button>
+          </div>
+        );
+      },
+    },
+    {
+      id: "editor.cursorColor",
+      section: "appearance",
+      title: "Cursor Color",
+      description: "Customize the editor caret (cursor) color.",
+      keywords: "cursor caret color",
+      renderControl: () => {
+        const current = String(props.settings.editor_cursor_color ?? "").trim();
+        const isHex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(current);
+        const value = isHex ? current : "";
+
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <input
+              type="color"
+              className="h-8 w-10 cursor-pointer rounded border border-border bg-bg"
+              value={value && value.length === 9 ? value.slice(0, 7) : value || "#60d6aa"}
+              onChange={(e) => {
+                const next = e.currentTarget.value;
+                props.onChangeCursorColor(next);
+              }}
+            />
+            <input
+              className="ws-vscode-input w-[140px]"
+              placeholder="#60D6AA"
+              value={current}
+              spellCheck={false}
+              onChange={(e) => props.onChangeCursorColor(e.currentTarget.value)}
+            />
+            <button type="button" className="ws-vscode-btn" onClick={() => props.onChangeCursorColor(null)}>
+              Reset
+            </button>
+          </div>
+        );
+      },
     },
     {
       id: "appearance.theme",

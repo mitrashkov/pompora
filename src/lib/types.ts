@@ -9,6 +9,8 @@ export type AppSettings = {
   active_model?: string | null;
   pompora_thinking?: "slow" | "fast" | "reasoning" | string | null;
   editor_cursor_blinking?: CursorBlinking;
+  editor_line_highlight_color?: string | null;
+  editor_cursor_color?: string | null;
   workspace_root: string | null;
   recent_workspaces: string[];
 };

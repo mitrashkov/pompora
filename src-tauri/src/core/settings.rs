@@ -18,6 +18,10 @@ pub struct AppSettings {
     #[serde(default)]
     pub editor_cursor_blinking: Option<String>,
     #[serde(default)]
+    pub editor_line_highlight_color: Option<String>,
+    #[serde(default)]
+    pub editor_cursor_color: Option<String>,
+    #[serde(default)]
     pub workspace_root: Option<String>,
     #[serde(default)]
     pub recent_workspaces: Vec<String>,
@@ -39,6 +43,8 @@ impl Default for AppSettings {
             active_model: None,
             pompora_thinking: None,
             editor_cursor_blinking: None,
+            editor_line_highlight_color: None,
+            editor_cursor_color: None,
             workspace_root: None,
             recent_workspaces: Vec::new(),
         }
