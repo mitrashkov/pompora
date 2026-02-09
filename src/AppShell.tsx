@@ -1778,18 +1778,11 @@ const __DocTileIcon = function DocTileIcon(props: { className?: string }) {
 const __SettingsTileIcon = function SettingsTileIcon(props: { className?: string }) {
   const { className } = props;
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false}>
-      <rect x="0" y="0" width="24" height="24" rx="6" fill="#4B5563" />
-      <path
-        d="M12 7.2l1 .4.8-.8 1.3.7-.2 1.1 1 .7v1.5l-1 .7.2 1.1-1.3.7-.8-.8-1 .4-1-.4-.8.8-1.3-.7.2-1.1-1-.7V9.3l1-.7-.2-1.1 1.3-.7.8.8 1-.4z"
-        fill="none"
-        stroke="#ffffff"
-        strokeOpacity="0.92"
-        strokeWidth="1.4"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="12" r="2.2" fill="none" stroke="#ffffff" strokeOpacity="0.92" strokeWidth="1.4" />
-    </svg>
+    <div className={className} aria-hidden>
+      <div className="h-full w-full rounded-[6px] bg-[#4B5563] flex items-center justify-center">
+        <SettingsIcon className="h-[70%] w-[70%] text-white" />
+      </div>
+    </div>
   );
 };
 
