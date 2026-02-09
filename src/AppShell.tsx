@@ -1,4 +1,5 @@
 import React, { Component, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type ReactElement } from "react";
+import { createPortal } from "react-dom";
 import Editor, { DiffEditor } from "@monaco-editor/react";
 import type { editor as MonacoEditorNS } from "monaco-editor";
 import { listen } from "@tauri-apps/api/event";
@@ -53,18 +54,14 @@ import {
   Plus,
   RefreshCw,
   RotateCw,
-  Save,
   Search,
   Settings as SettingsIcon,
-  Star,
   Terminal,
   Trash2,
   ThumbsDown,
   ThumbsUp,
-  User,
   Wand2,
   X,
-  Palette,
 } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
@@ -603,6 +600,28 @@ function ImageTabView(props: {
         </div>
       </div>
     </div>
+  );
+}
+
+function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { preferLeft?: boolean }) {
+  const gap = 6;
+  const rightX = anchor.right + gap;
+  const leftX = anchor.left - gap - approxWidth;
+  const canOpenRight = rightX + approxWidth <= window.innerWidth;
+  const preferLeft = !!opts?.preferLeft;
+  const openRight = preferLeft ? !canOpenRight : canOpenRight;
+  const x = openRight ? rightX : Math.max(8, leftX);
+  const y = clamp(anchor.top, 8, window.innerHeight - 80);
+  return { x, y };
+}
+
+function MenuPortal(props: { anchor: DOMRect; approxWidth: number; preferLeft?: boolean; children: React.ReactNode }) {
+  const pos = computeSubmenuPos(props.anchor, props.approxWidth, { preferLeft: props.preferLeft });
+  return createPortal(
+    <div style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 100000 }}>
+      {props.children}
+    </div>,
+    document.body,
   );
 }
 
@@ -1579,8 +1598,8 @@ function MenuItem(props: {
   right?: React.ReactNode;
   keepOpen?: boolean;
   onClick?: () => void;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
+  onMouseEnter?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  onMouseLeave?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
@@ -2058,6 +2077,11 @@ export default function AppShell() {
   >(null);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
 
+  const [fileRecentAnchor, setFileRecentAnchor] = useState<DOMRect | null>(null);
+  const [viewAppearanceAnchor, setViewAppearanceAnchor] = useState<DOMRect | null>(null);
+  const [viewEditorLayoutAnchor, setViewEditorLayoutAnchor] = useState<DOMRect | null>(null);
+  const [viewAppearanceSubAnchor, setViewAppearanceSubAnchor] = useState<DOMRect | null>(null);
+
   const closeMenubarMenus = useCallback(() => {
     setIsFileMenuOpen(false);
     setIsFileMenuRecentOpen(false);
@@ -2068,6 +2092,10 @@ export default function AppShell() {
     setIsTerminalMenuOpen(false);
     setViewMenuSub(null);
     setViewAppearanceSub(null);
+    setFileRecentAnchor(null);
+    setViewAppearanceAnchor(null);
+    setViewEditorLayoutAnchor(null);
+    setViewAppearanceSubAnchor(null);
   }, []);
 
   const anyMenubarOpen =
@@ -6517,7 +6545,7 @@ export default function AppShell() {
                     File
                   </button>
                   {isFileMenuOpen ? (
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="New Text File" shortcut="Ctrl+N" onClick={() => newUntitledFile()} />
                       <MenuItem label="New File" shortcut="Ctrl+Alt+Win+N" onClick={() => newUntitledFile()} />
                       <MenuItem label="New Window" shortcut="Ctrl+Shift+N" onClick={() => openNewWindow()} />
@@ -6529,36 +6557,40 @@ export default function AppShell() {
                           label="Open Recent"
                           right={<ChevronRight className="h-3.5 w-3.5" />}
                           keepOpen
-                          onMouseEnter={() => setIsFileMenuRecentOpen(true)}
-                          onMouseLeave={() => setIsFileMenuRecentOpen(false)}
+                          onMouseEnter={(e) => {
+                            setIsFileMenuRecentOpen(true);
+                            setFileRecentAnchor(e.currentTarget.getBoundingClientRect());
+                          }}
                           onClick={() => setIsFileMenuRecentOpen((v) => !v)}
                         />
-                        {isFileMenuRecentOpen ? (
-                          <div
-                            className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-                            onMouseEnter={() => setIsFileMenuRecentOpen(true)}
-                            onMouseLeave={() => setIsFileMenuRecentOpen(false)}
-                          >
-                            <div className="px-2 py-1 text-[11px] font-medium text-muted">Folders</div>
-                            {(workspace.recent.length ? workspace.recent : settings.recent_workspaces).length ? (
-                              (workspace.recent.length ? workspace.recent : settings.recent_workspaces).map((p) => (
-                                <MenuItem key={p} label={p} onClick={() => void openRecent(p)} />
-                              ))
-                            ) : (
-                              <div className="px-2 py-1 text-xs text-muted">No recent folders</div>
-                            )}
+                        {isFileMenuRecentOpen && fileRecentAnchor ? (
+                          <MenuPortal anchor={fileRecentAnchor} approxWidth={320}>
+                            <div
+                              className="w-max min-w-72 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                              onMouseEnter={() => setIsFileMenuRecentOpen(true)}
+                              onMouseLeave={() => setIsFileMenuRecentOpen(false)}
+                            >
+                              <div className="px-2 py-1 text-[11px] font-medium text-muted">Folders</div>
+                              {(workspace.recent.length ? workspace.recent : settings.recent_workspaces).length ? (
+                                (workspace.recent.length ? workspace.recent : settings.recent_workspaces).map((p) => (
+                                  <MenuItem key={p} label={p} onClick={() => void openRecent(p)} />
+                                ))
+                              ) : (
+                                <div className="px-2 py-1 text-xs text-muted">No recent folders</div>
+                              )}
 
-                            <MenuSep />
-                            <div className="px-2 py-1 text-[11px] font-medium text-muted">Files</div>
-                            {recentFiles.length ? (
-                              recentFiles.map((p) => {
-                                const Icon = fileIconFor(p);
-                                return <MenuItem key={p} label={p} left={<Icon className="h-3.5 w-3.5" />} onClick={() => void openRecentFile(p)} />;
-                              })
-                            ) : (
-                              <div className="px-2 py-1 text-xs text-muted">No recent files</div>
-                            )}
-                          </div>
+                              <MenuSep />
+                              <div className="px-2 py-1 text-[11px] font-medium text-muted">Files</div>
+                              {recentFiles.length ? (
+                                recentFiles.map((p) => {
+                                  const Icon = fileIconFor(p);
+                                  return <MenuItem key={p} label={p} left={<Icon className="h-3.5 w-3.5" />} onClick={() => void openRecentFile(p)} />;
+                                })
+                              ) : (
+                                <div className="px-2 py-1 text-xs text-muted">No recent files</div>
+                              )}
+                            </div>
+                          </MenuPortal>
                         ) : null}
                       </div>
                       <MenuSep />
@@ -6620,7 +6652,7 @@ export default function AppShell() {
                     Edit
                   </button>
                   {isEditMenuOpen ? (
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="Undo" shortcut="Ctrl+Z" onClick={() => notify({ kind: "info", title: "Undo", message: "Coming next." })} />
                       <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => notify({ kind: "info", title: "Redo", message: "Coming next." })} />
                       <MenuSep />
@@ -6698,7 +6730,7 @@ export default function AppShell() {
                     Selection
                   </button>
                   {isSelectionMenuOpen ? (
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => notify({ kind: "info", title: "Select All", message: "Coming next." })} />
                       <MenuItem
                         label="Expand Selection"
@@ -6809,11 +6841,7 @@ export default function AppShell() {
                   </button>
                   {isViewMenuOpen ? (
                     <div
-                      className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-                      onMouseLeave={() => {
-                        setViewMenuSub(null);
-                        setViewAppearanceSub(null);
-                      }}
+                      className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
                     >
                       <MenuItem label="Command Palette…" shortcut="Ctrl+Shift+P" onClick={() => setIsPaletteOpen(true)} />
                       <MenuItem label="Open View…" onClick={() => notify({ kind: "info", title: "Open View", message: "Coming next." })} />
@@ -6824,11 +6852,23 @@ export default function AppShell() {
                           label="Appearance"
                           right={<ChevronRight className="h-3.5 w-3.5" />}
                           keepOpen
-                          onMouseEnter={() => setViewMenuSub("appearance")}
+                          onMouseEnter={(e) => {
+                            setViewMenuSub("appearance");
+                            setViewAppearanceAnchor(e.currentTarget.getBoundingClientRect());
+                          }}
                           onClick={() => setViewMenuSub((v) => (v === "appearance" ? null : "appearance"))}
                         />
-                        {viewMenuSub === "appearance" ? (
-                          <div className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                        {viewMenuSub === "appearance" && viewAppearanceAnchor ? (
+                          <MenuPortal anchor={viewAppearanceAnchor} approxWidth={360}>
+                            <div
+                              className="w-max min-w-80 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                              onMouseEnter={() => setViewMenuSub("appearance")}
+                              onMouseLeave={() => {
+                                setViewMenuSub(null);
+                                setViewAppearanceSub(null);
+                                setViewAppearanceSubAnchor(null);
+                              }}
+                            >
                             <MenuItem label="Full Screen" shortcut="F11" onClick={() => notify({ kind: "info", title: "Full Screen", message: "Coming next." })} />
                             <MenuItem
                               label="Zen Mode"
@@ -6856,16 +6896,21 @@ export default function AppShell() {
                                 label="Activity Bar Position"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
                                 keepOpen
-                                onMouseEnter={() => setViewAppearanceSub("activityBarPosition")}
+                                onMouseEnter={(e) => {
+                                  setViewAppearanceSub("activityBarPosition");
+                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                                }}
                                 onClick={() => setViewAppearanceSub((v) => (v === "activityBarPosition" ? null : "activityBarPosition"))}
                               />
-                              {viewAppearanceSub === "activityBarPosition" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                              {viewAppearanceSub === "activityBarPosition" && viewAppearanceSubAnchor ? (
+                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
-                                </div>
+                                  </div>
+                                </MenuPortal>
                               ) : null}
                             </div>
 
@@ -6874,16 +6919,21 @@ export default function AppShell() {
                                 label="Secondary Activity Bar Position"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
                                 keepOpen
-                                onMouseEnter={() => setViewAppearanceSub("secondaryActivityBarPosition")}
+                                onMouseEnter={(e) => {
+                                  setViewAppearanceSub("secondaryActivityBarPosition");
+                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                                }}
                                 onClick={() => setViewAppearanceSub((v) => (v === "secondaryActivityBarPosition" ? null : "secondaryActivityBarPosition"))}
                               />
-                              {viewAppearanceSub === "secondaryActivityBarPosition" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                              {viewAppearanceSub === "secondaryActivityBarPosition" && viewAppearanceSubAnchor ? (
+                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
-                                </div>
+                                  </div>
+                                </MenuPortal>
                               ) : null}
                             </div>
 
@@ -6892,16 +6942,21 @@ export default function AppShell() {
                                 label="Panel Position"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
                                 keepOpen
-                                onMouseEnter={() => setViewAppearanceSub("panelPosition")}
+                                onMouseEnter={(e) => {
+                                  setViewAppearanceSub("panelPosition");
+                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                                }}
                                 onClick={() => setViewAppearanceSub((v) => (v === "panelPosition" ? null : "panelPosition"))}
                               />
-                              {viewAppearanceSub === "panelPosition" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                              {viewAppearanceSub === "panelPosition" && viewAppearanceSubAnchor ? (
+                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
                                   <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
                                   <MenuItem label="Right" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
                                   <MenuItem label="Bottom" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
-                                </div>
+                                  </div>
+                                </MenuPortal>
                               ) : null}
                             </div>
 
@@ -6910,16 +6965,21 @@ export default function AppShell() {
                                 label="Align Panel"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
                                 keepOpen
-                                onMouseEnter={() => setViewAppearanceSub("alignPanel")}
+                                onMouseEnter={(e) => {
+                                  setViewAppearanceSub("alignPanel");
+                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                                }}
                                 onClick={() => setViewAppearanceSub((v) => (v === "alignPanel" ? null : "alignPanel"))}
                               />
-                              {viewAppearanceSub === "alignPanel" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                              {viewAppearanceSub === "alignPanel" && viewAppearanceSubAnchor ? (
+                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Center" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
                                   <MenuItem label="Justify" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
                                   <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
                                   <MenuItem label="Right" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
-                                </div>
+                                  </div>
+                                </MenuPortal>
                               ) : null}
                             </div>
 
@@ -6928,15 +6988,20 @@ export default function AppShell() {
                                 label="Tab Bar"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
                                 keepOpen
-                                onMouseEnter={() => setViewAppearanceSub("tabBar")}
+                                onMouseEnter={(e) => {
+                                  setViewAppearanceSub("tabBar");
+                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                                }}
                                 onClick={() => setViewAppearanceSub((v) => (v === "tabBar" ? null : "tabBar"))}
                               />
-                              {viewAppearanceSub === "tabBar" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                              {viewAppearanceSub === "tabBar" && viewAppearanceSubAnchor ? (
+                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Multiple Tabs" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
                                   <MenuItem label="Single Tabs" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
-                                </div>
+                                  </div>
+                                </MenuPortal>
                               ) : null}
                             </div>
 
@@ -6945,15 +7010,20 @@ export default function AppShell() {
                                 label="Editor Actions Position"
                                 right={<ChevronRight className="h-3.5 w-3.5" />}
                                 keepOpen
-                                onMouseEnter={() => setViewAppearanceSub("editorActionsPosition")}
+                                onMouseEnter={(e) => {
+                                  setViewAppearanceSub("editorActionsPosition");
+                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                                }}
                                 onClick={() => setViewAppearanceSub((v) => (v === "editorActionsPosition" ? null : "editorActionsPosition"))}
                               />
-                              {viewAppearanceSub === "editorActionsPosition" ? (
-                                <div className="absolute right-full top-0 z-[9999] mr-1 w-max min-w-56 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                              {viewAppearanceSub === "editorActionsPosition" && viewAppearanceSubAnchor ? (
+                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                                   <MenuItem label="Tab Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
                                   <MenuItem label="Title Bar" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
                                   <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
-                                </div>
+                                  </div>
+                                </MenuPortal>
                               ) : null}
                             </div>
 
@@ -6967,7 +7037,8 @@ export default function AppShell() {
                               right={<MenuCheck checked />}
                               onClick={() => notify({ kind: "info", title: "Render Control Characters", message: "Coming next." })}
                             />
-                          </div>
+                            </div>
+                          </MenuPortal>
                         ) : null}
                       </div>
 
@@ -6986,11 +7057,19 @@ export default function AppShell() {
                           label="Editor Layout"
                           right={<ChevronRight className="h-3.5 w-3.5" />}
                           keepOpen
-                          onMouseEnter={() => setViewMenuSub("editorLayout")}
+                          onMouseEnter={(e) => {
+                            setViewMenuSub("editorLayout");
+                            setViewEditorLayoutAnchor(e.currentTarget.getBoundingClientRect());
+                          }}
                           onClick={() => setViewMenuSub((v) => (v === "editorLayout" ? null : "editorLayout"))}
                         />
-                        {viewMenuSub === "editorLayout" ? (
-                          <div className="absolute left-full top-0 z-[9999] ml-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                        {viewMenuSub === "editorLayout" && viewEditorLayoutAnchor ? (
+                          <MenuPortal anchor={viewEditorLayoutAnchor} approxWidth={320}>
+                            <div
+                              className="w-max min-w-64 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                              onMouseEnter={() => setViewMenuSub("editorLayout")}
+                              onMouseLeave={() => setViewMenuSub(null)}
+                            >
                             <MenuItem
                               label="Split Up"
                               shortcut="Ctrl+K Ctrl+\\"
@@ -7020,7 +7099,8 @@ export default function AppShell() {
                               shortcut="Shift+Alt+0"
                               onClick={() => notify({ kind: "info", title: "Flip Layout", message: "Coming next." })}
                             />
-                          </div>
+                            </div>
+                          </MenuPortal>
                         ) : null}
                       </div>
 
@@ -7251,7 +7331,7 @@ export default function AppShell() {
                   </button>
 
                   {isAccountMenuOpen ? (
-                    <div className="absolute right-0 top-full z-[9999] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-hidden overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className="absolute right-0 top-full z-[9999] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
                       <div className="px-3 py-2">
                         <div className="text-xs font-semibold text-text">{authProfile.email || "Account"}</div>
                         <div className="mt-0.5 text-[11px] text-muted">Plan: {authCredits?.plan || authProfile.plan || "starter"}</div>
