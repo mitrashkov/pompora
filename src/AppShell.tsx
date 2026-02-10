@@ -9897,7 +9897,16 @@ function WelcomeScreen(props: {
                     : `${useBrandFont ? "ws-brand-title" : ""} text-5xl md:text-6xl`.trim()
                 } font-normal text-text`}
               >
-                {title}
+                {title === "POMPORA" ? (
+                  <img
+                    src="/pompora_logo_transparent.png"
+                    alt="Pompora"
+                    className={`${isCompact ? "h-17 w-19" : "h-22 w-24"} mx-auto select-none`}
+                    draggable={false}
+                  />
+                ) : (
+                  title
+                )}
               </div>
               <div className={`${isCompact ? "mt-1 text-[11px]" : "mt-2 text-sm"} text-muted`}>{subtitle}</div>
               <div className={`${isCompact ? "mt-1 text-[10px]" : "mt-1 text-xs"} text-muted`}>{hint}</div>
