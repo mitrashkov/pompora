@@ -44,6 +44,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
+  Clipboard,
   FileText,
   Folder,
   FolderOpen,
@@ -623,6 +624,16 @@ function MenuPortal(props: { anchor: DOMRect; approxWidth: number; preferLeft?: 
     </div>,
     document.body,
   );
+}
+
+function computeContextMenuPos(anchor: { x: number; y: number }, size: { w: number; h: number }) {
+  const pad = 8;
+  const maxX = Math.max(pad, window.innerWidth - size.w - pad);
+  const maxY = Math.max(pad, window.innerHeight - size.h - pad);
+  return {
+    x: clamp(anchor.x, pad, maxX),
+    y: clamp(anchor.y, pad, maxY),
+  };
 }
 
 function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: number; maxChars?: number }): string {
@@ -5262,6 +5273,22 @@ export default function AppShell() {
     await refreshRoot();
   }, [refreshRoot, selectedPath]);
 
+  const closeAllTabs = useCallback(() => {
+    setTabs((prev) => {
+      for (const t of prev) {
+        if (t.isDirty) {
+          const ok = window.confirm(`Close '${t.name}' without saving?`);
+          if (!ok) return prev;
+        }
+      }
+      for (const t of prev) {
+        revokeTabObjectUrl(t);
+      }
+      return [];
+    });
+    setActiveTabPath(null);
+  }, []);
+
   const deleteSelected = useCallback(async () => {
     if (!selectedPath) return;
     const ok = window.confirm(`Delete '${basename(selectedPath)}'?`);
@@ -6196,6 +6223,7 @@ export default function AppShell() {
       { id: "file.delete", label: "File: Delete", run: () => void deleteSelected() },
       { id: "file.save", label: "File: Save", shortcut: "Ctrl+S", run: () => void saveActiveFile() },
       { id: "file.saveAll", label: "File: Save All", shortcut: "Ctrl+K S", run: () => void saveAll() },
+      { id: "file.closeAll", label: "File: Close All Editors", shortcut: "Ctrl+Shift+W", run: () => closeAllTabs() },
       { id: "view.commandPalette", label: "View: Show Command Palette", shortcut: "Ctrl+Shift+P", run: () => setIsPaletteOpen(true) },
       { id: "workbench.findInFiles", label: "Search: Find in Files", shortcut: "Ctrl+Shift+F", run: () => setActivity("search") },
       { id: "view.toggleTheme", label: "Preferences: Toggle Theme", run: () => toggleTheme() },
@@ -6213,7 +6241,7 @@ export default function AppShell() {
     }
 
     return c;
-  }, [activeTab, closeTab, createNewFolder, deleteSelected, newUntitledFile, openFolder, openGoToLine, openQuickOpen, renameSelected, saveActiveFile, saveAll]);
+  }, [activeTab, closeAllTabs, closeTab, createNewFolder, deleteSelected, newUntitledFile, openFolder, openGoToLine, openQuickOpen, renameSelected, saveActiveFile, saveAll]);
 
   const filteredCommands = useMemo(() => {
     const q = paletteQuery.trim().toLowerCase();
@@ -6225,12 +6253,6 @@ export default function AppShell() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key.toLowerCase() === "l") {
         e.preventDefault();
-        setIsChatDockOpen((v) => !v);
-        return;
-      }
-
-      if (e.ctrlKey && (e.key === "`" || e.code === "Backquote")) {
-        e.preventDefault();
         toggleTerminal();
         return;
       }
@@ -6238,14 +6260,6 @@ export default function AppShell() {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "p") {
         e.preventDefault();
         setIsPaletteOpen(true);
-        return;
-      }
-
-      if (e.ctrlKey && e.key === "F4") {
-        if (activeTab) {
-          e.preventDefault();
-          closeTab(activeTab.path);
-        }
         return;
       }
 
@@ -6355,6 +6369,12 @@ export default function AppShell() {
         return;
       }
 
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "w") {
+        e.preventDefault();
+        closeAllTabs();
+        return;
+      }
+
       if (e.key === "Escape") {
         setIsPaletteOpen(false);
         setIsQuickOpenOpen(false);
@@ -6365,9 +6385,9 @@ export default function AppShell() {
       }
     };
 
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeTab, closeFolder, closeTab, newUntitledFile, openFolder, openGoToLine, openNewWindow, openQuickOpen, openStandaloneFile, saveActiveFile, saveAll, saveAs, toggleTerminal]);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [activeTab, closeAllTabs, closeFolder, closeTab, newUntitledFile, openFolder, openGoToLine, openNewWindow, openQuickOpen, openStandaloneFile, saveActiveFile, saveAll, saveAs, toggleTerminal]);
 
   useEffect(() => {
     if (!explorerMenu) return;
@@ -6745,9 +6765,10 @@ export default function AppShell() {
                       <MenuItem label="Revert File" onClick={() => void revertFile()} />
                       <MenuItem
                         label="Close Editor"
-                        shortcut="Ctrl+F4"
+                        shortcut="Ctrl+W"
                         onClick={() => (activeTab ? closeTab(activeTab.path) : undefined)}
                       />
+                      <MenuItem label="Close All Editors" shortcut="Ctrl+Shift+W" onClick={() => closeAllTabs()} />
                       <MenuItem label="Close Folder" onClick={() => void closeFolder()} />
                       <MenuItem label="Close Window" shortcut="Alt+F4" onClick={() => exitApp()} />
                       <MenuSep />
@@ -8972,22 +8993,25 @@ export default function AppShell() {
           x={explorerMenu.x}
           y={explorerMenu.y}
           onClose={() => setExplorerMenu(null)}
-          items={[
-            { id: "newFile", label: "New File...", onClick: () => void createNewFile() },
-            { id: "newFolder", label: "New Folder...", onClick: () => void createNewFolder() },
+          items={([
+            { id: "newFile", label: "New File...", icon: <FileText className="h-4 w-4" />, onClick: () => void createNewFile() },
+            { id: "newFolder", label: "New Folder...", icon: <Folder className="h-4 w-4" />, onClick: () => void createNewFolder() },
+            { id: "sep-create", kind: "sep" as const },
             ...(explorerMenu.path === ""
-              ? [
-                  { id: "refresh", label: "Refresh", onClick: () => void refreshRoot() },
-                  { id: "closeFolder", label: "Close Folder", onClick: () => void closeFolder() },
-                ]
-              : [
-                  { id: "rename", label: "Rename...", onClick: () => void renameSelected() },
-                  { id: "delete", label: "Delete", onClick: () => void deleteSelected() },
-                  { id: "copyPath", label: "Copy Relative Path", onClick: () => void copyText(explorerMenu.path) },
-                ]),
+              ? ([
+                  { id: "refresh", label: "Refresh", icon: <RotateCw className="h-4 w-4" />, onClick: () => void refreshRoot() },
+                  { id: "closeFolder", label: "Close Folder", icon: <X className="h-4 w-4" />, onClick: () => void closeFolder() },
+                ] as ContextMenuItem[])
+              : ([
+                  { id: "rename", label: "Rename...", icon: <Pencil className="h-4 w-4" />, onClick: () => void renameSelected() },
+                  { id: "delete", label: "Delete", icon: <Trash2 className="h-4 w-4" />, kind: "danger" as const, onClick: () => void deleteSelected() },
+                  { id: "sep-actions", kind: "sep" as const },
+                  { id: "copyPath", label: "Copy Relative Path", icon: <Clipboard className="h-4 w-4" />, onClick: () => void copyText(explorerMenu.path) },
+                ] as ContextMenuItem[])),
             {
               id: "copyFullPath",
               label: "Copy Full Path",
+              icon: <Clipboard className="h-4 w-4" />,
               onClick: () => {
                 const root = (workspace.root ?? "").replace(/\\/g, "/").replace(/\/$/, "");
                 if (explorerMenu.path === "") {
@@ -8998,7 +9022,7 @@ export default function AppShell() {
                 void copyText(root && rel ? `${root}/${rel}` : explorerMenu.path);
               },
             },
-          ]}
+          ] as ContextMenuItem[])}
         />
       ) : null}
 
@@ -9682,32 +9706,71 @@ function Tree(props: {
   );
 }
 
+type ContextMenuItem =
+  | { id: string; kind?: "normal" | "danger"; label: string; icon?: React.ReactNode; onClick: () => void }
+  | { id: string; kind: "sep" };
+
 function ContextMenu(props: {
   x: number;
   y: number;
   onClose: () => void;
-  items: Array<{ id: string; label: string; onClick: () => void }>;
+  items: ContextMenuItem[];
 }) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: props.x, y: props.y });
+
+  useEffect(() => {
+    setPos({ x: props.x, y: props.y });
+  }, [props.x, props.y, props.items.length]);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const raf = window.requestAnimationFrame(() => {
+      const rect = el.getBoundingClientRect();
+      const next = computeContextMenuPos({ x: props.x, y: props.y }, { w: rect.width, h: rect.height });
+      if (next.x !== pos.x || next.y !== pos.y) {
+        setPos(next);
+      }
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [pos.x, pos.y, props.x, props.y, props.items.length]);
+
   return (
     <div className="fixed inset-0 z-50" onMouseDown={props.onClose}>
       <div
-        className="absolute w-56 overflow-hidden rounded border border-border bg-panel shadow-2xl"
-        style={{ left: props.x, top: props.y }}
+        className="absolute w-max min-w-64 max-w-[calc(100vw-16px)] overflow-hidden rounded-2xl border border-[#1A191C] bg-panel p-1 shadow-2xl"
+        style={{ left: pos.x, top: pos.y }}
         onMouseDown={(e) => e.stopPropagation()}
+        ref={rootRef}
       >
-        {props.items.map((it) => (
-          <button
-            key={it.id}
-            type="button"
-            className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-muted hover:bg-bg hover:text-text"
-            onClick={() => {
-              it.onClick();
-              props.onClose();
-            }}
-          >
-            <span>{it.label}</span>
-          </button>
-        ))}
+        {props.items.map((it) => {
+          if ((it as any).kind === "sep") {
+            return <div key={it.id} className="my-1 h-px bg-border/70" />;
+          }
+          const item = it as { id: string; kind?: "normal" | "danger"; label: string; icon?: React.ReactNode; onClick: () => void };
+          const danger = item.kind === "danger";
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[13px] leading-4 ${
+                danger
+                  ? "text-red-300 hover:bg-bg hover:text-red-200"
+                  : "text-text/90 hover:bg-bg hover:text-text"
+              }`}
+              onClick={() => {
+                item.onClick();
+                props.onClose();
+              }}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                {item.icon ? <span className={`shrink-0 ${danger ? "text-red-300" : "text-muted"}`}>{item.icon}</span> : null}
+                <span className="truncate">{item.label}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -10221,7 +10284,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
     const parsed = __parseHexColor(String(p.value ?? "").trim());
     const activeHex = parsed?.hex ?? null;
     const swatch = activeHex ? (activeHex.length === 9 ? activeHex.slice(0, 7) : activeHex) : p.defaultSwatch;
-    const activeAlpha = parsed?.a ?? 255;
 
     const [popoverPos, setPopoverPos] = useState<{ left: number; top: number } | null>(null);
 
