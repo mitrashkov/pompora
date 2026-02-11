@@ -105,6 +105,145 @@ import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntr
 
 type ActivityId = "explorer" | "search" | "scm";
 
+const DEFAULT_KEYBINDINGS: Record<string, string> = {
+  "chat.toggle": "Ctrl+L",
+  "view.commandPalette": "Ctrl+Shift+P",
+
+  "file.newTextFile": "Ctrl+N",
+  "file.new": "Ctrl+Alt+N",
+  "file.newWindow": "Ctrl+Shift+N",
+  "file.openFile": "Ctrl+O",
+  "file.openFolder": "Ctrl+K Ctrl+O",
+
+  "file.save": "Ctrl+S",
+  "file.saveAs": "Ctrl+Shift+S",
+  "file.saveAll": "Ctrl+K S",
+
+  "file.close": "Ctrl+W",
+  "file.closeAll": "Ctrl+K Ctrl+W",
+  "window.close": "Alt+F4",
+
+  "edit.undo": "Ctrl+Z",
+  "edit.redo": "Ctrl+Y",
+  "edit.cut": "Ctrl+X",
+  "edit.copy": "Ctrl+C",
+  "edit.paste": "Ctrl+V",
+  "edit.selectAll": "Ctrl+A",
+
+  "find.find": "Ctrl+F",
+  "find.replace": "Ctrl+H",
+  "workbench.findInFiles": "Ctrl+Shift+F",
+  "workbench.replaceInFiles": "Ctrl+Shift+H",
+
+  "editor.toggleLineComment": "Ctrl+/",
+  "editor.toggleBlockComment": "Shift+Alt+A",
+  "emmet.expandAbbreviation": "Tab",
+
+  "editor.expandSelection": "Shift+Alt+ArrowRight",
+  "editor.copyLineUp": "Shift+Alt+ArrowUp",
+  "editor.copyLineDown": "Shift+Alt+ArrowDown",
+  "editor.moveLineUp": "Alt+ArrowUp",
+  "editor.moveLineDown": "Alt+ArrowDown",
+
+  "editor.addCursorAbove": "Ctrl+Alt+ArrowUp",
+  "editor.addCursorBelow": "Ctrl+Alt+ArrowDown",
+  "editor.addCursorsToLineEnds": "Shift+Alt+I",
+  "editor.selectAllOccurrences": "Ctrl+Shift+L",
+
+  "view.fullScreen": "F11",
+  "view.zenMode": "Ctrl+K Z",
+  "editor.toggleWordWrap": "Alt+Z",
+  "view.primarySidebar": "Ctrl+B",
+  "view.explorer": "Ctrl+Shift+E",
+  "view.search": "Ctrl+Shift+F",
+  "view.sourceControl": "Ctrl+Shift+G",
+  "view.runDebug": "Ctrl+Shift+D",
+  "view.extensions": "Ctrl+Shift+X",
+
+  "panel.problems": "Ctrl+Shift+M",
+  "panel.output": "Ctrl+Shift+U",
+  "panel.debugConsole": "Ctrl+Shift+Y",
+  "terminal.toggle": "Ctrl+`",
+  "terminal.new": "Ctrl+Shift+`",
+  "terminal.split": "Ctrl+Shift+5",
+  "terminal.newWindow": "Ctrl+Shift+Alt+`",
+
+  "debug.start": "F5",
+  "debug.runWithout": "Ctrl+F5",
+  "debug.stop": "Shift+F5",
+  "debug.restart": "Ctrl+Shift+F5",
+  "tasks.build": "Ctrl+Shift+B",
+
+  "view.zoomIn": "Ctrl+=",
+  "view.zoomOut": "Ctrl+-",
+  "view.zoomReset": "Ctrl+0",
+  "view.splitEditor": "Ctrl+\\",
+  "view.splitEditorInGroup": "Ctrl+K Ctrl+\\",
+  "view.flipLayout": "Shift+Alt+0",
+  "file.quickOpen": "Ctrl+P",
+  "editor.gotoLine": "Ctrl+G",
+  "view.settings": "Ctrl+,",
+};
+
+function __normShortcut(raw: string): string {
+  const s = String(raw || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (!s) return "";
+
+  const normPart = (part: string) => {
+    const bits = part
+      .split("+")
+      .map((x) => x.trim())
+      .filter(Boolean);
+    if (!bits.length) return "";
+
+    const modOrder = ["Ctrl", "Shift", "Alt", "Win"];
+    const mods = new Set<string>();
+    let key = "";
+    for (const b of bits) {
+      const c = b.length === 1 ? b.toUpperCase() : b;
+      if (modOrder.includes(c)) mods.add(c);
+      else if (!key) key = c;
+    }
+    const ordered = modOrder.filter((m) => mods.has(m));
+    return [...ordered, key].filter(Boolean).join("+");
+  };
+
+  return s
+    .split(" ")
+    .map((p) => normPart(p))
+    .filter(Boolean)
+    .join(" ");
+}
+
+function __eventToShortcut(e: KeyboardEvent): string {
+  const rawKey = String((e as any).key || "");
+  if (rawKey === "Control" || rawKey === "Shift" || rawKey === "Alt" || rawKey === "Meta") return "";
+
+  const parts: string[] = [];
+  if (e.ctrlKey) parts.push("Ctrl");
+  if (e.shiftKey) parts.push("Shift");
+  if (e.altKey) parts.push("Alt");
+  if (e.metaKey) parts.push("Win");
+
+  const k = rawKey;
+  const code = String((e as any).code || "");
+  const key = (() => {
+    if (k === " ") return "Space";
+    if (k === "Esc") return "Escape";
+    if (k === "ArrowUp" || k === "ArrowDown" || k === "ArrowLeft" || k === "ArrowRight") return k;
+    if (k === "Enter" || k === "Tab" || k === "Backspace" || k === "Delete" || k === "Escape") return k;
+    if (code === "Backquote") return "`";
+    if (code === "Backslash") return "\\";
+    return k.length === 1 ? k.toUpperCase() : k;
+  })();
+
+  if (!key) return "";
+  parts.push(key);
+  return parts.join("+");
+}
+
 function isFreeTierModel(providerId: string, modelId: string): boolean {
   const prov = (providerId || "").trim().toLowerCase();
   const id = (modelId || "").trim().toLowerCase();
@@ -2099,6 +2238,7 @@ export default function AppShell() {
     editor_cursor_blinking: "expand",
     editor_line_highlight_color: null,
     editor_cursor_color: null,
+    keybindings: DEFAULT_KEYBINDINGS,
     workspace_root: null,
     recent_workspaces: [],
   });
@@ -3535,11 +3675,19 @@ export default function AppShell() {
 
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null);
   const cursorListenerDisposeRef = useRef<{ dispose: () => void } | null>(null);
+  const editorKeydownDisposeRef = useRef<{ dispose: () => void } | null>(null);
   const [cursorPos, setCursorPos] = useState<{ line: number; col: number } | null>(null);
   const activeTab = useMemo(
     () => (activeTabPath ? tabs.find((t) => t.path === activeTabPath) ?? null : null),
     [activeTabPath, tabs]
   );
+
+  useEffect(() => {
+    return () => {
+      editorKeydownDisposeRef.current?.dispose();
+      editorKeydownDisposeRef.current = null;
+    };
+  }, []);
 
   const imageContainerRef = useRef<HTMLDivElement | null>(null);
   const [imageNaturalSize, setImageNaturalSize] = useState<{ w: number; h: number } | null>(null);
@@ -3829,10 +3977,10 @@ export default function AppShell() {
           editor_cursor_blinking: (s as AppSettings).editor_cursor_blinking ?? prev.editor_cursor_blinking ?? "expand",
           editor_line_highlight_color: (s as AppSettings).editor_line_highlight_color ?? prev.editor_line_highlight_color ?? null,
           editor_cursor_color: (s as AppSettings).editor_cursor_color ?? prev.editor_cursor_color ?? null,
+          keybindings: { ...DEFAULT_KEYBINDINGS, ...((s as AppSettings).keybindings ?? {}) },
           workspace_root: s.workspace_root ?? null,
           recent_workspaces: s.recent_workspaces ?? [],
           active_provider: migratedProvider ?? null,
-          active_model: (s as AppSettings).active_model ?? null,
         }));
         setWorkspaceState(w);
       })
@@ -5719,6 +5867,26 @@ export default function AppShell() {
     [devConsoleError, formatErr, notify, settings]
   );
 
+  const setKeybindings = useCallback(
+    async (nextKeybindings: Record<string, string>) => {
+      const seq = (settingsMutationSeqRef.current += 1);
+      const prev = settings;
+      const merged = { ...DEFAULT_KEYBINDINGS, ...(nextKeybindings ?? {}) };
+      const next: AppSettings = { ...settings, keybindings: merged };
+      setSettingsState(next);
+      try {
+        await settingsSet(next);
+      } catch (e) {
+        devConsoleError("Failed to save keybindings", e);
+        notify({ kind: "error", title: "Settings", message: `Failed to save shortcuts: ${formatErr(e)}` });
+        if (settingsMutationSeqRef.current === seq) {
+          setSettingsState(prev);
+        }
+      }
+    },
+    [devConsoleError, formatErr, notify, settings]
+  );
+
   const changeProvider = useCallback(
     async (p: string | null) => {
       const seq = (settingsMutationSeqRef.current += 1);
@@ -6211,23 +6379,458 @@ export default function AppShell() {
     sendChatRef.current = sendChat;
   }, [sendChat]);
 
+  const kbRaw = useCallback(
+    (id: string) => String(settings.keybindings?.[id] ?? DEFAULT_KEYBINDINGS[id] ?? ""),
+    [settings.keybindings]
+  );
+  const kbNorm = useCallback((id: string) => __normShortcut(kbRaw(id)), [kbRaw]);
+
+  const runEditorAction = useCallback(
+    (actionId: string): boolean => {
+      const ed = editorRef.current;
+      if (!ed) return false;
+      try {
+        const act = ed.getAction(actionId);
+        if (!act) return false;
+        void act.run();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    []
+  );
+
+  const focusTerminalPanel = useCallback(() => {
+    setPanelTab("terminal");
+    setIsTerminalOpen(true);
+    window.setTimeout(() => {
+      void ensureTerminal().then(() => {
+        resizeTerminal();
+      });
+    }, 0);
+  }, [ensureTerminal, resizeTerminal]);
+
+  const focusProblemsPanel = useCallback(() => {
+    setPanelTab("problems");
+    setIsTerminalOpen(true);
+  }, []);
+
+  const focusOutputPanel = useCallback(() => {
+    setPanelTab("output");
+    setIsTerminalOpen(true);
+  }, []);
+
+  const focusDebugPanel = useCallback(() => {
+    setPanelTab("debug");
+    setIsTerminalOpen(true);
+  }, []);
+
+  const handleAppKeyDown = useCallback(
+    (e: KeyboardEvent): boolean => {
+      if ((window as any).__pomporaCapturingShortcut) return false;
+
+      const evRaw = __eventToShortcut(e);
+      if (!evRaw) return false;
+      const ev = __normShortcut(evRaw);
+      if (!ev) return false;
+
+      const chordState = (window as any).__pomporaChordSeq as { started: number; first: string } | null | undefined;
+      if (chordState && Date.now() - chordState.started < 1500) {
+        const seq = `${chordState.first} ${ev}`;
+        if (seq === kbNorm("file.openFolder")) {
+          e.preventDefault();
+          (window as any).__pomporaChordSeq = null;
+          void openFolder();
+          return true;
+        }
+        if (seq === kbNorm("file.saveAll")) {
+          e.preventDefault();
+          (window as any).__pomporaChordSeq = null;
+          void saveAll();
+          return true;
+        }
+        if (seq === kbNorm("file.closeAll")) {
+          e.preventDefault();
+          (window as any).__pomporaChordSeq = null;
+          closeAllTabs();
+          return true;
+        }
+        if (seq === kbNorm("view.splitEditorInGroup")) {
+          e.preventDefault();
+          (window as any).__pomporaChordSeq = null;
+          notify({ kind: "info", title: "Split Editor in Group", message: "Coming next." });
+          return true;
+        }
+        if (seq === kbNorm("view.zenMode")) {
+          e.preventDefault();
+          (window as any).__pomporaChordSeq = null;
+          notify({ kind: "info", title: "Zen Mode", message: "Coming next." });
+          return true;
+        }
+      }
+      if ((window as any).__pomporaChordSeq) (window as any).__pomporaChordSeq = null;
+
+      const chordCandidates = [
+        kbNorm("file.openFolder"),
+        kbNorm("file.saveAll"),
+        kbNorm("file.closeAll"),
+        kbNorm("view.splitEditorInGroup"),
+        kbNorm("view.zenMode"),
+      ].filter((x) => x.includes(" "));
+      for (const ch of chordCandidates) {
+        const first = ch.split(" ")[0] ?? "";
+        if (first && ev === first) {
+          e.preventDefault();
+          (window as any).__pomporaChordSeq = { started: Date.now(), first };
+          return true;
+        }
+      }
+
+      if (ev === kbNorm("chat.toggle")) {
+        e.preventDefault();
+        setIsChatDockOpen((v) => !v);
+        return true;
+      }
+
+      if (ev === kbNorm("terminal.toggle")) {
+        e.preventDefault();
+        toggleTerminal();
+        return true;
+      }
+      if (ev === kbNorm("view.commandPalette")) {
+        e.preventDefault();
+        setIsPaletteOpen(true);
+        return true;
+      }
+      if (ev === kbNorm("file.quickOpen")) {
+        e.preventDefault();
+        void openQuickOpen();
+        return true;
+      }
+      if (ev === kbNorm("file.openFile")) {
+        e.preventDefault();
+        void openStandaloneFile();
+        return true;
+      }
+      if (ev === kbNorm("editor.gotoLine")) {
+        e.preventDefault();
+        openGoToLine();
+        return true;
+      }
+      if (ev === kbNorm("workbench.findInFiles")) {
+        e.preventDefault();
+        setActivity("search");
+        return true;
+      }
+      if (ev === kbNorm("workbench.replaceInFiles")) {
+        e.preventDefault();
+        setActivity("search");
+        notify({ kind: "info", title: "Replace in Files", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("view.search")) {
+        e.preventDefault();
+        setActivity("search");
+        return true;
+      }
+      if (ev === kbNorm("view.explorer")) {
+        e.preventDefault();
+        setActivity("explorer");
+        return true;
+      }
+      if (ev === kbNorm("view.sourceControl")) {
+        e.preventDefault();
+        setActivity("scm");
+        return true;
+      }
+      if (ev === kbNorm("view.runDebug")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Run & Debug", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("view.extensions")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Extensions", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("panel.problems")) {
+        e.preventDefault();
+        focusProblemsPanel();
+        return true;
+      }
+      if (ev === kbNorm("panel.output")) {
+        e.preventDefault();
+        focusOutputPanel();
+        return true;
+      }
+      if (ev === kbNorm("panel.debugConsole")) {
+        e.preventDefault();
+        focusDebugPanel();
+        return true;
+      }
+      if (ev === kbNorm("terminal.new") || ev === kbNorm("terminal.split") || ev === kbNorm("terminal.newWindow")) {
+        e.preventDefault();
+        focusTerminalPanel();
+        if (ev === kbNorm("terminal.newWindow")) {
+          notify({ kind: "info", title: "New Terminal Window", message: "Coming next." });
+        }
+        return true;
+      }
+      if (ev === kbNorm("view.fullScreen")) {
+        e.preventDefault();
+        toggleFullscreenApp();
+        return true;
+      }
+      if (ev === kbNorm("view.primarySidebar")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Primary Sidebar", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("view.zoomIn")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Zoom In", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("view.zoomOut")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Zoom Out", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("view.zoomReset")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Reset Zoom", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("view.splitEditor")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Split Editor", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("view.flipLayout")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Flip Layout", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("view.settings")) {
+        e.preventDefault();
+        openSettingsTab();
+        return true;
+      }
+      if (ev === kbNorm("file.saveAs")) {
+        e.preventDefault();
+        void saveAs();
+        return true;
+      }
+      if (ev === kbNorm("file.save")) {
+        e.preventDefault();
+        void saveActiveFile();
+        return true;
+      }
+      if (ev === kbNorm("file.newWindow")) {
+        e.preventDefault();
+        openNewWindow();
+        return true;
+      }
+      if (ev === kbNorm("file.new")) {
+        e.preventDefault();
+        newUntitledFile();
+        return true;
+      }
+      if (ev === kbNorm("file.newTextFile")) {
+        e.preventDefault();
+        void createNewTextFileInline();
+        return true;
+      }
+      if (ev === kbNorm("file.close")) {
+        if (activeTab) {
+          e.preventDefault();
+          closeTab(activeTab.path);
+          return true;
+        }
+        return false;
+      }
+      if (ev === kbNorm("window.close")) {
+        e.preventDefault();
+        exitApp();
+        return true;
+      }
+      if (ev === kbNorm("edit.undo")) {
+        e.preventDefault();
+        if (!runEditorAction("undo")) void runEditorAction("editor.action.undo");
+        return true;
+      }
+      if (ev === kbNorm("edit.redo")) {
+        e.preventDefault();
+        if (!runEditorAction("redo")) void runEditorAction("editor.action.redo");
+        return true;
+      }
+      if (ev === kbNorm("edit.cut")) {
+        e.preventDefault();
+        document.execCommand("cut");
+        return true;
+      }
+      if (ev === kbNorm("edit.copy")) {
+        e.preventDefault();
+        document.execCommand("copy");
+        return true;
+      }
+      if (ev === kbNorm("edit.paste")) {
+        e.preventDefault();
+        document.execCommand("paste");
+        return true;
+      }
+      if (ev === kbNorm("edit.selectAll")) {
+        e.preventDefault();
+        if (!runEditorAction("editor.action.selectAll")) document.execCommand("selectAll");
+        return true;
+      }
+      if (ev === kbNorm("find.find")) {
+        e.preventDefault();
+        runEditorAction("actions.find");
+        return true;
+      }
+      if (ev === kbNorm("find.replace")) {
+        e.preventDefault();
+        runEditorAction("editor.action.startFindReplaceAction");
+        return true;
+      }
+      if (ev === kbNorm("editor.toggleLineComment")) {
+        e.preventDefault();
+        runEditorAction("editor.action.commentLine");
+        return true;
+      }
+      if (ev === kbNorm("editor.toggleBlockComment")) {
+        e.preventDefault();
+        runEditorAction("editor.action.blockComment");
+        return true;
+      }
+      if (ev === kbNorm("editor.expandSelection")) {
+        e.preventDefault();
+        runEditorAction("editor.action.smartSelect.expand");
+        return true;
+      }
+      if (ev === kbNorm("editor.copyLineUp")) {
+        e.preventDefault();
+        runEditorAction("editor.action.copyLinesUpAction");
+        return true;
+      }
+      if (ev === kbNorm("editor.copyLineDown")) {
+        e.preventDefault();
+        runEditorAction("editor.action.copyLinesDownAction");
+        return true;
+      }
+      if (ev === kbNorm("editor.moveLineUp")) {
+        e.preventDefault();
+        runEditorAction("editor.action.moveLinesUpAction");
+        return true;
+      }
+      if (ev === kbNorm("editor.moveLineDown")) {
+        e.preventDefault();
+        runEditorAction("editor.action.moveLinesDownAction");
+        return true;
+      }
+      if (ev === kbNorm("editor.addCursorAbove")) {
+        e.preventDefault();
+        runEditorAction("editor.action.insertCursorAbove");
+        return true;
+      }
+      if (ev === kbNorm("editor.addCursorBelow")) {
+        e.preventDefault();
+        runEditorAction("editor.action.insertCursorBelow");
+        return true;
+      }
+      if (ev === kbNorm("editor.addCursorsToLineEnds")) {
+        e.preventDefault();
+        runEditorAction("editor.action.insertCursorAtEndOfEachLineSelected");
+        return true;
+      }
+      if (ev === kbNorm("editor.selectAllOccurrences")) {
+        e.preventDefault();
+        runEditorAction("editor.action.selectHighlights");
+        return true;
+      }
+      if (ev === kbNorm("editor.toggleWordWrap")) {
+        e.preventDefault();
+        runEditorAction("editor.action.toggleWordWrap");
+        return true;
+      }
+      if (ev === kbNorm("emmet.expandAbbreviation")) {
+        // Let Tab behave normally for editor/inputs.
+        return false;
+      }
+      if (ev === kbNorm("debug.start") || ev === kbNorm("debug.runWithout") || ev === kbNorm("debug.stop") || ev === kbNorm("debug.restart")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Debug", message: "Coming next." });
+        return true;
+      }
+      if (ev === kbNorm("tasks.build")) {
+        e.preventDefault();
+        notify({ kind: "info", title: "Build Task", message: "Coming next." });
+        return true;
+      }
+
+      if (e.key === "Escape") {
+        setIsPaletteOpen(false);
+        setIsQuickOpenOpen(false);
+        setIsGoToLineOpen(false);
+        setExplorerMenu(null);
+        setIsFileMenuOpen(false);
+        setIsFileMenuRecentOpen(false);
+        return true;
+      }
+
+      return false;
+    },
+    [
+      activeTab,
+      closeAllTabs,
+      closeTab,
+      createNewTextFileInline,
+      ensureTerminal,
+      kbNorm,
+      newUntitledFile,
+      openFolder,
+      openGoToLine,
+      openNewWindow,
+      openQuickOpen,
+      openSettingsTab,
+      openStandaloneFile,
+      focusDebugPanel,
+      focusOutputPanel,
+      focusProblemsPanel,
+      focusTerminalPanel,
+      notify,
+      resizeTerminal,
+      runEditorAction,
+      saveActiveFile,
+      saveAll,
+      saveAs,
+      setActivity,
+      setIsChatDockOpen,
+      toggleTerminal,
+      toggleFullscreenApp,
+      exitApp,
+    ]
+  );
+
   const commands = useMemo<Command[]>(() => {
     const c: Command[] = [
-      { id: "file.openFolder", label: "File: Open Folder...", shortcut: "Ctrl+K Ctrl+O", run: () => void openFolder() },
+      { id: "file.openFolder", label: "File: Open Folder...", shortcut: kbRaw("file.openFolder"), run: () => void openFolder() },
       { id: "file.openFile", label: "File: Open File...", shortcut: "Ctrl+O", run: () => void openStandaloneFile() },
-      { id: "file.quickOpen", label: "File: Quick Open...", shortcut: "Ctrl+P", run: () => void openQuickOpen() },
-      { id: "editor.gotoLine", label: "Go: Go to Line...", shortcut: "Ctrl+G", run: () => openGoToLine() },
-      { id: "file.newFile", label: "File: New File", shortcut: "Ctrl+N", run: () => newUntitledFile() },
+      { id: "file.quickOpen", label: "File: Quick Open...", shortcut: kbRaw("file.quickOpen"), run: () => void openQuickOpen() },
+      { id: "editor.gotoLine", label: "Go: Go to Line...", shortcut: kbRaw("editor.gotoLine"), run: () => openGoToLine() },
+      { id: "file.newFile", label: "File: New File", shortcut: kbRaw("file.new"), run: () => newUntitledFile() },
       { id: "file.newFolder", label: "File: New Folder...", run: () => void createNewFolder() },
       { id: "file.rename", label: "File: Rename...", run: () => void renameSelected() },
       { id: "file.delete", label: "File: Delete", run: () => void deleteSelected() },
-      { id: "file.save", label: "File: Save", shortcut: "Ctrl+S", run: () => void saveActiveFile() },
-      { id: "file.saveAll", label: "File: Save All", shortcut: "Ctrl+K S", run: () => void saveAll() },
-      { id: "file.closeAll", label: "File: Close All Editors", shortcut: "Ctrl+Shift+W", run: () => closeAllTabs() },
-      { id: "view.commandPalette", label: "View: Show Command Palette", shortcut: "Ctrl+Shift+P", run: () => setIsPaletteOpen(true) },
-      { id: "workbench.findInFiles", label: "Search: Find in Files", shortcut: "Ctrl+Shift+F", run: () => setActivity("search") },
+      { id: "file.save", label: "File: Save", shortcut: kbRaw("file.save"), run: () => void saveActiveFile() },
+      { id: "file.saveAll", label: "File: Save All", shortcut: kbRaw("file.saveAll"), run: () => void saveAll() },
+      { id: "file.closeAll", label: "File: Close All Editors", shortcut: kbRaw("file.closeAll"), run: () => closeAllTabs() },
+      { id: "view.commandPalette", label: "View: Show Command Palette", shortcut: kbRaw("view.commandPalette"), run: () => setIsPaletteOpen(true) },
+      { id: "workbench.findInFiles", label: "Search: Find in Files", shortcut: kbRaw("workbench.findInFiles"), run: () => setActivity("search") },
       { id: "view.toggleTheme", label: "Preferences: Toggle Theme", run: () => toggleTheme() },
-      { id: "view.settings", label: "Preferences: Open Settings", shortcut: "Ctrl+,", run: () => openSettingsTab() },
+      { id: "view.settings", label: "Preferences: Open Settings", shortcut: kbRaw("view.settings"), run: () => openSettingsTab() },
       { id: "workbench.focusExplorer", label: "View: Focus Explorer", run: () => setActivity("explorer") },
     ];
 
@@ -6241,7 +6844,7 @@ export default function AppShell() {
     }
 
     return c;
-  }, [activeTab, closeAllTabs, closeTab, createNewFolder, deleteSelected, newUntitledFile, openFolder, openGoToLine, openQuickOpen, renameSelected, saveActiveFile, saveAll]);
+  }, [activeTab, closeAllTabs, closeTab, createNewFolder, deleteSelected, kbRaw, newUntitledFile, openFolder, openGoToLine, openQuickOpen, openSettingsTab, openStandaloneFile, renameSelected, saveActiveFile, saveAll, setIsPaletteOpen, setActivity, toggleTheme]);
 
   const filteredCommands = useMemo(() => {
     const q = paletteQuery.trim().toLowerCase();
@@ -6251,143 +6854,12 @@ export default function AppShell() {
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key.toLowerCase() === "l") {
-        e.preventDefault();
-        toggleTerminal();
-        return;
-      }
-
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "p") {
-        e.preventDefault();
-        setIsPaletteOpen(true);
-        return;
-      }
-
-      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "f") {
-        const ed = editorRef.current;
-        if (ed) {
-          e.preventDefault();
-          void ed.getAction("actions.find")?.run();
-        }
-        return;
-      }
-
-      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "p") {
-        e.preventDefault();
-        void openQuickOpen();
-        return;
-      }
-
-      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "g") {
-        e.preventDefault();
-        openGoToLine();
-        return;
-      }
-
-      if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "h") {
-        const ed = editorRef.current;
-        if (ed) {
-          e.preventDefault();
-          void ed.getAction("editor.action.startFindReplaceAction")?.run();
-        }
-        return;
-      }
-
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "f") {
-        e.preventDefault();
-        setActivity("search");
-        return;
-      }
-
-      if (e.ctrlKey && e.key === ",") {
-        e.preventDefault();
-        openSettingsTab();
-        return;
-      }
-
-      // chord handling (Ctrl+K ...)
-      if (e.ctrlKey && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        (window as any).__pomporaChord = { started: Date.now() };
-        return;
-      }
-
-      const chord = (window as any).__pomporaChord as { started: number } | undefined;
-      if (chord && Date.now() - chord.started < 1500) {
-        // Ctrl+K Ctrl+O
-        if (e.ctrlKey && e.key.toLowerCase() === "o") {
-          e.preventDefault();
-          (window as any).__pomporaChord = null;
-          void openFolder();
-          return;
-        }
-        // Ctrl+K S
-        if (e.key.toLowerCase() === "s") {
-          e.preventDefault();
-          (window as any).__pomporaChord = null;
-          void saveAll();
-          return;
-        }
-      }
-      if ((window as any).__pomporaChord) (window as any).__pomporaChord = null;
-
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        void saveAs();
-        return;
-      }
-
-      if (e.ctrlKey && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        void saveActiveFile();
-        return;
-      }
-
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "n") {
-        e.preventDefault();
-        openNewWindow();
-        return;
-      }
-
-      if (e.ctrlKey && e.altKey && e.metaKey && e.key.toLowerCase() === "n") {
-        e.preventDefault();
-        newUntitledFile();
-        return;
-      }
-
-      if (e.ctrlKey && e.key.toLowerCase() === "n") {
-        e.preventDefault();
-        newUntitledFile();
-        return;
-      }
-
-      if (e.ctrlKey && e.key === "w") {
-        if (activeTab) {
-          e.preventDefault();
-          closeTab(activeTab.path);
-        }
-        return;
-      }
-
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "w") {
-        e.preventDefault();
-        closeAllTabs();
-        return;
-      }
-
-      if (e.key === "Escape") {
-        setIsPaletteOpen(false);
-        setIsQuickOpenOpen(false);
-        setIsGoToLineOpen(false);
-        setExplorerMenu(null);
-        setIsFileMenuOpen(false);
-        setIsFileMenuRecentOpen(false);
-      }
+      handleAppKeyDown(e);
     };
 
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [activeTab, closeAllTabs, closeFolder, closeTab, newUntitledFile, openFolder, openGoToLine, openNewWindow, openQuickOpen, openStandaloneFile, saveActiveFile, saveAll, saveAs, toggleTerminal]);
+  }, [handleAppKeyDown]);
 
   useEffect(() => {
     if (!explorerMenu) return;
@@ -7756,6 +8228,7 @@ export default function AppShell() {
                         onChangeCursorBlinking={(v) => void setCursorBlinking(v)}
                         onChangeLineHighlightColor={(hex) => void setLineHighlightColor(hex)}
                         onChangeCursorColor={(hex) => void setCursorColor(hex)}
+                        onChangeKeybindings={(next) => void setKeybindings(next)}
                         onToggleOffline={toggleOfflineMode}
                         onChangeProvider={(p) => void changeProvider(p)}
                         onChangePomporaThinking={(t) => void setPomporaThinking(t)}
@@ -7871,6 +8344,16 @@ export default function AppShell() {
                             });
                             const p = mod.getPosition();
                             if (p) setCursorPos({ line: p.lineNumber, col: p.column });
+
+                            editorKeydownDisposeRef.current?.dispose();
+                            editorKeydownDisposeRef.current = mod.onKeyDown((ev) => {
+                              const be = (ev as any)?.browserEvent as KeyboardEvent | undefined;
+                              if (!be) return;
+                              if (handleAppKeyDown(be)) {
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                              }
+                            });
                             mod.focus();
                           }}
                           options={{
@@ -7916,6 +8399,16 @@ export default function AppShell() {
                             });
                             const p = ed.getPosition();
                             if (p) setCursorPos({ line: p.lineNumber, col: p.column });
+
+                            editorKeydownDisposeRef.current?.dispose();
+                            editorKeydownDisposeRef.current = ed.onKeyDown((ev) => {
+                              const be = (ev as any)?.browserEvent as KeyboardEvent | undefined;
+                              if (!be) return;
+                              if (handleAppKeyDown(be)) {
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                              }
+                            });
                             ed.focus();
                           }}
                           options={{
@@ -10108,6 +10601,7 @@ interface SettingsScreenProps {
   onChangeCursorBlinking: (v: CursorBlinking) => void;
   onChangeLineHighlightColor: (hex: string | null) => void;
   onChangeCursorColor: (hex: string | null) => void;
+  onChangeKeybindings: (next: Record<string, string>) => void;
   onToggleOffline: () => void;
   onChangeProvider: (p: string | null) => void;
   onChangePomporaThinking: (t: string | null) => void;
@@ -10278,6 +10772,97 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const [modelSearchQueries, setModelSearchQueries] = useState<Record<string, string>>({});
+
+  const ShortcutEditor = (p: {
+    commandId: string;
+    value: string;
+    defaultValue: string;
+  }) => {
+    const [isCapturing, setIsCapturing] = useState(false);
+    const [conflict, setConflict] = useState<string | null>(null);
+
+    useEffect(() => {
+      if (!isCapturing) return;
+      (window as any).__pomporaCapturingShortcut = true;
+
+      const onKeyDown = (e: KeyboardEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (e.key === "Escape") {
+          setIsCapturing(false);
+          return;
+        }
+
+        const raw = __eventToShortcut(e);
+        if (!raw) return;
+        const next = __normShortcut(raw);
+        if (!next) return;
+
+        const all = { ...DEFAULT_KEYBINDINGS, ...(props.settings.keybindings ?? {}) };
+        const found = Object.entries(all).find(([id, v]) => id !== p.commandId && __normShortcut(v) === next);
+        setConflict(found ? found[0] : null);
+
+        props.onChangeKeybindings({
+          ...(props.settings.keybindings ?? {}),
+          [p.commandId]: next,
+        });
+        setIsCapturing(false);
+      };
+
+      window.addEventListener("keydown", onKeyDown, true);
+      return () => {
+        window.removeEventListener("keydown", onKeyDown, true);
+        (window as any).__pomporaCapturingShortcut = false;
+      };
+    }, [isCapturing, p.commandId, props]);
+
+    const remove = () => {
+      const next = { ...(props.settings.keybindings ?? {}) };
+      delete next[p.commandId];
+      props.onChangeKeybindings(next);
+      setConflict(null);
+    };
+
+    const reset = () => {
+      props.onChangeKeybindings({
+        ...(props.settings.keybindings ?? {}),
+        [p.commandId]: __normShortcut(p.defaultValue),
+      });
+      setConflict(null);
+    };
+
+    return (
+      <div className="w-full">
+        <div className="flex w-full items-center justify-end gap-2">
+          <button
+            type="button"
+            className={`min-w-[140px] rounded-lg border border-border bg-bg px-3 py-2 text-right font-mono text-xs text-text hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/30 ${
+              isCapturing ? "ring-2 ring-accent/40" : ""
+            }`}
+            onClick={() => {
+              setConflict(null);
+              setIsCapturing(true);
+            }}
+            aria-label="Capture shortcut"
+          >
+            {p.value ? __normShortcut(p.value) : "—"}
+          </button>
+          <button type="button" className="ws-icon-btn h-8 w-8" onClick={remove} aria-label="Remove shortcut">
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <button type="button" className="ws-icon-btn h-8 w-8" onClick={reset} aria-label="Reset shortcut">
+            <RotateCw className="h-4 w-4" />
+          </button>
+        </div>
+        {conflict ? (
+          <div className="mt-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+            Conflicts with: <span className="font-mono">{conflict}</span>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
 
   const ColorPicker = (p: {
     label: string;
@@ -10711,6 +11296,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       [
         { id: "workspace", label: "Workspace" },
         { id: "appearance", label: "Appearance" },
+        { id: "shortcuts", label: "Shortcuts" },
         { id: "ai", label: "AI" },
       ] as const,
     []
@@ -10723,7 +11309,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
     const map: Record<SectionId, { title: string; description: string }> = {
       workspace: { title: "Workspace", description: "Workspace folder and recent workspaces" },
       appearance: { title: "Appearance", description: "Theme" },
-      ai: { title: "AI", description: "Provider and offline mode" },
+      shortcuts: { title: "Shortcuts", description: "Customize keyboard shortcuts" },
+      ai: { title: "AI", description: "Providers & your account" },
     };
     return map;
   }, []);
@@ -10826,19 +11413,119 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   };
 
   const settingsItems = useMemo<SettingItem[]>(
-    () => [
-    {
-      id: "workspace.folder",
-      section: "workspace",
-      title: "Workspace Folder",
-      description: "Choose the folder you want to work in.",
-      keywords: "workspace folder open",
-      renderControl: () => (
-        <button type="button" className="ws-vscode-btn" onClick={props.onPickFolder}>
-          Open Folder
-        </button>
-      ),
-    },
+    () => {
+      const shortcutDefs: Array<{ id: string; title: string; description: string; keywords: string }> = [
+        { id: "chat.toggle", title: "Open/Close Chat", description: "Toggle chat dock", keywords: "shortcut chat" },
+        { id: "view.commandPalette", title: "Open Command Palette", description: "Show the command palette", keywords: "shortcut command palette" },
+
+        { id: "file.newTextFile", title: "New Text File", description: "Create a new text file in workspace", keywords: "shortcut new text file" },
+        { id: "file.new", title: "New File", description: "Create a new untitled file", keywords: "shortcut new file" },
+        { id: "file.newWindow", title: "New Window", description: "Open a new window", keywords: "shortcut new window" },
+        { id: "file.openFile", title: "Open File", description: "Open a file", keywords: "shortcut open file" },
+        { id: "file.openFolder", title: "Open Folder", description: "Open a folder", keywords: "shortcut open folder" },
+
+        { id: "file.save", title: "Save", description: "Save current file", keywords: "shortcut save" },
+        { id: "file.saveAs", title: "Save As", description: "Save current file as…", keywords: "shortcut save as" },
+        { id: "file.saveAll", title: "Save All", description: "Save all open files", keywords: "shortcut save all" },
+
+        { id: "file.close", title: "Close Editor", description: "Close the active editor", keywords: "shortcut close editor" },
+        { id: "file.closeAll", title: "Close All Editors", description: "Close all editors", keywords: "shortcut close all" },
+        { id: "window.close", title: "Close Window", description: "Close the application window", keywords: "shortcut close window" },
+
+        { id: "edit.undo", title: "Undo", description: "Undo last change", keywords: "shortcut undo" },
+        { id: "edit.redo", title: "Redo", description: "Redo last change", keywords: "shortcut redo" },
+        { id: "edit.cut", title: "Cut", description: "Cut selection", keywords: "shortcut cut" },
+        { id: "edit.copy", title: "Copy", description: "Copy selection", keywords: "shortcut copy" },
+        { id: "edit.paste", title: "Paste", description: "Paste", keywords: "shortcut paste" },
+        { id: "edit.selectAll", title: "Select All", description: "Select all", keywords: "shortcut select all" },
+
+        { id: "find.find", title: "Find", description: "Find in file", keywords: "shortcut find" },
+        { id: "find.replace", title: "Replace", description: "Replace in file", keywords: "shortcut replace" },
+        { id: "workbench.findInFiles", title: "Find in Files", description: "Search across workspace", keywords: "shortcut find in files" },
+        { id: "workbench.replaceInFiles", title: "Replace in Files", description: "Replace across workspace", keywords: "shortcut replace in files" },
+
+        { id: "editor.toggleLineComment", title: "Toggle Line Comment", description: "Toggle line comment", keywords: "shortcut comment line" },
+        { id: "editor.toggleBlockComment", title: "Toggle Block Comment", description: "Toggle block comment", keywords: "shortcut comment block" },
+        { id: "emmet.expandAbbreviation", title: "Emmet: Expand Abbreviation", description: "Expand abbreviation", keywords: "shortcut emmet" },
+
+        { id: "editor.expandSelection", title: "Expand Selection", description: "Expand selection", keywords: "shortcut expand selection" },
+        { id: "editor.copyLineUp", title: "Copy Line Up", description: "Copy line up", keywords: "shortcut copy line up" },
+        { id: "editor.copyLineDown", title: "Copy Line Down", description: "Copy line down", keywords: "shortcut copy line down" },
+        { id: "editor.moveLineUp", title: "Move Line Up", description: "Move line up", keywords: "shortcut move line up" },
+        { id: "editor.moveLineDown", title: "Move Line Down", description: "Move line down", keywords: "shortcut move line down" },
+
+        { id: "editor.addCursorAbove", title: "Add Cursor Above", description: "Add cursor above", keywords: "shortcut cursor above" },
+        { id: "editor.addCursorBelow", title: "Add Cursor Below", description: "Add cursor below", keywords: "shortcut cursor below" },
+        { id: "editor.addCursorsToLineEnds", title: "Add Cursors to Line End", description: "Add cursors to line ends", keywords: "shortcut line end" },
+        { id: "editor.selectAllOccurrences", title: "Select All Occurrences", description: "Select all occurrences", keywords: "shortcut occurrences" },
+
+        { id: "view.fullScreen", title: "Full Screen", description: "Toggle fullscreen", keywords: "shortcut fullscreen" },
+        { id: "view.zenMode", title: "Zen Mode", description: "Zen mode", keywords: "shortcut zen" },
+        { id: "editor.toggleWordWrap", title: "Toggle Word Wrap", description: "Toggle word wrap", keywords: "shortcut word wrap" },
+        { id: "view.primarySidebar", title: "Primary Sidebar", description: "Toggle primary sidebar", keywords: "shortcut sidebar" },
+
+        { id: "view.explorer", title: "Explorer", description: "Focus explorer", keywords: "shortcut explorer" },
+        { id: "view.search", title: "Search", description: "Focus search", keywords: "shortcut search" },
+        { id: "view.sourceControl", title: "Source Control", description: "Focus source control", keywords: "shortcut scm" },
+        { id: "view.runDebug", title: "Run & Debug", description: "Run and debug", keywords: "shortcut debug" },
+        { id: "view.extensions", title: "Extensions", description: "Extensions", keywords: "shortcut extensions" },
+
+        { id: "panel.problems", title: "Problems", description: "Focus problems panel", keywords: "shortcut problems" },
+        { id: "panel.output", title: "Output", description: "Focus output panel", keywords: "shortcut output" },
+        { id: "panel.debugConsole", title: "Debug Console", description: "Focus debug console", keywords: "shortcut debug console" },
+
+        { id: "terminal.toggle", title: "Terminal", description: "Toggle terminal panel", keywords: "shortcut terminal" },
+        { id: "terminal.new", title: "New Terminal", description: "New terminal", keywords: "shortcut new terminal" },
+        { id: "terminal.split", title: "Split Terminal", description: "Split terminal", keywords: "shortcut split terminal" },
+        { id: "terminal.newWindow", title: "New Terminal Window", description: "New terminal window", keywords: "shortcut terminal window" },
+
+        { id: "debug.start", title: "Start Debugging", description: "Start debugging", keywords: "shortcut start debugging" },
+        { id: "debug.runWithout", title: "Run Without Debugging", description: "Run without debugging", keywords: "shortcut run without debugging" },
+        { id: "debug.stop", title: "Stop Debugging", description: "Stop debugging", keywords: "shortcut stop debugging" },
+        { id: "debug.restart", title: "Restart Debugging", description: "Restart debugging", keywords: "shortcut restart debugging" },
+        { id: "tasks.build", title: "Run Build Task", description: "Run build task", keywords: "shortcut build" },
+
+        { id: "view.zoomIn", title: "Zoom In", description: "Zoom in", keywords: "shortcut zoom in" },
+        { id: "view.zoomOut", title: "Zoom Out", description: "Zoom out", keywords: "shortcut zoom out" },
+        { id: "view.zoomReset", title: "Reset Zoom", description: "Reset zoom", keywords: "shortcut reset zoom" },
+
+        { id: "view.splitEditor", title: "Split Editor", description: "Split editor", keywords: "shortcut split editor" },
+        { id: "view.splitEditorInGroup", title: "Split Editor in Group", description: "Split editor in group", keywords: "shortcut split group" },
+        { id: "view.flipLayout", title: "Flip Layout", description: "Flip layout", keywords: "shortcut flip layout" },
+
+        { id: "file.quickOpen", title: "Quick Open", description: "Open file by name", keywords: "shortcut quick open" },
+        { id: "editor.gotoLine", title: "Go to Line", description: "Go to line", keywords: "shortcut go to line" },
+        { id: "view.settings", title: "Settings", description: "Open settings", keywords: "shortcut settings" },
+      ];
+
+      const shortcutItems: SettingItem[] = shortcutDefs.map((d) => ({
+        id: `shortcuts.${d.id}`,
+        section: "shortcuts",
+        title: d.title,
+        description: d.description,
+        keywords: d.keywords,
+        renderControl: () => (
+          <ShortcutEditor
+            commandId={d.id}
+            value={String(props.settings.keybindings?.[d.id] ?? DEFAULT_KEYBINDINGS[d.id] ?? "")}
+            defaultValue={DEFAULT_KEYBINDINGS[d.id] ?? ""}
+          />
+        ),
+      }));
+
+      return [
+        {
+          id: "workspace.folder",
+          section: "workspace",
+          title: "Workspace Folder",
+          description: "Choose the folder you want to work in.",
+          keywords: "workspace folder open",
+          renderControl: () => (
+            <button type="button" className="ws-vscode-btn" onClick={props.onPickFolder}>
+              Open Folder
+            </button>
+          ),
+        },
     {
       id: "editor.cursorBlinking",
       section: "appearance",
@@ -10912,6 +11599,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
         />
       ),
     },
+    ...shortcutItems,
     {
       id: "ai.provider",
       section: "ai",
@@ -10920,9 +11608,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       keywords: "provider ai model",
       renderControl: () => (
         <Dropdown
-          value={props.settings.active_provider ?? "pompora"}
-          options={props.providerChoices.map((p) => ({ value: p.id, label: p.label }))}
-          onChange={(v) => props.onChangeProvider(v === "pompora" ? null : v)}
+          value={props.settings.active_provider ?? ""}
+          options={[
+            { value: "", label: "Not configured" },
+            ...props.providerChoices.map((p) => ({ value: p.id, label: p.label })),
+          ]}
+          onChange={(v) => props.onChangeProvider(v ? v : null)}
+          widthClassName="w-[240px]"
         />
       ),
     },
@@ -11013,7 +11705,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
         />
       ),
     },
-    ],
+      ];
+    },
     [props, modelSearchQueries]
   );
 

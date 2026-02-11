@@ -11,6 +11,7 @@ export type AppSettings = {
   editor_cursor_blinking?: CursorBlinking;
   editor_line_highlight_color?: string | null;
   editor_cursor_color?: string | null;
+  keybindings?: Record<string, string>;
   workspace_root: string | null;
   recent_workspaces: string[];
 };

@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::fs::OpenOptions;
 use std::path::PathBuf;
@@ -21,6 +22,8 @@ pub struct AppSettings {
     pub editor_line_highlight_color: Option<String>,
     #[serde(default)]
     pub editor_cursor_color: Option<String>,
+    #[serde(default)]
+    pub keybindings: Option<HashMap<String, String>>,
     #[serde(default)]
     pub workspace_root: Option<String>,
     #[serde(default)]
@@ -45,6 +48,7 @@ impl Default for AppSettings {
             editor_cursor_blinking: None,
             editor_line_highlight_color: None,
             editor_cursor_color: None,
+            keybindings: None,
             workspace_root: None,
             recent_workspaces: Vec::new(),
         }
