@@ -9,6 +9,31 @@ description = "Allows writing application settings."
 commands.allow = ["settings_set"]
 
 [[permission]]
+identifier = "allow-settings-clear"
+description = "Allows resetting application settings (deletes local settings file)."
+commands.allow = ["settings_clear"]
+
+[[permission]]
+identifier = "allow-history-get-raw"
+description = "Allows reading locally stored chat history."
+commands.allow = ["history_get_raw"]
+
+[[permission]]
+identifier = "allow-history-set-raw"
+description = "Allows writing locally stored chat history."
+commands.allow = ["history_set_raw"]
+
+[[permission]]
+identifier = "allow-history-clear"
+description = "Allows deleting locally stored chat history."
+commands.allow = ["history_clear"]
+
+[[permission]]
+identifier = "allow-history-path"
+description = "Allows reading the resolved on-disk path for chat history (for diagnostics/UI)."
+commands.allow = ["history_path"]
+
+[[permission]]
 identifier = "allow-provider-key-status"
 description = "Allows checking whether an AI provider key is configured."
 commands.allow = ["provider_key_status"]
@@ -22,6 +47,11 @@ commands.allow = ["provider_key_set"]
 identifier = "allow-provider-key-clear"
 description = "Allows removing an AI provider key."
 commands.allow = ["provider_key_clear"]
+
+[[permission]]
+identifier = "allow-provider-keys-clear-all"
+description = "Allows deleting all stored provider API keys (local)."
+commands.allow = ["provider_keys_clear_all"]
 
 [[permission]]
 identifier = "allow-auth-begin-login"
@@ -42,6 +72,11 @@ commands.allow = ["auth_get_profile"]
 identifier = "allow-auth-logout"
 description = "Allows logging out of the desktop account (clears stored API key and profile)."
 commands.allow = ["auth_logout"]
+
+[[permission]]
+identifier = "allow-auth-clear"
+description = "Allows deleting locally stored auth profile (local)."
+commands.allow = ["auth_clear"]
 
 [[permission]]
 identifier = "allow-auth-get-credits"
@@ -163,19 +198,31 @@ identifier = "allow-terminal-kill"
 description = "Allows terminating the active terminal session."
 commands.allow = ["terminal_kill"]
 
+[[permission]]
+identifier = "allow-app-wipe-all"
+description = "Allows wiping all locally stored application data (config + data dirs)."
+commands.allow = ["app_wipe_all"]
+
 [[set]]
 identifier = "pompora-default"
 description = "Default Pompora application command set."
 permissions = [
   "allow-settings-get",
   "allow-settings-set",
+  "allow-settings-clear",
+  "allow-history-get-raw",
+  "allow-history-set-raw",
+  "allow-history-clear",
+  "allow-history-path",
   "allow-provider-key-status",
   "allow-provider-key-set",
   "allow-provider-key-clear",
+  "allow-provider-keys-clear-all",
   "allow-auth-begin-login",
   "allow-auth-wait-login",
   "allow-auth-get-profile",
   "allow-auth-logout",
+  "allow-auth-clear",
   "allow-auth-get-credits",
   "allow-workspace-get",
   "allow-workspace-set",
@@ -199,5 +246,6 @@ permissions = [
   "allow-terminal-start",
   "allow-terminal-write",
   "allow-terminal-resize",
-  "allow-terminal-kill"
+  "allow-terminal-kill",
+  "allow-app-wipe-all"
 ]
