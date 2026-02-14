@@ -9,6 +9,10 @@ fn history_path() -> Result<PathBuf> {
     Ok(base.join("Pompora").join("history.json"))
 }
 
+pub fn history_path_string() -> Result<String> {
+    Ok(history_path()?.to_string_lossy().to_string())
+}
+
 pub fn load_raw() -> Result<Option<String>> {
     let path = history_path()?;
     if !path.exists() {

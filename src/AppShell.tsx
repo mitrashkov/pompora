@@ -106,6 +106,7 @@ import {
   terminalResize,
   terminalKill,
   providerListModels,
+  historyPath,
 } from "./lib/tauri";
 import type { AiChatMessage, AiEditOp } from "./lib/tauri";
 import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
@@ -11266,6 +11267,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const [modelSearchQueries, setModelSearchQueries] = useState<Record<string, string>>({});
+  const [historyPathText, setHistoryPathText] = useState<string | null>(null);
 
   const ShortcutEditor = (p: {
     commandId: string;
@@ -11801,6 +11803,26 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   type SectionId = (typeof sectionList)[number]["id"];
   const [activeSection, setActiveSection] = useState<SectionId>("workspace");
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const p = await historyPath();
+        if (!cancelled) setHistoryPathText(p);
+      } catch {
+        if (!cancelled) setHistoryPathText(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const allowed = new Set(sectionList.map((s) => s.id));
+    if (!allowed.has(activeSection)) setActiveSection("workspace");
+  }, [activeSection, sectionList]);
+
   const sectionMeta = useMemo(() => {
     const map: Record<SectionId, { title: string; description: string }> = {
       workspace: { title: "Workspace", description: "Workspace folder and recent workspaces" },
@@ -11811,11 +11833,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
     };
     return map;
   }, []);
-
-  useEffect(() => {
-    const allowed = new Set(sectionList.map((s) => s.id));
-    if (!allowed.has(activeSection)) setActiveSection("workspace");
-  }, [activeSection, sectionList]);
 
   type SettingItem = {
     id: string;
@@ -12530,6 +12547,28 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                     <div className="text-sm font-medium text-text">Local storage</div>
                     <div className="mt-1 text-xs text-muted">
                       Manage and delete locally stored data. These actions only affect this device.
+                    </div>
+                    <div className="mt-3 rounded-xl border border-border/60 bg-bg/40 px-3 py-2">
+                      <div className="text-[11px] text-muted">Chat history path</div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="min-w-0 flex-1 truncate text-[12px] text-text">
+                          {historyPathText ?? "Unavailable"}
+                        </div>
+                        <button
+                          type="button"
+                          className="ws-vscode-btn ws-vscode-btn-ghost h-7 px-2 text-[11px]"
+                          disabled={!historyPathText}
+                          onClick={async () => {
+                            if (!historyPathText) return;
+                            try {
+                              await navigator.clipboard.writeText(historyPathText);
+                            } catch {
+                            }
+                          }}
+                        >
+                          Copy
+                        </button>
+                      </div>
                     </div>
                   </div>
 

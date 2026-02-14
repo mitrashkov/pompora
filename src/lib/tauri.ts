@@ -31,6 +31,10 @@ export async function historyClear(): Promise<void> {
   await __invoke<void>("history_clear");
 }
 
+export async function historyPath(): Promise<string> {
+  return __invoke<string>("history_path", {});
+}
+
 export async function providerKeyStatus(provider: string): Promise<KeyStatus> {
   return __invoke<KeyStatus>("provider_key_status", { provider });
 }

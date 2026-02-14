@@ -133,6 +133,11 @@ fn history_clear() -> Result<(), String> {
 }
 
 #[tauri::command]
+fn history_path() -> Result<String, String> {
+    history::history_path_string().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn provider_key_status(provider: String) -> Result<secrets::KeyStatus, String> {
     secrets::provider_key_status(&provider)
 }
@@ -484,6 +489,7 @@ pub fn run() {
             history_get_raw,
             history_set_raw,
             history_clear,
+            history_path,
             provider_key_status,
             provider_key_set,
             provider_key_get,
