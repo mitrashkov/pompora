@@ -106,7 +106,7 @@ import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntr
 type ActivityId = "explorer" | "search" | "scm";
 
 const DEFAULT_KEYBINDINGS: Record<string, string> = {
-  "chat.toggle": "Ctrl+Alt+L",
+  "chat.toggle": "Ctrl+L",
   "view.commandPalette": "Ctrl+Shift+P",
 
   "view.navigateBack": "Alt+ArrowLeft",
@@ -6389,6 +6389,11 @@ export default function AppShell() {
   );
   const kbNorm = useCallback((id: string) => __normShortcut(kbRaw(id)), [kbRaw]);
 
+  const chatToggleNormRef = useRef<string>("");
+  useEffect(() => {
+    chatToggleNormRef.current = kbNorm("chat.toggle");
+  }, [kbNorm]);
+
   const runEditorAction = useCallback(
     (actionId: string): boolean => {
       const ed = editorRef.current;
@@ -6442,6 +6447,22 @@ export default function AppShell() {
       if (!evRaw) return false;
       const ev = __normShortcut(evRaw);
       if (!ev) return false;
+
+      // When Monaco is focused, it installs its own keydown handlers. Since this app listens
+      // on window in capture phase, we'd otherwise handle shortcuts twice (window first,
+      // then Monaco), which makes toggles look like no-ops.
+      const targetEl = e.target as HTMLElement | null;
+      const fromMonaco = !!targetEl && typeof (targetEl as any).closest === "function" && !!targetEl.closest(".monaco-editor");
+      if (fromMonaco) {
+        const editorOwned = new Set([
+          kbNorm("chat.toggle"),
+          kbNorm("edit.undo"),
+          kbNorm("edit.redo"),
+          kbNorm("view.navigateBack"),
+          kbNorm("view.navigateForward"),
+        ]);
+        if (editorOwned.has(ev)) return false;
+      }
 
       const chordState = (window as any).__pomporaChordSeq as { started: number; first: string } | null | undefined;
       if (chordState && Date.now() - chordState.started < 1500) {
@@ -8296,6 +8317,10 @@ export default function AppShell() {
                     onOpenRecentFile={(p) => void openRecentFile(p)}
                     onOpenChat={() => setIsChatDockOpen(true)}
                     onOpenCommandPalette={() => setIsPaletteOpen(true)}
+                    shortcutOpenFolder={__normShortcut(kbRaw("file.openFolder")) || "Ctrl+K Ctrl+O"}
+                    shortcutOpenFile={__normShortcut(kbRaw("file.openFile")) || "Ctrl+O"}
+                    shortcutOpenChat={__normShortcut(kbRaw("chat.toggle")) || "Ctrl+L"}
+                    shortcutOpenCommandPalette={__normShortcut(kbRaw("view.commandPalette")) || "Ctrl+Shift+P"}
                   />
                 ) : !activeTab ? (
                   <WelcomeScreen
@@ -8307,6 +8332,10 @@ export default function AppShell() {
                     onOpenRecentFile={(p) => void openRecentFile(p)}
                     onOpenChat={() => setIsChatDockOpen(true)}
                     onOpenCommandPalette={() => setIsPaletteOpen(true)}
+                    shortcutOpenFolder={__normShortcut(kbRaw("file.openFolder")) || "Ctrl+K Ctrl+O"}
+                    shortcutOpenFile={__normShortcut(kbRaw("file.openFile")) || "Ctrl+O"}
+                    shortcutOpenChat={__normShortcut(kbRaw("chat.toggle")) || "Ctrl+L"}
+                    shortcutOpenCommandPalette={__normShortcut(kbRaw("view.commandPalette")) || "Ctrl+Shift+P"}
                     title="POMPORA"
                     subtitle="Getting started with Pompora"
                     hint="Open a file from Explorer to start editing."
@@ -8379,8 +8408,15 @@ export default function AppShell() {
                                 }
                               } catch {
                               }
-                              const k = String(be.key || "").toLowerCase();
-                              if (be.ctrlKey && be.altKey && !be.metaKey && !be.shiftKey && k === "l") {
+
+                              const evRaw = __eventToShortcut(be);
+                              const evNorm = evRaw ? __normShortcut(evRaw) : "";
+                              const chatToggleNorm = chatToggleNormRef.current;
+                              if (localStorage.getItem("pompora.debug.shortcuts") === "1") {
+                                // eslint-disable-next-line no-console
+                                console.log("[monaco.chat]", { evNorm, chatToggleNorm });
+                              }
+                              if (evNorm && chatToggleNorm && evNorm === chatToggleNorm) {
                                 setIsChatDockOpen((v) => !v);
                                 try {
                                   be.preventDefault();
@@ -8392,6 +8428,8 @@ export default function AppShell() {
                                 ev.stopPropagation();
                                 return;
                               }
+
+                              const k = String(be.key || "").toLowerCase();
                               if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
                                 goBack();
                                 try {
@@ -8532,8 +8570,14 @@ export default function AppShell() {
                                 }
                               } catch {
                               }
-                              const k = String(be.key || "").toLowerCase();
-                              if (be.ctrlKey && be.altKey && !be.metaKey && !be.shiftKey && k === "l") {
+                              const evRaw = __eventToShortcut(be);
+                              const evNorm = evRaw ? __normShortcut(evRaw) : "";
+                              const chatToggleNorm = chatToggleNormRef.current;
+                              if (localStorage.getItem("pompora.debug.shortcuts") === "1") {
+                                // eslint-disable-next-line no-console
+                                console.log("[monaco.chat]", { evNorm, chatToggleNorm });
+                              }
+                              if (evNorm && chatToggleNorm && evNorm === chatToggleNorm) {
                                 setIsChatDockOpen((v) => !v);
                                 try {
                                   be.preventDefault();
@@ -8545,6 +8589,8 @@ export default function AppShell() {
                                 ev.stopPropagation();
                                 return;
                               }
+
+                              const k = String(be.key || "").toLowerCase();
                               if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
                                 goBack();
                                 try {
@@ -10536,6 +10582,10 @@ function WelcomeScreen(props: {
   onOpenRecentFile?: (p: string) => void;
   onOpenChat?: () => void;
   onOpenCommandPalette?: () => void;
+  shortcutOpenFolder?: string;
+  shortcutOpenFile?: string;
+  shortcutOpenChat?: string;
+  shortcutOpenCommandPalette?: string;
   title?: string;
   subtitle?: string;
   hint?: string;
@@ -10629,12 +10679,12 @@ function WelcomeScreen(props: {
                 <div className="flex w-full max-w-[260px] flex-col gap-2">
                   <button type="button" className="ws-welcome-row" onClick={props.onOpenFolder}>
                     <span className="truncate">Open Folder</span>
-                    <span className="ws-kbd">Ctrl+K Ctrl+O</span>
+                    <span className="ws-kbd">{props.shortcutOpenFolder ?? "Ctrl+K Ctrl+O"}</span>
                   </button>
                   {props.onOpenFile ? (
                     <button type="button" className="ws-welcome-row" onClick={props.onOpenFile}>
                       <span className="truncate">Open File</span>
-                      <span className="ws-kbd">Ctrl+O</span>
+                      <span className="ws-kbd">{props.shortcutOpenFile ?? "Ctrl+O"}</span>
                     </button>
                   ) : null}
                 </div>
@@ -10663,7 +10713,7 @@ function WelcomeScreen(props: {
                     disabled={!props.onOpenChat}
                   >
                     <span className="truncate">Open Chat</span>
-                    <span className="ws-kbd">Ctrl+L</span>
+                    <span className="ws-kbd">{props.shortcutOpenChat ?? "Ctrl+L"}</span>
                   </button>
                   <button
                     type="button"
@@ -10672,7 +10722,7 @@ function WelcomeScreen(props: {
                     disabled={!props.onOpenCommandPalette}
                   >
                     <span className="truncate">Open Command Palette</span>
-                    <span className="ws-kbd">Ctrl+Shift+P</span>
+                    <span className="ws-kbd">{props.shortcutOpenCommandPalette ?? "Ctrl+Shift+P"}</span>
                   </button>
                 </div>
               </section>
@@ -11637,6 +11687,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       const shortcutDefs: Array<{ id: string; title: string; description: string; keywords: string }> = [
         { id: "chat.toggle", title: "Open/Close Chat", description: "Toggle chat dock", keywords: "shortcut chat" },
         { id: "view.commandPalette", title: "Open Command Palette", description: "Show the command palette", keywords: "shortcut command palette" },
+
+        { id: "view.navigateBack", title: "Navigate Back", description: "Go back", keywords: "shortcut back navigate" },
+        { id: "view.navigateForward", title: "Navigate Forward", description: "Go forward", keywords: "shortcut forward navigate" },
 
         { id: "file.newTextFile", title: "New Text File", description: "Create a new text file in workspace", keywords: "shortcut new text file" },
         { id: "file.new", title: "New File", description: "Create a new untitled file", keywords: "shortcut new file" },
