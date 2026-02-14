@@ -106,8 +106,11 @@ import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntr
 type ActivityId = "explorer" | "search" | "scm";
 
 const DEFAULT_KEYBINDINGS: Record<string, string> = {
-  "chat.toggle": "Ctrl+L",
+  "chat.toggle": "Ctrl+Alt+L",
   "view.commandPalette": "Ctrl+Shift+P",
+
+  "view.navigateBack": "Alt+ArrowLeft",
+  "view.navigateForward": "Alt+ArrowRight",
 
   "file.newTextFile": "Ctrl+N",
   "file.new": "Ctrl+Alt+N",
@@ -4412,7 +4415,8 @@ export default function AppShell() {
     placement: "above" | "below";
   } | null>(null);
 
-  const showTooltipForEl = useCallback((el: HTMLElement, text: string, align: "tl" | "tr" = "tr") => {
+  const showTooltipForEl = useCallback((el: HTMLElement | null, text: string, align: "tl" | "tr" = "tr") => {
+    if (!el) return;
     const r = el.getBoundingClientRect();
     const pad = 10;
     const safeAlign: "tl" | "tr" = align === "tr" && r.right < 280 ? "tl" : align;
@@ -6428,7 +6432,11 @@ export default function AppShell() {
 
   const handleAppKeyDown = useCallback(
     (e: KeyboardEvent): boolean => {
-      if ((window as any).__pomporaCapturingShortcut) return false;
+      if ((window as any).__pomporaCapturingShortcut) {
+        const captureActive = !!document.querySelector('[data-shortcut-capturing="true"]');
+        if (!captureActive) (window as any).__pomporaCapturingShortcut = false;
+        else return false;
+      }
 
       const evRaw = __eventToShortcut(e);
       if (!evRaw) return false;
@@ -6617,6 +6625,16 @@ export default function AppShell() {
         openSettingsTab();
         return true;
       }
+      if (ev === kbNorm("view.navigateBack")) {
+        e.preventDefault();
+        goBack();
+        return true;
+      }
+      if (ev === kbNorm("view.navigateForward")) {
+        e.preventDefault();
+        goForward();
+        return true;
+      }
       if (ev === kbNorm("file.saveAs")) {
         e.preventDefault();
         void saveAs();
@@ -6661,6 +6679,11 @@ export default function AppShell() {
         return true;
       }
       if (ev === kbNorm("edit.redo")) {
+        e.preventDefault();
+        if (!runEditorAction("redo")) void runEditorAction("editor.action.redo");
+        return true;
+      }
+      if (ev === __normShortcut("Ctrl+Shift+Z")) {
         e.preventDefault();
         if (!runEditorAction("redo")) void runEditorAction("editor.action.redo");
         return true;
@@ -8349,7 +8372,105 @@ export default function AppShell() {
                             editorKeydownDisposeRef.current = mod.onKeyDown((ev) => {
                               const be = (ev as any)?.browserEvent as KeyboardEvent | undefined;
                               if (!be) return;
+                              try {
+                                if (localStorage.getItem("pompora.debug.shortcuts") === "1") {
+                                  // eslint-disable-next-line no-console
+                                  console.log("[monaco]", { key: be.key, code: (be as any).code, ctrl: be.ctrlKey, shift: be.shiftKey, alt: be.altKey, meta: be.metaKey });
+                                }
+                              } catch {
+                              }
+                              const k = String(be.key || "").toLowerCase();
+                              if (be.ctrlKey && be.altKey && !be.metaKey && !be.shiftKey && k === "l") {
+                                setIsChatDockOpen((v) => !v);
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
+                                goBack();
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowRight" || be.key === "Right")) {
+                                goForward();
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.ctrlKey && !be.altKey && !be.metaKey && !be.shiftKey && k === "z") {
+                                try {
+                                  mod.trigger("keyboard", "undo", null);
+                                } catch {
+                                  if (!runEditorAction("undo")) runEditorAction("editor.action.undo");
+                                }
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.ctrlKey && !be.altKey && !be.metaKey && be.shiftKey && k === "z") {
+                                try {
+                                  mod.trigger("keyboard", "redo", null);
+                                } catch {
+                                  if (!runEditorAction("redo")) runEditorAction("editor.action.redo");
+                                }
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.ctrlKey && !be.altKey && !be.metaKey && !be.shiftKey && k === "y") {
+                                try {
+                                  mod.trigger("keyboard", "redo", null);
+                                } catch {
+                                  if (!runEditorAction("redo")) runEditorAction("editor.action.redo");
+                                }
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
                               if (handleAppKeyDown(be)) {
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
                                 ev.preventDefault();
                                 ev.stopPropagation();
                               }
@@ -8404,7 +8525,105 @@ export default function AppShell() {
                             editorKeydownDisposeRef.current = ed.onKeyDown((ev) => {
                               const be = (ev as any)?.browserEvent as KeyboardEvent | undefined;
                               if (!be) return;
+                              try {
+                                if (localStorage.getItem("pompora.debug.shortcuts") === "1") {
+                                  // eslint-disable-next-line no-console
+                                  console.log("[monaco]", { key: be.key, code: (be as any).code, ctrl: be.ctrlKey, shift: be.shiftKey, alt: be.altKey, meta: be.metaKey });
+                                }
+                              } catch {
+                              }
+                              const k = String(be.key || "").toLowerCase();
+                              if (be.ctrlKey && be.altKey && !be.metaKey && !be.shiftKey && k === "l") {
+                                setIsChatDockOpen((v) => !v);
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
+                                goBack();
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowRight" || be.key === "Right")) {
+                                goForward();
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.ctrlKey && !be.altKey && !be.metaKey && !be.shiftKey && k === "z") {
+                                try {
+                                  ed.trigger("keyboard", "undo", null);
+                                } catch {
+                                  if (!runEditorAction("undo")) runEditorAction("editor.action.undo");
+                                }
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.ctrlKey && !be.altKey && !be.metaKey && be.shiftKey && k === "z") {
+                                try {
+                                  ed.trigger("keyboard", "redo", null);
+                                } catch {
+                                  if (!runEditorAction("redo")) runEditorAction("editor.action.redo");
+                                }
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
+                              if (be.ctrlKey && !be.altKey && !be.metaKey && !be.shiftKey && k === "y") {
+                                try {
+                                  ed.trigger("keyboard", "redo", null);
+                                } catch {
+                                  if (!runEditorAction("redo")) runEditorAction("editor.action.redo");
+                                }
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                                return;
+                              }
                               if (handleAppKeyDown(be)) {
+                                try {
+                                  be.preventDefault();
+                                  be.stopPropagation();
+                                  (be as any).stopImmediatePropagation?.();
+                                } catch {
+                                }
                                 ev.preventDefault();
                                 ev.stopPropagation();
                               }
@@ -10840,6 +11059,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
             className={`min-w-[140px] rounded-lg border border-border bg-bg px-3 py-2 text-right font-mono text-xs text-text hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/30 ${
               isCapturing ? "ring-2 ring-accent/40" : ""
             }`}
+            data-shortcut-capturing={isCapturing ? "true" : "false"}
             onClick={() => {
               setConflict(null);
               setIsCapturing(true);
