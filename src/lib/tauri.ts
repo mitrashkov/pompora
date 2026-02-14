@@ -1,13 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { AppSettings, AuthProfile, CreditsResponse, DirEntryInfo, KeyStatus, WorkspaceInfo } from "./types";
 
-const __isTauri = typeof window !== "undefined" && !!(window as any).__TAURI_INTERNALS__;
-
 function __invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
-  if (!__isTauri) {
-    return Promise.reject(new Error(`Tauri IPC unavailable (not running inside Tauri). Command: ${cmd}`));
+  try {
+    return invoke<T>(cmd, args);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return Promise.reject(new Error(`Tauri IPC failed. Command: ${cmd}. Error: ${msg}`));
   }
-  return invoke<T>(cmd, args);
 }
 
 export async function settingsGet(): Promise<AppSettings> {
