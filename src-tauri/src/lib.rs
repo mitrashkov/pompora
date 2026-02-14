@@ -1,6 +1,6 @@
 mod core;
 
-use core::{ai, auth, fsops, search, secrets, settings, terminal, workspace};
+use core::{ai, auth, fsops, history, search, secrets, settings, terminal, workspace};
 use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 
@@ -118,6 +118,21 @@ fn settings_set(next: settings::AppSettings) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn history_get_raw() -> Result<Option<String>, String> {
+    history::load_raw().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn history_set_raw(raw: String) -> Result<(), String> {
+    history::store_raw(&raw).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn history_clear() -> Result<(), String> {
+    history::clear().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn provider_key_status(provider: String) -> Result<secrets::KeyStatus, String> {
     secrets::provider_key_status(&provider)
 }
@@ -135,6 +150,26 @@ fn provider_key_get(provider: String, encryption_password: Option<String>) -> Re
 #[tauri::command]
 fn provider_key_clear(provider: String) -> Result<(), String> {
     secrets::provider_key_clear(&provider)
+}
+
+#[tauri::command]
+fn auth_clear() -> Result<(), String> {
+    auth::clear_profile().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn settings_clear() -> Result<(), String> {
+    settings::clear().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn provider_keys_clear_all() -> Result<(), String> {
+    secrets::clear_all_provider_keys().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn app_wipe_all() -> Result<(), String> {
+    core::wipe_all().map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -446,10 +481,17 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             settings_get,
             settings_set,
+            history_get_raw,
+            history_set_raw,
+            history_clear,
             provider_key_status,
             provider_key_set,
             provider_key_get,
             provider_key_clear,
+            provider_keys_clear_all,
+            settings_clear,
+            auth_clear,
+            app_wipe_all,
             auth_begin_login,
             auth_wait_login,
             auth_get_profile,

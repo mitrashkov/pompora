@@ -179,6 +179,14 @@ pub fn store(next: &AppSettings) -> Result<()> {
     Ok(())
 }
 
+pub fn clear() -> Result<()> {
+    let path = settings_path()?;
+    if path.exists() {
+        let _ = fs::remove_file(&path);
+    }
+    Ok(())
+}
+
 fn settings_path() -> Result<PathBuf> {
     let base = dirs::config_dir().or_else(|| dirs::home_dir().map(|h| h.join(".config"))).context("missing config dir")?;
     Ok(base.join("Pompora").join("settings.json"))

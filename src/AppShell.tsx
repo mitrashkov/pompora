@@ -75,11 +75,18 @@ import {
   authWaitLogin,
   authGetProfile,
   authLogout,
+  authClear,
   authGetCredits,
   debugGeminiEndToEnd,
   aiChat,
   settingsGet,
   settingsSet,
+  settingsClear,
+  historyGetRaw,
+  historySetRaw,
+  historyClear,
+  providerKeysClearAll,
+  appWipeAll,
   workspaceGet,
   workspaceListDir,
   workspaceListFiles,
@@ -731,9 +738,6 @@ function ImageTabView(props: {
 
                 <div className="mx-1 h-5 w-px bg-border/70" />
 
-                <button type="button" className="ws-btn" onClick={props.onRefresh}>
-                  Reload
-                </button>
                 <button type="button" className="ws-btn" onClick={props.onOpenAsText}>
                   Open as Text
                 </button>
@@ -746,18 +750,6 @@ function ImageTabView(props: {
   );
 }
 
-function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { preferLeft?: boolean }) {
-  const gap = 6;
-  const rightX = anchor.right + gap;
-  const leftX = anchor.left - gap - approxWidth;
-  const canOpenRight = rightX + approxWidth <= window.innerWidth;
-  const preferLeft = !!opts?.preferLeft;
-  const openRight = preferLeft ? !canOpenRight : canOpenRight;
-  const x = openRight ? rightX : Math.max(8, leftX);
-  const y = clamp(anchor.top, 8, window.innerHeight - 80);
-  return { x, y };
-}
-
 function MenuPortal(props: { anchor: DOMRect; approxWidth: number; preferLeft?: boolean; children: React.ReactNode }) {
   const pos = computeSubmenuPos(props.anchor, props.approxWidth, { preferLeft: props.preferLeft });
   return createPortal(
@@ -766,6 +758,18 @@ function MenuPortal(props: { anchor: DOMRect; approxWidth: number; preferLeft?: 
     </div>,
     document.body,
   );
+}
+
+function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { preferLeft?: boolean }) {
+  const pad = 8;
+  const rightX = anchor.right;
+  const leftX = anchor.left - approxWidth;
+  const canOpenRight = rightX + approxWidth <= window.innerWidth;
+  const preferLeft = !!opts?.preferLeft;
+  const openRight = preferLeft ? !canOpenRight : canOpenRight;
+  const x = openRight ? rightX : Math.max(pad, leftX);
+  const y = clamp(anchor.top, pad, window.innerHeight - 80);
+  return { x, y };
 }
 
 function computeContextMenuPos(anchor: { x: number; y: number }, size: { w: number; h: number }) {
@@ -2396,33 +2400,6 @@ export default function AppShell() {
   const [chatHistoryQueryDraft, setChatHistoryQueryDraft] = useState("");
   const [chatHistoryQuery, setChatHistoryQuery] = useState("");
   const [chatSessions, setChatSessions] = useState<ChatSession[]>(() => {
-    try {
-      const raw = localStorage.getItem(CHAT_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as unknown;
-        if (Array.isArray(parsed)) {
-          const now = Date.now();
-          const restored = parsed
-            .filter((x: any) => x && typeof x.id === "string")
-            .map((x: any) => ({
-              id: String(x.id),
-              title: typeof x.title === "string" ? x.title : "Chat",
-              createdAt: typeof x.createdAt === "number" ? x.createdAt : now,
-              updatedAt: typeof x.updatedAt === "number" ? x.updatedAt : now,
-              messages: Array.isArray(x.messages)
-                ? (x.messages.map((m: any) => migrateStoredChatMessage(m)).filter(Boolean) as ChatUiMessage[])
-                : ([] as ChatUiMessage[]),
-              logs: Array.isArray(x.logs) ? (x.logs as ChatLogEntry[]) : ([] as ChatLogEntry[]),
-              draft: typeof x.draft === "string" ? x.draft : "",
-              changeSet: (x.changeSet as ChangeSet | null) ?? null,
-            }))
-            .slice(0, 200);
-
-          if (restored.length) return restored;
-        }
-      }
-    } catch {
-    }
     const now = Date.now();
     return [
       {
@@ -2562,12 +2539,107 @@ export default function AppShell() {
     setActiveChatId(chatSessions[0]!.id);
   }, [activeChatId, chatSessions]);
 
+  const didLoadChatHistoryRef = useRef(false);
+  const isWritingChatHistoryRef = useRef(false);
+
   useEffect(() => {
-    const t = window.setTimeout(() => {
+    if (didLoadChatHistoryRef.current) return;
+    didLoadChatHistoryRef.current = true;
+
+    let cancelled = false;
+
+    (async () => {
+      // 1) Load history from local file (tauri backend).
+      let raw: string | null = null;
       try {
-        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatSessions));
+        raw = await historyGetRaw();
       } catch {
+        raw = null;
       }
+
+      const tryParseSessions = (rawStr: string | null): ChatSession[] | null => {
+        if (!rawStr) return null;
+        try {
+          const parsed = JSON.parse(rawStr) as unknown;
+          if (!Array.isArray(parsed)) return null;
+          const now = Date.now();
+          const restored = parsed
+            .filter((x: any) => x && typeof x.id === "string")
+            .map((x: any) => ({
+              id: String(x.id),
+              title: typeof x.title === "string" ? x.title : "Chat",
+              createdAt: typeof x.createdAt === "number" ? x.createdAt : now,
+              updatedAt: typeof x.updatedAt === "number" ? x.updatedAt : now,
+              messages: Array.isArray(x.messages)
+                ? (x.messages.map((m: any) => migrateStoredChatMessage(m)).filter(Boolean) as ChatUiMessage[])
+                : ([] as ChatUiMessage[]),
+              logs: Array.isArray(x.logs) ? (x.logs as ChatLogEntry[]) : ([] as ChatLogEntry[]),
+              draft: typeof x.draft === "string" ? x.draft : "",
+              changeSet: (x.changeSet as ChangeSet | null) ?? null,
+            }))
+            .slice(0, 200);
+          return restored.length ? restored : null;
+        } catch {
+          return null;
+        }
+      };
+
+      let loaded = tryParseSessions(raw);
+
+      // 2) One-time migration: if file history is empty, try old localStorage key.
+      if (!loaded) {
+        try {
+          const legacy = window.localStorage.getItem(CHAT_STORAGE_KEY);
+          loaded = tryParseSessions(legacy);
+          if (loaded) {
+            // persist migrated data to file
+            try {
+              isWritingChatHistoryRef.current = true;
+              await historySetRaw(JSON.stringify(loaded));
+            } catch {
+            } finally {
+              isWritingChatHistoryRef.current = false;
+            }
+            try {
+              window.localStorage.removeItem(CHAT_STORAGE_KEY);
+            } catch {
+            }
+          }
+        } catch {
+        }
+      }
+
+      if (cancelled) return;
+      if (loaded) {
+        setChatSessions(loaded);
+        if (loaded.some((s) => s.id === activeChatId)) {
+          // keep current
+        } else {
+          setActiveChatId(loaded[0]!.id);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!didLoadChatHistoryRef.current) return;
+    if (isWritingChatHistoryRef.current) return;
+
+    const t = window.setTimeout(() => {
+      (async () => {
+        try {
+          isWritingChatHistoryRef.current = true;
+          await historySetRaw(JSON.stringify(chatSessions));
+        } catch {
+        } finally {
+          isWritingChatHistoryRef.current = false;
+        }
+      })();
     }, 250);
     return () => window.clearTimeout(t);
   }, [chatSessions]);
@@ -4353,6 +4425,116 @@ export default function AppShell() {
     );
     setProviderKeyStatuses(out);
   }, [providerChoices]);
+
+  const clearChatHistoryNow = useCallback(async () => {
+    const ok = window.confirm("Delete all chat history? This cannot be undone.");
+    if (!ok) return;
+    try {
+      await historyClear();
+    } catch {
+    }
+    const now = Date.now();
+    const id = `${now}-${Math.random().toString(16).slice(2)}`;
+    setChatSessions([{ id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
+    setActiveChatId(id);
+    notify({ kind: "info", title: "Privacy", message: "Chat history deleted" });
+  }, [notify]);
+
+  const clearAllProviderKeysNow = useCallback(async () => {
+    const ok = window.confirm("Delete all stored API keys? This cannot be undone.");
+    if (!ok) return;
+    try {
+      await providerKeysClearAll();
+      await refreshProviderKeyStatuses();
+      if (settings.active_provider) {
+        try {
+          setKeyStatus(await providerKeyStatus(settings.active_provider));
+        } catch {
+        }
+      }
+      notify({ kind: "info", title: "Privacy", message: "API keys deleted" });
+    } catch (e) {
+      devConsoleError(e);
+      notify({ kind: "error", title: "Privacy", message: "Failed to delete API keys" });
+    }
+  }, [devConsoleError, notify, refreshProviderKeyStatuses, settings.active_provider]);
+
+  const clearAuthNow = useCallback(async () => {
+    const ok = window.confirm("Delete local account info and log out? This does not delete your cloud account.");
+    if (!ok) return;
+    try {
+      await authClear();
+    } catch {
+    }
+    setAuthProfile(null);
+    setAuthCredits(null);
+    notify({ kind: "info", title: "Privacy", message: "Local account info deleted" });
+  }, [notify]);
+
+  const clearSettingsFileNow = useCallback(async () => {
+    const ok = window.confirm("Reset settings to defaults? This cannot be undone.");
+    if (!ok) return;
+    try {
+      await settingsClear();
+    } catch {
+    }
+    try {
+      const s = await settingsGet();
+      setSettingsState({
+        theme: s.theme === "light" ? "light" : "dark",
+        offline_mode: !!s.offline_mode,
+        active_provider: s.active_provider ?? null,
+        active_model: (s as any).active_model ?? null,
+        pompora_thinking: (s as any).pompora_thinking ?? null,
+        editor_cursor_blinking: (s as any).editor_cursor_blinking ?? "expand",
+        editor_line_highlight_color: (s as any).editor_line_highlight_color ?? null,
+        editor_cursor_color: (s as any).editor_cursor_color ?? null,
+        keybindings: (s as any).keybindings ?? DEFAULT_KEYBINDINGS,
+        workspace_root: (s as any).workspace_root ?? null,
+        recent_workspaces: (s as any).recent_workspaces ?? [],
+      } as any);
+    } catch {
+    }
+    notify({ kind: "info", title: "Privacy", message: "Settings reset" });
+  }, [notify]);
+
+  const wipeAllNow = useCallback(async () => {
+    const ok = window.confirm("Wipe ALL local Pompora data (settings, history, keys, auth)? This cannot be undone.");
+    if (!ok) return;
+    try {
+      await appWipeAll();
+    } catch {
+    }
+
+    setAuthProfile(null);
+    setAuthCredits(null);
+    setApiKeyDraft("");
+    setEncryptionPasswordDraft("");
+    setSecretsError(null);
+    setProviderKeyStatuses({});
+    setKeyStatus(null);
+
+    const now = Date.now();
+    const id = `${now}-${Math.random().toString(16).slice(2)}`;
+    setChatSessions([{ id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
+    setActiveChatId(id);
+
+    setSettingsState({
+      theme: "dark",
+      offline_mode: false,
+      active_provider: null,
+      active_model: null,
+      pompora_thinking: null,
+      editor_cursor_blinking: "expand",
+      editor_line_highlight_color: null,
+      editor_cursor_color: null,
+      keybindings: DEFAULT_KEYBINDINGS,
+      workspace_root: null,
+      recent_workspaces: [],
+    });
+
+    notify({ kind: "info", title: "Privacy", message: "All local data wiped" });
+  }, [notify]);
 
   const loadProviderModels = useCallback(async (providerId: string) => {
     // Don't reload if already loading, but allow reloading if models exist (in case key was updated)
@@ -8304,6 +8486,11 @@ export default function AppShell() {
                             setSettingsState(settings);
                           }
                         }}
+                        onClearChatHistory={() => void clearChatHistoryNow()}
+                        onClearAllProviderKeys={() => void clearAllProviderKeysNow()}
+                        onClearAuth={() => void clearAuthNow()}
+                        onClearSettingsFile={() => void clearSettingsFileNow()}
+                        onWipeAll={() => void wipeAllNow()}
                       />
                     </SettingsErrorBoundary>
                   </div>
@@ -10892,6 +11079,12 @@ interface SettingsScreenProps {
   providerModelsError: Record<string, string | null>;
   onLoadModels: (providerId: string) => void;
   onSelectModel: (providerId: string, modelId: string) => void;
+
+  onClearChatHistory: () => void;
+  onClearAllProviderKeys: () => void;
+  onClearAuth: () => void;
+  onClearSettingsFile: () => void;
+  onWipeAll: () => void;
 }
 
 function __clampInt(n: number, min: number, max: number): number {
@@ -11568,6 +11761,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
         { id: "appearance", label: "Appearance" },
         { id: "shortcuts", label: "Shortcuts" },
         { id: "ai", label: "AI" },
+        { id: "privacy", label: "Privacy" },
       ] as const,
     []
   );
@@ -11581,6 +11775,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
       appearance: { title: "Appearance", description: "Theme" },
       shortcuts: { title: "Shortcuts", description: "Customize keyboard shortcuts" },
       ai: { title: "AI", description: "Providers & your account" },
+      privacy: { title: "Privacy", description: "Manage and delete locally stored data" },
     };
     return map;
   }, []);
@@ -12294,6 +12489,46 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                       </div>
                     </div>
                   ) : null}
+                </div>
+              ) : null}
+
+              {activeSection === "privacy" && !q ? (
+                <div className="mt-6 space-y-3">
+                  <div className="rounded-xl border border-border/60 bg-panel/30 p-4">
+                    <div className="text-sm font-medium text-text">Local storage</div>
+                    <div className="mt-1 text-xs text-muted">
+                      Manage and delete locally stored data. These actions only affect this device.
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-border/60 bg-panel/30 p-4">
+                    <div className="grid gap-2">
+                      <button type="button" className="ws-vscode-btn ws-vscode-btn-ghost" onClick={props.onClearChatHistory}>
+                        Delete chat history
+                      </button>
+                      <button type="button" className="ws-vscode-btn ws-vscode-btn-ghost" onClick={props.onClearAllProviderKeys}>
+                        Delete all API keys
+                      </button>
+                      <button type="button" className="ws-vscode-btn ws-vscode-btn-ghost" onClick={props.onClearAuth}>
+                        Delete local account info
+                      </button>
+                      <button type="button" className="ws-vscode-btn ws-vscode-btn-ghost" onClick={props.onClearSettingsFile}>
+                        Reset settings to default
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-danger/30 bg-danger/10 p-4">
+                    <div className="text-sm font-semibold text-danger">Wipe everything</div>
+                    <div className="mt-1 text-xs text-danger/80">
+                      Removes all Pompora files from this device (settings, history, keys, auth).
+                    </div>
+                    <div className="mt-3">
+                      <button type="button" className="ws-vscode-btn ws-vscode-btn-primary" onClick={props.onWipeAll}>
+                        Wipe all local data
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : null}
 

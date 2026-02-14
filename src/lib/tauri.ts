@@ -18,6 +18,19 @@ export async function settingsSet(next: AppSettings): Promise<void> {
   await __invoke<void>("settings_set", { next });
 }
 
+export async function historyGetRaw(): Promise<string | null> {
+  const v = await __invoke<string | null>("history_get_raw");
+  return v;
+}
+
+export async function historySetRaw(raw: string): Promise<void> {
+  await __invoke<void>("history_set_raw", { raw });
+}
+
+export async function historyClear(): Promise<void> {
+  await __invoke<void>("history_clear");
+}
+
 export async function providerKeyStatus(provider: string): Promise<KeyStatus> {
   return __invoke<KeyStatus>("provider_key_status", { provider });
 }
@@ -85,6 +98,22 @@ export async function providerListModels(args: {
 
 export async function providerKeyClear(provider: string): Promise<void> {
   return __invoke<void>("provider_key_clear", { provider });
+}
+
+export async function providerKeysClearAll(): Promise<void> {
+  return __invoke<void>("provider_keys_clear_all", {});
+}
+
+export async function settingsClear(): Promise<void> {
+  return __invoke<void>("settings_clear", {});
+}
+
+export async function authClear(): Promise<void> {
+  return __invoke<void>("auth_clear", {});
+}
+
+export async function appWipeAll(): Promise<void> {
+  return __invoke<void>("app_wipe_all", {});
 }
 
 export async function authBeginLogin(): Promise<[string, string]> {
