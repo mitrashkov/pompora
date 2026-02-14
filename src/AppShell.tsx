@@ -2468,10 +2468,6 @@ export default function AppShell() {
     return firstLine.length > 140 ? `${firstLine.slice(0, 137)}...` : firstLine;
   }, []);
 
-  const hasChatHistory = useMemo(() => {
-    return chatSessions.some((s) => s.messages.some((m) => m.role === "user"));
-  }, [chatSessions]);
-
   useEffect(() => {
     const t = window.setTimeout(() => {
       setChatHistoryQuery(chatHistoryQueryDraft.trim());
@@ -2527,8 +2523,18 @@ export default function AppShell() {
     setActiveChatId(chatSessions[0]!.id);
   }, [activeChatId, chatSessions]);
 
+  const devConsoleError = useCallback(
+    (...args: any[]) => {
+      if (!import.meta.env?.DEV) return;
+      console.error(...args);
+    },
+    []
+  );
+
   const didLoadChatHistoryRef = useRef(false);
   const isWritingChatHistoryRef = useRef(false);
+  const chatHistoryBtnRef = useRef<HTMLButtonElement | null>(null);
+  const [chatHistoryAnchor, setChatHistoryAnchor] = useState<DOMRect | null>(null);
 
   useEffect(() => {
     if (didLoadChatHistoryRef.current) return;
@@ -2630,14 +2636,42 @@ export default function AppShell() {
         try {
           isWritingChatHistoryRef.current = true;
           await historySetRaw(JSON.stringify(chatSessions));
-        } catch {
+        } catch (e) {
+          devConsoleError("Failed to save chat history", e);
         } finally {
           isWritingChatHistoryRef.current = false;
         }
       })();
     }, 250);
     return () => window.clearTimeout(t);
-  }, [chatSessions]);
+  }, [chatSessions, devConsoleError]);
+
+  const flushChatHistoryNow = useCallback(async () => {
+    if (!didLoadChatHistoryRef.current) return;
+    if (isWritingChatHistoryRef.current) return;
+    try {
+      isWritingChatHistoryRef.current = true;
+      await historySetRaw(JSON.stringify(chatSessions));
+    } catch (e) {
+      devConsoleError("Failed to flush chat history", e);
+    } finally {
+      isWritingChatHistoryRef.current = false;
+    }
+  }, [chatSessions, devConsoleError]);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === "hidden") {
+        void flushChatHistoryNow();
+      }
+    };
+    window.addEventListener("visibilitychange", onVis);
+    window.addEventListener("beforeunload", onVis);
+    return () => {
+      window.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("beforeunload", onVis);
+    };
+  }, [flushChatHistoryNow]);
 
   const [notifications] = useState<AppNotification[]>([]);
 
@@ -2678,13 +2712,6 @@ export default function AppShell() {
     if (isChatDockOpen) cols.push(`minmax(280px, ${chatDockWidth}px)`);
     return cols.join(" ");
   }, [chatDockWidth, explorerWidth, isChatDockOpen]);
-  const devConsoleError = useCallback(
-    (...args: any[]) => {
-      if (!import.meta.env?.DEV) return;
-      console.error(...args);
-    },
-    []
-  );
 
   useEffect(() => {
     if (!isChatHistoryOpen) return;
@@ -9147,24 +9174,30 @@ export default function AppShell() {
                     </div>
 
                     <div className="flex shrink-0 items-center gap-1">
-                      {hasChatHistory ? (
-                        <div className="relative" ref={chatHistoryMenuRef}>
-                          <button
-                            type="button"
-                            className="ws-icon-btn"
-                            onClick={() => {
-                              setIsChatHistoryOpen((v) => !v);
-                              if (!isChatHistoryOpen) {
+                      <div className="relative" ref={chatHistoryMenuRef}>
+                        <button
+                          ref={chatHistoryBtnRef}
+                          type="button"
+                          className="ws-icon-btn"
+                          onClick={() => {
+                            setIsChatHistoryOpen((v) => {
+                              const next = !v;
+                              if (next) {
                                 setChatHistoryQueryDraft("");
                                 setChatHistoryQuery("");
+                                const r = chatHistoryBtnRef.current?.getBoundingClientRect() ?? null;
+                                setChatHistoryAnchor(r);
                               }
-                            }}
-                          >
-                            <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
-                          </button>
+                              return next;
+                            });
+                          }}
+                        >
+                          <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
+                        </button>
 
-                          {isChatHistoryOpen ? (
-                            <div className="absolute right-0 top-full z-[70] mt-2 w-80 overflow-hidden rounded-2xl bg-panel shadow">
+                        {isChatHistoryOpen && chatHistoryAnchor ? (
+                          <MenuPortal anchor={chatHistoryAnchor} approxWidth={320} preferLeft>
+                            <div className="w-80 overflow-hidden rounded-2xl border border-border/60 bg-panel shadow">
                               <div className="flex items-center gap-2 bg-bg px-3 py-2">
                                 <div className="flex min-w-0 flex-1 items-center gap-2">
                                   <Search className="h-4 w-4 text-muted" />
@@ -9178,58 +9211,62 @@ export default function AppShell() {
                                 </div>
                               </div>
 
-                              <div className="max-h-48 overflow-auto p-1">
-                                {chatHistorySessions.map((s) => {
-                                  return (
-                                    <button
-                                      key={s.id}
-                                      type="button"
-                                      className={`group relative flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-left focus-visible:outline-none hover:bg-bg ${
-                                        s.id === activeChatId ? "bg-bg" : ""
-                                      }`}
-                                      onClick={() => {
-                                        setActiveChatId(s.id);
-                                        setIsChatHistoryOpen(false);
-                                        window.setTimeout(() => chatComposerRef.current?.focus(), 0);
-                                      }}
-                                    >
-                                      <div className="min-w-0 flex-1">
-                                        <div className="truncate text-[12px] text-text">{s.title}</div>
-                                        <div className="truncate text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
-                                      </div>
+                              <div className="max-h-80 overflow-auto p-1">
+                                {chatHistorySessions.length ? (
+                                  chatHistorySessions.map((s) => {
+                                    return (
+                                      <button
+                                        key={s.id}
+                                        type="button"
+                                        className={`group relative flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-left focus-visible:outline-none hover:bg-bg ${
+                                          s.id === activeChatId ? "bg-bg" : ""
+                                        }`}
+                                        onClick={() => {
+                                          setActiveChatId(s.id);
+                                          setIsChatHistoryOpen(false);
+                                          window.setTimeout(() => chatComposerRef.current?.focus(), 0);
+                                        }}
+                                      >
+                                        <div className="min-w-0 flex-1">
+                                          <div className="truncate text-[12px] text-text">{s.title}</div>
+                                          <div className="truncate text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
+                                        </div>
 
-                                      <div className="flex shrink-0 items-center gap-1">
-                                        <button
-                                          type="button"
-                                          className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            renameChatSession(s.id);
-                                          }}
-                                          aria-label="Rename chat"
-                                        >
-                                          <Pencil className="h-4 w-4" />
-                                        </button>
-                                        <button
-                                          type="button"
-                                          className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            deleteChatSession(s.id);
-                                          }}
-                                          aria-label="Delete chat"
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </button>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
+                                        <div className="flex shrink-0 items-center gap-1">
+                                          <button
+                                            type="button"
+                                            className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              renameChatSession(s.id);
+                                            }}
+                                            aria-label="Rename chat"
+                                          >
+                                            <Pencil className="h-4 w-4" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              deleteChatSession(s.id);
+                                            }}
+                                            aria-label="Delete chat"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </button>
+                                        </div>
+                                      </button>
+                                    );
+                                  })
+                                ) : (
+                                  <div className="px-3 py-4 text-xs text-muted">No chats yet.</div>
+                                )}
                               </div>
                             </div>
-                          ) : null}
-                        </div>
-                      ) : null}
+                          </MenuPortal>
+                        ) : null}
+                      </div>
                       <button
                         type="button"
                         className="ws-icon-btn"
