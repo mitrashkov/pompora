@@ -2521,18 +2521,6 @@ export default function AppShell() {
       .map((x) => x.s);
   }, [chatHistoryQuery, chatSessions]);
 
-  const didBootstrapFreshChatRef = useRef(false);
-  useEffect(() => {
-    if (didBootstrapFreshChatRef.current) return;
-    didBootstrapFreshChatRef.current = true;
-
-    // Always start on a fresh empty chat on app launch.
-    const now = Date.now();
-    const id = `${now}-${Math.random().toString(16).slice(2)}`;
-    setChatSessions((prev) => [...prev, { id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
-    setActiveChatId(id);
-  }, []);
-
   useEffect(() => {
     if (!chatSessions.length) return;
     if (chatSessions.some((s) => s.id === activeChatId)) return;
@@ -2544,7 +2532,6 @@ export default function AppShell() {
 
   useEffect(() => {
     if (didLoadChatHistoryRef.current) return;
-    didLoadChatHistoryRef.current = true;
 
     let cancelled = false;
 
@@ -2617,7 +2604,15 @@ export default function AppShell() {
         } else {
           setActiveChatId(loaded[0]!.id);
         }
+      } else {
+        const now = Date.now();
+        const id = `${now}-${Math.random().toString(16).slice(2)}`;
+        setChatSessions([{ id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
+        setActiveChatId(id);
       }
+
+      // Mark history as initialized only after we've loaded/migrated and set initial state.
+      didLoadChatHistoryRef.current = true;
     })();
 
     return () => {
