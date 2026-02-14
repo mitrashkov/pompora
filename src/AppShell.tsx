@@ -11268,6 +11268,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
   const q = query.trim().toLowerCase();
   const [modelSearchQueries, setModelSearchQueries] = useState<Record<string, string>>({});
   const [historyPathText, setHistoryPathText] = useState<string | null>(null);
+  const [historyPathError, setHistoryPathError] = useState<string | null>(null);
 
   const ShortcutEditor = (p: {
     commandId: string;
@@ -11808,9 +11809,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
     (async () => {
       try {
         const p = await historyPath();
-        if (!cancelled) setHistoryPathText(p);
-      } catch {
-        if (!cancelled) setHistoryPathText(null);
+        if (cancelled) return;
+        setHistoryPathText(p);
+        setHistoryPathError(null);
+      } catch (e) {
+        if (cancelled) return;
+        setHistoryPathText(null);
+        setHistoryPathError(e instanceof Error ? e.message : String(e));
       }
     })();
     return () => {
@@ -12569,6 +12574,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                           Copy
                         </button>
                       </div>
+                      {!historyPathText && historyPathError ? (
+                        <div className="mt-2 text-[11px] text-muted break-all">{historyPathError}</div>
+                      ) : null}
                     </div>
                   </div>
 
@@ -12599,6 +12607,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
                         Wipe all local data
                       </button>
                     </div>
+                    {!historyPathText && historyPathError ? (
+                      <div className="mt-2 text-[11px] text-muted break-all">{historyPathError}</div>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
