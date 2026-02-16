@@ -9235,7 +9235,7 @@ export default function AppShell() {
                   {isChatHistoryOpen ? (
                     <div className="absolute inset-x-0 top-[calc(100%+8px)] z-40 px-3">
                       <div className="flex w-full max-h-[min(520px,calc(100vh-220px))] flex-col overflow-hidden rounded-2xl border border-border/60 bg-panel shadow">
-                        <div className="flex shrink-0 items-center gap-2 bg-bg px-3 py-2">
+                        <div className="flex shrink-0 items-center gap-2 bg-panel2 px-3 py-2">
                           <div className="flex min-w-0 flex-1 items-center gap-2">
                             <Search className="h-4 w-4 text-muted" />
                             <input
