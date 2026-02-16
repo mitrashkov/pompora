@@ -751,8 +751,14 @@ function ImageTabView(props: {
   );
 }
 
-function MenuPortal(props: { anchor: DOMRect; approxWidth: number; preferLeft?: boolean; children: React.ReactNode }) {
-  const pos = computeSubmenuPos(props.anchor, props.approxWidth, { preferLeft: props.preferLeft });
+function MenuPortal(props: {
+  anchor: DOMRect;
+  approxWidth: number;
+  approxHeight?: number;
+  preferLeft?: boolean;
+  children: React.ReactNode;
+}) {
+  const pos = computeSubmenuPos(props.anchor, props.approxWidth, { preferLeft: props.preferLeft, approxHeight: props.approxHeight });
   return createPortal(
     <div style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 100000 }}>
       {props.children}
@@ -761,15 +767,26 @@ function MenuPortal(props: { anchor: DOMRect; approxWidth: number; preferLeft?: 
   );
 }
 
-function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { preferLeft?: boolean }) {
+function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { preferLeft?: boolean; approxHeight?: number }) {
   const pad = 8;
+  const approxHeight = Math.max(120, Math.floor(opts?.approxHeight ?? 360));
+
   const rightX = anchor.right;
   const leftX = anchor.left - approxWidth;
-  const canOpenRight = rightX + approxWidth <= window.innerWidth;
+  const canOpenRight = rightX + approxWidth <= window.innerWidth - pad;
+  const canOpenLeft = leftX >= pad;
   const preferLeft = !!opts?.preferLeft;
-  const openRight = preferLeft ? !canOpenRight : canOpenRight;
-  const x = openRight ? rightX : Math.max(pad, leftX);
-  const y = clamp(anchor.top, pad, window.innerHeight - 80);
+
+  const openRight = preferLeft ? !canOpenLeft : canOpenRight;
+  const desiredX = openRight ? rightX : leftX;
+  const x = clamp(desiredX, pad, Math.max(pad, window.innerWidth - approxWidth - pad));
+
+  const belowY = anchor.bottom + 6;
+  const aboveY = anchor.top - approxHeight - 6;
+  const canOpenBelow = belowY + approxHeight <= window.innerHeight - pad;
+  const desiredY = canOpenBelow ? belowY : aboveY;
+  const y = clamp(desiredY, pad, Math.max(pad, window.innerHeight - approxHeight - pad));
+
   return { x, y };
 }
 
@@ -2535,7 +2552,6 @@ export default function AppShell() {
   const didLoadChatHistoryRef = useRef(false);
   const isWritingChatHistoryRef = useRef(false);
   const chatHistoryBtnRef = useRef<HTMLButtonElement | null>(null);
-  const [chatHistoryAnchor, setChatHistoryAnchor] = useState<DOMRect | null>(null);
 
   useEffect(() => {
     if (didLoadChatHistoryRef.current) return;
@@ -9168,7 +9184,7 @@ export default function AppShell() {
                   </div>
                 ) : null}
 
-                <div className="bg-panel px-3 py-2">
+                <div className="relative bg-panel px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="truncate text-[13px] font-normal text-[#a39d9d]">{activeChat.title}</div>
@@ -9186,8 +9202,6 @@ export default function AppShell() {
                               if (next) {
                                 setChatHistoryQueryDraft("");
                                 setChatHistoryQuery("");
-                                const r = chatHistoryBtnRef.current?.getBoundingClientRect() ?? null;
-                                setChatHistoryAnchor(r);
                               }
                               return next;
                             });
@@ -9195,78 +9209,6 @@ export default function AppShell() {
                         >
                           <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
                         </button>
-
-                        {isChatHistoryOpen && chatHistoryAnchor ? (
-                          <MenuPortal anchor={chatHistoryAnchor} approxWidth={320} preferLeft>
-                            <div className="w-80 overflow-hidden rounded-2xl border border-border/60 bg-panel shadow">
-                              <div className="flex items-center gap-2 bg-bg px-3 py-2">
-                                <div className="flex min-w-0 flex-1 items-center gap-2">
-                                  <Search className="h-4 w-4 text-muted" />
-                                  <input
-                                    className="w-full bg-transparent text-sm text-text placeholder:text-muted focus-visible:outline-none"
-                                    placeholder="Search chats"
-                                    value={chatHistoryQueryDraft}
-                                    onChange={(e) => setChatHistoryQueryDraft(e.currentTarget.value)}
-                                    autoFocus
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="max-h-80 overflow-auto p-1">
-                                {chatHistorySessions.length ? (
-                                  chatHistorySessions.map((s) => {
-                                    return (
-                                      <button
-                                        key={s.id}
-                                        type="button"
-                                        className={`group relative flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-left focus-visible:outline-none hover:bg-bg ${
-                                          s.id === activeChatId ? "bg-bg" : ""
-                                        }`}
-                                        onClick={() => {
-                                          setActiveChatId(s.id);
-                                          setIsChatHistoryOpen(false);
-                                          window.setTimeout(() => chatComposerRef.current?.focus(), 0);
-                                        }}
-                                      >
-                                        <div className="min-w-0 flex-1">
-                                          <div className="truncate text-[12px] text-text">{s.title}</div>
-                                          <div className="truncate text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
-                                        </div>
-
-                                        <div className="flex shrink-0 items-center gap-1">
-                                          <button
-                                            type="button"
-                                            className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              renameChatSession(s.id);
-                                            }}
-                                            aria-label="Rename chat"
-                                          >
-                                            <Pencil className="h-4 w-4" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              deleteChatSession(s.id);
-                                            }}
-                                            aria-label="Delete chat"
-                                          >
-                                            <Trash2 className="h-4 w-4" />
-                                          </button>
-                                        </div>
-                                      </button>
-                                    );
-                                  })
-                                ) : (
-                                  <div className="px-3 py-4 text-xs text-muted">No chats yet.</div>
-                                )}
-                              </div>
-                            </div>
-                          </MenuPortal>
-                        ) : null}
                       </div>
                       <button
                         type="button"
@@ -9289,6 +9231,78 @@ export default function AppShell() {
                       </button>
                     </div>
                   </div>
+
+                  {isChatHistoryOpen ? (
+                    <div className="absolute inset-x-0 top-[calc(100%+8px)] z-40 px-3">
+                      <div className="flex w-full max-h-[min(520px,calc(100vh-220px))] flex-col overflow-hidden rounded-2xl border border-border/60 bg-panel shadow">
+                        <div className="flex shrink-0 items-center gap-2 bg-bg px-3 py-2">
+                          <div className="flex min-w-0 flex-1 items-center gap-2">
+                            <Search className="h-4 w-4 text-muted" />
+                            <input
+                              className="w-full bg-transparent text-sm text-text placeholder:text-muted focus-visible:outline-none"
+                              placeholder="Search chats"
+                              value={chatHistoryQueryDraft}
+                              onChange={(e) => setChatHistoryQueryDraft(e.currentTarget.value)}
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+
+                        <div className="min-h-0 flex-1 overflow-auto p-1">
+                          {chatHistorySessions.length ? (
+                            chatHistorySessions.map((s) => {
+                              return (
+                                <button
+                                  key={s.id}
+                                  type="button"
+                                  className={`group relative flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-left focus-visible:outline-none hover:bg-bg ${
+                                    s.id === activeChatId ? "bg-bg" : ""
+                                  }`}
+                                  onClick={() => {
+                                    setActiveChatId(s.id);
+                                    setIsChatHistoryOpen(false);
+                                    window.setTimeout(() => chatComposerRef.current?.focus(), 0);
+                                  }}
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <div className="truncate text-[12px] text-text">{s.title}</div>
+                                    <div className="truncate text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
+                                  </div>
+
+                                  <div className="flex shrink-0 items-center gap-1">
+                                    <button
+                                      type="button"
+                                      className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        renameChatSession(s.id);
+                                      }}
+                                      aria-label="Rename chat"
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteChatSession(s.id);
+                                      }}
+                                      aria-label="Delete chat"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <div className="px-3 py-4 text-xs text-muted">No chats yet.</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div
