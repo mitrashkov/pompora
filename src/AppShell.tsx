@@ -9184,14 +9184,14 @@ export default function AppShell() {
                   </div>
                 ) : null}
 
-                <div className="relative bg-panel px-3 py-2">
+                <div className="relative bg-panel px-3 py-2" ref={chatHistoryMenuRef}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="truncate text-[13px] font-normal text-[#a39d9d]">{activeChat.title}</div>
                     </div>
 
                     <div className="flex shrink-0 items-center gap-1">
-                      <div className="relative" ref={chatHistoryMenuRef}>
+                      <div className="relative">
                         <button
                           ref={chatHistoryBtnRef}
                           type="button"
@@ -9272,7 +9272,7 @@ export default function AppShell() {
                                   <div className="flex shrink-0 items-center gap-1">
                                     <button
                                       type="button"
-                                      className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
+                                      className="ws-icon-btn h-7 w-7 rounded-xl bg-panel2 active:bg-bg"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         renameChatSession(s.id);
@@ -9283,7 +9283,7 @@ export default function AppShell() {
                                     </button>
                                     <button
                                       type="button"
-                                      className="ws-icon-btn h-7 w-7 rounded-xl bg-bg"
+                                      className="ws-icon-btn h-7 w-7 rounded-xl bg-panel2 active:bg-bg"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         deleteChatSession(s.id);
