@@ -217,6 +217,7 @@ function __normShortcut(raw: string): string {
       if (modOrder.includes(c)) mods.add(c);
       else if (!key) key = c;
     }
+
     const ordered = modOrder.filter((m) => mods.has(m));
     return [...ordered, key].filter(Boolean).join("+");
   };
@@ -226,6 +227,167 @@ function __normShortcut(raw: string): string {
     .map((p) => normPart(p))
     .filter(Boolean)
     .join(" ");
+}
+
+function TextPromptDialog(props: {
+  title: string;
+  subtitle?: string;
+  placeholder?: string;
+  value: string;
+  setValue: (v: string) => void;
+  password?: boolean;
+  readOnly?: boolean;
+  showCopy?: boolean;
+  onClose: () => void;
+  onSubmit: (value: string) => void;
+}) {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        props.onClose();
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (props.readOnly) return;
+        const v = String(props.value ?? "");
+        props.onSubmit(v);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [props]);
+
+  const canSubmit = !props.readOnly;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+      <div
+        className="mx-auto mt-16 w-[520px] max-w-[92vw] overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="border-b border-border px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold text-text">{props.title}</div>
+              {props.subtitle ? <div className="mt-0.5 text-xs text-muted">{props.subtitle}</div> : null}
+            </div>
+            <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="px-4 py-3">
+          <div className="flex items-stretch gap-2">
+            <input
+              className="h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+              placeholder={props.placeholder ?? ""}
+              autoFocus
+              value={props.value}
+              readOnly={!!props.readOnly}
+              type={props.password ? "password" : "text"}
+              onChange={(e) => props.setValue(e.currentTarget.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 px-4 py-3">
+          <div className="text-[11px] text-muted">{props.readOnly ? "Esc to close" : "Enter to confirm • Esc to cancel"}</div>
+          <div className="flex items-center gap-2">
+            {props.showCopy ? (
+              <button
+                type="button"
+                className="ws-btn ws-btn-secondary h-8 px-3 text-[13px]"
+                onClick={() => {
+                  void navigator.clipboard.writeText(String(props.value ?? "")).catch(() => {});
+                }}
+              >
+                Copy
+              </button>
+            ) : null}
+            <button type="button" className="ws-btn ws-btn-secondary h-8 px-3 text-[13px]" onClick={props.onClose}>
+              {props.readOnly ? "Close" : "Cancel"}
+            </button>
+            {canSubmit ? (
+              <button
+                type="button"
+                className="ws-btn h-8 border border-accent bg-accent px-3 text-[13px] text-white hover:opacity-90"
+                onClick={() => props.onSubmit(String(props.value ?? ""))}
+              >
+                OK
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmDialog(props: {
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  danger?: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        props.onClose();
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        props.onConfirm();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [props]);
+
+  const confirmLabel = props.confirmLabel ?? "OK";
+  const confirmClass = props.danger
+    ? "ws-btn h-8 border border-red-500/60 bg-red-500/20 px-3 text-[13px] text-red-200 hover:bg-red-500/25"
+    : "ws-btn h-8 border border-accent bg-accent px-3 text-[13px] text-white hover:opacity-90";
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+      <div
+        className="mx-auto mt-16 w-[520px] max-w-[92vw] overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="border-b border-border px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold text-text">{props.title}</div>
+            </div>
+            <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="px-4 py-3">
+          <div className="text-[13px] text-muted whitespace-pre-wrap">{props.message}</div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 px-4 py-3">
+          <div className="text-[11px] text-muted">Enter to confirm • Esc to cancel</div>
+          <div className="flex items-center gap-2">
+            <button type="button" className="ws-btn ws-btn-secondary h-8 px-3 text-[13px]" onClick={props.onClose}>
+              Cancel
+            </button>
+            <button type="button" className={confirmClass} onClick={props.onConfirm}>
+              {confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function __eventToShortcut(e: KeyboardEvent): string {
@@ -1759,7 +1921,7 @@ function tryParseEditsFromAssistantOutput(
 }
 
 function MenuSep() {
-  return <div className="my-1 h-px bg-transparent" />;
+  return <div className="h-1" />;
 }
 
 function MenuCheck(props: { checked?: boolean }) {
@@ -1779,7 +1941,7 @@ function MenuItem(props: {
   return (
     <button
       type="button"
-      className="flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs text-text hover:bg-bg"
+      className="flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-[12px] text-text/90 hover:bg-bg/60 hover:text-text"
       onClick={() => {
         props.onClick?.();
         if (!props.keepOpen) {
@@ -1798,95 +1960,6 @@ function MenuItem(props: {
         {props.right ?? null}
       </span>
     </button>
-  );
-}
-
-type PopupMenuItem =
-  | { id: string; kind?: "normal" | "danger"; label: string; icon?: React.ReactNode; shortcut?: string; right?: React.ReactNode; onClick: () => void }
-  | { id: string; kind: "sep" };
-
-function PopupMenu(props: {
-  anchor: DOMRect;
-  approxWidth?: number;
-  approxHeight?: number;
-  onClose: () => void;
-  items: PopupMenuItem[];
-}) {
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const [pos, setPos] = useState<{ x: number; y: number }>({ x: props.anchor.left, y: props.anchor.bottom + 6 });
-
-  useEffect(() => {
-    const pad = 8;
-    const approxWidth = Math.max(220, Math.floor(props.approxWidth ?? 288));
-    const approxHeight = Math.max(120, Math.floor(props.approxHeight ?? 360));
-    const desiredX = props.anchor.left;
-    const desiredY = props.anchor.bottom + 6;
-
-    const x = clamp(desiredX, pad, Math.max(pad, window.innerWidth - approxWidth - pad));
-
-    const canOpenBelow = desiredY + approxHeight <= window.innerHeight - pad;
-    const openY = canOpenBelow ? desiredY : props.anchor.top - approxHeight - 6;
-    const y = clamp(openY, pad, Math.max(pad, window.innerHeight - approxHeight - pad));
-
-    setPos({ x, y });
-  }, [props.anchor.bottom, props.anchor.left, props.anchor.top, props.approxHeight, props.approxWidth, props.items.length]);
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") props.onClose();
-    };
-    window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [props.onClose]);
-
-  return createPortal(
-    <div className="fixed inset-0 z-[9999]" onMouseDown={props.onClose}>
-      <div
-        ref={rootRef}
-        className="absolute w-max min-w-64 max-w-[calc(100vw-16px)] overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-        style={{ left: pos.x, top: pos.y }}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        {props.items.map((it) => {
-          if ((it as any).kind === "sep") {
-            return <div key={it.id} className="my-1 h-px bg-border/70" />;
-          }
-          const item = it as {
-            id: string;
-            kind?: "normal" | "danger";
-            label: string;
-            icon?: React.ReactNode;
-            shortcut?: string;
-            right?: React.ReactNode;
-            onClick: () => void;
-          };
-          const danger = item.kind === "danger";
-          return (
-            <button
-              key={item.id}
-              type="button"
-              className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[13px] leading-4 ${
-                danger ? "text-red-300 hover:bg-red-500/10" : "text-text hover:bg-bg"
-              }`}
-              onClick={() => {
-                item.onClick();
-                props.onClose();
-              }}
-            >
-              <span className="flex min-w-0 items-center gap-2">
-                {item.icon ? <span className="shrink-0 text-muted">{item.icon}</span> : null}
-                <span className="truncate">{item.label}</span>
-              </span>
-              <span className="flex items-center gap-2 text-[11px] text-muted">
-                {item.shortcut ? <span className="whitespace-nowrap">{item.shortcut}</span> : null}
-                {item.right ?? null}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </div>,
-    document.body
   );
 }
 
@@ -2279,6 +2352,7 @@ export default function AppShell() {
   const [savePathDialog, setSavePathDialog] = useState<null | {
     title: string;
     subtitle?: string;
+    inputLabel?: string;
     placeholder?: string;
     value: string;
     extensions?: string[];
@@ -2287,12 +2361,32 @@ export default function AppShell() {
     resolve: (value: string | null) => void;
   }>(null);
 
+  const [textPromptDialog, setTextPromptDialog] = useState<null | {
+    title: string;
+    subtitle?: string;
+    placeholder?: string;
+    value: string;
+    password?: boolean;
+    readOnly?: boolean;
+    showCopy?: boolean;
+    resolve: (value: string | null) => void;
+  }>(null);
+
+  const [confirmDialog, setConfirmDialog] = useState<null | {
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    danger?: boolean;
+    resolve: (ok: boolean) => void;
+  }>(null);
+
   const requestRelativePath = useCallback(
     (
       title: string,
       initialValue: string,
       options?: {
         subtitle?: string;
+        inputLabel?: string;
         placeholder?: string;
         extensions?: string[];
         defaultExtension?: string;
@@ -2303,11 +2397,49 @@ export default function AppShell() {
         setSavePathDialog({
           title,
           subtitle: options?.subtitle,
+          inputLabel: options?.inputLabel,
           placeholder: options?.placeholder,
           value: initialValue,
           extensions: options?.extensions,
           defaultExtension: options?.defaultExtension,
           enforceExtension: options?.enforceExtension,
+          resolve,
+        });
+      });
+    },
+    []
+  );
+
+  const requestConfirm = useCallback(
+    (title: string, message: string, options?: { confirmLabel?: string; danger?: boolean }) => {
+      return new Promise<boolean>((resolve) => {
+        setConfirmDialog({ title, message, confirmLabel: options?.confirmLabel, danger: options?.danger, resolve });
+      });
+    },
+    []
+  );
+
+  const requestTextPrompt = useCallback(
+    (
+      title: string,
+      initialValue: string,
+      options?: {
+        subtitle?: string;
+        placeholder?: string;
+        password?: boolean;
+        readOnly?: boolean;
+        showCopy?: boolean;
+      }
+    ) => {
+      return new Promise<string | null>((resolve) => {
+        setTextPromptDialog({
+          title,
+          subtitle: options?.subtitle,
+          placeholder: options?.placeholder,
+          value: initialValue,
+          password: options?.password,
+          readOnly: options?.readOnly,
+          showCopy: options?.showCopy,
           resolve,
         });
       });
@@ -2426,6 +2558,7 @@ export default function AppShell() {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [inlineRenamePath, setInlineRenamePath] = useState<string | null>(null);
   const [inlineRenameValue, setInlineRenameValue] = useState<string>("");
+  const [inlineRenameIsDir, setInlineRenameIsDir] = useState<boolean>(false);
 
   const [footerPathExpanded, setFooterPathExpanded] = useState(false);
 
@@ -2874,13 +3007,15 @@ export default function AppShell() {
 
   const renameChatSession = useCallback(
     (id: string) => {
-      const current = chatSessions.find((s) => s.id === id);
-      const next = window.prompt("Chat name", current?.title || "Chat");
-      const title = String(next ?? "").trim();
-      if (!title) return;
-      setChatSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title, updatedAt: Date.now() } : s)));
+      void (async () => {
+        const current = chatSessions.find((s) => s.id === id);
+        const next = await requestTextPrompt("Chat name", current?.title || "Chat", { placeholder: "Chat" });
+        const title = String(next ?? "").trim();
+        if (!title) return;
+        setChatSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title, updatedAt: Date.now() } : s)));
+      })();
     },
-    [chatSessions]
+    [chatSessions, requestTextPrompt]
   );
 
   const setActiveChatTitle = useCallback(
@@ -3307,7 +3442,11 @@ export default function AppShell() {
       if (!c) return;
 
       if (isLikelyDangerousCommand(c)) {
-        const ok = window.confirm(`The app is about to run a potentially dangerous command:\n\n${c}\n\nRun anyway?`);
+        const ok = await requestConfirm(
+          "Run command",
+          `The app is about to run a potentially dangerous command:\n\n${c}\n\nRun anyway?`,
+          { danger: true, confirmLabel: "Run" }
+        );
         if (!ok) return;
       }
 
@@ -3790,12 +3929,13 @@ export default function AppShell() {
       if (renames.length) reasons.push(`Renames: ${renames.length}`);
 
       if (!reasons.length) return true;
-      const ok = window.confirm(
-        `This change set is larger than usual or potentially destructive:\n\n- ${reasons.join("\n- ")}\n\nApply anyway?`
+      return await requestConfirm(
+        "Apply change set",
+        `This change set is larger than usual or potentially destructive:\n\n- ${reasons.join("\n- ")}\n\nApply anyway?`,
+        { danger: true, confirmLabel: "Apply" }
       );
-      return ok;
     },
-    []
+    [requestConfirm]
   );
 
   const notify = useCallback(
@@ -4157,9 +4297,9 @@ export default function AppShell() {
       new WebviewWindow(label, { title: "Pompora", width: 1280, height: 800 });
     } catch (e) {
       devConsoleError("New window failed", e);
-      window.alert(`Failed to open new window: ${String(e)}`);
+      notify({ kind: "error", title: "New window", message: `Failed to open new window: ${String(e)}` });
     }
-  }, [devConsoleError]);
+  }, [devConsoleError, notify]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -4337,10 +4477,7 @@ export default function AppShell() {
         const ok = await safeOpenUrl(target);
         if (!ok) {
           notify({ kind: "error", title: "Could not open browser", message: "Copy the URL and open it manually." });
-          try {
-            window.prompt("Open this URL in your browser:", target);
-          } catch {
-          }
+          await requestTextPrompt("Open this URL in your browser", target, { readOnly: true, showCopy: true });
           setIsAuthBusy(false);
           void authWaitLogin(state)
             .then(async (profile) => {
@@ -4555,7 +4692,7 @@ export default function AppShell() {
   }, [providerChoices]);
 
   const clearChatHistoryNow = useCallback(async () => {
-    const ok = window.confirm("Delete all chat history? This cannot be undone.");
+    const ok = await requestConfirm("Delete chat history", "Delete all chat history? This cannot be undone.", { danger: true, confirmLabel: "Delete" });
     if (!ok) return;
     try {
       await historyClear();
@@ -4566,10 +4703,10 @@ export default function AppShell() {
     setChatSessions([{ id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
     setActiveChatId(id);
     notify({ kind: "info", title: "Privacy", message: "Chat history deleted" });
-  }, [notify]);
+  }, [notify, requestConfirm]);
 
   const clearAllProviderKeysNow = useCallback(async () => {
-    const ok = window.confirm("Delete all stored API keys? This cannot be undone.");
+    const ok = await requestConfirm("Delete API keys", "Delete all stored API keys? This cannot be undone.", { danger: true, confirmLabel: "Delete" });
     if (!ok) return;
     try {
       await providerKeysClearAll();
@@ -4585,10 +4722,14 @@ export default function AppShell() {
       devConsoleError(e);
       notify({ kind: "error", title: "Privacy", message: "Failed to delete API keys" });
     }
-  }, [devConsoleError, notify, refreshProviderKeyStatuses, settings.active_provider]);
+  }, [devConsoleError, notify, refreshProviderKeyStatuses, requestConfirm, settings.active_provider]);
 
   const clearAuthNow = useCallback(async () => {
-    const ok = window.confirm("Delete local account info and log out? This does not delete your cloud account.");
+    const ok = await requestConfirm(
+      "Log out",
+      "Delete local account info and log out? This does not delete your cloud account.",
+      { danger: true, confirmLabel: "Log out" }
+    );
     if (!ok) return;
     try {
       await authClear();
@@ -4597,10 +4738,10 @@ export default function AppShell() {
     setAuthProfile(null);
     setAuthCredits(null);
     notify({ kind: "info", title: "Privacy", message: "Local account info deleted" });
-  }, [notify]);
+  }, [notify, requestConfirm]);
 
   const clearSettingsFileNow = useCallback(async () => {
-    const ok = window.confirm("Reset settings to defaults? This cannot be undone.");
+    const ok = await requestConfirm("Reset settings", "Reset settings to defaults? This cannot be undone.", { danger: true, confirmLabel: "Reset" });
     if (!ok) return;
     try {
       await settingsClear();
@@ -4624,10 +4765,14 @@ export default function AppShell() {
     } catch {
     }
     notify({ kind: "info", title: "Privacy", message: "Settings reset" });
-  }, [notify]);
+  }, [notify, requestConfirm]);
 
   const wipeAllNow = useCallback(async () => {
-    const ok = window.confirm("Wipe ALL local Pompora data (settings, history, keys, auth)? This cannot be undone.");
+    const ok = await requestConfirm(
+      "Wipe all local data",
+      "Wipe ALL local Pompora data (settings, history, keys, auth)? This cannot be undone.",
+      { danger: true, confirmLabel: "Wipe" }
+    );
     if (!ok) return;
     try {
       await appWipeAll();
@@ -4662,7 +4807,7 @@ export default function AppShell() {
     });
 
     notify({ kind: "info", title: "Privacy", message: "All local data wiped" });
-  }, [notify]);
+  }, [notify, requestConfirm]);
 
   const loadProviderModels = useCallback(async (providerId: string) => {
     // Don't reload if already loading, but allow reloading if models exist (in case key was updated)
@@ -4838,10 +4983,14 @@ export default function AppShell() {
   }, [refreshDir, workspace.root]);
 
   const addFolderToWorkspace = useCallback(async () => {
+    if (!workspace.root) {
+      await openFolder();
+      return;
+    }
     const folder = await workspacePickFolder();
     if (!folder) return;
     // Multi-root workspaces are not implemented yet; mimic VS Code by switching to the picked folder.
-    window.alert("Multi-root workspace is not implemented yet. Opening the selected folder instead.");
+    notify({ kind: "info", title: "Workspace", message: "Multi-root workspace is not implemented yet. Opening the selected folder instead." });
     const w = await workspaceSet(folder);
     setWorkspaceState(w);
     setSettingsState((s) => ({
@@ -4926,7 +5075,7 @@ export default function AppShell() {
     try {
       const folder = await workspacePickFolder();
       if (!folder) {
-        window.alert("No folder was selected.");
+        notify({ kind: "info", title: "Open folder", message: "No folder was selected." });
         return;
       }
 
@@ -4945,9 +5094,9 @@ export default function AppShell() {
       await refreshRoot();
     } catch (e) {
       devConsoleError("Open folder failed", e);
-      window.alert(`Failed to open folder: ${String(e)}`);
+      notify({ kind: "error", title: "Open folder", message: `Failed to open folder: ${String(e)}` });
     }
-  }, [devConsoleError, refreshRoot]);
+  }, [devConsoleError, notify, refreshRoot]);
 
   const openRecent = useCallback(
     async (root: string) => {
@@ -5462,7 +5611,7 @@ export default function AppShell() {
     try {
       const file = await workspacePickFile();
       if (!file) {
-        window.alert("No file was selected.");
+        notify({ kind: "info", title: "Open file", message: "No file was selected." });
         return;
       }
 
@@ -5488,9 +5637,9 @@ export default function AppShell() {
       rememberRecentFile(file);
     } catch (e) {
       devConsoleError("Open file failed", e);
-      window.alert(`Failed to open file: ${String(e)}`);
+      notify({ kind: "error", title: "Open file", message: `Failed to open file: ${String(e)}` });
     }
-  }, [devConsoleError, openFile, refreshRoot, rememberRecentFile]);
+  }, [devConsoleError, notify, openFile, refreshRoot, rememberRecentFile]);
 
   useEffect(() => {
     if (!autoSaveEnabled) return;
@@ -5559,6 +5708,7 @@ export default function AppShell() {
     const base = baseDirForCreate(selectedPath);
     const name = await requestRelativePath("New file", "", {
       subtitle: base ? `Create in: ${base}` : undefined,
+      inputLabel: "File name (relative)",
       placeholder: "folder/file.ext",
     });
     if (!name) return;
@@ -5580,15 +5730,17 @@ export default function AppShell() {
       if (!raw) {
         setInlineRenamePath(null);
         setInlineRenameValue("");
+        setInlineRenameIsDir(false);
         return;
       }
 
-      const nextName = raw.includes(".") ? raw : `${raw}.txt`;
+      const nextName = inlineRenameIsDir ? raw : raw.includes(".") ? raw : `${raw}.txt`;
       const parent = fromRel.includes("/") ? fromRel.split("/").slice(0, -1).join("/") : "";
       const toRel = parent ? `${parent}/${nextName}` : nextName;
 
       setInlineRenamePath(null);
       setInlineRenameValue("");
+      setInlineRenameIsDir(false);
 
       if (toRel === fromRel) {
         if (opts?.openAfter) await openFile(toRel);
@@ -5625,9 +5777,9 @@ export default function AppShell() {
 
       setSelectedPath(toRel);
       await refreshRoot();
-      if (opts?.openAfter) await openFile(toRel);
+      if (opts?.openAfter && !inlineRenameIsDir) await openFile(toRel);
     },
-    [inlineRenamePath, inlineRenameValue, openFile, refreshRoot]
+    [inlineRenameIsDir, inlineRenamePath, inlineRenameValue, openFile, refreshRoot]
   );
 
   const cancelInlineRename = useCallback(async () => {
@@ -5636,6 +5788,7 @@ export default function AppShell() {
 
     setInlineRenamePath(null);
     setInlineRenameValue("");
+    setInlineRenameIsDir(false);
 
     try {
       await workspaceDelete(fromRel);
@@ -5683,6 +5836,47 @@ export default function AppShell() {
     setSelectedPath(rel);
     setInlineRenamePath(rel);
     setInlineRenameValue(filename);
+    setInlineRenameIsDir(false);
+  }, [baseDirForCreate, explorer, openFolder, refreshDir, selectedPath, workspace.root]);
+
+  const createNewFolderInline = useCallback(async () => {
+    if (!workspace.root) {
+      await openFolder();
+      return;
+    }
+
+    const base = baseDirForCreate(selectedPath);
+    const dirKey = base || "";
+    const siblings = explorer[dirKey] ?? [];
+    const existing = new Set(siblings.map((x) => String(x.name || "").toLowerCase()));
+
+    const baseName = "New Folder";
+    const pickName = (): string => {
+      if (!existing.has(baseName.toLowerCase())) return baseName;
+      for (let i = 2; i <= 99; i++) {
+        const n = `${baseName} (${i})`;
+        if (!existing.has(n.toLowerCase())) return n;
+      }
+      return `${baseName} (${Date.now()})`;
+    };
+
+    const folderName = pickName();
+    const rel = base ? `${base}/${folderName}` : folderName;
+
+    if (base) {
+      setExpandedDirs((prev) => {
+        const next = new Set(prev);
+        next.add(base);
+        return next;
+      });
+    }
+
+    await workspaceCreateDir(rel);
+    await refreshDir(base || undefined);
+    setSelectedPath(rel);
+    setInlineRenamePath(rel);
+    setInlineRenameValue(folderName);
+    setInlineRenameIsDir(true);
   }, [baseDirForCreate, explorer, openFolder, refreshDir, selectedPath, workspace.root]);
 
   const createNewFolder = useCallback(async () => {
@@ -5693,6 +5887,7 @@ export default function AppShell() {
     const base = baseDirForCreate(selectedPath);
     const name = await requestRelativePath("New folder", "", {
       subtitle: base ? `Create in: ${base}` : undefined,
+      inputLabel: "Folder name (relative)",
       placeholder: "folder",
     });
     if (!name) return;
@@ -5707,7 +5902,8 @@ export default function AppShell() {
   const renameSelected = useCallback(async () => {
     if (!selectedPath) return;
     const currentName = basename(selectedPath);
-    const nextName = window.prompt("Rename to", currentName);
+    const nextNameRaw = await requestTextPrompt("Rename to", currentName, { placeholder: currentName });
+    const nextName = String(nextNameRaw ?? "").trim();
     if (!nextName || nextName === currentName) return;
     const parent = selectedPath.includes("/") ? selectedPath.split("/").slice(0, -1).join("/") : "";
     const toRel = parent ? `${parent}/${nextName}` : nextName;
@@ -5743,27 +5939,24 @@ export default function AppShell() {
 
     setSelectedPath(toRel);
     await refreshRoot();
-  }, [refreshRoot, selectedPath]);
+  }, [refreshRoot, requestTextPrompt, selectedPath]);
 
-  const closeAllTabs = useCallback(() => {
+  const closeAllTabs = useCallback(async () => {
+    const dirty = tabs.filter((t) => t.isDirty);
+    if (dirty.length) {
+      const ok = await requestConfirm("Close all", "Close all editors without saving?", { danger: true, confirmLabel: "Close" });
+      if (!ok) return;
+    }
     setTabs((prev) => {
-      for (const t of prev) {
-        if (t.isDirty) {
-          const ok = window.confirm(`Close '${t.name}' without saving?`);
-          if (!ok) return prev;
-        }
-      }
-      for (const t of prev) {
-        revokeTabObjectUrl(t);
-      }
+      for (const t of prev) revokeTabObjectUrl(t);
       return [];
     });
     setActiveTabPath(null);
-  }, []);
+  }, [requestConfirm, tabs]);
 
   const deleteSelected = useCallback(async () => {
     if (!selectedPath) return;
-    const ok = window.confirm(`Delete '${basename(selectedPath)}'?`);
+    const ok = await requestConfirm("Delete", `Delete '${basename(selectedPath)}'?`, { danger: true, confirmLabel: "Delete" });
     if (!ok) return;
     const target = selectedPath;
     await workspaceDelete(target);
@@ -5790,7 +5983,7 @@ export default function AppShell() {
 
     setSelectedPath(null);
     await refreshRoot();
-  }, [refreshRoot, selectedPath]);
+  }, [refreshRoot, requestConfirm, selectedPath]);
 
   useEffect(() => {
     let cancelled = false;
@@ -5828,30 +6021,32 @@ export default function AppShell() {
   }, [searchQuery, workspace.root]);
 
   const closeTab = useCallback(
-    (path: string) => {
+    async (path: string) => {
+      const tab = tabs.find((t) => t.path === path);
+      if (!tab) return;
+      if (tab.isDirty) {
+        const ok = await requestConfirm("Close editor", `Close '${tab.name}' without saving?`, { danger: true, confirmLabel: "Close" });
+        if (!ok) return;
+      }
+
       let nextActive: string | null = activeTabPath;
       setTabs((prev) => {
-        const tab = prev.find((t) => t.path === path);
-        if (tab?.kind === "image" && tab.image?.url?.startsWith("blob:")) {
+        const remaining = prev.filter((t) => t.path !== path);
+        const prevTab = prev.find((t) => t.path === path);
+        if (prevTab?.kind === "image" && prevTab.image?.url?.startsWith("blob:")) {
           try {
-            URL.revokeObjectURL(tab.image.url);
+            URL.revokeObjectURL(prevTab.image.url);
           } catch {
           }
         }
-        if (tab?.isDirty) {
-          const ok = window.confirm(`Close \'${tab.name}\' without saving?`);
-          if (!ok) return prev;
-        }
-        const remaining = prev.filter((t) => t.path !== path);
         if (activeTabPath === path) {
           nextActive = remaining.length ? remaining[remaining.length - 1]!.path : null;
         }
         return remaining;
       });
-
       setActiveTabPath(nextActive);
     },
-    [activeTabPath]
+    [activeTabPath, requestConfirm, tabs]
   );
 
   const saveActiveFile = useCallback(async () => {
@@ -5980,9 +6175,9 @@ export default function AppShell() {
   const revertFile = useCallback(async () => {
     if (!activeTab) return;
     if (activeTab.path.startsWith("untitled:")) {
-      const ok = window.confirm("Revert will close this untitled file. Continue?");
+      const ok = await requestConfirm("Revert", "Revert will close this untitled file. Continue?", { danger: true, confirmLabel: "Revert" });
       if (!ok) return;
-      closeTab(activeTab.path);
+      void closeTab(activeTab.path);
       return;
     }
 
@@ -5992,11 +6187,11 @@ export default function AppShell() {
     }
     const content = await workspaceReadFile(activeTab.path);
     setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, content, isDirty: false } : t)));
-  }, [activeTab, closeTab, refreshImageTab]);
+  }, [activeTab, closeTab, refreshImageTab, requestConfirm]);
 
   const saveWorkspaceAs = useCallback(async () => {
     if (!workspace.root) {
-      window.alert("No folder is open. Open a folder first.");
+      notify({ kind: "info", title: "Workspace", message: "No folder is open. Open a folder first." });
       return;
     }
     const name = await requestRelativePath("Save workspace as", "pompora-workspace.json", {
@@ -6016,7 +6211,7 @@ export default function AppShell() {
 
   const duplicateWorkspace = useCallback(async () => {
     if (!workspace.root) {
-      window.alert("No folder is open. Open a folder first.");
+      notify({ kind: "info", title: "Workspace", message: "No folder is open. Open a folder first." });
       return;
     }
     const name = await requestRelativePath("Duplicate workspace as", "pompora-workspace-copy.json", {
@@ -6058,7 +6253,7 @@ export default function AppShell() {
   );
 
   const closeFolder = useCallback(async () => {
-    const ok = window.confirm("Close folder?");
+    const ok = await requestConfirm("Close folder", "Close folder?", { confirmLabel: "Close" });
     if (!ok) return;
     const w = await workspaceSet(null);
     setWorkspaceState(w);
@@ -6411,7 +6606,11 @@ export default function AppShell() {
 
     let encryptionPassword: string | undefined;
     if (providerNeedsKey && keyStatus?.storage === "encryptedfile") {
-      const pw = window.prompt("Enter encryption password to use your stored provider key");
+      const pw = await requestTextPrompt("Encryption password", "", {
+        subtitle: "Enter password to use your stored provider key",
+        placeholder: "Password",
+        password: true,
+      });
       if (!pw) {
         setChatBusy(false);
         return;
@@ -7251,9 +7450,9 @@ export default function AppShell() {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      window.prompt("Copy to clipboard:", text);
+      await requestTextPrompt("Copy to clipboard", text, { readOnly: true, showCopy: true });
     }
-  }, []);
+  }, [requestTextPrompt]);
 
   useEffect(() => {
     if (!isPaletteOpen) {
@@ -8464,7 +8663,7 @@ export default function AppShell() {
                 onOpenFile={(p) => void openFile(p)}
                 onRefresh={() => void refreshRoot()}
                 onCreateNewFile={() => void createNewFile()}
-                onCreateNewFolder={() => void createNewFolder()}
+                onCreateNewFolder={() => void createNewFolderInline()}
                 onCreateNewTextFileInline={() => void createNewTextFileInline()}
               />
             ) : activity === "search" ? (
@@ -10028,6 +10227,48 @@ export default function AppShell() {
         />
       ) : null}
 
+      {textPromptDialog ? (
+        <TextPromptDialog
+          title={textPromptDialog.title}
+          subtitle={textPromptDialog.subtitle}
+          placeholder={textPromptDialog.placeholder}
+          value={textPromptDialog.value}
+          setValue={(v) => setTextPromptDialog((prev) => (prev ? { ...prev, value: v } : prev))}
+          password={textPromptDialog.password}
+          readOnly={textPromptDialog.readOnly}
+          showCopy={textPromptDialog.showCopy}
+          onClose={() => {
+            const r = textPromptDialog.resolve;
+            setTextPromptDialog(null);
+            r(null);
+          }}
+          onSubmit={(value) => {
+            const r = textPromptDialog.resolve;
+            setTextPromptDialog(null);
+            r(value);
+          }}
+        />
+      ) : null}
+
+      {confirmDialog ? (
+        <ConfirmDialog
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmLabel={confirmDialog.confirmLabel}
+          danger={confirmDialog.danger}
+          onClose={() => {
+            const r = confirmDialog.resolve;
+            setConfirmDialog(null);
+            r(false);
+          }}
+          onConfirm={() => {
+            const r = confirmDialog.resolve;
+            setConfirmDialog(null);
+            r(true);
+          }}
+        />
+      ) : null}
+
       {isQuickOpenOpen ? (
         <QuickOpen
           query={quickOpenQuery}
@@ -10060,6 +10301,7 @@ export default function AppShell() {
         <SavePathDialog
           title={savePathDialog.title}
           subtitle={savePathDialog.subtitle}
+          inputLabel={savePathDialog.inputLabel}
           placeholder={savePathDialog.placeholder}
           value={savePathDialog.value}
           setValue={(v) => setSavePathDialog((prev) => (prev ? { ...prev, value: v } : prev))}
@@ -10085,8 +10327,8 @@ export default function AppShell() {
           y={explorerMenu.y}
           onClose={() => setExplorerMenu(null)}
           items={([
-            { id: "newFile", label: "New File...", icon: <FileText className="h-4 w-4" />, onClick: () => void createNewFile() },
-            { id: "newFolder", label: "New Folder...", icon: <Folder className="h-4 w-4" />, onClick: () => void createNewFolder() },
+            { id: "newFile", label: "New File...", icon: <FileText className="h-4 w-4" />, onClick: () => void createNewTextFileInline() },
+            { id: "newFolder", label: "New Folder...", icon: <Folder className="h-4 w-4" />, onClick: () => void createNewFolderInline() },
             { id: "sep-create", kind: "sep" as const },
             ...(explorerMenu.path === ""
               ? ([
@@ -10297,6 +10539,7 @@ function GoToLine(props: {
 function SavePathDialog(props: {
   title: string;
   subtitle?: string;
+  inputLabel?: string;
   placeholder?: string;
   value: string;
   setValue: (v: string) => void;
@@ -10389,13 +10632,13 @@ function SavePathDialog(props: {
   return (
     <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
       <div
-        className="mx-auto mt-20 w-[640px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl"
+        className="mx-auto mt-16 w-[520px] max-w-[92vw] overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-border p-4">
+        <div className="border-b border-border px-4 py-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-text">{props.title}</div>
+              <div className="text-[13px] font-semibold text-text">{props.title}</div>
               {props.subtitle ? <div className="mt-0.5 text-xs text-muted">{props.subtitle}</div> : null}
             </div>
             <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
@@ -10404,11 +10647,11 @@ function SavePathDialog(props: {
           </div>
         </div>
 
-        <div className="p-4">
-          <div className="text-xs font-medium text-muted">File name (relative)</div>
+        <div className="px-4 py-3">
+          <div className="text-[11px] font-medium text-muted">{props.inputLabel ?? "File name (relative)"}</div>
           <div className="mt-2 flex items-stretch gap-2">
             <input
-              className="h-10 w-full rounded-xl border border-border bg-bg px-3 text-sm text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
               placeholder={props.placeholder ?? "folder/file"}
               autoFocus
               value={props.value}
@@ -10443,12 +10686,12 @@ function SavePathDialog(props: {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 p-4">
-          <div className="text-xs text-muted">Enter to confirm • Esc to cancel</div>
+        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 px-4 py-3">
+          <div className="text-[11px] text-muted">Enter to confirm • Esc to cancel</div>
           <div className="flex items-center gap-2">
           <button
             type="button"
-            className="ws-btn ws-btn-secondary h-9 px-4"
+            className="ws-btn ws-btn-secondary h-8 px-3 text-[13px]"
             onClick={props.onClose}
           >
             Cancel
@@ -10456,7 +10699,7 @@ function SavePathDialog(props: {
           <button
             type="button"
             disabled={!isValid}
-            className="ws-btn h-9 border border-accent bg-accent px-4 text-white hover:opacity-90 disabled:opacity-50"
+            className="ws-btn h-8 border border-accent bg-accent px-3 text-[13px] text-white hover:opacity-90 disabled:opacity-50"
             onClick={() => {
               const v = normalize(props.value);
               if (v) props.onSubmit(v);
@@ -10658,6 +10901,40 @@ function Tree(props: {
           const isExpanded = props.expandedDirs.has(e.path);
           const children = props.explorer[e.path] ?? [];
           const isRoot = e.path === "";
+
+          if (props.inlineRenamePath === e.path && !isRoot) {
+            return (
+              <div
+                key={e.path}
+                className={`group relative flex w-full items-center gap-2 rounded-none pr-2 py-1 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
+                style={{ paddingLeft: indentPx }}
+              >
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted" />
+                <Folder className="h-4 w-4 shrink-0 text-muted" />
+                <input
+                  className="min-w-0 flex-1 rounded border border-border bg-bg px-1 py-0.5 text-[13px] text-text outline-none focus-visible:border-accent"
+                  autoFocus
+                  value={props.inlineRenameValue}
+                  onChange={(ev) => props.onInlineRenameValue(ev.currentTarget.value)}
+                  onFocus={(ev) => ev.currentTarget.select()}
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter") {
+                      ev.preventDefault();
+                      props.onInlineRenameCommit();
+                      return;
+                    }
+                    if (ev.key === "Escape") {
+                      ev.preventDefault();
+                      props.onInlineRenameCancel();
+                      return;
+                    }
+                  }}
+                  onBlur={() => props.onInlineRenameCommit()}
+                />
+              </div>
+            );
+          }
+
           return (
             <div key={e.path}>
               <button
@@ -10830,14 +11107,14 @@ function ContextMenu(props: {
   return (
     <div className="fixed inset-0 z-50" onMouseDown={props.onClose}>
       <div
-        className="absolute w-max min-w-64 max-w-[calc(100vw-16px)] overflow-hidden rounded-2xl border border-[#1A191C] bg-panel p-1 shadow-2xl"
+        className="absolute w-max min-w-52 max-w-[calc(100vw-16px)] overflow-hidden rounded-xl border border-border bg-panel p-1 shadow-2xl"
         style={{ left: pos.x, top: pos.y }}
         onMouseDown={(e) => e.stopPropagation()}
         ref={rootRef}
       >
         {props.items.map((it) => {
           if ((it as any).kind === "sep") {
-            return <div key={it.id} className="my-1 h-px bg-border/70" />;
+            return <div key={it.id} className="h-1" />;
           }
           const item = it as { id: string; kind?: "normal" | "danger"; label: string; icon?: React.ReactNode; onClick: () => void };
           const danger = item.kind === "danger";
@@ -10845,10 +11122,8 @@ function ContextMenu(props: {
             <button
               key={item.id}
               type="button"
-              className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[13px] leading-4 ${
-                danger
-                  ? "text-red-300 hover:bg-bg hover:text-red-200"
-                  : "text-text/90 hover:bg-bg hover:text-text"
+              className={`flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[12px] leading-4 ${
+                danger ? "text-red-300 hover:bg-red-500/10 hover:text-red-200" : "text-text/90 hover:bg-bg/60 hover:text-text"
               }`}
               onClick={() => {
                 item.onClick();
