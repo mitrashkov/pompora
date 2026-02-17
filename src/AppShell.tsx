@@ -1801,6 +1801,95 @@ function MenuItem(props: {
   );
 }
 
+type PopupMenuItem =
+  | { id: string; kind?: "normal" | "danger"; label: string; icon?: React.ReactNode; shortcut?: string; right?: React.ReactNode; onClick: () => void }
+  | { id: string; kind: "sep" };
+
+function PopupMenu(props: {
+  anchor: DOMRect;
+  approxWidth?: number;
+  approxHeight?: number;
+  onClose: () => void;
+  items: PopupMenuItem[];
+}) {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: props.anchor.left, y: props.anchor.bottom + 6 });
+
+  useEffect(() => {
+    const pad = 8;
+    const approxWidth = Math.max(220, Math.floor(props.approxWidth ?? 288));
+    const approxHeight = Math.max(120, Math.floor(props.approxHeight ?? 360));
+    const desiredX = props.anchor.left;
+    const desiredY = props.anchor.bottom + 6;
+
+    const x = clamp(desiredX, pad, Math.max(pad, window.innerWidth - approxWidth - pad));
+
+    const canOpenBelow = desiredY + approxHeight <= window.innerHeight - pad;
+    const openY = canOpenBelow ? desiredY : props.anchor.top - approxHeight - 6;
+    const y = clamp(openY, pad, Math.max(pad, window.innerHeight - approxHeight - pad));
+
+    setPos({ x, y });
+  }, [props.anchor.bottom, props.anchor.left, props.anchor.top, props.approxHeight, props.approxWidth, props.items.length]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") props.onClose();
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [props.onClose]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999]" onMouseDown={props.onClose}>
+      <div
+        ref={rootRef}
+        className="absolute w-max min-w-64 max-w-[calc(100vw-16px)] overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+        style={{ left: pos.x, top: pos.y }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        {props.items.map((it) => {
+          if ((it as any).kind === "sep") {
+            return <div key={it.id} className="my-1 h-px bg-border/70" />;
+          }
+          const item = it as {
+            id: string;
+            kind?: "normal" | "danger";
+            label: string;
+            icon?: React.ReactNode;
+            shortcut?: string;
+            right?: React.ReactNode;
+            onClick: () => void;
+          };
+          const danger = item.kind === "danger";
+          return (
+            <button
+              key={item.id}
+              type="button"
+              className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[13px] leading-4 ${
+                danger ? "text-red-300 hover:bg-red-500/10" : "text-text hover:bg-bg"
+              }`}
+              onClick={() => {
+                item.onClick();
+                props.onClose();
+              }}
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                {item.icon ? <span className="shrink-0 text-muted">{item.icon}</span> : null}
+                <span className="truncate">{item.label}</span>
+              </span>
+              <span className="flex items-center gap-2 text-[11px] text-muted">
+                {item.shortcut ? <span className="whitespace-nowrap">{item.shortcut}</span> : null}
+                {item.right ?? null}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function basename(p: string) {
   const norm = p.replace(/\\/g, "/");
   const parts = norm.split("/").filter(Boolean);
@@ -10435,6 +10524,27 @@ function Explorer(props: {
   onCreateNewFolder: () => void;
   onCreateNewTextFileInline: () => void;
 }) {
+  const [toolbarMenu, setToolbarMenu] = useState<{ anchor: DOMRect; kind: "file" | "folder" } | null>(null);
+
+  const toolbarItems = useMemo<PopupMenuItem[]>(() => {
+    if (!toolbarMenu) return [];
+    if (toolbarMenu.kind === "file") {
+      return [
+        { id: "newText", label: "New Text File", icon: <FileText className="h-4 w-4" />, onClick: () => props.onCreateNewTextFileInline() },
+        { id: "newFile", label: "New File...", icon: <FileText className="h-4 w-4" />, onClick: () => props.onCreateNewFile() },
+        { id: "newFolder", label: "New Folder...", icon: <Folder className="h-4 w-4" />, onClick: () => props.onCreateNewFolder() },
+        { id: "sep", kind: "sep" as const },
+        { id: "refresh", label: "Refresh", icon: <RotateCw className="h-4 w-4" />, onClick: () => props.onRefresh() },
+      ];
+    }
+    return [
+      { id: "newFolder", label: "New Folder...", icon: <Folder className="h-4 w-4" />, onClick: () => props.onCreateNewFolder() },
+      { id: "newFile", label: "New File...", icon: <FileText className="h-4 w-4" />, onClick: () => props.onCreateNewFile() },
+      { id: "sep", kind: "sep" as const },
+      { id: "refresh", label: "Refresh", icon: <RotateCw className="h-4 w-4" />, onClick: () => props.onRefresh() },
+    ];
+  }, [props, toolbarMenu]);
+
   if (!props.workspaceRoot) {
     return (
       <Panel title="Explorer">
@@ -10471,14 +10581,18 @@ function Explorer(props: {
           <button
             type="button"
             className="ws-icon-btn"
-            onClick={props.onCreateNewFile}
+            onClick={(e) => {
+              setToolbarMenu({ anchor: e.currentTarget.getBoundingClientRect(), kind: "file" });
+            }}
           >
             <FileText className="h-4 w-4" />
           </button>
           <button
             type="button"
             className="ws-icon-btn"
-            onClick={props.onCreateNewFolder}
+            onClick={(e) => {
+              setToolbarMenu({ anchor: e.currentTarget.getBoundingClientRect(), kind: "folder" });
+            }}
           >
             <Folder className="h-4 w-4" />
           </button>
@@ -10491,6 +10605,10 @@ function Explorer(props: {
           </button>
         </div>
       </div>
+
+      {toolbarMenu ? (
+        <PopupMenu anchor={toolbarMenu.anchor} onClose={() => setToolbarMenu(null)} items={toolbarItems} approxWidth={288} />
+      ) : null}
 
       <div className="min-h-0 flex-1 overflow-auto p-1">
         <Tree
