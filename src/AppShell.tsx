@@ -9870,8 +9870,10 @@ export default function AppShell() {
                         })}
                       </div>
                     ) : (
-                      <div className="flex min-h-[240px] flex-col items-center text-center">
-                        <div className="mt-2 text-[22px] font-semibold tracking-tight text-text">Pompora Code</div>
+                      <div className="flex min-h-[240px] flex-col items-center justify-center text-center">
+                        <div className="mt-2 text-[22px] font-semibold tracking-tight text-text">
+                          {authProfile?.first_name ? `Welcome back, ${authProfile.first_name}` : "Welcome back"}
+                        </div>
                         <div className="mt-1 max-w-[360px] text-sm leading-relaxed text-muted">Build and improve your codebase — privately.</div>
 
                         {!authProfile ? (
