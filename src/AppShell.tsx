@@ -61,7 +61,6 @@ import {
   Trash2,
   ThumbsDown,
   ThumbsUp,
-  Wand2,
   X,
 } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -2733,7 +2732,6 @@ export default function AppShell() {
     const all = chatSessions
       .slice()
       .sort((a, b) => b.updatedAt - a.updatedAt)
-      .filter((s) => s.messages.some((m) => m.role === "user"))
       .map((s) => {
         if (!tokens.length) return { s, score: 0, titleMatch: true };
 
@@ -9507,7 +9505,7 @@ export default function AppShell() {
                             });
                           }}
                         >
-                          <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
+                          <ChevronDown className={`relative top-[1px] h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
                         </button>
                       </div>
                       <button
@@ -9911,64 +9909,7 @@ export default function AppShell() {
                               </div>
                             </div>
                           </div>
-                        ) : (
-                          <div className="mt-5 w-full max-w-[420px]">
-                            <div className="grid grid-cols-1 gap-2">
-                              {[
-                                {
-                                  label: "Explain current file",
-                                  Icon: FileText,
-                                  prompt:
-                                    "Explain what the currently open file does. Summarize intent, key flows, and anything risky or confusing.",
-                                },
-                                {
-                                  label: "Find bugs",
-                                  Icon: AlertTriangle,
-                                  prompt:
-                                    "Review the current code and list potential bugs, edge cases, and footguns. Propose minimal fixes.",
-                                },
-                                {
-                                  label: "Refactor",
-                                  Icon: Wand2,
-                                  prompt:
-                                    "Refactor the current code for readability and maintainability. Keep behavior the same; propose small, safe steps.",
-                                },
-                                {
-                                  label: "Add a feature",
-                                  Icon: Plus,
-                                  prompt:
-                                    "Help me add a small feature to the current file. Ask 2-3 clarifying questions first, then propose an implementation plan.",
-                                },
-                              ].map((s) => (
-                                <button
-                                  key={s.label}
-                                  type="button"
-                                  className={`group flex w-full items-center justify-between gap-3 rounded-2xl border border-border/60 bg-bg/30 px-3 py-2 text-left backdrop-blur-sm transition-all hover:border-accent/50 hover:bg-panel/40 focus-visible:outline-none ${
-                                    canUseAi ? "" : "cursor-not-allowed opacity-60"
-                                  }`}
-                                  onClick={() => {
-                                    if (!canUseAi) {
-                                      openSettingsTab();
-                                      return;
-                                    }
-                                    setActiveChatDraft(s.prompt);
-                                    window.setTimeout(() => {
-                                      void sendChatRef.current?.();
-                                    }, 0);
-                                  }}
-                                >
-                                  <div className="flex min-w-0 items-center gap-2">
-                                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[rgb(var(--p-panel2))]">
-                                      <s.Icon className="h-4 w-4 text-text" />
-                                    </span>
-                                    <span className="truncate text-[13px] font-medium text-text">{s.label}</span>
-                                  </div>
-                                  <ChevronRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5" />
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        ) : null}
                       </div>
                     )}
                 </div>
