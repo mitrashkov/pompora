@@ -5557,14 +5557,19 @@ export default function AppShell() {
       return;
     }
     const base = baseDirForCreate(selectedPath);
-    const name = window.prompt("New file name");
+    const name = await requestRelativePath("New file", "", {
+      subtitle: base ? `Create in: ${base}` : undefined,
+      placeholder: "folder/file.ext",
+    });
     if (!name) return;
-    const rel = base ? `${base}/${name}` : name;
+    const relName = normalizeRelPath(name);
+    if (!relName) return;
+    const rel = base ? `${base}/${relName}` : relName;
     await workspaceWriteFile(rel, "");
     await refreshDir(base || undefined);
     setSelectedPath(rel);
     await openFile(rel);
-  }, [baseDirForCreate, openFile, openFolder, refreshDir, selectedPath, workspace.root]);
+  }, [baseDirForCreate, openFile, openFolder, refreshDir, requestRelativePath, selectedPath, workspace.root]);
 
   const commitInlineRename = useCallback(
     async (opts?: { openAfter?: boolean }) => {
@@ -5686,13 +5691,18 @@ export default function AppShell() {
       return;
     }
     const base = baseDirForCreate(selectedPath);
-    const name = window.prompt("New folder name");
+    const name = await requestRelativePath("New folder", "", {
+      subtitle: base ? `Create in: ${base}` : undefined,
+      placeholder: "folder",
+    });
     if (!name) return;
-    const rel = base ? `${base}/${name}` : name;
+    const relName = normalizeRelPath(name);
+    if (!relName) return;
+    const rel = base ? `${base}/${relName}` : relName;
     await workspaceCreateDir(rel);
     await refreshDir(base || undefined);
     setSelectedPath(rel);
-  }, [baseDirForCreate, openFolder, refreshDir, selectedPath, workspace.root]);
+  }, [baseDirForCreate, openFolder, refreshDir, requestRelativePath, selectedPath, workspace.root]);
 
   const renameSelected = useCallback(async () => {
     if (!selectedPath) return;
@@ -10524,27 +10534,6 @@ function Explorer(props: {
   onCreateNewFolder: () => void;
   onCreateNewTextFileInline: () => void;
 }) {
-  const [toolbarMenu, setToolbarMenu] = useState<{ anchor: DOMRect; kind: "file" | "folder" } | null>(null);
-
-  const toolbarItems = useMemo<PopupMenuItem[]>(() => {
-    if (!toolbarMenu) return [];
-    if (toolbarMenu.kind === "file") {
-      return [
-        { id: "newText", label: "New Text File", icon: <FileText className="h-4 w-4" />, onClick: () => props.onCreateNewTextFileInline() },
-        { id: "newFile", label: "New File...", icon: <FileText className="h-4 w-4" />, onClick: () => props.onCreateNewFile() },
-        { id: "newFolder", label: "New Folder...", icon: <Folder className="h-4 w-4" />, onClick: () => props.onCreateNewFolder() },
-        { id: "sep", kind: "sep" as const },
-        { id: "refresh", label: "Refresh", icon: <RotateCw className="h-4 w-4" />, onClick: () => props.onRefresh() },
-      ];
-    }
-    return [
-      { id: "newFolder", label: "New Folder...", icon: <Folder className="h-4 w-4" />, onClick: () => props.onCreateNewFolder() },
-      { id: "newFile", label: "New File...", icon: <FileText className="h-4 w-4" />, onClick: () => props.onCreateNewFile() },
-      { id: "sep", kind: "sep" as const },
-      { id: "refresh", label: "Refresh", icon: <RotateCw className="h-4 w-4" />, onClick: () => props.onRefresh() },
-    ];
-  }, [props, toolbarMenu]);
-
   if (!props.workspaceRoot) {
     return (
       <Panel title="Explorer">
@@ -10581,18 +10570,14 @@ function Explorer(props: {
           <button
             type="button"
             className="ws-icon-btn"
-            onClick={(e) => {
-              setToolbarMenu({ anchor: e.currentTarget.getBoundingClientRect(), kind: "file" });
-            }}
+            onClick={props.onCreateNewTextFileInline}
           >
             <FileText className="h-4 w-4" />
           </button>
           <button
             type="button"
             className="ws-icon-btn"
-            onClick={(e) => {
-              setToolbarMenu({ anchor: e.currentTarget.getBoundingClientRect(), kind: "folder" });
-            }}
+            onClick={props.onCreateNewFolder}
           >
             <Folder className="h-4 w-4" />
           </button>
@@ -10605,10 +10590,6 @@ function Explorer(props: {
           </button>
         </div>
       </div>
-
-      {toolbarMenu ? (
-        <PopupMenu anchor={toolbarMenu.anchor} onClose={() => setToolbarMenu(null)} items={toolbarItems} approxWidth={288} />
-      ) : null}
 
       <div className="min-h-0 flex-1 overflow-auto p-1">
         <Tree
