@@ -261,27 +261,32 @@ function TextPromptDialog(props: {
   const canSubmit = !props.readOnly;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+    <div className="fixed inset-0 z-50 bg-black/45" onMouseDown={props.onClose}>
       <div
-        className="mx-auto mt-16 w-[520px] max-w-[92vw] overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
+        className="mx-auto mt-16 w-[420px] max-w-[92vw] overflow-hidden rounded-xl border border-border/70 bg-panel2 shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-border px-4 py-3">
+        <div className="px-4 pt-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[13px] font-semibold text-text">{props.title}</div>
               {props.subtitle ? <div className="mt-0.5 text-xs text-muted">{props.subtitle}</div> : null}
             </div>
-            <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
+            <button
+              type="button"
+              className="ws-icon-btn rounded-lg active:bg-red-500/15 active:text-red-200"
+              onClick={props.onClose}
+              aria-label="Close"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="px-4 py-3">
+        <div className="px-4 pb-4 pt-3">
           <div className="flex items-stretch gap-2">
             <input
-              className="h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="h-9 w-full rounded-lg border border-border/70 bg-bg/40 px-3 text-[13px] text-text placeholder:text-muted caret-accent selection:bg-accent/25 focus:outline-none focus:ring-2 focus:ring-accent/25"
               placeholder={props.placeholder ?? ""}
               autoFocus
               value={props.value}
@@ -292,13 +297,12 @@ function TextPromptDialog(props: {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 px-4 py-3">
-          <div className="text-[11px] text-muted">{props.readOnly ? "Esc to close" : "Enter to confirm • Esc to cancel"}</div>
+        <div className="flex items-center justify-end gap-2 px-4 pb-4">
           <div className="flex items-center gap-2">
             {props.showCopy ? (
               <button
                 type="button"
-                className="ws-btn ws-btn-secondary h-8 px-3 text-[13px]"
+                className="ws-btn ws-btn-secondary h-8 rounded-lg px-3 text-[13px]"
                 onClick={() => {
                   void navigator.clipboard.writeText(String(props.value ?? "")).catch(() => {});
                 }}
@@ -306,13 +310,13 @@ function TextPromptDialog(props: {
                 Copy
               </button>
             ) : null}
-            <button type="button" className="ws-btn ws-btn-secondary h-8 px-3 text-[13px]" onClick={props.onClose}>
+            <button type="button" className="ws-btn ws-btn-secondary h-8 rounded-lg px-3 text-[13px]" onClick={props.onClose}>
               {props.readOnly ? "Close" : "Cancel"}
             </button>
             {canSubmit ? (
               <button
                 type="button"
-                className="ws-btn h-8 border border-accent bg-accent px-3 text-[13px] text-white hover:opacity-90"
+                className="ws-btn h-8 rounded-lg border border-accent bg-accent px-3 text-[13px] text-white hover:opacity-90"
                 onClick={() => props.onSubmit(String(props.value ?? ""))}
               >
                 OK
@@ -354,33 +358,37 @@ function ConfirmDialog(props: {
     : "ws-btn h-8 border border-accent bg-accent px-3 text-[13px] text-white hover:opacity-90";
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+    <div className="fixed inset-0 z-50 bg-black/45" onMouseDown={props.onClose}>
       <div
-        className="mx-auto mt-16 w-[520px] max-w-[92vw] overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
+        className="mx-auto mt-16 w-[420px] max-w-[92vw] overflow-hidden rounded-xl border border-border/70 bg-panel2 shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-border px-4 py-3">
+        <div className="px-4 pt-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[13px] font-semibold text-text">{props.title}</div>
             </div>
-            <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
+            <button
+              type="button"
+              className="ws-icon-btn rounded-lg active:bg-red-500/15 active:text-red-200"
+              onClick={props.onClose}
+              aria-label="Close"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="px-4 py-3">
+        <div className="px-4 pb-4 pt-3">
           <div className="text-[13px] text-muted whitespace-pre-wrap">{props.message}</div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 px-4 py-3">
-          <div className="text-[11px] text-muted">Enter to confirm • Esc to cancel</div>
+        <div className="flex items-center justify-end gap-2 px-4 pb-4">
           <div className="flex items-center gap-2">
-            <button type="button" className="ws-btn ws-btn-secondary h-8 px-3 text-[13px]" onClick={props.onClose}>
+            <button type="button" className="ws-btn ws-btn-secondary h-8 rounded-lg px-3 text-[13px]" onClick={props.onClose}>
               Cancel
             </button>
-            <button type="button" className={confirmClass} onClick={props.onConfirm}>
+            <button type="button" className={`${confirmClass} rounded-lg`} onClick={props.onConfirm}>
               {confirmLabel}
             </button>
           </div>
@@ -2644,7 +2652,7 @@ export default function AppShell() {
     return [
       {
         id: initialChatIdRef.current,
-        title: "Chat 1",
+        title: "New Chat",
         createdAt: now,
         updatedAt: now,
         messages: [],
@@ -2665,6 +2673,8 @@ export default function AppShell() {
   const [terminalHeight, setTerminalHeight] = useState(240);
   const [panelTab, setPanelTab] = useState<"problems" | "output" | "debug" | "terminal" | "ports">("terminal");
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
+  const [chatInlineRenameId, setChatInlineRenameId] = useState<string | null>(null);
+  const [chatInlineRenameValue, setChatInlineRenameValue] = useState<string>("");
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
   const [uiPomporaThinking, setUiPomporaThinking] = useState<"slow" | "fast" | "reasoning" | null>(null);
   const [providerModels, setProviderModels] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
@@ -2852,7 +2862,7 @@ export default function AppShell() {
       } else {
         const now = Date.now();
         const id = `${now}-${Math.random().toString(16).slice(2)}`;
-        setChatSessions([{ id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
+        setChatSessions([{ id, title: "New Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
         setActiveChatId(id);
       }
 
@@ -2966,17 +2976,6 @@ export default function AppShell() {
     return () => window.removeEventListener("mousedown", onDown);
   }, [isChatHistoryOpen]);
 
-  const nextChatTitle = useMemo(() => {
-    const nums = chatSessions
-      .map((s) => {
-        const m = s.title.match(/\bChat\s+(\d+)\b/i);
-        return m ? Number(m[1]) : null;
-      })
-      .filter((n): n is number => typeof n === "number" && Number.isFinite(n));
-    const max = nums.length ? Math.max(...nums) : 0;
-    return `Chat ${max + 1}`;
-  }, [chatSessions]);
-
   const deleteChatSession = useCallback(
     (id: string) => {
       let nextActive: string | null = null;
@@ -2992,7 +2991,7 @@ export default function AppShell() {
             const now = Date.now();
             const newId = `${now}-${Math.random().toString(16).slice(2)}`;
             nextActive = newId;
-            return [{ id: newId, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }];
+            return [{ id: newId, title: "New Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }];
           }
         }
         return remaining.length ? remaining : prev;
@@ -3005,18 +3004,21 @@ export default function AppShell() {
     [activeChatId]
   );
 
-  const renameChatSession = useCallback(
+  const commitChatInlineRename = useCallback(
     (id: string) => {
-      void (async () => {
-        const current = chatSessions.find((s) => s.id === id);
-        const next = await requestTextPrompt("Chat name", current?.title || "Chat", { placeholder: "Chat" });
-        const title = String(next ?? "").trim();
-        if (!title) return;
-        setChatSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title, updatedAt: Date.now() } : s)));
-      })();
+      const raw = chatInlineRenameValue.trim();
+      setChatInlineRenameId(null);
+      setChatInlineRenameValue("");
+      if (!raw) return;
+      setChatSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title: raw, updatedAt: Date.now() } : s)));
     },
-    [chatSessions, requestTextPrompt]
+    [chatInlineRenameValue]
   );
+
+  const cancelChatInlineRename = useCallback(() => {
+    setChatInlineRenameId(null);
+    setChatInlineRenameValue("");
+  }, []);
 
   const setActiveChatTitle = useCallback(
     (title: string) => {
@@ -4700,7 +4702,7 @@ export default function AppShell() {
     }
     const now = Date.now();
     const id = `${now}-${Math.random().toString(16).slice(2)}`;
-    setChatSessions([{ id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
+    setChatSessions([{ id, title: "New Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
     setActiveChatId(id);
     notify({ kind: "info", title: "Privacy", message: "Chat history deleted" });
   }, [notify, requestConfirm]);
@@ -4789,7 +4791,7 @@ export default function AppShell() {
 
     const now = Date.now();
     const id = `${now}-${Math.random().toString(16).slice(2)}`;
-    setChatSessions([{ id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
+    setChatSessions([{ id, title: "New Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
     setActiveChatId(id);
 
     setSettingsState({
@@ -9516,7 +9518,7 @@ export default function AppShell() {
                           const id = `${now}-${Math.random().toString(16).slice(2)}`;
                           setChatSessions((prev) => [
                             ...prev,
-                            { id, title: nextChatTitle, createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null },
+                            { id, title: "New Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null },
                           ]);
                           setActiveChatId(id);
                           setIsChatHistoryOpen(false);
@@ -9549,6 +9551,7 @@ export default function AppShell() {
                         <div className="min-h-0 flex-1 overflow-auto p-1">
                           {chatHistorySessions.length ? (
                             chatHistorySessions.map((s) => {
+                              const isInline = chatInlineRenameId === s.id;
                               return (
                                 <button
                                   key={s.id}
@@ -9557,13 +9560,37 @@ export default function AppShell() {
                                     s.id === activeChatId ? "bg-bg" : ""
                                   }`}
                                   onClick={() => {
+                                    if (isInline) return;
                                     setActiveChatId(s.id);
                                     setIsChatHistoryOpen(false);
                                     window.setTimeout(() => chatComposerRef.current?.focus(), 0);
                                   }}
                                 >
                                   <div className="min-w-0 flex-1">
-                                    <div className="truncate text-[12px] text-text">{s.title}</div>
+                                    {isInline ? (
+                                      <input
+                                        className="w-full rounded-lg border border-border/70 bg-bg/40 px-2 py-1 text-[13px] text-text placeholder:text-muted caret-accent selection:bg-accent/25 focus:outline-none focus:ring-2 focus:ring-accent/25"
+                                        autoFocus
+                                        value={chatInlineRenameValue}
+                                        onChange={(e) => setChatInlineRenameValue(e.currentTarget.value)}
+                                        onFocus={(e) => e.currentTarget.select()}
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            commitChatInlineRename(s.id);
+                                            return;
+                                          }
+                                          if (e.key === "Escape") {
+                                            e.preventDefault();
+                                            cancelChatInlineRename();
+                                            return;
+                                          }
+                                        }}
+                                        onBlur={() => commitChatInlineRename(s.id)}
+                                      />
+                                    ) : (
+                                      <div className="truncate text-[12px] text-text">{s.title}</div>
+                                    )}
                                     <div className="truncate text-[11px] text-muted">{formatRelTime(s.updatedAt)}</div>
                                   </div>
 
@@ -9573,7 +9600,8 @@ export default function AppShell() {
                                       className="ws-icon-btn h-7 w-7 rounded-xl bg-panel2 active:bg-bg"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        renameChatSession(s.id);
+                                        setChatInlineRenameId(s.id);
+                                        setChatInlineRenameValue(s.title);
                                       }}
                                       aria-label="Rename chat"
                                     >
@@ -10630,38 +10658,43 @@ function SavePathDialog(props: {
   const isValid = !!normalizedPreview;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+    <div className="fixed inset-0 z-50 bg-black/45" onMouseDown={props.onClose}>
       <div
-        className="mx-auto mt-16 w-[520px] max-w-[92vw] overflow-hidden rounded-xl border border-border bg-panel shadow-2xl"
+        className="mx-auto mt-16 w-[420px] max-w-[92vw] overflow-hidden rounded-xl border border-border/70 bg-panel2 shadow-2xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-border px-4 py-3">
+        <div className="px-4 pt-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[13px] font-semibold text-text">{props.title}</div>
               {props.subtitle ? <div className="mt-0.5 text-xs text-muted">{props.subtitle}</div> : null}
             </div>
-            <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
+            <button
+              type="button"
+              className="ws-icon-btn rounded-lg active:bg-red-500/15 active:text-red-200"
+              onClick={props.onClose}
+              aria-label="Close"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="px-4 py-3">
+        <div className="px-4 pb-4 pt-3">
           <div className="text-[11px] font-medium text-muted">{props.inputLabel ?? "File name (relative)"}</div>
           <div className="mt-2 flex items-stretch gap-2">
             <input
-              className="h-9 w-full rounded-lg border border-border bg-bg px-3 text-[13px] text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="h-9 w-full rounded-lg border border-border/70 bg-bg/40 px-3 text-[13px] text-text placeholder:text-muted caret-accent selection:bg-accent/25 focus:outline-none focus:ring-2 focus:ring-accent/25"
               placeholder={props.placeholder ?? "folder/file"}
               autoFocus
               value={props.value}
               onChange={(e) => props.setValue(e.currentTarget.value)}
             />
             {extensions.length ? (
-              <div className="flex h-10 items-center gap-2 rounded-xl border border-border bg-bg px-3">
-                <span className="text-xs text-muted">.</span>
+              <div className="flex h-9 items-center gap-2 rounded-lg border border-border/70 bg-bg/40 px-3">
+                <span className="text-[12px] text-muted">.</span>
                 <select
-                  className="bg-transparent text-sm text-text focus:outline-none"
+                  className="bg-transparent text-[13px] text-text focus:outline-none"
                   value={selectedExt}
                   onChange={(e) => setSelectedExt(e.currentTarget.value)}
                 >
@@ -10675,38 +10708,33 @@ function SavePathDialog(props: {
             ) : null}
           </div>
 
-          <div className="mt-2 text-xs">
-            {isValid ? (
-              <span className="text-muted">
-                Will save as <span className="text-text">{normalizedPreview}</span>
-              </span>
-            ) : (
-              <span className="text-red-300">Enter a file name</span>
-            )}
-          </div>
+          {normalizedPreview ? (
+            <div className="mt-2 truncate text-[11px] text-muted">{normalizedPreview}</div>
+          ) : (
+            <div className="mt-2 text-[11px] text-red-300">Enter a name</div>
+          )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 px-4 py-3">
-          <div className="text-[11px] text-muted">Enter to confirm • Esc to cancel</div>
+        <div className="flex items-center justify-end gap-2 px-4 pb-4">
           <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className="ws-btn ws-btn-secondary h-8 px-3 text-[13px]"
-            onClick={props.onClose}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={!isValid}
-            className="ws-btn h-8 border border-accent bg-accent px-3 text-[13px] text-white hover:opacity-90 disabled:opacity-50"
-            onClick={() => {
-              const v = normalize(props.value);
-              if (v) props.onSubmit(v);
-            }}
-          >
-            OK
-          </button>
+            <button
+              type="button"
+              className="ws-btn ws-btn-secondary h-8 rounded-lg px-3 text-[13px]"
+              onClick={props.onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={!isValid}
+              className="ws-btn h-8 rounded-lg border border-accent bg-accent px-3 text-[13px] text-white hover:opacity-90 disabled:opacity-50"
+              onClick={() => {
+                const v = normalize(props.value);
+                if (v) props.onSubmit(v);
+              }}
+            >
+              OK
+            </button>
           </div>
         </div>
       </div>
@@ -11107,7 +11135,7 @@ function ContextMenu(props: {
   return (
     <div className="fixed inset-0 z-50" onMouseDown={props.onClose}>
       <div
-        className="absolute w-max min-w-52 max-w-[calc(100vw-16px)] overflow-hidden rounded-xl border border-border bg-panel p-1 shadow-2xl"
+        className="absolute w-max min-w-48 max-w-[calc(100vw-16px)] overflow-hidden rounded-xl border border-border/70 bg-panel2 p-1 shadow-2xl"
         style={{ left: pos.x, top: pos.y }}
         onMouseDown={(e) => e.stopPropagation()}
         ref={rootRef}
