@@ -320,7 +320,7 @@ body {
   }
 
   .ws-vscode-btn {
-    @apply inline-flex items-center justify-center rounded-md border border-border bg-bg px-3 py-1.5 text-[12px] text-text hover:border-accent;
+    @apply inline-flex items-center justify-center rounded-md border border-border bg-bg px-3 py-1.5 text-[12px] text-text hover:border-border;
   }
 
   .ws-vscode-btn-primary {
