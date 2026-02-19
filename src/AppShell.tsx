@@ -22606,6 +22606,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
   const ShortcutEditor = (p: {
 
     commandId: string;
@@ -24111,10 +24112,10 @@ return (
       {/* Search */}
       <div className="px-4 pb-4">
         <div className="relative group">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted/40 transition-colors group-focus-within:text-accent" />
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted/40 transition-colors group-focus-within:text-text" />
           <input
-            className="w-full h-9 rounded-lg bg-bg border border-border/60 pl-9 pr-3 text-[12px] text-text outline-none transition-all placeholder:text-muted/60 focus:border-accent/40 focus:ring-1 focus:ring-accent/10 shadow-sm"
-            placeholder="Search settings Ctrl+F"
+            className="w-full h-9 rounded-lg bg-bg border border-border/60 pl-9 pr-3 text-[12px] text-text outline-none transition-all placeholder:text-muted/60 focus:border-border focus:ring-1 focus:ring-border/20 shadow-sm"
+            placeholder="Search settings"
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
           />
@@ -24164,8 +24165,8 @@ return (
           </div>
         </div>
 
-          <div className="bg-panel rounded-2xl border border-border/60 overflow-hidden shadow-2xl ring-1 ring-white/5">
-            {filteredItems.length ? (
+          {filteredItems.length > 0 && (
+            <div className="bg-panel rounded-2xl border border-border/60 overflow-hidden shadow-2xl ring-1 ring-white/5">
               <div className="divide-y divide-border/10">
                 {filteredItems.map((it) => (
                   <div
@@ -24184,13 +24185,15 @@ return (
                   </div>
                 ))}
               </div>
-            ) : (
-              <div className="p-16 text-center">
-                <Search className="h-10 w-10 text-muted/10 mx-auto mb-4" />
-                <div className="text-muted text-[13px] font-normal">No settings found matching your search.</div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {query && filteredItems.length === 0 && (
+            <div className="p-16 text-center">
+              <Search className="h-10 w-10 text-muted/10 mx-auto mb-4" />
+              <div className="text-muted text-[13px] font-normal">No settings found matching your search.</div>
+            </div>
+          )}
 
           {/* AI Section Footer Logic */}
           {activeSection === "ai" && !query && (
