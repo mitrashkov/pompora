@@ -200,6 +200,14 @@ import {
 
   workspaceSet,
 
+  workspaceAddRoot,
+
+  workspaceRemoveRoot,
+
+  fsReadFileAbs,
+
+  fsReadFileAbsBase64,
+
   terminalStart,
 
   terminalWrite,
@@ -235,10 +243,6 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
   "view.navigateForward": "Alt+ArrowRight",
 
 
-
-  "file.newTextFile": "Ctrl+N",
-
-  "file.new": "Ctrl+Alt+N",
 
   "file.newWindow": "Ctrl+Shift+N",
 
@@ -4527,6 +4531,36 @@ export default function AppShell() {
 
 
 
+  const fileRecentCloseTimerRef = useRef<number | null>(null);
+
+  const clearFileRecentCloseTimer = useCallback(() => {
+
+    if (fileRecentCloseTimerRef.current) {
+
+      window.clearTimeout(fileRecentCloseTimerRef.current);
+
+      fileRecentCloseTimerRef.current = null;
+
+    }
+
+  }, []);
+
+  const scheduleFileRecentClose = useCallback(() => {
+
+    clearFileRecentCloseTimer();
+
+    fileRecentCloseTimerRef.current = window.setTimeout(() => {
+
+      setIsFileMenuRecentOpen(false);
+
+      fileRecentCloseTimerRef.current = null;
+
+    }, 120);
+
+  }, [clearFileRecentCloseTimer]);
+
+
+
   const anyMenubarOpen =
 
     isFileMenuOpen ||
@@ -4553,9 +4587,23 @@ export default function AppShell() {
 
   }, [closeMenubarMenus]);
 
-  const [recentFiles, setRecentFiles] = useState<string[]>([]);
 
-  const [untitledCounter, setUntitledCounter] = useState(1);
+
+  useEffect(() => {
+
+    // Ensure timers don't keep running after a hard close.
+
+    if (!isFileMenuOpen) {
+
+      clearFileRecentCloseTimer();
+
+      setIsFileMenuRecentOpen(false);
+
+    }
+
+  }, [clearFileRecentCloseTimer, isFileMenuOpen]);
+
+  const [recentFiles, setRecentFiles] = useState<string[]>([]);
 
   const [explorer, setExplorer] = useState<Record<string, DirEntryInfo[]>>({});
 
@@ -7997,38 +8045,6 @@ export default function AppShell() {
 
 
 
-  const newUntitledFile = useCallback(() => {
-
-    const n = untitledCounter;
-
-    setUntitledCounter((x) => x + 1);
-
-    const path = `untitled:Untitled-${n}`;
-
-    const tab: EditorTab = {
-
-      path,
-
-      name: `Untitled-${n}`,
-
-      language: "plaintext",
-
-      content: "",
-
-      isDirty: true,
-
-      kind: "text",
-
-    };
-
-    setTabs((prev) => [...prev, tab]);
-
-    setActiveTabPath(path);
-
-  }, [untitledCounter]);
-
-
-
   const openNewWindow = useCallback(() => {
 
     try {
@@ -8037,7 +8053,9 @@ export default function AppShell() {
 
       // In dev, this will load the devUrl; in production it loads the bundled index.
 
-      new WebviewWindow(label, { title: "Pompora", width: 1280, height: 800 });
+      const url = window.location.origin;
+
+      new WebviewWindow(label, { title: "Pompora", width: 1280, height: 800, url });
 
     } catch (e) {
 
@@ -9427,11 +9445,21 @@ export default function AppShell() {
 
     if (!folder) return;
 
-    // Multi-root workspaces are not implemented yet; mimic VS Code by switching to the picked folder.
+    let w: WorkspaceInfo;
 
-    notify({ kind: "info", title: "Workspace", message: "Multi-root workspace is not implemented yet. Opening the selected folder instead." });
+    try {
 
-    const w = await workspaceSet(folder);
+      w = await workspaceAddRoot(folder);
+
+    } catch (e) {
+
+      devConsoleError("Add folder to workspace failed", e);
+
+      notify({ kind: "error", title: "Workspace", message: `Failed to add folder: ${String(e)}` });
+
+      return;
+
+    }
 
     setWorkspaceState(w);
 
@@ -9441,17 +9469,229 @@ export default function AppShell() {
 
       workspace_root: w.root,
 
+      workspace_roots: w.roots,
+
       recent_workspaces: w.recent,
 
     }));
 
-    setTabs([]);
-
-    setActiveTabPath(null);
-
     await refreshRoot();
 
-  }, [refreshRoot]);
+  }, [refreshRoot, workspaceAddRoot]);
+
+
+
+  const openAbsFileInEditor = useCallback(
+
+    async (absPath: string) => {
+
+      const file = String(absPath || "").replace(/\\/g, "/");
+
+      if (!file) return;
+
+      if (isImagePath(file)) {
+
+        const fb = await fsReadFileAbsBase64(file);
+
+        const url = base64ToObjectUrl(fb.mime, fb.base64);
+
+        const tab: EditorTab = {
+
+          path: file,
+
+          name: basename(file),
+
+          language: detectLanguage(file),
+
+          content: "",
+
+          isDirty: false,
+
+          kind: "image",
+
+          image: { mime: fb.mime, url },
+
+        };
+
+        setTabs((prev) => {
+
+          const key = file.toLowerCase();
+
+          const existing = prev.find((t) => String(t.path || "").replace(/\\/g, "/").toLowerCase() === key);
+
+          if (existing) {
+
+            if (existing.kind === "image") {
+
+              try {
+
+                URL.revokeObjectURL(url);
+
+              } catch {
+
+              }
+
+              setActiveTabPath(existing.path);
+
+              return prev;
+
+            }
+
+            setActiveTabPath(file);
+
+            return prev.map((t) => (t.path === existing.path ? tab : t));
+
+          }
+
+          setActiveTabPath(file);
+
+          return [...prev, tab];
+
+        });
+
+        rememberRecentFile(file);
+
+        return;
+
+      }
+
+      const content = await fsReadFileAbs(file);
+
+      const tab: EditorTab = {
+
+        path: file,
+
+        name: basename(file),
+
+        language: detectLanguage(file),
+
+        content,
+
+        isDirty: false,
+
+        kind: "text",
+
+      };
+
+      setTabs((prev) => {
+
+        const key = file.toLowerCase();
+
+        const existing = prev.find((t) => String(t.path || "").replace(/\\/g, "/").toLowerCase() === key);
+
+        if (existing) {
+
+          setActiveTabPath(existing.path);
+
+          return prev;
+
+        }
+
+        setActiveTabPath(file);
+
+        return [...prev, tab];
+
+      });
+
+      rememberRecentFile(file);
+
+    },
+
+    [rememberRecentFile]
+
+  );
+
+
+
+  const parseVirtualRootPath = useCallback((p: string) => {
+
+    const norm = String(p || "").replace(/\\/g, "/");
+
+    if (!norm.startsWith("__wsroot__/")) return null;
+
+    const rest = norm.slice("__wsroot__/".length);
+
+    const [idxRaw, ...tailParts] = rest.split("/");
+
+    const idx = Number(idxRaw);
+
+    if (!Number.isFinite(idx) || idx < 0) return null;
+
+    return { idx, tail: tailParts.join("/") };
+
+  }, []);
+
+  const resolveAbsPathFromExplorerPath = useCallback(
+
+    (p: string): string | null => {
+
+      const norm = String(p || "").replace(/\\/g, "/");
+
+      if (!norm) return null;
+
+      const v = parseVirtualRootPath(norm);
+
+      if (v) {
+
+        const roots = workspace.roots?.length ? workspace.roots : settings.workspace_roots;
+
+        const base = String(roots?.[v.idx] || "").replace(/\\/g, "/").replace(/\/$/, "");
+
+        if (!base) return null;
+
+        if (!v.tail) return base;
+
+        const rel = v.tail.replace(/^\//, "");
+
+        return `${base}/${rel}`;
+
+      }
+
+      const base = String(workspace.root || "").replace(/\\/g, "/").replace(/\/$/, "");
+
+      if (!base) return null;
+
+      if (norm === "") return base;
+
+      const rel = norm.replace(/^\//, "");
+
+      return base && rel ? `${base}/${rel}` : norm;
+
+    },
+
+    [parseVirtualRootPath, settings.workspace_roots, workspace.root, workspace.roots]
+
+  );
+
+
+
+  const removeFolderFromWorkspace = useCallback(
+
+    async (absFolder: string) => {
+
+      const w = await workspaceRemoveRoot(absFolder);
+
+      setWorkspaceState(w);
+
+      setSettingsState((s) => ({
+
+        ...s,
+
+        workspace_root: w.root,
+
+        workspace_roots: w.roots,
+
+        recent_workspaces: w.recent,
+
+      }));
+
+      await refreshRoot();
+
+    },
+
+    [refreshRoot, workspaceRemoveRoot]
+
+  );
 
 
 
@@ -10679,45 +10919,7 @@ export default function AppShell() {
 
 
 
-      // Ensure we have a workspace root that can read files via backend (backend only reads *relative* paths).
-
-      const root = dirname(file);
-
-      const w = await workspaceSet(root);
-
-      setWorkspaceState(w);
-
-      setSettingsState((s) => ({
-
-        ...s,
-
-        workspace_root: w.root,
-
-        recent_workspaces: w.recent,
-
-      }));
-
-
-
-      setTabs((prev) => {
-
-        prev.forEach(revokeTabObjectUrl);
-
-        return [];
-
-      });
-
-      setActiveTabPath(null);
-
-      await refreshRoot();
-
-
-
-      // Since workspace root is the file's parent directory, rel path is just the basename.
-
-      await openFile(basename(file));
-
-      rememberRecentFile(file);
+      await openAbsFileInEditor(file);
 
     } catch (e) {
 
@@ -10727,7 +10929,7 @@ export default function AppShell() {
 
     }
 
-  }, [devConsoleError, notify, openFile, refreshRoot, rememberRecentFile]);
+  }, [devConsoleError, notify, openAbsFileInEditor, workspacePickFile]);
 
 
 
@@ -10846,48 +11048,6 @@ export default function AppShell() {
     setPendingReveal(null);
 
   }, [activeTab, pendingReveal]);
-
-
-
-  const createNewFile = useCallback(async () => {
-
-    if (!workspace.root) {
-
-      await openFolder();
-
-      return;
-
-    }
-
-    const base = baseDirForCreate(selectedPath);
-
-    const name = await requestRelativePath("New file", "", {
-
-      subtitle: base ? `Create in: ${base}` : undefined,
-
-      inputLabel: "File name (relative)",
-
-      placeholder: "folder/file.ext",
-
-    });
-
-    if (!name) return;
-
-    const relName = normalizeRelPath(name);
-
-    if (!relName) return;
-
-    const rel = base ? `${base}/${relName}` : relName;
-
-    await workspaceWriteFile(rel, "");
-
-    await refreshDir(base || undefined);
-
-    setSelectedPath(rel);
-
-    await openFile(rel);
-
-  }, [baseDirForCreate, openFile, openFolder, refreshDir, requestRelativePath, selectedPath, workspace.root]);
 
 
 
@@ -11036,86 +11196,6 @@ export default function AppShell() {
     await refreshRoot();
 
   }, [inlineRenamePath, refreshRoot]);
-
-
-
-  const createNewTextFileInline = useCallback(async () => {
-
-    if (!workspace.root) {
-
-      await openFolder();
-
-      return;
-
-    }
-
-
-
-    const base = baseDirForCreate(selectedPath);
-
-    const dirKey = base || "";
-
-    const siblings = explorer[dirKey] ?? [];
-
-    const existing = new Set(siblings.map((x) => String(x.name || "").toLowerCase()));
-
-
-
-    const baseName = "New Text Document";
-
-    const pickName = (): string => {
-
-      const first = `${baseName}.txt`;
-
-      if (!existing.has(first.toLowerCase())) return first;
-
-      for (let i = 2; i <= 99; i++) {
-
-        const n = `${baseName} (${i}).txt`;
-
-        if (!existing.has(n.toLowerCase())) return n;
-
-      }
-
-      return `${baseName} (${Date.now()}).txt`;
-
-    };
-
-
-
-    const filename = pickName();
-
-    const rel = base ? `${base}/${filename}` : filename;
-
-
-
-    if (base) {
-
-      setExpandedDirs((prev) => {
-
-        const next = new Set(prev);
-
-        next.add(base);
-
-        return next;
-
-      });
-
-    }
-
-
-
-    await workspaceWriteFile(rel, "");
-
-    await refreshDir(base || undefined);
-
-    setSelectedPath(rel);
-
-    setInlineRenamePath(rel);
-
-    setInlineRenameValue(filename);
-
-  }, [baseDirForCreate, explorer, openFolder, refreshDir, selectedPath, workspace.root]);
 
 
 
@@ -13741,26 +13821,6 @@ export default function AppShell() {
 
       }
 
-      if (ev === kbNorm("file.new")) {
-
-        e.preventDefault();
-
-        newUntitledFile();
-
-        return true;
-
-      }
-
-      if (ev === kbNorm("file.newTextFile")) {
-
-        e.preventDefault();
-
-        void createNewTextFileInline();
-
-        return true;
-
-      }
-
       if (ev === kbNorm("file.close")) {
 
         if (activeTab) {
@@ -14059,13 +14119,9 @@ export default function AppShell() {
 
       closeTab,
 
-      createNewTextFileInline,
-
       ensureTerminal,
 
       kbNorm,
-
-      newUntitledFile,
 
       openFolder,
 
@@ -14127,8 +14183,6 @@ export default function AppShell() {
 
       { id: "editor.gotoLine", label: "Go: Go to Line...", shortcut: kbRaw("editor.gotoLine"), run: () => openGoToLine() },
 
-      { id: "file.newFile", label: "File: New File", shortcut: kbRaw("file.new"), run: () => newUntitledFile() },
-
       { id: "file.newFolder", label: "File: New Folder...", run: () => void createNewFolder() },
 
       { id: "file.rename", label: "File: Rename...", run: () => void renameSelected() },
@@ -14175,7 +14229,7 @@ export default function AppShell() {
 
     return c;
 
-  }, [activeTab, closeAllTabs, closeTab, createNewFolder, deleteSelected, kbRaw, newUntitledFile, openFolder, openGoToLine, openQuickOpen, openSettingsTab, openStandaloneFile, renameSelected, saveActiveFile, saveAll, setIsPaletteOpen, setActivity, toggleTheme]);
+  }, [activeTab, closeAllTabs, closeTab, createNewFolder, deleteSelected, kbRaw, openFolder, openGoToLine, openQuickOpen, openSettingsTab, openStandaloneFile, renameSelected, saveActiveFile, saveAll, setIsPaletteOpen, setActivity, toggleTheme]);
 
 
 
@@ -14833,10 +14887,6 @@ export default function AppShell() {
 
                     <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
 
-                      <MenuItem label="New Text File" shortcut="Ctrl+N" onClick={() => newUntitledFile()} />
-
-                      <MenuItem label="New File" shortcut="Ctrl+Alt+Win+N" onClick={() => newUntitledFile()} />
-
                       <MenuItem label="New Window" shortcut="Ctrl+Shift+N" onClick={() => openNewWindow()} />
 
                       <MenuSep />
@@ -14857,11 +14907,15 @@ export default function AppShell() {
 
                           onMouseEnter={(e) => {
 
+                            clearFileRecentCloseTimer();
+
                             setIsFileMenuRecentOpen(true);
 
                             setFileRecentAnchor(e.currentTarget.getBoundingClientRect());
 
                           }}
+
+                          onMouseLeave={() => scheduleFileRecentClose()}
 
                           onClick={() => setIsFileMenuRecentOpen((v) => !v)}
 
@@ -14875,9 +14929,15 @@ export default function AppShell() {
 
                               className="w-max min-w-72 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
 
-                              onMouseEnter={() => setIsFileMenuRecentOpen(true)}
+                              onMouseEnter={() => {
 
-                              onMouseLeave={() => setIsFileMenuRecentOpen(false)}
+                                clearFileRecentCloseTimer();
+
+                                setIsFileMenuRecentOpen(true);
+
+                              }}
+
+                              onMouseLeave={() => scheduleFileRecentClose()}
 
                             >
 
@@ -16685,11 +16745,7 @@ export default function AppShell() {
 
                 onRefresh={() => void refreshRoot()}
 
-                onCreateNewFile={() => void createNewFile()}
-
                 onCreateNewFolder={() => void createNewFolder()}
-
-                onCreateNewTextFileInline={() => void createNewTextFileInline()}
 
               />
 
@@ -20015,19 +20071,47 @@ export default function AppShell() {
 
           items={([
 
-            { id: "newFile", label: "New File...", icon: <FileText className="h-4 w-4" />, onClick: () => void createNewFile() },
-
             { id: "newFolder", label: "New Folder...", icon: <Folder className="h-4 w-4" />, onClick: () => void createNewFolder() },
 
             { id: "sep-create", kind: "sep" as const },
 
-            ...(explorerMenu.path === ""
+            ...((explorerMenu.path === "" || explorerMenu.path.startsWith("__wsroot__/"))
 
               ? ([
 
                   { id: "refresh", label: "Refresh", icon: <RotateCw className="h-4 w-4" />, onClick: () => void refreshRoot() },
 
-                  { id: "closeFolder", label: "Close Folder", icon: <X className="h-4 w-4" />, onClick: () => void closeFolder() },
+                  ...(explorerMenu.path.startsWith("__wsroot__/")
+
+                    ? ([
+
+                        {
+
+                          id: "removeWorkspaceFolder",
+
+                          label: "Remove Folder from Workspace",
+
+                          icon: <X className="h-4 w-4" />,
+
+                          kind: "danger" as const,
+
+                          onClick: () => {
+
+                            const abs = resolveAbsPathFromExplorerPath(explorerMenu.path);
+
+                            if (abs) void removeFolderFromWorkspace(abs);
+
+                          },
+
+                        },
+
+                      ] as ContextMenuItem[])
+
+                    : ([
+
+                        { id: "closeFolder", label: "Close Folder", icon: <X className="h-4 w-4" />, onClick: () => void closeFolder() },
+
+                      ] as ContextMenuItem[])),
 
                 ] as ContextMenuItem[])
 
@@ -20053,19 +20137,9 @@ export default function AppShell() {
 
               onClick: () => {
 
-                const root = (workspace.root ?? "").replace(/\\/g, "/").replace(/\/$/, "");
+                const abs = resolveAbsPathFromExplorerPath(explorerMenu.path);
 
-                if (explorerMenu.path === "") {
-
-                  void copyText(root);
-
-                  return;
-
-                }
-
-                const rel = explorerMenu.path.replace(/^\//, "");
-
-                void copyText(root && rel ? `${root}/${rel}` : explorerMenu.path);
+                void copyText(abs ?? explorerMenu.path);
 
               },
 
@@ -20907,11 +20981,7 @@ function Explorer(props: {
 
   onRefresh: () => void;
 
-  onCreateNewFile: () => void;
-
   onCreateNewFolder: () => void;
-
-  onCreateNewTextFileInline: () => void;
 
 }) {
 
@@ -20943,7 +21013,7 @@ function Explorer(props: {
 
           onOpenCommandPalette={undefined}
 
-          onCreateNewFile={props.onCreateNewTextFileInline}
+          onCreateNewFile={undefined}
 
           useBrandFont={false}
 
@@ -20958,6 +21028,10 @@ function Explorer(props: {
   }
 
 
+
+  const rootEntries = props.explorer[""] ?? [];
+
+  const isMultiRoot = rootEntries.some((e) => String(e.path || "").startsWith("__wsroot__/"));
 
   const rootNode: DirEntryInfo = {
 
@@ -20980,20 +21054,6 @@ function Explorer(props: {
         <div className="text-xs font-normal text-muted">Explorer</div>
 
         <div className="flex items-center gap-1">
-
-          <button
-
-            type="button"
-
-            className="ws-icon-btn"
-
-            onClick={props.onCreateNewTextFileInline}
-
-          >
-
-            <FileText className="h-4 w-4" />
-
-          </button>
 
           <button
 
@@ -21037,7 +21097,7 @@ function Explorer(props: {
 
           depth={0}
 
-          entries={[rootNode]}
+          entries={isMultiRoot ? rootEntries : [rootNode]}
 
           explorer={props.explorer}
 
@@ -23872,10 +23932,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
         { id: "view.navigateForward", title: "Navigate Forward", description: "Go forward", keywords: "shortcut forward navigate" },
 
 
-
-        { id: "file.newTextFile", title: "New Text File", description: "Create a new text file in workspace", keywords: "shortcut new text file" },
-
-        { id: "file.new", title: "New File", description: "Create a new untitled file", keywords: "shortcut new file" },
 
         { id: "file.newWindow", title: "New Window", description: "Open a new window", keywords: "shortcut new window" },
 

@@ -94,6 +94,16 @@ description = "Allows setting the current workspace root (must be a directory)."
 commands.allow = ["workspace_set"]
 
 [[permission]]
+identifier = "allow-workspace-add-root"
+description = "Allows adding a folder to the current workspace (multi-root)."
+commands.allow = ["workspace_add_root"]
+
+[[permission]]
+identifier = "allow-workspace-remove-root"
+description = "Allows removing a folder from the current workspace (multi-root)."
+commands.allow = ["workspace_remove_root"]
+
+[[permission]]
 identifier = "allow-workspace-pick-folder"
 description = "Allows opening a native folder picker dialog to choose a workspace."
 commands.allow = ["workspace_pick_folder"]
@@ -122,6 +132,16 @@ commands.allow = ["workspace_read_file"]
 identifier = "allow-workspace-read-file-base64"
 description = "Allows reading a file within the current workspace as base64 (binary-safe)."
 commands.allow = ["workspace_read_file_base64"]
+
+[[permission]]
+identifier = "allow-fs-read-file-abs"
+description = "Allows reading an absolute file path (used for Open File without switching workspace)."
+commands.allow = ["fs_read_file_abs"]
+
+[[permission]]
+identifier = "allow-fs-read-file-abs-base64"
+description = "Allows reading an absolute file path as base64 (used for Open File without switching workspace)."
+commands.allow = ["fs_read_file_abs_base64"]
 
 [[permission]]
 identifier = "allow-workspace-write-file"
@@ -226,12 +246,16 @@ permissions = [
   "allow-auth-get-credits",
   "allow-workspace-get",
   "allow-workspace-set",
+  "allow-workspace-add-root",
+  "allow-workspace-remove-root",
   "allow-workspace-pick-folder",
   "allow-workspace-pick-file",
   "allow-workspace-list-dir",
   "allow-workspace-list-files",
   "allow-workspace-read-file",
   "allow-workspace-read-file-base64",
+  "allow-fs-read-file-abs",
+  "allow-fs-read-file-abs-base64",
   "allow-workspace-write-file",
   "allow-workspace-write-file-base64",
   "allow-workspace-create-dir",
