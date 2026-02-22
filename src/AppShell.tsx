@@ -10933,6 +10933,254 @@ export default function AppShell() {
 
 
 
+  const openSavedWorkspace = useCallback(async () => {
+
+    try {
+
+      const picked = await workspacePickFile();
+
+      if (!picked) {
+
+        notify({ kind: "info", title: "Workspace", message: "No workspace file was selected." });
+
+        return;
+
+      }
+
+      const raw = await fsReadFileAbs(String(picked).replace(/\\/g, "/"));
+
+      let parsed: any;
+
+      try {
+
+        parsed = JSON.parse(raw);
+
+      } catch {
+
+        notify({ kind: "error", title: "Workspace", message: "Invalid workspace file (not valid JSON)." });
+
+        return;
+
+      }
+
+      const folders: string[] = Array.isArray(parsed?.folders) ? parsed.folders : [];
+
+      const roots = folders
+
+        .map((x) => String(x || "").trim())
+
+        .filter((x) => !!x)
+
+        .map((x) => x.replace(/\\/g, "/"));
+
+      if (!roots.length) {
+
+        notify({ kind: "error", title: "Workspace", message: "Workspace file contains no folders." });
+
+        return;
+
+      }
+
+      const w0 = await workspaceSet(roots[0]);
+
+      let w = w0;
+
+      for (const r of roots.slice(1)) {
+
+        w = await workspaceAddRoot(r);
+
+      }
+
+      setWorkspaceState(w);
+
+      setSettingsState((s) => ({
+
+        ...s,
+
+        workspace_root: w.root,
+
+        workspace_roots: w.roots,
+
+        recent_workspaces: w.recent,
+
+      }));
+
+      setTabs((prev) => {
+
+        prev.forEach(revokeTabObjectUrl);
+
+        return [];
+
+      });
+
+      setActiveTabPath(null);
+
+      await refreshRoot();
+
+      notify({ kind: "info", title: "Workspace", message: `Opened workspace (${roots.length} folder${roots.length === 1 ? "" : "s"}).` });
+
+    } catch (e) {
+
+      devConsoleError("Open saved workspace failed", e);
+
+      notify({ kind: "error", title: "Workspace", message: `Failed to open workspace: ${String(e)}` });
+
+    }
+
+  }, [devConsoleError, notify, refreshRoot, workspaceAddRoot, workspacePickFile, workspaceSet]);
+
+
+
+  const runEditCommand = useCallback(
+
+    (kind: "undo" | "redo" | "cut" | "copy" | "paste" | "selectAll") => {
+
+      const ed = editorRef.current;
+
+      if (ed) {
+
+        const actionMap: Record<typeof kind, string[]> = {
+
+          undo: ["undo", "editor.action.undo"],
+
+          redo: ["redo", "editor.action.redo"],
+
+          cut: ["editor.action.clipboardCutAction"],
+
+          copy: ["editor.action.clipboardCopyAction"],
+
+          paste: ["editor.action.clipboardPasteAction"],
+
+          selectAll: ["editor.action.selectAll"],
+
+        };
+
+        for (const id of actionMap[kind]) {
+
+          try {
+
+            const act = ed.getAction(id);
+
+            if (act) {
+
+              void act.run();
+
+              return;
+
+            }
+
+          } catch {
+
+          }
+
+        }
+
+      }
+
+      const cmdMap: Record<typeof kind, string> = {
+
+        undo: "undo",
+
+        redo: "redo",
+
+        cut: "cut",
+
+        copy: "copy",
+
+        paste: "paste",
+
+        selectAll: "selectAll",
+
+      };
+
+      try {
+
+        document.execCommand(cmdMap[kind]);
+
+      } catch {
+
+      }
+
+    },
+
+    []
+
+  );
+
+
+
+  const replaceInFiles = useCallback(async () => {
+
+    if (!workspace.root) {
+
+      notify({ kind: "info", title: "Replace in Files", message: "Open a folder first." });
+
+      return;
+
+    }
+
+    setActivity("search");
+
+    const find = window.prompt("Replace in Files: Find");
+
+    if (!find) return;
+
+    const repl = window.prompt("Replace in Files: Replace with", "");
+
+    if (repl === null) return;
+
+    const ok = await requestConfirm("Replace in Files", `Replace all occurrences of '${find}' across workspace files?`, {
+
+      confirmLabel: "Replace",
+
+      danger: true,
+
+    });
+
+    if (!ok) return;
+
+    let changedFiles = 0;
+
+    let changedOccurrences = 0;
+
+    const files = await workspaceListFiles(20000);
+
+    for (const p of files) {
+
+      try {
+
+        const content = await workspaceReadFile(p);
+
+        if (!content.includes(find)) continue;
+
+        const next = content.split(find).join(repl);
+
+        if (next === content) continue;
+
+        const count = content.split(find).length - 1;
+
+        await workspaceWriteFile(p, next);
+
+        changedFiles += 1;
+
+        changedOccurrences += count;
+
+      } catch {
+
+        // ignore non-text/binary files
+
+      }
+
+    }
+
+    notify({ kind: "info", title: "Replace in Files", message: `Replaced ${changedOccurrences} occurrence${changedOccurrences === 1 ? "" : "s"} in ${changedFiles} file${changedFiles === 1 ? "" : "s"}.` });
+
+    await refreshRoot();
+
+  }, [notify, refreshRoot, requestConfirm, setActivity, workspace.root, workspaceListFiles, workspaceReadFile, workspaceWriteFile]);
+
+
+
   useEffect(() => {
 
     if (!autoSaveEnabled) return;
@@ -13387,6 +13635,82 @@ export default function AppShell() {
 
       if (fromMonaco) {
 
+        const mod = e.ctrlKey || e.metaKey;
+
+        // Clipboard/select shortcuts are best handled explicitly here, otherwise they can be
+        // blocked by our global capture handler depending on platform/webview.
+        if (mod && !e.shiftKey && !e.altKey) {
+
+          const k = (e.key || "").toLowerCase();
+
+          if (k === "x") {
+
+            e.preventDefault();
+
+            runEditCommand("cut");
+
+            return true;
+
+          }
+
+          if (k === "c") {
+
+            e.preventDefault();
+
+            runEditCommand("copy");
+
+            return true;
+
+          }
+
+          if (k === "v") {
+
+            e.preventDefault();
+
+            runEditCommand("paste");
+
+            return true;
+
+          }
+
+          if (k === "a") {
+
+            e.preventDefault();
+
+            runEditCommand("selectAll");
+
+            return true;
+
+          }
+
+          // Toggle line comment (Ctrl+/) is layout-dependent, so detect by code/key.
+          if (e.code === "Slash" || e.key === "/") {
+
+            e.preventDefault();
+
+            runEditorAction("editor.action.commentLine");
+
+            return true;
+
+          }
+
+        }
+
+        // Toggle block comment (Shift+Alt+A)
+        if (e.shiftKey && e.altKey && !mod && (e.code === "KeyA" || (e.key || "").toLowerCase() === "a")) {
+
+          e.preventDefault();
+
+          runEditorAction("editor.action.blockComment");
+
+          return true;
+
+        }
+
+      }
+
+      if (fromMonaco) {
+
         const editorOwned = new Set([
 
           kbNorm("chat.toggle"),
@@ -14991,6 +15315,8 @@ export default function AppShell() {
 
                       <MenuItem label="Add Folder to Workspace" onClick={() => void addFolderToWorkspace()} />
 
+                      <MenuItem label="Open Saved Workspace" onClick={() => void openSavedWorkspace()} />
+
                       <MenuItem label="Save Workspace as" onClick={() => void saveWorkspaceAs()} />
 
                       <MenuItem label="Duplicate Workspace" onClick={() => void duplicateWorkspace()} />
@@ -15109,17 +15435,19 @@ export default function AppShell() {
 
                     <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
 
-                      <MenuItem label="Undo" shortcut="Ctrl+Z" onClick={() => notify({ kind: "info", title: "Undo", message: "Coming next." })} />
+                      <MenuItem label="Undo" shortcut="Ctrl+Z" onClick={() => runEditCommand("undo")} />
 
-                      <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => notify({ kind: "info", title: "Redo", message: "Coming next." })} />
+                      <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => runEditCommand("redo")} />
 
                       <MenuSep />
 
-                      <MenuItem label="Cut" shortcut="Ctrl+X" onClick={() => notify({ kind: "info", title: "Cut", message: "Coming next." })} />
+                      <MenuItem label="Cut" shortcut="Ctrl+X" onClick={() => runEditCommand("cut")} />
 
-                      <MenuItem label="Copy" shortcut="Ctrl+C" onClick={() => notify({ kind: "info", title: "Copy", message: "Coming next." })} />
+                      <MenuItem label="Copy" shortcut="Ctrl+C" onClick={() => runEditCommand("copy")} />
 
-                      <MenuItem label="Paste" shortcut="Ctrl+V" onClick={() => notify({ kind: "info", title: "Paste", message: "Coming next." })} />
+                      <MenuItem label="Paste" shortcut="Ctrl+V" onClick={() => runEditCommand("paste")} />
+
+                      <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => runEditCommand("selectAll")} />
 
                       <MenuSep />
 
@@ -15165,13 +15493,27 @@ export default function AppShell() {
 
                         shortcut="Ctrl+Shift+H"
 
-                        onClick={() => notify({ kind: "info", title: "Replace in Files", message: "Coming next." })}
+                        onClick={() => void replaceInFiles()}
 
                       />
 
                       <MenuSep />
 
-                      <MenuItem label="Toggle Line Comment" shortcut="Ctrl+/" onClick={() => notify({ kind: "info", title: "Toggle Line Comment", message: "Coming next." })} />
+                      <MenuItem
+
+                        label="Toggle Line Comment"
+
+                        shortcut="Ctrl+/"
+
+                        onClick={() => {
+
+                          const ok = runEditorAction("editor.action.commentLine");
+
+                          if (!ok) notify({ kind: "info", title: "Toggle Line Comment", message: "No editor is focused." });
+
+                        }}
+
+                      />
 
                       <MenuItem
 
@@ -15179,7 +15521,13 @@ export default function AppShell() {
 
                         shortcut="Shift+Alt+A"
 
-                        onClick={() => notify({ kind: "info", title: "Toggle Block Comment", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ok = runEditorAction("editor.action.blockComment");
+
+                          if (!ok) notify({ kind: "info", title: "Toggle Block Comment", message: "No editor is focused." });
+
+                        }}
 
                       />
 
@@ -15189,7 +15537,23 @@ export default function AppShell() {
 
                         shortcut="Tab"
 
-                        onClick={() => notify({ kind: "info", title: "Emmet", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Emmet", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.emmet.action.expandAbbreviation");
+
+                          if (!ok) notify({ kind: "info", title: "Emmet", message: "Emmet is not available in this editor." });
+
+                        }}
 
                       />
 
