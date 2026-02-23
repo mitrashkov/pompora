@@ -337,7 +337,7 @@ body {
   }
 
   .ws-vscode-menu {
-    @apply absolute right-0 top-full z-50 mt-1 w-[280px] overflow-auto rounded-md border border-border bg-panel shadow;
+    @apply absolute right-0 top-full z-50 mt-2 w-[280px] overflow-auto rounded-lg border border-border/80 bg-panel p-1 shadow-xl;
     max-height: min(420px, calc(100vh - 96px));
   }
 
@@ -370,7 +370,7 @@ body {
   }
 
   .ws-vscode-dropdown-menu {
-    @apply absolute right-0 top-full z-50 mt-1 w-[280px] overflow-auto rounded-md border border-border bg-panel shadow;
+    @apply absolute right-0 top-full z-50 mt-2 w-[280px] overflow-auto rounded-lg border border-border/80 bg-panel p-1 shadow-xl;
     max-height: min(420px, calc(100vh - 96px));
   }
 
@@ -430,7 +430,7 @@ body {
   }
 
   .ws-dropdown-menu {
-    @apply absolute right-0 top-full z-50 mt-2 w-[280px] overflow-auto rounded-xl border border-border/60 bg-panel/90 p-1 shadow-xl backdrop-blur;
+    @apply absolute right-0 top-full z-50 mt-2 w-[280px] overflow-auto rounded-lg border border-border/80 bg-panel p-1 shadow-xl;
     max-height: min(420px, calc(100vh - 96px));
   }
 

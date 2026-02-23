@@ -32,7 +32,17 @@ export type AppSettings = {
 
   recent_workspaces: string[];
 
+  saved_workspaces?: SavedWorkspace[];
+
 };
+
+export type SavedWorkspace = {
+  name: string;
+  roots: string[];
+  updated_at?: number;
+};
+
+
 
 
 

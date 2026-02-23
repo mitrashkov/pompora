@@ -230,7 +230,7 @@ import {
 
 import type { AiChatMessage, AiEditOp } from "./lib/tauri";
 
-import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntryInfo, EditorTab, KeyStatus, Theme, WorkspaceInfo } from "./lib/types";
+import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntryInfo, EditorTab, KeyStatus, SavedWorkspace, Theme, WorkspaceInfo } from "./lib/types";
 
 
 
@@ -400,6 +400,192 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+function SavedWorkspacesDialog(props: {
+
+  items: SavedWorkspace[];
+
+  onClose: () => void;
+
+  onPick: (name: string) => void;
+
+  onRename: (name: string) => void;
+
+  onDelete: (name: string) => void;
+
+}) {
+
+  useEffect(() => {
+
+    const onKeyDown = (e: KeyboardEvent) => {
+
+      if (e.key === "Escape") {
+
+        e.preventDefault();
+
+        props.onClose();
+
+      }
+
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => window.removeEventListener("keydown", onKeyDown);
+
+  }, [props]);
+
+
+
+  return (
+
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" onMouseDown={props.onClose}>
+
+      <div
+
+        className="mx-auto mt-16 flex w-[520px] max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border/80 bg-panel shadow-2xl shadow-black/35"
+
+        onMouseDown={(e) => e.stopPropagation()}
+
+      >
+
+        <div className="px-5 py-4">
+
+          <div className="flex items-start justify-between gap-3">
+
+            <div className="min-w-0">
+
+              <div className="text-[15px] font-semibold text-text">Saved Workspaces</div>
+
+              <div className="mt-1 text-[12px] text-muted">Pick one to open</div>
+
+            </div>
+
+            <button
+
+              type="button"
+
+              className="ws-titlebar-window-btn hover:bg-red-500/15 hover:text-red-300"
+
+              onClick={props.onClose}
+
+              aria-label="Close"
+
+            >
+
+              <X className="h-4 w-4" />
+
+            </button>
+
+          </div>
+
+        </div>
+
+
+
+        <div className="max-h-[58vh] min-h-0 flex-1 p-2">
+
+          {props.items.length ? (
+
+            <div className="h-full overflow-auto px-1">
+
+              {props.items.map((w) => (
+
+                <div
+
+                  key={w.name}
+
+                  className="group flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5 hover:bg-bg/40"
+
+                >
+
+                  <button
+
+                    type="button"
+
+                    className="min-w-0 flex-1 text-left"
+
+                    onClick={() => props.onPick(w.name)}
+
+                  >
+
+                    <div className="truncate text-[13px] font-medium text-text">{w.name}</div>
+
+                    <div className="mt-1 space-y-0.5 text-[11px] text-muted">
+
+                      {(w.roots ?? []).slice(0, 2).map((r) => (
+
+                        <div key={r} className="truncate">
+
+                          {r}
+
+                        </div>
+
+                      ))}
+
+                      {(w.roots ?? []).length > 2 ? (
+
+                        <div className="text-[10px] text-muted/80">+{(w.roots ?? []).length - 2} more</div>
+
+                      ) : null}
+
+                    </div>
+
+                  </button>
+
+                  <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+
+                    <button type="button" className="ws-icon-btn" aria-label="Rename" onClick={() => props.onRename(w.name)}>
+
+                      <Pencil className="h-4 w-4" />
+
+                    </button>
+
+                    <button type="button" className="ws-icon-btn" aria-label="Delete" onClick={() => props.onDelete(w.name)}>
+
+                      <Trash2 className="h-4 w-4" />
+
+                    </button>
+
+                  </div>
+
+                </div>
+
+              ))}
+            </div>
+
+          ) : (
+
+            <div className="p-5 text-[13px] text-muted">No saved workspaces yet</div>
+
+          )}
+
+        </div>
+
+        <div className="flex items-center justify-between gap-3 px-5 py-4">
+
+          <div className="text-[11px] text-muted">Esc to close</div>
+
+          <div className="flex items-center gap-2">
+
+            <button type="button" className="ws-btn ws-btn-secondary h-9 px-5" onClick={props.onClose}>
+
+              Close
+
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  );
+}
+
+
+
 function __normShortcut(raw: string): string {
 
   const s = String(raw || "")
@@ -530,29 +716,39 @@ function TextPromptDialog(props: {
 
   return (
 
-    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" onMouseDown={props.onClose}>
 
       <div
 
-        className="mx-auto mt-20 w-[640px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl"
+        className="mx-auto mt-16 w-[520px] max-w-[92vw] overflow-hidden rounded-2xl border border-border/80 bg-panel shadow-2xl shadow-black/35"
 
         onMouseDown={(e) => e.stopPropagation()}
 
       >
 
-        <div className="border-b border-border p-4">
+        <div className="px-5 py-4">
 
           <div className="flex items-start justify-between gap-3">
 
             <div className="min-w-0">
 
-              <div className="text-sm font-semibold text-text">{props.title}</div>
+              <div className="text-[15px] font-semibold text-text">{props.title}</div>
 
-              {props.subtitle ? <div className="mt-0.5 text-xs text-muted">{props.subtitle}</div> : null}
+              {props.subtitle ? <div className="mt-1 text-[12px] text-muted">{props.subtitle}</div> : null}
 
             </div>
 
-            <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
+            <button
+
+              type="button"
+
+              className="ws-titlebar-window-btn hover:bg-red-500/15 hover:text-red-300"
+
+              onClick={props.onClose}
+
+              aria-label="Close"
+
+            >
 
               <X className="h-4 w-4" />
 
@@ -564,13 +760,13 @@ function TextPromptDialog(props: {
 
 
 
-        <div className="p-4">
+        <div className="px-5 pb-4">
 
           <div className="mt-2 flex items-stretch gap-2">
 
             <input
 
-              className="h-10 w-full rounded-xl border border-border bg-bg px-3 text-sm text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+              className="h-10 w-full rounded-xl border border-border/70 bg-panel2 px-3 text-sm text-text placeholder:text-muted focus:outline-none"
 
               placeholder={props.placeholder ?? ""}
 
@@ -592,9 +788,9 @@ function TextPromptDialog(props: {
 
 
 
-        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 p-4">
+        <div className="flex items-center justify-between gap-2 px-5 py-4">
 
-          <div className="text-xs text-muted">{props.readOnly ? "Esc to close" : "Enter to confirm • Esc to cancel"}</div>
+          <div className="text-[11px] text-muted">{props.readOnly ? "Esc to close" : "Enter to confirm • Esc to cancel"}</div>
 
           <div className="flex items-center gap-2">
 
@@ -620,7 +816,15 @@ function TextPromptDialog(props: {
 
             ) : null}
 
-            <button type="button" className="ws-btn ws-btn-secondary h-9 px-4" onClick={props.onClose}>
+            <button
+
+              type="button"
+
+              className="ws-btn ws-btn-secondary h-9 px-4 hover:bg-red-500/15 hover:text-red-300"
+
+              onClick={props.onClose}
+
+            >
 
               {props.readOnly ? "Close" : "Cancel"}
 
@@ -632,7 +836,7 @@ function TextPromptDialog(props: {
 
                 type="button"
 
-                className="ws-btn h-9 border border-accent bg-accent px-4 text-white hover:opacity-90"
+                className="ws-btn h-9 border border-border/80 bg-panel2 px-4 text-text hover:bg-panel2/80"
 
                 onClick={() => props.onSubmit(String(props.value ?? ""))}
 
@@ -653,7 +857,6 @@ function TextPromptDialog(props: {
     </div>
 
   );
-
 }
 
 
@@ -710,33 +913,43 @@ function ConfirmDialog(props: {
 
     ? "ws-btn h-9 border border-red-500/60 bg-red-500/20 px-4 text-red-200 hover:bg-red-500/25"
 
-    : "ws-btn h-9 border border-accent bg-accent px-4 text-white hover:opacity-90";
+    : "ws-btn h-9 border border-border/80 bg-panel2 px-4 text-text hover:bg-panel2/80";
 
 
 
   return (
 
-    <div className="fixed inset-0 z-50 bg-black/40" onMouseDown={props.onClose}>
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" onMouseDown={props.onClose}>
 
       <div
 
-        className="mx-auto mt-20 w-[640px] max-w-[92vw] overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl"
+        className="mx-auto mt-16 w-[520px] max-w-[92vw] overflow-hidden rounded-2xl border border-border/80 bg-panel shadow-2xl shadow-black/35"
 
         onMouseDown={(e) => e.stopPropagation()}
 
       >
 
-        <div className="border-b border-border p-4">
+        <div className="px-5 py-4">
 
           <div className="flex items-start justify-between gap-3">
 
             <div className="min-w-0">
 
-              <div className="text-sm font-semibold text-text">{props.title}</div>
+              <div className="text-[15px] font-semibold text-text">{props.title}</div>
 
             </div>
 
-            <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
+            <button
+
+              type="button"
+
+              className="ws-titlebar-window-btn hover:bg-red-500/15 hover:text-red-300"
+
+              onClick={props.onClose}
+
+              aria-label="Close"
+
+            >
 
               <X className="h-4 w-4" />
 
@@ -748,7 +961,7 @@ function ConfirmDialog(props: {
 
 
 
-        <div className="p-4">
+        <div className="px-5 pb-4">
 
           <div className="text-sm text-muted whitespace-pre-wrap">{props.message}</div>
 
@@ -756,13 +969,21 @@ function ConfirmDialog(props: {
 
 
 
-        <div className="flex items-center justify-between gap-2 border-t border-border bg-bg/30 p-4">
+        <div className="flex items-center justify-between gap-2 px-5 py-4">
 
-          <div className="text-xs text-muted">Enter to confirm • Esc to cancel</div>
+          <div className="text-[11px] text-muted">Enter to confirm • Esc to cancel</div>
 
           <div className="flex items-center gap-2">
 
-            <button type="button" className="ws-btn ws-btn-secondary h-9 px-4" onClick={props.onClose}>
+            <button
+
+              type="button"
+
+              className="ws-btn ws-btn-secondary h-9 px-4 hover:bg-red-500/15 hover:text-red-300"
+
+              onClick={props.onClose}
+
+            >
 
               Cancel
 
@@ -4185,6 +4406,10 @@ export default function AppShell() {
 
 
 
+  const [isSavedWorkspacesOpen, setIsSavedWorkspacesOpen] = useState(false);
+
+
+
   const [textPromptDialog, setTextPromptDialog] = useState<null | {
 
     title: string;
@@ -4436,6 +4661,8 @@ export default function AppShell() {
     workspace_root: null,
 
     recent_workspaces: [],
+
+    saved_workspaces: [],
 
   });
 
@@ -9439,6 +9666,164 @@ export default function AppShell() {
 
 
 
+  const getSavedWorkspaces = useCallback((): SavedWorkspace[] => {
+
+    const items = (settings.saved_workspaces ?? []).filter((w) => !!String(w?.name ?? "").trim());
+
+    const deduped: SavedWorkspace[] = [];
+
+    const seen = new Set<string>();
+
+    for (const w of items) {
+
+      const key = String(w.name ?? "").trim().toLowerCase();
+
+      if (!key || seen.has(key)) continue;
+
+      seen.add(key);
+
+      deduped.push({ name: String(w.name ?? "").trim(), roots: Array.isArray(w.roots) ? w.roots : [], updated_at: w.updated_at });
+
+    }
+
+    return deduped;
+
+  }, [settings.saved_workspaces]);
+
+
+
+  const persistSavedWorkspaces = useCallback(
+
+    async (items: SavedWorkspace[]) => {
+
+      const next: AppSettings = { ...settings, saved_workspaces: items };
+
+      setSettingsState(next);
+
+      try {
+
+        await settingsSet(next);
+
+      } catch (e) {
+
+        devConsoleError("Failed to save saved workspaces", e);
+
+        notify({ kind: "error", title: "Workspace", message: "Failed to save workspaces" });
+
+        setSettingsState(settings);
+
+      }
+
+    },
+
+    [devConsoleError, notify, settings]
+
+  );
+
+
+
+  const openSavedWorkspaceByRoots = useCallback(
+
+    async (rootsRaw: string[]) => {
+
+      const roots = (Array.isArray(rootsRaw) ? rootsRaw : [])
+
+        .map((x) => String(x || "").trim())
+
+        .filter(Boolean)
+
+        .map((x) => x.replace(/\\/g, "/"));
+
+      if (!roots.length) {
+
+        notify({ kind: "error", title: "Workspace", message: "Saved workspace contains no folders." });
+
+        return;
+
+      }
+
+      const w0 = await workspaceSet(roots[0]);
+
+      let w = w0;
+
+      for (const r of roots.slice(1)) {
+
+        w = await workspaceAddRoot(r);
+
+      }
+
+      setWorkspaceState(w);
+
+      setSettingsState((s) => ({
+
+        ...s,
+
+        workspace_root: w.root,
+
+        workspace_roots: w.roots,
+
+        recent_workspaces: w.recent,
+
+      }));
+
+      setTabs((prev) => {
+
+        prev.forEach(revokeTabObjectUrl);
+
+        return [];
+
+      });
+
+      setActiveTabPath(null);
+
+      await refreshRoot();
+
+      notify({ kind: "info", title: "Workspace", message: `Opened workspace (${roots.length} folder${roots.length === 1 ? "" : "s"}).` });
+
+    },
+
+    [notify, refreshRoot, workspaceAddRoot, workspaceSet]
+
+  );
+
+
+
+  const openSavedWorkspaceByName = useCallback(
+
+    async (name: string) => {
+
+      const picked = getSavedWorkspaces().find((x) => x.name.trim().toLowerCase() === String(name || "").trim().toLowerCase());
+
+      if (!picked) {
+
+        notify({ kind: "error", title: "Workspace", message: "Workspace not found." });
+
+        return;
+
+      }
+
+      try {
+
+        await openSavedWorkspaceByRoots(picked.roots ?? []);
+
+        setIsSavedWorkspacesOpen(false);
+
+      } catch (e) {
+
+        devConsoleError("Open saved workspace failed", e);
+
+        notify({ kind: "error", title: "Workspace", message: `Failed to open workspace: ${String(e)}` });
+
+      }
+
+    },
+
+    [devConsoleError, getSavedWorkspaces, notify, openSavedWorkspaceByRoots]
+
+  );
+
+
+
   const addFolderToWorkspace = useCallback(async () => {
 
     if (!workspace.root) {
@@ -10943,99 +11328,9 @@ export default function AppShell() {
 
   const openSavedWorkspace = useCallback(async () => {
 
-    try {
+    setIsSavedWorkspacesOpen(true);
 
-      const picked = await workspacePickFile();
-
-      if (!picked) {
-
-        notify({ kind: "info", title: "Workspace", message: "No workspace file was selected." });
-
-        return;
-
-      }
-
-      const raw = await fsReadFileAbs(String(picked).replace(/\\/g, "/"));
-
-      let parsed: any;
-
-      try {
-
-        parsed = JSON.parse(raw);
-
-      } catch {
-
-        notify({ kind: "error", title: "Workspace", message: "Invalid workspace file (not valid JSON)." });
-
-        return;
-
-      }
-
-      const folders: string[] = Array.isArray(parsed?.folders) ? parsed.folders : [];
-
-      const roots = folders
-
-        .map((x) => String(x || "").trim())
-
-        .filter((x) => !!x)
-
-        .map((x) => x.replace(/\\/g, "/"));
-
-      if (!roots.length) {
-
-        notify({ kind: "error", title: "Workspace", message: "Workspace file contains no folders." });
-
-        return;
-
-      }
-
-      const w0 = await workspaceSet(roots[0]);
-
-      let w = w0;
-
-      for (const r of roots.slice(1)) {
-
-        w = await workspaceAddRoot(r);
-
-      }
-
-      setWorkspaceState(w);
-
-      setSettingsState((s) => ({
-
-        ...s,
-
-        workspace_root: w.root,
-
-        workspace_roots: w.roots,
-
-        recent_workspaces: w.recent,
-
-      }));
-
-      setTabs((prev) => {
-
-        prev.forEach(revokeTabObjectUrl);
-
-        return [];
-
-      });
-
-      setActiveTabPath(null);
-
-      await refreshRoot();
-
-      notify({ kind: "info", title: "Workspace", message: `Opened workspace (${roots.length} folder${roots.length === 1 ? "" : "s"}).` });
-
-    } catch (e) {
-
-      devConsoleError("Open saved workspace failed", e);
-
-      notify({ kind: "error", title: "Workspace", message: `Failed to open workspace: ${String(e)}` });
-
-    }
-
-  }, [devConsoleError, notify, refreshRoot, workspaceAddRoot, workspacePickFile, workspaceSet]);
+  }, []);
 
 
 
@@ -12299,73 +12594,49 @@ export default function AppShell() {
 
     }
 
-    const name = await requestRelativePath("Save workspace as", "pompora-workspace.json", {
 
-      subtitle: "Workspace files are JSON",
 
-      placeholder: "pompora-workspace",
+    const initial = workspace.root.split("/").filter(Boolean).slice(-1)[0] ?? "workspace";
 
-      extensions: ["json"],
-
-      defaultExtension: "json",
-
-      enforceExtension: true,
-
-    });
+    const name = await requestTextPrompt("Save workspace", initial, { subtitle: "Name this workspace" });
 
     if (!name) return;
 
-    const rel = name.trim().replace(/\\/g, "/");
+    const trimmed = String(name).trim();
 
-    if (!rel) return;
+    if (!trimmed) return;
 
-    const payload = JSON.stringify({ folders: [workspace.root] }, null, 2);
+    const existing = getSavedWorkspaces();
 
-    await workspaceWriteFile(rel, payload);
+    const exists = existing.find((x) => x.name.trim().toLowerCase() === trimmed.toLowerCase());
 
-    await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
+    if (exists) {
 
-  }, [refreshDir, requestRelativePath, workspace.root]);
+      const ok = await requestConfirm("Overwrite workspace", `A workspace named "${trimmed}" already exists. Overwrite?`, { confirmLabel: "Overwrite" });
+
+      if (!ok) return;
+
+    }
+
+    const now = Date.now();
+
+    const roots = (workspace.roots && workspace.roots.length ? workspace.roots : workspace.root ? [workspace.root] : []).map((r) => String(r || "").trim()).filter(Boolean);
+
+    const next = [{ name: trimmed, roots, updated_at: now }, ...existing.filter((x) => x.name.trim().toLowerCase() !== trimmed.toLowerCase())];
+
+    await persistSavedWorkspaces(next);
+
+    notify({ kind: "info", title: "Workspace", message: `Saved "${trimmed}".` });
+
+  }, [getSavedWorkspaces, notify, persistSavedWorkspaces, requestConfirm, requestTextPrompt, workspace.root, workspace.roots]);
 
 
 
   const duplicateWorkspace = useCallback(async () => {
 
-    if (!workspace.root) {
+    await saveWorkspaceAs();
 
-      notify({ kind: "info", title: "Workspace", message: "No folder is open. Open a folder first." });
-
-      return;
-
-    }
-
-    const name = await requestRelativePath("Duplicate workspace as", "pompora-workspace-copy.json", {
-
-      subtitle: "Workspace files are JSON",
-
-      placeholder: "pompora-workspace-copy",
-
-      extensions: ["json"],
-
-      defaultExtension: "json",
-
-      enforceExtension: true,
-
-    });
-
-    if (!name) return;
-
-    const rel = name.trim().replace(/\\/g, "/");
-
-    if (!rel) return;
-
-    const payload = JSON.stringify({ folders: [workspace.root] }, null, 2);
-
-    await workspaceWriteFile(rel, payload);
-
-    await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
-
-  }, [refreshDir, requestRelativePath, workspace.root]);
+  }, [saveWorkspaceAs]);
 
 
 
@@ -21081,6 +21352,94 @@ export default function AppShell() {
             goToLine(n);
 
             setIsGoToLineOpen(false);
+
+          }}
+
+        />
+
+      ) : null}
+
+
+
+      {isSavedWorkspacesOpen ? (
+
+        <SavedWorkspacesDialog
+
+          items={getSavedWorkspaces()}
+
+          onClose={() => setIsSavedWorkspacesOpen(false)}
+
+          onPick={(name) => {
+
+            void openSavedWorkspaceByName(name);
+
+          }}
+
+          onRename={(name) => {
+
+            void (async () => {
+
+              const existing = getSavedWorkspaces();
+
+              const ws = existing.find((x) => x.name.trim().toLowerCase() === String(name || "").trim().toLowerCase());
+
+              if (!ws) return;
+
+              const nextName = await requestTextPrompt("Rename workspace", ws.name, { subtitle: "Choose a new name" });
+
+              if (!nextName) return;
+
+              const trimmed = String(nextName).trim();
+
+              if (!trimmed) return;
+
+              if (trimmed.toLowerCase() !== ws.name.trim().toLowerCase()) {
+
+                const collision = existing.find((x) => x.name.trim().toLowerCase() === trimmed.toLowerCase());
+
+                if (collision) {
+
+                  notify({ kind: "error", title: "Workspace", message: "A workspace with that name already exists." });
+
+                  return;
+
+                }
+
+              }
+
+              const now = Date.now();
+
+              const nextItems = existing.map((x) =>
+
+                x.name.trim().toLowerCase() === ws.name.trim().toLowerCase() ? { ...x, name: trimmed, updated_at: now } : x
+
+              );
+
+              await persistSavedWorkspaces(nextItems);
+
+            })();
+
+          }}
+
+          onDelete={(name) => {
+
+            void (async () => {
+
+              const existing = getSavedWorkspaces();
+
+              const ws = existing.find((x) => x.name.trim().toLowerCase() === String(name || "").trim().toLowerCase());
+
+              if (!ws) return;
+
+              const ok = await requestConfirm("Delete workspace", `Delete \"${ws.name}\"?`, { danger: true, confirmLabel: "Delete" });
+
+              if (!ok) return;
+
+              const nextItems = existing.filter((x) => x.name.trim().toLowerCase() !== ws.name.trim().toLowerCase());
+
+              await persistSavedWorkspaces(nextItems);
+
+            })();
 
           }}
 

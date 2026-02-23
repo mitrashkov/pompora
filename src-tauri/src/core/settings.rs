@@ -62,6 +62,28 @@ pub struct AppSettings {
 
     pub recent_workspaces: Vec<String>,
 
+    #[serde(default)]
+
+    pub saved_workspaces: Vec<SavedWorkspace>,
+
+}
+
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+
+pub struct SavedWorkspace {
+
+    pub name: String,
+
+    #[serde(default)]
+
+    pub roots: Vec<String>,
+
+    #[serde(default)]
+
+    pub updated_at: Option<u64>,
+
 }
 
 
@@ -109,6 +131,8 @@ impl Default for AppSettings {
             workspace_roots: Vec::new(),
 
             recent_workspaces: Vec::new(),
+
+            saved_workspaces: Vec::new(),
 
         }
 
