@@ -144,6 +144,26 @@ description = "Allows reading an absolute file path as base64 (used for Open Fil
 commands.allow = ["fs_read_file_abs_base64"]
 
 [[permission]]
+identifier = "allow-clipboard-write-text"
+description = "Allows writing text to the OS clipboard."
+commands.allow = ["clipboard_write_text"]
+
+[[permission]]
+identifier = "allow-clipboard-read-text"
+description = "Allows reading text from the OS clipboard."
+commands.allow = ["clipboard_read_text"]
+
+[[permission]]
+identifier = "allow-wsl-clipboard-write-text"
+description = "Allows writing text to Windows clipboard from WSL."
+commands.allow = ["wsl_clipboard_write_text"]
+
+[[permission]]
+identifier = "allow-wsl-clipboard-read-text"
+description = "Allows reading text from Windows clipboard in WSL."
+commands.allow = ["wsl_clipboard_read_text"]
+
+[[permission]]
 identifier = "allow-workspace-write-file"
 description = "Allows writing a file within the current workspace."
 commands.allow = ["workspace_write_file"]
@@ -256,6 +276,10 @@ permissions = [
   "allow-workspace-read-file-base64",
   "allow-fs-read-file-abs",
   "allow-fs-read-file-abs-base64",
+  "allow-clipboard-write-text",
+  "allow-clipboard-read-text",
+  "allow-wsl-clipboard-write-text",
+  "allow-wsl-clipboard-read-text",
   "allow-workspace-write-file",
   "allow-workspace-write-file-base64",
   "allow-workspace-create-dir",

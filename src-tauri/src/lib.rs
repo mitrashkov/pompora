@@ -6,6 +6,8 @@ use core::{ai, auth, fsops, history, search, secrets, settings, terminal, worksp
 
 use tauri::Manager;
 
+use tauri_plugin_clipboard_manager::ClipboardExt;
+
 use tauri_plugin_dialog::DialogExt;
 
 
@@ -147,19 +149,11 @@ fn apply_windows_border_fix<R: tauri::Runtime>(window: &tauri::webview::WebviewW
                     | SWP_NOZORDER
 
                     | SWP_NOACTIVATE
-
                     | SWP_FRAMECHANGED,
-
             );
-
         }
-
-
-
     }
-
 }
-
 
 
 #[cfg(debug_assertions)]
@@ -175,6 +169,155 @@ fn debug_log(msg: &str) {
 #[cfg(not(debug_assertions))]
 
 fn debug_log(_msg: &str) {}
+
+
+
+// WSL clipboard commands using Windows clipboard via powershell.exe
+
+#[cfg(target_os = "linux")]
+
+#[tauri::command]
+
+fn wsl_clipboard_write_text(text: String) -> Result<(), String> {
+
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    // Use PowerShell Set-Clipboard and pipe text via stdin. This avoids fragile quoting.
+    // We try powershell.exe from PATH first, then absolute Windows path from WSL.
+
+    let candidates = [
+        "powershell.exe",
+        "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+    ];
+
+    let mut last_err: Option<String> = None;
+
+    for ps in candidates {
+        let mut child = match Command::new(ps)
+            .arg("-NoProfile")
+            .arg("-Command")
+            .arg("Set-Clipboard -Value ([Console]::In.ReadToEnd())")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .stderr(Stdio::piped())
+            .spawn()
+        {
+            Ok(child) => child,
+            Err(e) => {
+                last_err = Some(format!("{}: {}", ps, e));
+                continue;
+            }
+        };
+
+        if let Some(stdin) = child.stdin.as_mut() {
+            if let Err(e) = stdin.write_all(text.as_bytes()) {
+                last_err = Some(format!("{} stdin: {}", ps, e));
+                let _ = child.kill();
+                continue;
+            }
+        }
+
+        match child.wait_with_output() {
+            Ok(out) if out.status.success() => return Ok(()),
+            Ok(out) => {
+                let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
+                last_err = Some(format!("{} exit {:?}: {}", ps, out.status.code(), stderr));
+            }
+            Err(e) => {
+                last_err = Some(format!("{} wait: {}", ps, e));
+            }
+        }
+    }
+
+    Err(format!(
+        "Failed to write to clipboard{}",
+        last_err
+            .as_deref()
+            .map(|e| format!(": {e}"))
+            .unwrap_or_default()
+    ))
+
+}
+
+
+
+#[cfg(target_os = "linux")]
+
+#[tauri::command]
+
+fn wsl_clipboard_read_text() -> Result<String, String> {
+
+    use std::process::{Command, Stdio};
+
+    // Use PowerShell Get-Clipboard -Raw. Try PATH then absolute Windows path.
+
+    let candidates = [
+        "powershell.exe",
+        "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe",
+    ];
+
+    let mut last_err: Option<String> = None;
+
+    for ps in candidates {
+        let out = match Command::new(ps)
+            .arg("-NoProfile")
+            .arg("-Command")
+            .arg("Get-Clipboard -Raw")
+            .stdin(Stdio::null())
+            .output()
+        {
+            Ok(out) => out,
+            Err(e) => {
+                last_err = Some(format!("{}: {}", ps, e));
+                continue;
+            }
+        };
+
+        if out.status.success() {
+            let text = String::from_utf8_lossy(&out.stdout).into_owned();
+            return Ok(text.trim_end_matches('\r').trim_end_matches('\n').to_string());
+        }
+
+        let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
+        last_err = Some(format!("{} exit {:?}: {}", ps, out.status.code(), stderr));
+    }
+
+    Err(format!(
+        "Failed to read from clipboard{}",
+        last_err
+            .as_deref()
+            .map(|e| format!(": {e}"))
+            .unwrap_or_default()
+    ))
+
+}
+
+
+
+// Non-Linux stubs (not used but needed for compilation)
+
+#[cfg(not(target_os = "linux"))]
+
+#[tauri::command]
+
+fn wsl_clipboard_write_text(_text: String) -> Result<(), String> {
+
+    Err("Not supported on this platform".to_string())
+
+}
+
+
+
+#[cfg(not(target_os = "linux"))]
+
+#[tauri::command]
+
+fn wsl_clipboard_read_text() -> Result<String, String> {
+
+    Err("Not supported on this platform".to_string())
+
+}
 
 
 
@@ -213,6 +356,26 @@ fn terminal_resize(id: String, cols: u16, rows: u16) -> Result<(), String> {
 fn terminal_kill(id: String) -> Result<(), String> {
 
     terminal::terminal_kill(id)
+
+}
+
+
+
+#[tauri::command]
+
+fn clipboard_write_text(app: tauri::AppHandle, text: String) -> Result<(), String> {
+
+    app.clipboard().write_text(text).map_err(|e| e.to_string())
+
+}
+
+
+
+#[tauri::command]
+
+fn clipboard_read_text(app: tauri::AppHandle) -> Result<String, String> {
+
+    app.clipboard().read_text().map_err(|e| e.to_string())
 
 }
 
@@ -1010,6 +1173,8 @@ pub fn run() {
 
         .plugin(tauri_plugin_dialog::init())
 
+        .plugin(tauri_plugin_clipboard_manager::init())
+
         .invoke_handler(tauri::generate_handler![
 
             settings_get,
@@ -1077,6 +1242,14 @@ pub fn run() {
             fs_read_file_abs,
 
             fs_read_file_abs_base64,
+
+            clipboard_write_text,
+
+            clipboard_read_text,
+
+            wsl_clipboard_write_text,
+
+            wsl_clipboard_read_text,
 
             workspace_write_file,
 

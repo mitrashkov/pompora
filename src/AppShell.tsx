@@ -208,6 +208,14 @@ import {
 
   fsReadFileAbsBase64,
 
+  clipboardWriteText,
+
+  clipboardReadText,
+
+  wslClipboardWriteText,
+
+  wslClipboardReadText,
+
   terminalStart,
 
   terminalWrite,
@@ -13547,6 +13555,479 @@ export default function AppShell() {
 
 
 
+  const clipboardReadCacheRef = useRef<{ text: string; ts: number } | null>(null);
+
+
+
+  const clipboardCopyFromEditor = useCallback(async (ed: any) => {
+
+    console.log("[clipboardCopyFromEditor] called, ed:", !!ed);
+
+    const model = ed?.getModel?.();
+
+    const selections = ed?.getSelections?.() as any[] | null | undefined;
+
+    console.log("[clipboardCopyFromEditor] model:", !!model, "selections:", selections?.length);
+
+    if (!model || !selections || selections.length === 0) return;
+
+    try {
+
+      const parts = selections
+
+        .map((sel) => {
+
+          try {
+
+            if (sel?.isEmpty?.()) return "";
+
+            return model.getValueInRange(sel) as string;
+
+          } catch {
+
+            return "";
+
+          }
+
+        })
+
+        .filter((x) => x !== "");
+
+      const eol = typeof model?.getEOL === "function" ? (model.getEOL() as string) : "\n";
+
+      const text = parts.join(eol);
+
+      console.log("[clipboardCopyFromEditor] copying text:", text.length, "chars");
+
+      // Try Tauri clipboard first, then WSL clipboard, then web API, then execCommand
+      try {
+
+        await clipboardWriteText(text);
+
+        console.log("[clipboardCopyFromEditor] Tauri clipboard done");
+
+      } catch (tauriErr) {
+
+        console.log("[clipboardCopyFromEditor] Tauri clipboard failed, trying WSL clipboard:", tauriErr);
+
+        try {
+
+          await wslClipboardWriteText(text);
+
+          console.log("[clipboardCopyFromEditor] WSL clipboard done");
+
+        } catch (wslErr) {
+
+          console.log("[clipboardCopyFromEditor] WSL clipboard failed, trying web API:", wslErr);
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+
+            try {
+
+              await navigator.clipboard.writeText(text);
+
+              console.log("[clipboardCopyFromEditor] Web clipboard done");
+
+            } catch (webErr) {
+
+              console.log("[clipboardCopyFromEditor] Web clipboard failed, trying execCommand:", webErr);
+
+              const textarea = document.createElement("textarea");
+
+              textarea.value = text;
+
+              textarea.style.position = "fixed";
+
+              textarea.style.left = "-9999px";
+
+              document.body.appendChild(textarea);
+
+              textarea.select();
+
+              document.execCommand("copy");
+
+              document.body.removeChild(textarea);
+
+              console.log("[clipboardCopyFromEditor] execCommand copy done");
+
+            }
+
+          } else {
+
+            const textarea = document.createElement("textarea");
+
+            textarea.value = text;
+
+            textarea.style.position = "fixed";
+
+            textarea.style.left = "-9999px";
+
+            document.body.appendChild(textarea);
+
+            textarea.select();
+
+            document.execCommand("copy");
+
+            document.body.removeChild(textarea);
+
+            console.log("[clipboardCopyFromEditor] execCommand copy done");
+
+          }
+
+        }
+
+      }
+
+    } catch (e) {
+
+      console.error("[clipboardCopyFromEditor] error:", e);
+
+    }
+
+  }, []);
+
+
+
+  const clipboardCutFromEditor = useCallback(async (ed: any) => {
+
+    const model = ed?.getModel?.();
+
+    const selections = ed?.getSelections?.() as any[] | null | undefined;
+
+    if (!model || !selections || selections.length === 0) return;
+
+    const nonEmpty = selections.filter((s) => !s?.isEmpty?.());
+
+    if (nonEmpty.length === 0) return;
+
+    try {
+
+      const parts = nonEmpty.map((sel) => model.getValueInRange(sel) as string);
+
+      const eol = typeof model?.getEOL === "function" ? (model.getEOL() as string) : "\n";
+
+      const text = parts.join(eol);
+
+      // Try Tauri clipboard first, then WSL clipboard, then web API, then execCommand
+      try {
+
+        await clipboardWriteText(text);
+
+      } catch (tauriErr) {
+
+        console.log("[clipboardCutFromEditor] Tauri clipboard failed, trying WSL clipboard:", tauriErr);
+
+        try {
+
+          await wslClipboardWriteText(text);
+
+        } catch (wslErr) {
+
+          console.log("[clipboardCutFromEditor] WSL clipboard failed, trying web API:", wslErr);
+
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+
+            try {
+
+              await navigator.clipboard.writeText(text);
+
+            } catch (webErr) {
+
+              console.log("[clipboardCutFromEditor] Web clipboard failed, trying execCommand:", webErr);
+
+              const textarea = document.createElement("textarea");
+
+              textarea.value = text;
+
+              textarea.style.position = "fixed";
+
+              textarea.style.left = "-9999px";
+
+              document.body.appendChild(textarea);
+
+              textarea.select();
+
+              document.execCommand("copy");
+
+              document.body.removeChild(textarea);
+
+            }
+
+          } else {
+
+            const textarea = document.createElement("textarea");
+
+            textarea.value = text;
+
+            textarea.style.position = "fixed";
+
+            textarea.style.left = "-9999px";
+
+            document.body.appendChild(textarea);
+
+            textarea.select();
+
+            document.execCommand("copy");
+
+            document.body.removeChild(textarea);
+
+          }
+
+        }
+
+      }
+
+    } catch {
+
+    }
+
+    try {
+
+      ed.pushUndoStop?.();
+
+      const edits = nonEmpty.map((sel) => ({ range: sel, text: "" }));
+
+      ed.executeEdits?.("clipboard", edits);
+
+      ed.pushUndoStop?.();
+
+    } catch {
+
+    }
+
+  }, []);
+
+
+
+  const clipboardPasteIntoEditor = useCallback(async (ed: any) => {
+
+    console.log("[clipboardPasteIntoEditor] called, ed:", !!ed);
+
+    if (!ed) return;
+
+    const cached = clipboardReadCacheRef.current;
+
+    if (cached && Date.now() - cached.ts < 250) {
+
+      const cachedText = cached.text;
+
+      if (typeof cachedText === "string") {
+
+        try {
+
+          const sels = ed.getSelections?.() as any[] | null | undefined;
+
+          if (!sels || sels.length === 0) return;
+
+          ed.pushUndoStop?.();
+
+          ed.executeEdits?.(
+
+            "clipboard",
+
+            sels.map((sel) => ({ range: sel, text: cachedText }))
+
+          );
+
+          ed.pushUndoStop?.();
+
+          return;
+
+        } catch {
+
+        }
+
+      }
+
+    }
+
+    let text: string | null = null;
+
+    // Try Tauri clipboard first, then WSL clipboard, then web API
+    try {
+
+      text = await clipboardReadText();
+
+      console.log("[clipboardPasteIntoEditor] Tauri read text:", text?.length, "chars");
+
+    } catch (tauriErr) {
+
+      console.log("[clipboardPasteIntoEditor] Tauri clipboard failed, trying WSL clipboard:", tauriErr);
+
+      try {
+
+        text = await wslClipboardReadText();
+
+        console.log("[clipboardPasteIntoEditor] WSL read text:", text?.length, "chars");
+
+      } catch (wslErr) {
+
+        console.log("[clipboardPasteIntoEditor] WSL clipboard failed, trying web API:", wslErr);
+
+        if (navigator.clipboard && navigator.clipboard.readText) {
+
+          try {
+
+            text = await navigator.clipboard.readText();
+
+            console.log("[clipboardPasteIntoEditor] Web clipboard read:", text?.length, "chars");
+
+          } catch (webErr) {
+
+            console.log("[clipboardPasteIntoEditor] Web clipboard failed:", webErr);
+
+          }
+
+        }
+
+      }
+
+    }
+
+    if (typeof text !== "string") {
+
+      console.log("[clipboardPasteIntoEditor] No text from any clipboard API");
+
+      return;
+
+    }
+
+    try {
+
+      clipboardReadCacheRef.current = { text, ts: Date.now() };
+
+    } catch {
+
+    }
+
+    try {
+
+      const sels = ed.getSelections?.() as any[] | null | undefined;
+
+      if (!sels || sels.length === 0) return;
+
+      ed.pushUndoStop?.();
+
+      ed.executeEdits?.(
+
+        "clipboard",
+
+        sels.map((sel) => ({ range: sel, text }))
+
+      );
+
+      ed.pushUndoStop?.();
+
+      console.log("[clipboardPasteIntoEditor] executeEdits done");
+
+    } catch (e) {
+
+      console.log("[clipboardPasteIntoEditor] executeEdits failed:", e);
+
+    }
+
+  }, []);
+
+
+
+  const selectAllInEditor = useCallback((ed: any) => {
+
+    const model = ed?.getModel?.();
+
+    if (!model) return;
+
+    try {
+
+      const full = model.getFullModelRange?.();
+
+      if (full) {
+
+        ed.setSelection?.(full);
+
+        ed.revealRangeInCenterIfOutsideViewport?.(full);
+
+        return;
+
+      }
+
+    } catch {
+
+    }
+
+    try {
+
+      runEditCommand("selectAll");
+
+    } catch {
+
+    }
+
+  }, [runEditCommand]);
+
+
+
+  const bindMonacoShortcuts = useCallback(
+
+    (ed: any) => {
+
+      const monaco = monacoRef.current as any;
+
+      if (!monaco || !ed?.addCommand) {
+        console.log("[bindMonacoShortcuts] ABORT: monaco:", !!monaco, "ed?.addCommand:", !!ed?.addCommand);
+        return;
+      }
+      console.log("[bindMonacoShortcuts] Binding shortcuts...");
+
+      try {
+
+        const km = monaco.KeyMod;
+
+        const kc = monaco.KeyCode;
+
+        // Use explicit Ctrl (2048) instead of CtrlCmd for Linux compatibility
+        const Ctrl = 2048;
+
+        console.log("[bindMonacoShortcuts] km.CtrlCmd:", km.CtrlCmd, "Ctrl:", Ctrl);
+
+        ed.addCommand(Ctrl | kc.KeyA, () => {
+          console.log("[Monaco] Ctrl+A TRIGGERED");
+          selectAllInEditor(ed);
+        });
+
+        ed.addCommand(Ctrl | kc.KeyC, () => {
+          console.log("[Monaco] Ctrl+C TRIGGERED");
+          void clipboardCopyFromEditor(ed);
+        });
+
+        ed.addCommand(Ctrl | kc.KeyV, () => {
+          console.log("[Monaco] Ctrl+V TRIGGERED");
+          void clipboardPasteIntoEditor(ed);
+        });
+
+        ed.addCommand(Ctrl | kc.KeyX, () => {
+          console.log("[Monaco] Ctrl+X TRIGGERED");
+          void clipboardCutFromEditor(ed);
+        });
+
+        ed.addCommand(Ctrl | kc.Slash, () => {
+          console.log("[Monaco] Ctrl+/ TRIGGERED");
+          if (!runEditorAction("editor.action.commentLine")) runEditorAction("editor.action.toggleComment");
+        });
+
+        console.log("[bindMonacoShortcuts] Bound successfully with Ctrl:", Ctrl);
+
+      } catch (e) {
+        console.error("[bindMonacoShortcuts] ERROR:", e);
+      }
+
+    },
+
+    [clipboardCopyFromEditor, clipboardCutFromEditor, clipboardPasteIntoEditor, runEditorAction, selectAllInEditor]
+
+  );
+
+
+
   const focusTerminalPanel = useCallback(() => {
 
     setPanelTab("terminal");
@@ -13613,6 +14094,107 @@ export default function AppShell() {
 
 
 
+      const targetEl = e.target as HTMLElement | null;
+
+      // When Monaco is focused, handle important Edit shortcuts using physical key codes.
+      // This avoids layout issues and avoids being blocked by __eventToShortcut().
+      const fromMonacoDom =
+
+        !!targetEl && typeof (targetEl as any).closest === "function" && !!targetEl.closest(".monaco-editor");
+
+      const fromMonaco = fromMonacoDom || !!editorRef.current?.hasTextFocus?.();
+
+      if (fromMonaco) {
+
+        const mod = e.ctrlKey;
+
+        if (mod && !e.altKey) {
+
+          if (!e.shiftKey && e.code === "KeyX") {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            void clipboardCutFromEditor(editorRef.current);
+
+            return true;
+
+          }
+
+          if (!e.shiftKey && e.code === "KeyC") {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            void clipboardCopyFromEditor(editorRef.current);
+
+            return true;
+
+          }
+
+          if (!e.shiftKey && e.code === "KeyV") {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            void clipboardPasteIntoEditor(editorRef.current);
+
+            return true;
+
+          }
+
+          if (!e.shiftKey && e.code === "KeyA") {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            selectAllInEditor(editorRef.current);
+
+            return true;
+
+          }
+
+          // Toggle line comment (Ctrl+/). Prefer physical key code, but also accept literal '/'
+          // because some environments report non-standard codes.
+          if (!e.shiftKey && (e.code === "Slash" || e.code === "NumpadDivide" || e.key === "/")) {
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            if (runEditorAction("editor.action.commentLine")) return true;
+
+            // If Monaco doesn't have the action for some reason, let it handle the key.
+            return false;
+
+          }
+
+        }
+
+        // Toggle block comment (Shift+Alt+A)
+        if (!mod && e.shiftKey && e.altKey && e.code === "KeyA") {
+
+          e.preventDefault();
+
+          e.stopPropagation();
+
+          if (!runEditorAction("editor.action.blockComment")) {
+
+            runEditorAction("editor.action.commentBlock");
+
+          }
+
+          return true;
+
+        }
+
+      }
+
+
       const evRaw = __eventToShortcut(e);
 
       if (!evRaw) return false;
@@ -13621,94 +14203,9 @@ export default function AppShell() {
 
       if (!ev) return false;
 
-
-
       // When Monaco is focused, it installs its own keydown handlers. Since this app listens
-
       // on window in capture phase, we'd otherwise handle shortcuts twice (window first,
-
       // then Monaco), which makes toggles look like no-ops.
-
-      const targetEl = e.target as HTMLElement | null;
-
-      const fromMonaco = !!targetEl && typeof (targetEl as any).closest === "function" && !!targetEl.closest(".monaco-editor");
-
-      if (fromMonaco) {
-
-        const mod = e.ctrlKey || e.metaKey;
-
-        // Clipboard/select shortcuts are best handled explicitly here, otherwise they can be
-        // blocked by our global capture handler depending on platform/webview.
-        if (mod && !e.shiftKey && !e.altKey) {
-
-          const k = (e.key || "").toLowerCase();
-
-          if (k === "x") {
-
-            e.preventDefault();
-
-            runEditCommand("cut");
-
-            return true;
-
-          }
-
-          if (k === "c") {
-
-            e.preventDefault();
-
-            runEditCommand("copy");
-
-            return true;
-
-          }
-
-          if (k === "v") {
-
-            e.preventDefault();
-
-            runEditCommand("paste");
-
-            return true;
-
-          }
-
-          if (k === "a") {
-
-            e.preventDefault();
-
-            runEditCommand("selectAll");
-
-            return true;
-
-          }
-
-          // Toggle line comment (Ctrl+/) is layout-dependent, so detect by code/key.
-          if (e.code === "Slash" || e.key === "/") {
-
-            e.preventDefault();
-
-            runEditorAction("editor.action.commentLine");
-
-            return true;
-
-          }
-
-        }
-
-        // Toggle block comment (Shift+Alt+A)
-        if (e.shiftKey && e.altKey && !mod && (e.code === "KeyA" || (e.key || "").toLowerCase() === "a")) {
-
-          e.preventDefault();
-
-          runEditorAction("editor.action.blockComment");
-
-          return true;
-
-        }
-
-      }
-
       if (fromMonaco) {
 
         const editorOwned = new Set([
@@ -17607,6 +18104,8 @@ export default function AppShell() {
 
                             editorRef.current = mod;
 
+                            bindMonacoShortcuts(mod);
+
                             cursorListenerDisposeRef.current?.dispose();
 
                             cursorListenerDisposeRef.current = mod.onDidChangeCursorPosition((ev) => {
@@ -17930,6 +18429,8 @@ export default function AppShell() {
                           onMount={(ed) => {
 
                             editorRef.current = ed;
+
+                            bindMonacoShortcuts(ed);
 
                             cursorListenerDisposeRef.current?.dispose();
 

@@ -34,6 +34,36 @@ export async function fsReadFileAbsBase64(absPath: string): Promise<FileBase64> 
 }
 
 
+
+export async function clipboardWriteText(text: string): Promise<void> {
+
+  await __invoke<void>("clipboard_write_text", { text });
+
+}
+
+
+
+export async function clipboardReadText(): Promise<string> {
+
+  return __invoke<string>("clipboard_read_text", {});
+
+}
+
+
+export async function wslClipboardWriteText(text: string): Promise<void> {
+
+  await __invoke<void>("wsl_clipboard_write_text", { text });
+
+}
+
+
+export async function wslClipboardReadText(): Promise<string> {
+
+  return __invoke<string>("wsl_clipboard_read_text", {});
+
+}
+
+
 export async function settingsGet(): Promise<AppSettings> {
 
   return __invoke<AppSettings>("settings_get");
