@@ -11045,6 +11045,220 @@ export default function AppShell() {
 
       const ed = editorRef.current;
 
+      // Prefer our custom clipboard implementation when Monaco is present.
+      // (Monaco's built-in clipboard actions can be broken in some Tauri environments.)
+      if (ed) {
+
+        try {
+
+          if (kind === "selectAll") {
+
+            try {
+
+              const act = ed.getAction?.("editor.action.selectAll");
+
+              if (act) {
+
+                void act.run();
+
+                return;
+
+              }
+
+            } catch {
+
+            }
+
+            try {
+
+              document.execCommand("selectAll");
+
+            } catch {
+
+            }
+
+            return;
+
+          }
+
+          if (kind === "copy" || kind === "cut") {
+
+            const model = ed.getModel?.();
+
+            const selections = (ed.getSelections?.() as any[] | null | undefined) ?? [];
+
+            if (!model || selections.length === 0) return;
+
+            const nonEmpty = selections.filter((s) => !s?.isEmpty?.());
+
+            if (nonEmpty.length === 0) return;
+
+            const eol = typeof model?.getEOL === "function" ? (model.getEOL() as string) : "\n";
+
+            const parts = nonEmpty.map((sel) => model.getValueInRange(sel) as string);
+
+            const text = parts.join(eol);
+
+            void (async () => {
+
+              try {
+
+                await clipboardWriteText(text);
+
+                return;
+
+              } catch {
+
+              }
+
+              try {
+
+                await wslClipboardWriteText(text);
+
+                return;
+
+              } catch {
+
+              }
+
+              try {
+
+                if (navigator.clipboard?.writeText) {
+
+                  await navigator.clipboard.writeText(text);
+
+                  return;
+
+                }
+
+              } catch {
+
+              }
+
+              try {
+
+                const textarea = document.createElement("textarea");
+
+                textarea.value = text;
+
+                textarea.style.position = "fixed";
+
+                textarea.style.left = "-9999px";
+
+                document.body.appendChild(textarea);
+
+                textarea.select();
+
+                document.execCommand("copy");
+
+                document.body.removeChild(textarea);
+
+              } catch {
+
+              }
+
+            })();
+
+            if (kind === "cut") {
+
+              try {
+
+                ed.pushUndoStop?.();
+
+                ed.executeEdits?.(
+
+                  "clipboard",
+
+                  nonEmpty.map((sel) => ({ range: sel, text: "" }))
+
+                );
+
+                ed.pushUndoStop?.();
+
+              } catch {
+
+              }
+
+            }
+
+            return;
+
+          }
+
+          if (kind === "paste") {
+
+            void (async () => {
+
+              let text: string | null = null;
+
+              try {
+
+                text = await clipboardReadText();
+
+              } catch {
+
+              }
+
+              if (typeof text !== "string") {
+
+                try {
+
+                  text = await wslClipboardReadText();
+
+                } catch {
+
+                }
+
+              }
+
+              if (typeof text !== "string") {
+
+                try {
+
+                  if (navigator.clipboard?.readText) text = await navigator.clipboard.readText();
+
+                } catch {
+
+                }
+
+              }
+
+              if (typeof text !== "string") return;
+
+              const sels = (ed.getSelections?.() as any[] | null | undefined) ?? [];
+
+              if (sels.length === 0) return;
+
+              try {
+
+                ed.pushUndoStop?.();
+
+                ed.executeEdits?.(
+
+                  "clipboard",
+
+                  sels.map((sel) => ({ range: sel, text }))
+
+                );
+
+                ed.pushUndoStop?.();
+
+              } catch {
+
+              }
+
+            })();
+
+            return;
+
+          }
+
+        } catch {
+
+        }
+
+      }
+
       if (ed) {
 
         const actionMap: Record<typeof kind, string[]> = {
