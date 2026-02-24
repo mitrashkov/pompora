@@ -178,7 +178,7 @@ body {
   }
 
   .ws-welcome-row {
-    @apply flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-bg/35 px-2.5 py-1.5 text-left text-[13px] text-muted backdrop-blur-sm transition-colors hover:border-accent hover:text-text disabled:opacity-50;
+    @apply flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-bg/35 px-2.5 py-1.5 text-left text-[13px] text-muted backdrop-blur-sm transition-colors hover:border-muted/50 hover:text-text disabled:opacity-50;
   }
 
   .ws-btn {
@@ -194,7 +194,7 @@ body {
   }
 
   .ws-btn-primary {
-    @apply border border-border bg-panel text-text hover:border-accent;
+    @apply border border-border bg-panel text-text hover:border-muted/50;
   }
 
   .ws-btn-danger {
@@ -234,7 +234,7 @@ body {
   }
 
   .ws-toggle {
-    @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+    @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border/70 focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
     background-color: hsl(var(--border));
   }
 
@@ -256,11 +256,11 @@ body {
   }
 
   .ws-select {
-    @apply rounded-lg border border-border/60 bg-panel/50 px-3 py-2 text-sm text-text backdrop-blur-sm transition-all hover:border-accent/50 focus-visible:border-accent focus-visible:outline-none;
+    @apply rounded-lg border border-border/60 bg-panel/50 px-3 py-2 text-sm text-text backdrop-blur-sm transition-all hover:border-border/80 focus-visible:border-border/80 focus-visible:outline-none;
   }
 
   .ws-vscode-search {
-    @apply w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-[12px] text-text outline-none placeholder:text-muted hover:border-accent/40 focus-visible:border-accent;
+    @apply w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-[12px] text-text outline-none placeholder:text-muted hover:border-border/80 focus-visible:border-border/80;
   }
 
   .ws-vscode-nav-item {
@@ -311,11 +311,11 @@ body {
   }
 
   .ws-vscode-input {
-    @apply w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-[12px] text-text outline-none placeholder:text-muted hover:border-accent/40 focus-visible:border-accent;
+    @apply w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-[12px] text-text outline-none placeholder:text-muted hover:border-border/80 focus-visible:border-border/80;
   }
 
   .ws-vscode-select {
-    @apply w-[240px] rounded-md border border-border bg-bg px-2.5 py-1.5 pr-8 text-[12px] text-text outline-none hover:border-accent/40 focus-visible:border-accent;
+    @apply w-[240px] rounded-md border border-border bg-bg px-2.5 py-1.5 pr-8 text-[12px] text-text outline-none hover:border-border/80 focus-visible:border-border/80;
     appearance: none;
   }
 
@@ -362,11 +362,11 @@ body {
   }
 
   .ws-vscode-checkbox input {
-    @apply h-4 w-4 accent-[rgb(var(--p-accent))];
+    @apply h-4 w-4 accent-[rgb(var(--p-muted))];
   }
 
   .ws-vscode-dropdown-btn {
-    @apply inline-flex min-h-[30px] w-[240px] items-center justify-between gap-2 rounded-md border border-border bg-bg px-2.5 py-1.5 text-[12px] text-text outline-none hover:border-accent/40 focus-visible:border-accent;
+    @apply inline-flex min-h-[30px] w-[240px] items-center justify-between gap-2 rounded-md border border-border bg-bg px-2.5 py-1.5 text-[12px] text-text outline-none hover:border-border/80 focus-visible:border-border/80;
   }
 
   .ws-vscode-dropdown-menu {
@@ -402,11 +402,11 @@ body {
   }
 
   .ws-settings-input {
-    @apply w-full rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text outline-none placeholder:text-muted backdrop-blur-sm transition-colors hover:border-accent/40 focus-visible:border-accent;
+    @apply w-full rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text outline-none placeholder:text-muted backdrop-blur-sm transition-colors hover:border-border/80 focus-visible:border-border/80;
   }
 
   .ws-settings-btn {
-    @apply inline-flex items-center gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm font-medium text-text backdrop-blur-sm transition-colors hover:border-accent/50 hover:bg-panel/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 disabled:opacity-50;
+    @apply inline-flex items-center gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm font-medium text-text backdrop-blur-sm transition-colors hover:border-border/80 hover:bg-panel/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border/70 disabled:opacity-50;
   }
 
   .ws-settings-btn-ghost {
@@ -418,15 +418,15 @@ body {
   }
 
   .ws-settings-nav-item-active {
-    @apply bg-accent/10 text-text;
+    @apply bg-panel/50 text-text;
   }
 
   .ws-settings-list-item {
-    @apply flex w-full items-center gap-2 rounded-xl border border-border/60 bg-panel/20 px-3 py-2 text-left text-sm text-muted transition-colors hover:border-accent/50 hover:bg-panel/50 hover:text-text;
+    @apply flex w-full items-center gap-2 rounded-xl border border-border/60 bg-panel/20 px-3 py-2 text-left text-sm text-muted transition-colors hover:border-border/80 hover:bg-panel/50 hover:text-text;
   }
 
   .ws-dropdown-btn {
-    @apply flex w-[240px] max-w-[44vw] items-center justify-between gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text backdrop-blur-sm transition-colors hover:border-accent/50 hover:bg-panel/50 focus-visible:outline-none;
+    @apply flex w-[240px] max-w-[44vw] items-center justify-between gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text backdrop-blur-sm transition-colors hover:border-border/80 hover:bg-panel/50 focus-visible:outline-none;
   }
 
   .ws-dropdown-menu {
@@ -439,7 +439,7 @@ body {
   }
 
   .ws-dropdown-item-active {
-    @apply bg-accent/10 text-text;
+    @apply bg-panel/50 text-text;
   }
 
   .ws-switch {
@@ -447,8 +447,8 @@ body {
   }
 
   .ws-switch[data-checked="true"] {
-    background: rgba(var(--p-accent) / 0.28);
-    border-color: rgba(var(--p-accent) / 0.45);
+    background: rgb(var(--p-muted) / 0.18);
+    border-color: rgb(var(--p-muted) / 0.35);
   }
 
   .ws-switch-thumb {
@@ -470,7 +470,7 @@ body {
   }
 
   .ws-segment-item-active {
-    @apply bg-accent/10 text-text;
+    @apply bg-panel/50 text-text;
   }
 
   .ws-msg {
