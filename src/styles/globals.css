@@ -125,8 +125,9 @@ body {
   background: rgb(var(--p-bg));
   color: rgb(var(--p-text));
   font-family: "Geist Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
   overscroll-behavior: none;
 }
 
@@ -178,16 +179,16 @@ body {
   }
 
   .ws-welcome-row {
-    @apply flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-bg/35 px-2.5 py-1.5 text-left text-[13px] text-muted backdrop-blur-sm transition-colors hover:border-muted/50 hover:text-text disabled:opacity-50;
+    @apply flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-bg/35 px-2.5 py-1.5 text-left text-[13px] text-muted transition-colors hover:border-muted/50 hover:text-text disabled:opacity-50;
   }
 
   .ws-btn {
     @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50;
   }
 
-.ws-change-bar {
-  @apply bg-[rgb(var(--p-panel2))] backdrop-blur-sm border border-gray-700 rounded-lg shadow-lg;
-}
+  .ws-change-bar {
+    @apply bg-[rgb(var(--p-panel2))] border border-gray-700 rounded-lg shadow-lg;
+  }
 
   .ws-btn-secondary {
     @apply border border-border bg-panel text-text;
@@ -256,7 +257,7 @@ body {
   }
 
   .ws-select {
-    @apply rounded-lg border border-border/60 bg-panel/50 px-3 py-2 text-sm text-text backdrop-blur-sm transition-all hover:border-border/80 focus-visible:border-border/80 focus-visible:outline-none;
+    @apply rounded-lg border border-border/60 bg-panel/50 px-3 py-2 text-sm text-text transition-all hover:border-border/80 focus-visible:border-border/80 focus-visible:outline-none;
   }
 
   .ws-vscode-search {
@@ -402,11 +403,11 @@ body {
   }
 
   .ws-settings-input {
-    @apply w-full rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text outline-none placeholder:text-muted backdrop-blur-sm transition-colors hover:border-border/80 focus-visible:border-border/80;
+    @apply w-full rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text outline-none placeholder:text-muted transition-colors hover:border-border/80 focus-visible:border-border/80;
   }
 
   .ws-settings-btn {
-    @apply inline-flex items-center gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm font-medium text-text backdrop-blur-sm transition-colors hover:border-border/80 hover:bg-panel/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border/70 disabled:opacity-50;
+    @apply inline-flex items-center gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm font-medium text-text transition-colors hover:border-border/80 hover:bg-panel/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border/70 disabled:opacity-50;
   }
 
   .ws-settings-btn-ghost {
@@ -426,7 +427,7 @@ body {
   }
 
   .ws-dropdown-btn {
-    @apply flex w-[240px] max-w-[44vw] items-center justify-between gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text backdrop-blur-sm transition-colors hover:border-border/80 hover:bg-panel/50 focus-visible:outline-none;
+    @apply flex w-[240px] max-w-[44vw] items-center justify-between gap-2 rounded-xl border border-border/60 bg-panel/30 px-3 py-2 text-sm text-text transition-colors hover:border-border/80 hover:bg-panel/50 focus-visible:outline-none;
   }
 
   .ws-dropdown-menu {
@@ -646,7 +647,7 @@ body {
 
   /* Modern chat card */
   .ws-chat-card {
-    @apply w-full max-w-[720px] rounded-2xl border border-border/80 bg-panel/80 shadow-xl shadow-black/20 backdrop-blur-sm px-4 py-3;
+    @apply w-full max-w-[720px] rounded-2xl border border-border/80 bg-panel/80 shadow-xl shadow-black/20 px-4 py-3;
   }
 
   .ws-chat-header {
@@ -721,7 +722,7 @@ body {
   }
 
   .ws-proposal-card {
-    @apply w-full max-w-[720px] rounded-2xl border border-border/80 bg-panel/85 shadow-xl shadow-black/20 backdrop-blur px-4 py-3;
+    @apply w-full max-w-[720px] rounded-2xl border border-border/80 bg-panel/85 shadow-xl shadow-black/20 px-4 py-3;
   }
 
   .ws-proposal-header {

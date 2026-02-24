@@ -438,7 +438,7 @@ function SavedWorkspacesDialog(props: {
 
   return (
 
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" onMouseDown={props.onClose}>
+    <div className="fixed inset-0 z-50 bg-black/50" onMouseDown={props.onClose}>
 
       <div
 
@@ -716,7 +716,7 @@ function TextPromptDialog(props: {
 
   return (
 
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" onMouseDown={props.onClose}>
+    <div className="fixed inset-0 z-50 bg-black/50" onMouseDown={props.onClose}>
 
       <div
 
@@ -919,7 +919,7 @@ function ConfirmDialog(props: {
 
   return (
 
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]" onMouseDown={props.onClose}>
+    <div className="fixed inset-0 z-50 bg-black/50" onMouseDown={props.onClose}>
 
       <div
 
@@ -1379,7 +1379,7 @@ function ImageTabView(props: {
 
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
 
-                <div className="pointer-events-auto w-full max-w-xl rounded-2xl border border-border bg-panel/90 p-5 shadow-2xl backdrop-blur">
+                <div className="pointer-events-auto w-full max-w-xl rounded-2xl border border-border bg-panel/90 p-5 shadow-2xl">
 
                   <div className="flex items-start gap-3">
 
@@ -1437,7 +1437,7 @@ function ImageTabView(props: {
 
               <div
 
-                className="pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-panel/80 px-2 py-1.5 shadow-xl backdrop-blur"
+                className="pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-panel/80 px-2 py-1.5 shadow-xl"
 
                 onPointerDown={stop}
 
@@ -20469,7 +20469,7 @@ export default function AppShell() {
 
                             <div className="pointer-events-none absolute inset-0 -z-10 rounded-[28px] bg-[radial-gradient(120%_80%_at_50%_0%,rgba(30,144,255,0.22)_0%,rgba(30,144,255,0)_58%)]" />
 
-                            <div className="rounded-[28px] border border-border/60 bg-panel/40 p-4 shadow-[0_16px_60px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                            <div className="rounded-[28px] border border-border/60 bg-panel/40 p-4 shadow-[0_16px_60px_rgba(0,0,0,0.35)]">
 
                               <div className="flex flex-col items-center gap-3 text-center">
 
@@ -20515,7 +20515,7 @@ export default function AppShell() {
 
                                   type="button"
 
-                                  className="group inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-border/70 bg-bg/35 px-3 text-[13px] font-medium text-text backdrop-blur-sm transition-colors hover:bg-panel/50 disabled:opacity-50"
+                                  className="group inline-flex h-9 items-center justify-center gap-2 rounded-2xl border border-border/70 bg-bg/35 px-3 text-[13px] font-medium text-text transition-colors hover:bg-panel/50 disabled:opacity-50"
 
                                   disabled={isAuthBusy}
 
@@ -20597,7 +20597,7 @@ export default function AppShell() {
 
                                   type="button"
 
-                                  className={`group flex w-full items-center justify-between gap-3 rounded-2xl border border-border/60 bg-bg/30 px-3 py-2 text-left backdrop-blur-sm transition-all hover:border-accent/50 hover:bg-panel/40 focus-visible:outline-none ${
+                                  className={`group flex w-full items-center justify-between gap-3 rounded-2xl border border-border/60 bg-bg/30 px-3 py-2 text-left transition-all hover:border-accent/50 hover:bg-panel/40 focus-visible:outline-none ${
 
                                     canUseAi ? "" : "cursor-not-allowed opacity-60"
 
@@ -21595,7 +21595,7 @@ export default function AppShell() {
 
         <div
 
-          className="fixed z-[9999] pointer-events-none select-none ws-msg-anim max-w-[320px] rounded-md border border-border ws-panel2 px-2 py-1 text-[11px] text-text shadow-xl backdrop-blur-sm"
+          className="fixed z-[9999] pointer-events-none select-none ws-msg-anim max-w-[320px] rounded-md border border-border ws-panel2 px-2 py-1 text-[11px] text-text shadow-xl"
 
           style={{
 
