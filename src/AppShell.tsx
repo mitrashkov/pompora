@@ -8442,7 +8442,9 @@ export default function AppShell() {
 
       })
 
-      .catch(() => {
+      .catch((e: unknown) => {
+
+        devConsoleError("authGetProfile failed", e);
 
       });
 
@@ -8478,7 +8480,9 @@ export default function AppShell() {
 
       })
 
-      .catch(() => {
+      .catch((e: unknown) => {
+
+        devConsoleError("authGetCredits failed", e);
 
       });
 
@@ -8531,6 +8535,18 @@ export default function AppShell() {
     return "U";
 
   }, [authProfile?.email, authProfile?.first_name, authProfile?.last_name]);
+
+
+
+  const [avatarImgError, setAvatarImgError] = useState(false);
+
+
+
+  useEffect(() => {
+
+    setAvatarImgError(false);
+
+  }, [authProfile?.avatar_url]);
 
 
 
@@ -8672,7 +8688,9 @@ export default function AppShell() {
 
                 setAuthCredits(credits);
 
-              } catch {
+              } catch (e) {
+
+                devConsoleError("authGetCredits failed (after login)", e);
 
               }
 
@@ -8716,7 +8734,9 @@ export default function AppShell() {
 
               setAuthCredits(credits);
 
-            } catch {
+            } catch (e) {
+
+              devConsoleError("authGetCredits failed (after login)", e);
 
             }
 
@@ -17783,7 +17803,7 @@ export default function AppShell() {
 
                       <div className="text-[11px] font-semibold leading-none text-text">{avatarLetter}</div>
 
-                      {authProfile.avatar_url ? (
+                      {authProfile.avatar_url && !avatarImgError ? (
 
                         <img
 
@@ -17795,7 +17815,9 @@ export default function AppShell() {
 
                           onError={(e) => {
 
-                            e.currentTarget.style.display = "none";
+                            devConsoleError("avatar image failed to load", { url: authProfile.avatar_url });
+
+                            setAvatarImgError(true);
 
                           }}
 
@@ -24117,9 +24139,21 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
     if (email) return email[0]!.toUpperCase();
 
-    return "R";
+    return "U";
 
   }, [props.authProfile?.email, props.authProfile?.first_name, props.authProfile?.last_name]);
+
+
+
+  const [avatarImgError, setAvatarImgError] = useState(false);
+
+
+
+  useEffect(() => {
+
+    setAvatarImgError(false);
+
+  }, [props.authProfile?.avatar_url]);
 
 
 
@@ -25612,13 +25646,14 @@ return (
       <div className="p-5 flex items-center gap-3">
         <div className="relative h-10 w-10 rounded-full bg-bg/40 border border-border/60 flex items-center justify-center text-sm font-medium text-muted shrink-0 shadow-inner overflow-hidden">
           {avatarLetter}
-          {props.authProfile?.avatar_url ? (
+          {props.authProfile?.avatar_url && !avatarImgError ? (
             <img
               src={props.authProfile.avatar_url}
               className="absolute inset-0 block h-full w-full object-cover"
               alt="Profile"
               onError={(e) => {
-                e.currentTarget.style.display = "none";
+                devConsoleError("settings avatar image failed to load", { url: props.authProfile?.avatar_url });
+                setAvatarImgError(true);
               }}
             />
           ) : null}

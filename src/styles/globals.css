@@ -125,8 +125,8 @@ body {
   background: rgb(var(--p-bg));
   color: rgb(var(--p-text));
   font-family: "Geist Sans", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  text-rendering: geometricPrecision;
-  -webkit-font-smoothing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: auto;
   overscroll-behavior: none;
 }
