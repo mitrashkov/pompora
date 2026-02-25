@@ -422,6 +422,12 @@ body {
     @apply bg-panel/50 text-text;
   }
 
+  .ws-settings-section-nav-item:focus,
+  .ws-settings-section-nav-item:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
   .ws-settings-list-item {
     @apply flex w-full items-center gap-2 rounded-xl border border-border/60 bg-panel/20 px-3 py-2 text-left text-sm text-muted transition-colors hover:border-border/80 hover:bg-panel/50 hover:text-text;
   }

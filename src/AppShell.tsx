@@ -25637,7 +25637,7 @@ return (
                   }
                 }}
                 onClick={() => { setActiveSection(item.id as any); setQuery(""); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all group active:scale-[0.98] focus:outline-none ${
+                className={`ws-settings-section-nav-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all group active:scale-[0.98] focus:outline-none ${
                   isActive
                     ? "bg-panel2 text-text border border-border/60"
                     : "text-muted/70 hover:bg-panel2 hover:text-text"
