@@ -24103,6 +24103,26 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+  const avatarLetter = useMemo(() => {
+
+    const first = (props.authProfile?.first_name ?? "").trim();
+
+    const last = (props.authProfile?.last_name ?? "").trim();
+
+    if (first && last) return `${first[0]!.toUpperCase()}${last[0]!.toUpperCase()}`;
+
+    if (first) return first[0]!.toUpperCase();
+
+    const email = (props.authProfile?.email ?? "").trim();
+
+    if (email) return email[0]!.toUpperCase();
+
+    return "R";
+
+  }, [props.authProfile?.email, props.authProfile?.first_name, props.authProfile?.last_name]);
+
+
+
 
 
   const ShortcutEditor = (p: {
@@ -25590,8 +25610,18 @@ return (
     <aside className="w-full md:w-[280px] flex flex-col border-b md:border-b-0 md:border-r border-border/40 bg-panel shrink-0 overflow-hidden">
       {/* User Profile */}
       <div className="p-5 flex items-center gap-3">
-        <div className="h-10 w-10 rounded-full bg-bg/40 border border-border/60 flex items-center justify-center text-sm font-medium text-muted shrink-0 shadow-inner">
-          {props.authProfile?.email?.[0]?.toUpperCase() ?? "R"}
+        <div className="relative h-10 w-10 rounded-full bg-bg/40 border border-border/60 flex items-center justify-center text-sm font-medium text-muted shrink-0 shadow-inner overflow-hidden">
+          {avatarLetter}
+          {props.authProfile?.avatar_url ? (
+            <img
+              src={props.authProfile.avatar_url}
+              className="absolute inset-0 block h-full w-full object-cover"
+              alt="Profile"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          ) : null}
         </div>
         <div className="min-w-0 flex-1">
           <div className="text-[13px] font-medium truncate leading-tight text-text/90">
