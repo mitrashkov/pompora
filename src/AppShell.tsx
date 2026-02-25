@@ -25630,7 +25630,8 @@ return (
             return (
               <button
                 key={item.id}
-                onMouseDown={(e) => {
+                onPointerDown={(e) => {
+                  e.preventDefault();
                   if (document.activeElement && document.activeElement instanceof HTMLElement) {
                     document.activeElement.blur();
                   }
