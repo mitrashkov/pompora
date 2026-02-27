@@ -84,6 +84,11 @@ description = "Allows fetching plan/credits for the signed-in desktop account."
 commands.allow = ["auth_get_credits"]
 
 [[permission]]
+identifier = "allow-auth-avatar-data-url"
+description = "Allows fetching the signed-in account avatar and returning it as a data URL (image base64) for reliable rendering."
+commands.allow = ["auth_avatar_data_url"]
+
+[[permission]]
 identifier = "allow-workspace-get"
 description = "Allows reading workspace state (current root and recent workspaces)."
 commands.allow = ["workspace_get"]
@@ -249,7 +254,6 @@ description = "Default Pompora application command set."
 permissions = [
   "allow-settings-get",
   "allow-settings-set",
-  "allow-settings-clear",
   "allow-history-get-raw",
   "allow-history-set-raw",
   "allow-history-clear",
@@ -264,6 +268,7 @@ permissions = [
   "allow-auth-logout",
   "allow-auth-clear",
   "allow-auth-get-credits",
+  "allow-auth-avatar-data-url",
   "allow-workspace-get",
   "allow-workspace-set",
   "allow-workspace-add-root",

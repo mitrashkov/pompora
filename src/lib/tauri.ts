@@ -324,6 +324,14 @@ export async function authGetCredits(): Promise<CreditsResponse> {
 
 
 
+export async function authAvatarDataUrl(url: string): Promise<string> {
+
+  return __invoke<string>("auth_avatar_data_url", { url });
+
+}
+
+
+
 export async function debugGeminiEndToEnd(apiKey: string): Promise<string> {
 
   return __invoke<string>("debug_gemini_end_to_end", { apiKey });

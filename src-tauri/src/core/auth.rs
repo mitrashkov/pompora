@@ -11,6 +11,8 @@ use std::time::Duration;
 
 use once_cell::sync::Lazy;
 
+use base64::Engine;
+
 use super::secrets;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -24,6 +26,44 @@ pub struct AuthProfile {
     pub first_name: String,
     #[serde(default)]
     pub last_name: String,
+}
+
+pub async fn fetch_avatar_data_url(url: &str) -> Result<String> {
+    let url = url.trim();
+    if url.is_empty() {
+        return Err(anyhow!("missing url"));
+    }
+
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(15))
+        .build()
+        .context("build http client")?;
+
+    let resp = client
+        .get(url)
+        .send()
+        .await
+        .with_context(|| format!("fetch avatar: {url}"))?;
+
+    let status = resp.status();
+    if !status.is_success() {
+        return Err(anyhow!("avatar fetch status: {status}"));
+    }
+
+    let content_type = resp
+        .headers()
+        .get(reqwest::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream")
+        .split(';')
+        .next()
+        .unwrap_or("application/octet-stream")
+        .trim()
+        .to_string();
+
+    let bytes = resp.bytes().await.context("read avatar body")?;
+    let encoded = base64::engine::general_purpose::STANDARD.encode(bytes);
+    Ok(format!("data:{content_type};base64,{encoded}"))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -152,6 +152,8 @@ import {
 
   authGetCredits,
 
+  authAvatarDataUrl,
+
   debugGeminiEndToEnd,
 
   aiChat,
@@ -8540,13 +8542,55 @@ export default function AppShell() {
 
   const [avatarImgError, setAvatarImgError] = useState(false);
 
+  const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
+
 
 
   useEffect(() => {
 
     setAvatarImgError(false);
 
+    setAvatarDataUrl(null);
+
   }, [authProfile?.avatar_url]);
+
+
+
+  useEffect(() => {
+
+    const url = (authProfile?.avatar_url ?? "").trim();
+
+    if (!url) return;
+
+    let cancelled = false;
+
+    authAvatarDataUrl(url)
+
+      .then((d: string) => {
+
+        if (cancelled) return;
+
+        const next = String(d || "").trim();
+
+        if (next) setAvatarDataUrl(next);
+
+      })
+
+      .catch((e: unknown) => {
+
+        if (cancelled) return;
+
+        devConsoleError("authAvatarDataUrl failed", e);
+
+      });
+
+    return () => {
+
+      cancelled = true;
+
+    };
+
+  }, [authProfile?.avatar_url, devConsoleError]);
 
 
 
@@ -9552,15 +9596,13 @@ export default function AppShell() {
 
     const p = activeTab?.path ?? null;
 
-    if (p && (p.startsWith("pompora:") || p.startsWith("untitled:"))) return activeTab?.name ?? p;
+    if (!p) return null;
 
-    if (p) return p;
+    if (p.startsWith("pompora:") || p.startsWith("untitled:")) return activeTab?.name ?? p;
 
-    if (selectedPath === "") return null;
+    return p;
 
-    return selectedPath;
-
-  }, [activeTab?.name, activeTab?.path, selectedPath, workspace.root]);
+  }, [activeTab?.name, activeTab?.path, workspace.root]);
 
 
 
@@ -17803,19 +17845,19 @@ export default function AppShell() {
 
                       <div className="text-[11px] font-semibold leading-none text-text">{avatarLetter}</div>
 
-                      {authProfile.avatar_url && !avatarImgError ? (
+                      {(avatarDataUrl || authProfile.avatar_url) && !avatarImgError ? (
 
                         <img
 
-                          src={authProfile.avatar_url}
+                          src={avatarDataUrl || authProfile.avatar_url}
 
                           className="absolute inset-0 block h-full w-full object-cover"
 
                           alt="Profile"
 
-                          onError={(e) => {
+                          onError={() => {
 
-                            devConsoleError("avatar image failed to load", { url: authProfile.avatar_url });
+                            devConsoleError("avatar image failed to load", { url: avatarDataUrl || authProfile.avatar_url });
 
                             setAvatarImgError(true);
 
@@ -21131,11 +21173,11 @@ export default function AppShell() {
 
 
 
-        <footer className="flex h-[32px] items-center justify-between gap-3 bg-bg px-3 text-[12px] leading-none text-muted">
+        <footer className="flex h-[32px] -translate-y-[1px] items-center justify-between gap-3 bg-bg px-3 pb-px text-[12px] leading-none text-muted">
 
           <div className="min-w-0">
 
-            {workspace.root ? (
+            {workspace.root && footerRelPath ? (
 
               <FooterBreadcrumb
 
@@ -24147,11 +24189,53 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
   const [avatarImgError, setAvatarImgError] = useState(false);
 
+  const [avatarDataUrl, setAvatarDataUrl] = useState<string | null>(null);
+
 
 
   useEffect(() => {
 
     setAvatarImgError(false);
+
+    setAvatarDataUrl(null);
+
+  }, [props.authProfile?.avatar_url]);
+
+
+
+  useEffect(() => {
+
+    const url = (props.authProfile?.avatar_url ?? "").trim();
+
+    if (!url) return;
+
+    let cancelled = false;
+
+    authAvatarDataUrl(url)
+
+      .then((d: string) => {
+
+        if (cancelled) return;
+
+        const next = String(d || "").trim();
+
+        if (next) setAvatarDataUrl(next);
+
+      })
+
+      .catch((e: unknown) => {
+
+        if (cancelled) return;
+
+        console.error("authAvatarDataUrl failed (settings)", e);
+
+      });
+
+    return () => {
+
+      cancelled = true;
+
+    };
 
   }, [props.authProfile?.avatar_url]);
 
@@ -25646,13 +25730,13 @@ return (
       <div className="p-5 flex items-center gap-3">
         <div className="relative h-10 w-10 rounded-full bg-bg/40 border border-border/60 flex items-center justify-center text-sm font-medium text-muted shrink-0 shadow-inner overflow-hidden">
           {avatarLetter}
-          {props.authProfile?.avatar_url && !avatarImgError ? (
+          {(avatarDataUrl || props.authProfile?.avatar_url) && !avatarImgError ? (
             <img
-              src={props.authProfile.avatar_url}
+              src={avatarDataUrl || props.authProfile!.avatar_url}
               className="absolute inset-0 block h-full w-full object-cover"
               alt="Profile"
-              onError={(e) => {
-                devConsoleError("settings avatar image failed to load", { url: props.authProfile?.avatar_url });
+              onError={() => {
+                console.error("settings avatar image failed to load", { url: avatarDataUrl || props.authProfile?.avatar_url });
                 setAvatarImgError(true);
               }}
             />

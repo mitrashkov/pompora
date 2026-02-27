@@ -573,6 +573,16 @@ async fn auth_get_credits() -> Result<auth::CreditsResponse, String> {
 
 #[tauri::command]
 
+async fn auth_avatar_data_url(url: String) -> Result<String, String> {
+
+    auth::fetch_avatar_data_url(&url).await.map_err(|e| e.to_string())
+
+}
+
+
+
+#[tauri::command]
+
 fn workspace_get() -> Result<workspace::WorkspaceInfo, String> {
 
     workspace::workspace_get().map_err(|e| e.to_string())
@@ -1214,6 +1224,8 @@ pub fn run() {
             auth_logout,
 
             auth_get_credits,
+
+            auth_avatar_data_url,
 
             test_gemini_api,
 
