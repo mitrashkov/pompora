@@ -20037,19 +20037,27 @@ export default function AppShell() {
 
 
 
-                <div
+                <div className="relative min-h-0 flex-1 overflow-hidden bg-[rgb(var(--p-panel)/0.82)]">
 
-                  ref={chatScrollRef}
+                  <div className="ws-chat-bg-layer" aria-hidden="true" />
 
-                  className={`min-h-0 flex-1 overflow-auto bg-panel px-3 py-3 ${canUseAi && !activeChat.messages.length ? "flex items-center justify-center" : ""}`}
+                  <div
 
-                  onScroll={(e) => {
+                    ref={chatScrollRef}
 
-                    syncChatStickinessFromEl(e.currentTarget);
+                    className={`ws-chat-scroll relative z-10 h-full overflow-y-auto overflow-x-hidden bg-transparent px-3 py-3 ${
 
-                  }}
+                      canUseAi && !activeChat.messages.length ? "flex items-center justify-center" : ""
 
-                >
+                    }`}
+
+                    onScroll={(e) => {
+
+                      syncChatStickinessFromEl(e.currentTarget);
+
+                    }}
+
+                  >
 
                   {aiBlockedReason && !(settings.active_provider === "pompora" && !authProfile) ? (
 
@@ -20592,7 +20600,6 @@ export default function AppShell() {
                                 </button>
 
                               </div>
-
                             </div>
 
                           </div>
@@ -20611,9 +20618,7 @@ export default function AppShell() {
 
                                   Icon: FileText,
 
-                                  prompt:
-
-                                    "Explain what the currently open file does. Summarize intent, key flows, and anything risky or confusing.",
+                                  prompt: "Explain what the currently open file does. Summarize intent, key flows, and anything risky or confusing.",
 
                                 },
 
@@ -20623,9 +20628,7 @@ export default function AppShell() {
 
                                   Icon: AlertTriangle,
 
-                                  prompt:
-
-                                    "Review the current code and list potential bugs, edge cases, and footguns. Propose minimal fixes.",
+                                  prompt: "Review the current code and list potential bugs, edge cases, and footguns. Propose minimal fixes.",
 
                                 },
 
@@ -20635,9 +20638,7 @@ export default function AppShell() {
 
                                   Icon: Wand2,
 
-                                  prompt:
-
-                                    "Refactor the current code for readability and maintainability. Keep behavior the same; propose small, safe steps.",
+                                  prompt: "Refactor the current code for readability and maintainability. Keep behavior the same; propose small, safe steps.",
 
                                 },
 
@@ -20647,9 +20648,7 @@ export default function AppShell() {
 
                                   Icon: Plus,
 
-                                  prompt:
-
-                                    "Help me add a small feature to the current file. Ask 2-3 clarifying questions first, then propose an implementation plan.",
+                                  prompt: "Help me add a small feature to the current file. Ask 2-3 clarifying questions first, then propose an implementation plan.",
 
                                 },
 
@@ -20716,6 +20715,8 @@ export default function AppShell() {
                       </div>
 
                     )}
+
+                </div>
 
                 </div>
 
