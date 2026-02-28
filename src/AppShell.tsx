@@ -98,6 +98,8 @@ import {
 
   GitBranch,
 
+  History,
+
   Maximize2,
 
   Minus,
@@ -19801,7 +19803,7 @@ export default function AppShell() {
 
                     <div className="min-w-0">
 
-                      <div className="truncate text-[13px] font-normal text-[#a39d9d]">{activeChat.title}</div>
+                      <div className="truncate text-[13px] font-normal leading-none text-[#a39d9d]">{activeChat.title}</div>
 
                     </div>
 
@@ -19809,43 +19811,39 @@ export default function AppShell() {
 
                     <div className="flex shrink-0 items-center gap-1">
 
-                      <div className="relative">
+                      <button
 
-                        <button
+                        ref={chatHistoryBtnRef}
 
-                          ref={chatHistoryBtnRef}
+                        type="button"
 
-                          type="button"
+                        className="ws-icon-btn"
 
-                          className="ws-icon-btn"
+                        onClick={() => {
 
-                          onClick={() => {
+                          setIsChatHistoryOpen((v) => {
 
-                            setIsChatHistoryOpen((v) => {
+                            const next = !v;
 
-                              const next = !v;
+                            if (next) {
 
-                              if (next) {
+                              setChatHistoryQueryDraft("");
 
-                                setChatHistoryQueryDraft("");
+                              setChatHistoryQuery("");
 
-                                setChatHistoryQuery("");
+                            }
 
-                              }
+                            return next;
 
-                              return next;
+                          });
 
-                            });
+                        }}
 
-                          }}
+                      >
 
-                        >
+                        <History className={`h-4 w-4 text-muted ${isChatHistoryOpen ? "text-text" : ""}`} />
 
-                          <ChevronDown className={`h-4 w-4 ${isChatHistoryOpen ? "rotate-180" : ""}`} />
-
-                        </button>
-
-                      </div>
+                      </button>
 
                       <button
 
