@@ -20039,7 +20039,7 @@ export default function AppShell() {
 
                 <div className="relative min-h-0 flex-1 overflow-hidden bg-[rgb(var(--p-panel)/0.82)]">
 
-                  <div className="ws-chat-bg-layer" aria-hidden="true" />
+                  {!activeChat.messages.length ? <div className="ws-chat-bg-layer" aria-hidden="true" /> : null}
 
                   <div
 
@@ -20529,9 +20529,35 @@ export default function AppShell() {
 
                       <div className="flex min-h-[240px] flex-col items-center text-center">
 
-                        <div className="mt-2 text-[22px] font-semibold tracking-tight text-text">Pompora Code</div>
+                        <div className="mt-2 text-[22px] font-semibold tracking-tight text-text">
 
-                        <div className="mt-1 max-w-[360px] text-sm leading-relaxed text-muted">Build and improve your codebase — privately.</div>
+                          {(() => {
+
+                            const rawName = (authProfile?.first_name || authProfile?.email || "").trim();
+
+                            const name = rawName ? rawName.split("@")[0] : "there";
+
+                            const variants = [
+
+                              `Welcome back, ${name}`,
+
+                              `Good to see you, ${name}`,
+
+                              `Ready when you are, ${name}`,
+
+                              `Let’s ship, ${name}`,
+
+                            ];
+
+                            const idx = __stableHash(`${activeChat.id}:${name}`) % variants.length;
+
+                            return variants[idx] ?? variants[0]!;
+
+                          })()}
+
+                        </div>
+
+                        <div className="mt-1 max-w-[360px] text-sm leading-relaxed text-muted">What are we working on today?</div>
 
 
 
@@ -20660,7 +20686,7 @@ export default function AppShell() {
 
                                   type="button"
 
-                                  className={`group flex w-full items-center justify-between gap-3 rounded-2xl border border-border/60 bg-bg/30 px-3 py-2 text-left transition-all hover:border-accent/50 hover:bg-panel/40 focus-visible:outline-none ${
+                                  className={`group flex w-full items-center justify-between gap-3 rounded-2xl border border-border/60 bg-bg/30 px-3 py-2 text-left transition-all hover:border-border/90 hover:bg-panel/40 active:border-border outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border/60 focus-visible:ring-offset-0 ${
 
                                     canUseAi ? "" : "cursor-not-allowed opacity-60"
 
