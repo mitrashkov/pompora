@@ -840,7 +840,7 @@ function TextPromptDialog(props: {
 
                 type="button"
 
-                className="ws-btn h-9 border border-border/80 bg-panel2 px-4 text-text hover:bg-panel2/80"
+                className="ws-btn h-9 bg-[#2563EB] px-4 text-white hover:bg-[#2563EB]/80"
 
                 onClick={() => props.onSubmit(String(props.value ?? ""))}
 
@@ -18912,31 +18912,18 @@ export default function AppShell() {
                           options={{
 
                             readOnly: true,
-
                             renderSideBySide: false,
-
                             fontSize: 13,
-
                             fontFamily:
-
                               '"JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-
                             fontLigatures: true,
-
                             minimap: { enabled: true },
-
                             scrollBeyondLastLine: false,
-
                             wordWrap: "on",
-
                             automaticLayout: true,
-
                             smoothScrolling: true,
-
                             cursorSmoothCaretAnimation: "off",
-
-                            cursorBlinking: settings.editor_cursor_blinking ?? "expand",
-
+                            cursorBlinking: "expand",
                             padding: { top: 8, bottom: 8 },
 
                           }}
@@ -19255,7 +19242,7 @@ export default function AppShell() {
 
                             cursorSmoothCaretAnimation: "off",
 
-                            cursorBlinking: settings.editor_cursor_blinking ?? "expand",
+                            cursorBlinking: "expand",
 
                             padding: { top: 8, bottom: 8 },
 
@@ -20037,7 +20024,21 @@ export default function AppShell() {
 
                 <div className="relative min-h-0 flex-1 overflow-hidden bg-[rgb(var(--p-panel)/0.82)]">
 
-                  {!activeChat.messages.length ? <div className="ws-chat-bg-layer" aria-hidden="true" /> : null}
+                  {!activeChat.messages.length ? (
+
+                    <div aria-hidden="true">
+
+                      <div className="ws-chat-bg-tint" />
+
+                      <div className="ws-chat-bg-static">
+
+                        <div className="ws-chat-bg-layer" />
+
+                      </div>
+
+                    </div>
+
+                  ) : null}
 
                   <div
 
