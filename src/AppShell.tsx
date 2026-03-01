@@ -917,7 +917,7 @@ function ConfirmDialog(props: {
 
     ? "ws-btn h-9 border border-red-500/60 bg-red-500/20 px-4 text-red-200 hover:bg-red-500/25"
 
-    : "ws-btn h-9 border border-border/80 bg-panel2 px-4 text-text hover:bg-panel2/80";
+    : "ws-btn h-9 bg-[#2563EB] px-4 text-white hover:bg-[#2563EB]/80";
 
 
 
@@ -12040,13 +12040,11 @@ export default function AppShell() {
 
     const base = baseDirForCreate(selectedPath);
 
-    const name = await requestRelativePath("New folder", "", {
+    const name = await requestTextPrompt("New Folder", "", {
 
       subtitle: base ? `Create in: ${base}` : undefined,
 
-      inputLabel: "Folder name (relative)",
-
-      placeholder: "folder",
+      placeholder: "Folder name",
 
     });
 
@@ -12064,7 +12062,7 @@ export default function AppShell() {
 
     setSelectedPath(rel);
 
-  }, [baseDirForCreate, openFolder, refreshDir, requestRelativePath, selectedPath, workspace.root]);
+  }, [baseDirForCreate, openFolder, refreshDir, requestTextPrompt, selectedPath, workspace.root]);
 
 
 
@@ -12752,7 +12750,7 @@ export default function AppShell() {
 
   const closeFolder = useCallback(async () => {
 
-    const ok = await requestConfirm("Close folder", "Close folder?", { confirmLabel: "Close" });
+    const ok = await requestConfirm("Close folder", "Are you sure you want to close the current folder?", { confirmLabel: "Close" });
 
     if (!ok) return;
 
