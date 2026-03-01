@@ -6274,11 +6274,13 @@ export default function AppShell() {
 
       const t = new XTermTerminal({
 
-        fontSize: 12,
+        fontSize: 13,
 
         fontFamily:
 
-          '"Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+          '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+
+        letterSpacing: 0.4,
 
         cursorBlink: true,
 
@@ -6286,7 +6288,7 @@ export default function AppShell() {
 
         cursorWidth: 2,
 
-        lineHeight: 1.15,
+        lineHeight: 1.22,
 
         scrollback: 8000,
 
@@ -18911,9 +18913,10 @@ export default function AppShell() {
 
                             readOnly: true,
                             renderSideBySide: false,
-                            fontSize: 13,
+                            fontSize: 14,
                             fontFamily:
-                              '"JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                              '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                            letterSpacing: 0.4,
                             fontLigatures: true,
                             minimap: { enabled: true },
                             scrollBeyondLastLine: false,
@@ -19220,11 +19223,13 @@ export default function AppShell() {
 
                           options={{
 
-                            fontSize: 13,
+                            fontSize: 14,
 
                             fontFamily:
 
-                              '"JetBrains Mono", "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+                              '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+
+                            letterSpacing: 0.4,
 
                             fontLigatures: true,
 
