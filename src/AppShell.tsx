@@ -4512,6 +4512,56 @@ export default function AppShell() {
 
 
 
+  const getEditorOption = useCallback(
+
+    <T,>(get: (ed: MonacoEditorNS.IStandaloneCodeEditor, monaco: typeof import("monaco-editor")) => T): T | null => {
+
+      const ed = editorRef.current;
+
+      const monaco = monacoRef.current;
+
+      if (!ed || !monaco) return null;
+
+      try {
+
+        return get(ed, monaco);
+
+      } catch {
+
+        return null;
+
+      }
+
+    },
+
+    []
+
+  );
+
+
+
+  const updateEditorOptions = useCallback((opts: Record<string, unknown>): boolean => {
+
+    const ed = editorRef.current as any;
+
+    if (!ed?.updateOptions) return false;
+
+    try {
+
+      ed.updateOptions(opts);
+
+      return true;
+
+    } catch {
+
+      return false;
+
+    }
+
+  }, []);
+
+
+
   const requestConfirm = useCallback(
 
     (title: string, message: string, options?: { confirmLabel?: string; danger?: boolean }) => {
@@ -16675,7 +16725,19 @@ export default function AppShell() {
 
                     <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
 
-                      <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => notify({ kind: "info", title: "Select All", message: "Coming next." })} />
+                      <MenuItem
+
+                        label="Select All"
+
+                        shortcut="Ctrl+A"
+
+                        onClick={() => {
+
+                          runEditCommand("selectAll");
+
+                        }}
+
+                      />
 
                       <MenuItem
 
@@ -16683,7 +16745,29 @@ export default function AppShell() {
 
                         shortcut="Shift+Alt+RightArrow"
 
-                        onClick={() => notify({ kind: "info", title: "Expand Selection", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Expand Selection", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok =
+
+                            runEditorAction("editor.action.smartSelect.expand") ||
+
+                            runEditorAction("editor.action.smartSelect.expand") ||
+
+                            runEditorAction("editor.action.smartSelect.grow");
+
+                          if (!ok) notify({ kind: "info", title: "Expand Selection", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16691,7 +16775,29 @@ export default function AppShell() {
 
                         label="Shrink Selection"
 
-                        onClick={() => notify({ kind: "info", title: "Shrink Selection", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Shrink Selection", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok =
+
+                            runEditorAction("editor.action.smartSelect.shrink") ||
+
+                            runEditorAction("editor.action.smartSelect.shrink") ||
+
+                            runEditorAction("editor.action.smartSelect.shrink");
+
+                          if (!ok) notify({ kind: "info", title: "Shrink Selection", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16703,7 +16809,23 @@ export default function AppShell() {
 
                         shortcut="Shift+Alt+UpArrow"
 
-                        onClick={() => notify({ kind: "info", title: "Copy Line Up", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Copy Line Up", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.copyLinesUpAction");
+
+                          if (!ok) notify({ kind: "info", title: "Copy Line Up", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16713,7 +16835,23 @@ export default function AppShell() {
 
                         shortcut="Shift+Alt+DownArrow"
 
-                        onClick={() => notify({ kind: "info", title: "Copy Line Down", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Copy Line Down", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.copyLinesDownAction");
+
+                          if (!ok) notify({ kind: "info", title: "Copy Line Down", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16723,7 +16861,23 @@ export default function AppShell() {
 
                         shortcut="Alt+UpArrow"
 
-                        onClick={() => notify({ kind: "info", title: "Move Line Up", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Move Line Up", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.moveLinesUpAction");
+
+                          if (!ok) notify({ kind: "info", title: "Move Line Up", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16733,7 +16887,23 @@ export default function AppShell() {
 
                         shortcut="Alt+DownArrow"
 
-                        onClick={() => notify({ kind: "info", title: "Move Line Down", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Move Line Down", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.moveLinesDownAction");
+
+                          if (!ok) notify({ kind: "info", title: "Move Line Down", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16741,7 +16911,23 @@ export default function AppShell() {
 
                         label="Duplicate Selection"
 
-                        onClick={() => notify({ kind: "info", title: "Duplicate Selection", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Duplicate Selection", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.duplicateSelection");
+
+                          if (!ok) notify({ kind: "info", title: "Duplicate Selection", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16753,7 +16939,23 @@ export default function AppShell() {
 
                         shortcut="Ctrl+Alt+UpArrow"
 
-                        onClick={() => notify({ kind: "info", title: "Add Cursor Above", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Add Cursor Above", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.insertCursorAbove");
+
+                          if (!ok) notify({ kind: "info", title: "Add Cursor Above", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16763,7 +16965,23 @@ export default function AppShell() {
 
                         shortcut="Ctrl+Alt+DownArrow"
 
-                        onClick={() => notify({ kind: "info", title: "Add Cursor Below", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Add Cursor Below", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.insertCursorBelow");
+
+                          if (!ok) notify({ kind: "info", title: "Add Cursor Below", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16773,7 +16991,23 @@ export default function AppShell() {
 
                         shortcut="Shift+Alt+I"
 
-                        onClick={() => notify({ kind: "info", title: "Add Cursors to Line End", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Add Cursors to Line End", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.insertCursorAtEndOfEachLineSelected");
+
+                          if (!ok) notify({ kind: "info", title: "Add Cursors to Line End", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16783,7 +17017,23 @@ export default function AppShell() {
 
                         shortcut="Ctrl+D"
 
-                        onClick={() => notify({ kind: "info", title: "Add Next Occurrence", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Add Next Occurrence", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.addSelectionToNextFindMatch");
+
+                          if (!ok) notify({ kind: "info", title: "Add Next Occurrence", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16791,7 +17041,23 @@ export default function AppShell() {
 
                         label="Add Previous Occurrence"
 
-                        onClick={() => notify({ kind: "info", title: "Add Previous Occurrence", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Add Previous Occurrence", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.addSelectionToPreviousFindMatch");
+
+                          if (!ok) notify({ kind: "info", title: "Add Previous Occurrence", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16801,7 +17067,29 @@ export default function AppShell() {
 
                         shortcut="Ctrl+Shift+L"
 
-                        onClick={() => notify({ kind: "info", title: "Select All Occurrences", message: "Coming next." })}
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Select All Occurrences", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok =
+
+                            runEditorAction("editor.action.selectHighlights") ||
+
+                            runEditorAction("editor.action.changeAll") ||
+
+                            runEditorAction("editor.action.addSelectionToNextFindMatch");
+
+                          if (!ok) notify({ kind: "info", title: "Select All Occurrences", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
@@ -16811,7 +17099,43 @@ export default function AppShell() {
 
                         label="Switch to Ctrl+Click for Multi-Cursor"
 
-                        onClick={() => notify({ kind: "info", title: "Multi-cursor", message: "Coming next." })}
+                        right={(
+
+                          <MenuCheck
+
+                            checked={
+
+                              getEditorOption((ed, monaco) =>
+
+                                (ed as any).getOption?.((monaco as any).editor?.EditorOption?.multiCursorModifier) === "ctrlCmd"
+
+                              ) === true
+
+                            }
+
+                          />
+
+                        )}
+
+                        keepOpen
+
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Multi-cursor", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = updateEditorOptions({ multiCursorModifier: "ctrlCmd" });
+
+                          if (!ok) notify({ kind: "info", title: "Multi-cursor", message: "Unable to update editor settings." });
+
+                        }}
 
                       />
 
@@ -16819,7 +17143,43 @@ export default function AppShell() {
 
                         label="Column Selection Mode"
 
-                        onClick={() => notify({ kind: "info", title: "Column Selection Mode", message: "Coming next." })}
+                        right={(
+
+                          <MenuCheck
+
+                            checked={
+
+                              getEditorOption((ed, monaco) =>
+
+                                Boolean((ed as any).getOption?.((monaco as any).editor?.EditorOption?.columnSelection))
+
+                              ) === true
+
+                            }
+
+                          />
+
+                        )}
+
+                        keepOpen
+
+                        onClick={() => {
+
+                          const ed = editorRef.current;
+
+                          if (!ed) {
+
+                            notify({ kind: "info", title: "Column Selection Mode", message: "No editor is focused." });
+
+                            return;
+
+                          }
+
+                          const ok = runEditorAction("editor.action.toggleColumnSelection");
+
+                          if (!ok) notify({ kind: "info", title: "Column Selection Mode", message: "This action is not available in this editor." });
+
+                        }}
 
                       />
 
