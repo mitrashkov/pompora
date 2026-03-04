@@ -7830,6 +7830,8 @@ export default function AppShell() {
 
   const [cursorPos, setCursorPos] = useState<{ line: number; col: number } | null>(null);
 
+  const [editorOptionsSeq, setEditorOptionsSeq] = useState(0);
+
   const activeTab = useMemo(
 
     () => (activeTabPath ? tabs.find((t) => t.path === activeTabPath) ?? null : null),
@@ -17219,6 +17221,8 @@ export default function AppShell() {
 
                           if (!ok) notify({ kind: "info", title: "Multi-cursor", message: "Unable to update editor settings." });
 
+                          setEditorOptionsSeq((v) => v + 1);
+
                         }}
 
                       />
@@ -17232,6 +17236,8 @@ export default function AppShell() {
                           <MenuCheck
 
                             checked={
+
+                              editorOptionsSeq >= 0 &&
 
                               getEditorOption((ed, monaco) =>
 
@@ -17261,7 +17267,19 @@ export default function AppShell() {
 
                           const ok = runEditorAction("editor.action.toggleColumnSelection");
 
-                          if (!ok) notify({ kind: "info", title: "Column Selection Mode", message: "This action is not available in this editor." });
+                          if (!ok) {
+
+                            const current =
+
+                              getEditorOption((ed, monaco) => Boolean((ed as any).getOption?.((monaco as any).editor?.EditorOption?.columnSelection))) ?? false;
+
+                            const ok2 = updateEditorOptions({ columnSelection: !current });
+
+                            if (!ok2) notify({ kind: "info", title: "Column Selection Mode", message: "This action is not available in this editor." });
+
+                          }
+
+                          setEditorOptionsSeq((v) => v + 1);
 
                         }}
 
@@ -19187,7 +19205,7 @@ export default function AppShell() {
 
                               const k = String(be.key || "").toLowerCase();
 
-                              if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
+                              if (be.altKey && !be.shiftKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
 
                                 goBack();
 
@@ -19211,7 +19229,7 @@ export default function AppShell() {
 
                               }
 
-                              if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowRight" || be.key === "Right")) {
+                              if (be.altKey && !be.shiftKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowRight" || be.key === "Right")) {
 
                                 goForward();
 
@@ -19501,7 +19519,7 @@ export default function AppShell() {
 
                               const k = String(be.key || "").toLowerCase();
 
-                              if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
+                              if (be.altKey && !be.shiftKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
 
                                 goBack();
 
@@ -19525,7 +19543,7 @@ export default function AppShell() {
 
                               }
 
-                              if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowRight" || be.key === "Right")) {
+                              if (be.altKey && !be.shiftKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowRight" || be.key === "Right")) {
 
                                 goForward();
 
