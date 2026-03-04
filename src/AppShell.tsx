@@ -314,6 +314,8 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
   "editor.expandSelection": "Shift+Alt+ArrowRight",
 
+  "editor.shrinkSelection": "Shift+Alt+ArrowLeft",
+
   "editor.copyLineUp": "Shift+Alt+ArrowUp",
 
   "editor.copyLineDown": "Shift+Alt+ArrowDown",
@@ -14613,6 +14615,38 @@ export default function AppShell() {
           if (!runEditorAction("editor.action.commentLine")) runEditorAction("editor.action.toggleComment");
         });
 
+
+
+        ed.addCommand(Ctrl | km.Alt | kc.UpArrow, () => {
+
+          runEditorAction("editor.action.insertCursorAbove");
+
+        });
+
+        ed.addCommand(Ctrl | km.Alt | kc.DownArrow, () => {
+
+          runEditorAction("editor.action.insertCursorBelow");
+
+        });
+
+        ed.addCommand(km.Shift | km.Alt | kc.KeyI, () => {
+
+          runEditorAction("editor.action.insertCursorAtEndOfEachLineSelected");
+
+        });
+
+        ed.addCommand(km.Shift | km.Alt | kc.RightArrow, () => {
+
+          runEditorAction("editor.action.smartSelect.expand");
+
+        });
+
+        ed.addCommand(km.Shift | km.Alt | kc.LeftArrow, () => {
+
+          runEditorAction("editor.action.smartSelect.shrink");
+
+        });
+
         console.log("[bindMonacoShortcuts] Bound successfully with Ctrl:", Ctrl);
 
       } catch (e) {
@@ -14815,6 +14849,26 @@ export default function AppShell() {
 
           kbNorm("edit.redo"),
 
+          kbNorm("editor.expandSelection"),
+
+          kbNorm("editor.shrinkSelection"),
+
+          kbNorm("editor.copyLineUp"),
+
+          kbNorm("editor.copyLineDown"),
+
+          kbNorm("editor.moveLineUp"),
+
+          kbNorm("editor.moveLineDown"),
+
+          kbNorm("editor.addCursorAbove"),
+
+          kbNorm("editor.addCursorBelow"),
+
+          kbNorm("editor.addCursorsToLineEnds"),
+
+          kbNorm("editor.selectAllOccurrences"),
+
           kbNorm("view.navigateBack"),
 
           kbNorm("view.navigateForward"),
@@ -14936,6 +14990,16 @@ export default function AppShell() {
         e.preventDefault();
 
         setIsChatDockOpen((v) => !v);
+
+        return true;
+
+      }
+
+      if (ev === kbNorm("file.closeAll") || ev === __normShortcut("Ctrl+Shift+W")) {
+
+        e.preventDefault();
+
+        closeAllTabs();
 
         return true;
 
@@ -15331,7 +15395,15 @@ export default function AppShell() {
 
         e.preventDefault();
 
-        if (!runEditorAction("editor.action.selectAll")) document.execCommand("selectAll");
+        if (fromMonaco) {
+
+          selectAllInEditor(editorRef.current);
+
+        } else {
+
+          if (!runEditorAction("editor.action.selectAll")) document.execCommand("selectAll");
+
+        }
 
         return true;
 
@@ -15382,6 +15454,16 @@ export default function AppShell() {
         e.preventDefault();
 
         runEditorAction("editor.action.smartSelect.expand");
+
+        return true;
+
+      }
+
+      if (ev === kbNorm("editor.shrinkSelection")) {
+
+        e.preventDefault();
+
+        runEditorAction("editor.action.smartSelect.shrink");
 
         return true;
 
@@ -16733,7 +16815,7 @@ export default function AppShell() {
 
                         onClick={() => {
 
-                          runEditCommand("selectAll");
+                          selectAllInEditor(editorRef.current);
 
                         }}
 
@@ -16774,6 +16856,8 @@ export default function AppShell() {
                       <MenuItem
 
                         label="Shrink Selection"
+
+                        shortcut="Shift+Alt+LeftArrow"
 
                         onClick={() => {
 
@@ -19005,6 +19089,10 @@ export default function AppShell() {
 
                           beforeMount={handleMonacoBeforeMount}
 
+                          originalModelPath={`${activeTab.path}:before`}
+
+                          modifiedModelPath={`${activeTab.path}:after`}
+
                           original={activeTabChangeFile.before ?? ""}
 
                           modified={typedEditorText !== null ? typedEditorText : (activeTabChangeFile.after ?? activeTab.content)}
@@ -19302,6 +19390,8 @@ export default function AppShell() {
                           language={activeTab.language}
 
                           beforeMount={handleMonacoBeforeMount}
+
+                          path={activeTab.path}
 
                           value={activeTab.content}
 
