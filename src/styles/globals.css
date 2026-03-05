@@ -112,6 +112,10 @@ body,
   overflow: hidden;
 }
 
+#root {
+  zoom: var(--pompora-ui-zoom, 1);
+}
+
 body {
   margin: 0;
   background: rgb(var(--p-bg));
