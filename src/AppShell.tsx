@@ -1046,7 +1046,7 @@ function SavedWorkspacesDialog(props: {
 
 
 
-                        </div>
+                          </div>
 
 
 
@@ -9714,6 +9714,634 @@ export default function AppShell() {
 
 
 
+  const [isZenMode, setIsZenMode] = useState<boolean>(() => {
+
+
+
+    try {
+
+
+
+      return window.localStorage.getItem("pompora.view.zenMode") === "1";
+
+
+
+    } catch {
+
+
+
+      return false;
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [isCenteredLayout, setIsCenteredLayout] = useState<boolean>(() => {
+
+
+
+    try {
+
+
+
+      return window.localStorage.getItem("pompora.view.centeredLayout") === "1";
+
+
+
+    } catch {
+
+
+
+      return false;
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [isMenuBarVisible, setIsMenuBarVisible] = useState<boolean>(() => {
+
+
+
+    try {
+
+
+
+      return window.localStorage.getItem("pompora.view.menuBar") !== "0";
+
+
+
+    } catch {
+
+
+
+      return true;
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [isStatusBarVisible, setIsStatusBarVisible] = useState<boolean>(() => {
+
+
+
+    try {
+
+
+
+      return window.localStorage.getItem("pompora.view.statusBar") !== "0";
+
+
+
+    } catch {
+
+
+
+      return true;
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [primarySidebarSide, setPrimarySidebarSide] = useState<"left" | "right">(() => {
+
+
+
+    try {
+
+
+
+      const v = window.localStorage.getItem("pompora.view.primarySidebarSide");
+
+
+
+      return v === "right" ? "right" : "left";
+
+
+
+    } catch {
+
+
+
+      return "left";
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [activityBarPosition, setActivityBarPosition] = useState<"default" | "top" | "bottom" | "hidden">(() => {
+
+
+
+    try {
+
+
+
+      const v = window.localStorage.getItem("pompora.view.activityBarPosition");
+
+
+
+      return v === "top" || v === "bottom" || v === "hidden" ? v : "default";
+
+
+
+    } catch {
+
+
+
+      return "default";
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [secondaryActivityBarPosition, setSecondaryActivityBarPosition] = useState<"default" | "top" | "bottom" | "hidden">(() => {
+
+
+
+    try {
+
+
+
+      const v = window.localStorage.getItem("pompora.view.secondaryActivityBarPosition");
+
+
+
+      return v === "top" || v === "bottom" || v === "hidden" ? v : "default";
+
+
+
+    } catch {
+
+
+
+      return "default";
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [panelPosition, setPanelPosition] = useState<"bottom" | "top" | "left" | "right">(() => {
+
+
+
+    try {
+
+
+
+      const v = window.localStorage.getItem("pompora.view.panelPosition");
+
+
+
+      return v === "top" || v === "left" || v === "right" ? v : "bottom";
+
+
+
+    } catch {
+
+
+
+      return "bottom";
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [panelAlign, setPanelAlign] = useState<"center" | "justify" | "left" | "right">(() => {
+
+
+
+    try {
+
+
+
+      const v = window.localStorage.getItem("pompora.view.panelAlign");
+
+
+
+      return v === "justify" || v === "left" || v === "right" ? v : "center";
+
+
+
+    } catch {
+
+
+
+      return "center";
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [tabBarMode, setTabBarMode] = useState<"multiple" | "single" | "hidden">(() => {
+
+
+
+    try {
+
+
+
+      const v = window.localStorage.getItem("pompora.view.tabBarMode");
+
+
+
+      return v === "single" || v === "hidden" ? v : "multiple";
+
+
+
+    } catch {
+
+
+
+      return "multiple";
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const [editorActionsPosition, setEditorActionsPosition] = useState<"tabBar" | "titleBar" | "hidden">(() => {
+
+
+
+    try {
+
+
+
+      const v = window.localStorage.getItem("pompora.view.editorActionsPosition");
+
+
+
+      return v === "titleBar" || v === "hidden" ? v : "tabBar";
+
+
+
+    } catch {
+
+
+
+      return "tabBar";
+
+
+
+    }
+
+
+
+  });
+
+
+
+  const zenRestoreRef = useRef<{
+
+
+
+    isPrimarySidebarOpen: boolean;
+
+
+
+    isChatDockOpen: boolean;
+
+
+
+    isTerminalOpen: boolean;
+
+
+
+    isStatusBarVisible: boolean;
+
+
+
+    activityBarPosition: "default" | "top" | "bottom" | "hidden";
+
+
+
+  } | null>(null);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.zenMode", isZenMode ? "1" : "0");
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [isZenMode]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.centeredLayout", isCenteredLayout ? "1" : "0");
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [isCenteredLayout]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.menuBar", isMenuBarVisible ? "1" : "0");
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [isMenuBarVisible]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.statusBar", isStatusBarVisible ? "1" : "0");
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [isStatusBarVisible]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.primarySidebarSide", primarySidebarSide);
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [primarySidebarSide]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.activityBarPosition", activityBarPosition);
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [activityBarPosition]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.secondaryActivityBarPosition", secondaryActivityBarPosition);
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [secondaryActivityBarPosition]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.panelPosition", panelPosition);
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [panelPosition]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.panelAlign", panelAlign);
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [panelAlign]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.tabBarMode", tabBarMode);
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [tabBarMode]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
+      window.localStorage.setItem("pompora.view.editorActionsPosition", editorActionsPosition);
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [editorActionsPosition]);
+
+
+
 
 
 
@@ -10371,6 +10999,210 @@ export default function AppShell() {
 
 
   const [terminalHeight, setTerminalHeight] = useState(240);
+
+
+
+  const toggleZenMode = useCallback(() => {
+
+
+
+    setIsZenMode((v) => {
+
+
+
+      const next = !v;
+
+
+
+      if (next) {
+
+
+
+        zenRestoreRef.current = {
+
+
+
+          isPrimarySidebarOpen,
+
+
+
+          isChatDockOpen,
+
+
+
+          isTerminalOpen,
+
+
+
+          isStatusBarVisible,
+
+
+
+          activityBarPosition,
+
+
+
+        };
+
+
+
+        setIsPrimarySidebarOpen(false);
+
+
+
+        setIsChatDockOpen(false);
+
+
+
+        setIsTerminalOpen(false);
+
+
+
+        setIsStatusBarVisible(false);
+
+
+
+        setActivityBarPosition("hidden");
+
+
+
+      } else {
+
+
+
+        const r = zenRestoreRef.current;
+
+
+
+        if (r) {
+
+
+
+          setIsPrimarySidebarOpen(r.isPrimarySidebarOpen);
+
+
+
+          setIsChatDockOpen(r.isChatDockOpen);
+
+
+
+          setIsTerminalOpen(r.isTerminalOpen);
+
+
+
+          setIsStatusBarVisible(r.isStatusBarVisible);
+
+
+
+          setActivityBarPosition(r.activityBarPosition);
+
+
+
+        } else {
+
+
+
+          setIsStatusBarVisible(true);
+
+
+
+          setActivityBarPosition("default");
+
+
+
+        }
+
+
+
+        zenRestoreRef.current = null;
+
+
+
+      }
+
+
+
+      return next;
+
+
+
+    });
+
+
+
+  }, [activityBarPosition, isChatDockOpen, isPrimarySidebarOpen, isStatusBarVisible, isTerminalOpen]);
+
+
+
+  const toggleCenteredLayout = useCallback(() => {
+
+
+
+    setIsCenteredLayout((v) => !v);
+
+
+
+  }, []);
+
+
+
+  const toggleMenuBarVisible = useCallback(() => {
+
+
+
+    setIsMenuBarVisible((v) => !v);
+
+
+
+  }, []);
+
+
+
+  const toggleStatusBarVisible = useCallback(() => {
+
+
+
+    setIsStatusBarVisible((v) => !v);
+
+
+
+  }, []);
+
+
+
+  const togglePanelVisible = useCallback(() => {
+
+
+
+    setIsTerminalOpen((v) => !v);
+
+
+
+  }, []);
+
+
+
+  const toggleSecondarySideBar = useCallback(() => {
+
+
+
+    setIsChatDockOpen((v) => !v);
+
+
+
+  }, []);
+
+
+
+  const movePrimarySideBarRight = useCallback(() => {
+
+
+
+    setPrimarySidebarSide((v) => (v === "right" ? "left" : "right"));
+
+
+
+  }, []);
 
 
 
@@ -11510,11 +12342,27 @@ export default function AppShell() {
 
 
 
+    const activityCol = activityBarPosition === "hidden" ? "0px" : "52px";
+
+
+
     const explorerCol = isPrimarySidebarOpen ? `minmax(220px, ${explorerWidth}px)` : "0px";
 
 
 
-    const cols: string[] = ["52px", explorerCol, "minmax(0, 1fr)"];
+    const editorCol = "minmax(0, 1fr)";
+
+
+
+    const cols: string[] = [activityCol];
+
+
+
+    if (primarySidebarSide === "left") cols.push(explorerCol, editorCol);
+
+
+
+    else cols.push(editorCol, explorerCol);
 
 
 
@@ -11526,7 +12374,7 @@ export default function AppShell() {
 
 
 
-  }, [chatDockWidth, explorerWidth, isChatDockOpen, isPrimarySidebarOpen]);
+  }, [activityBarPosition, chatDockWidth, explorerWidth, isChatDockOpen, isPrimarySidebarOpen, primarySidebarSide]);
 
 
 
@@ -29972,10 +30820,6 @@ export default function AppShell() {
 
 
 
-
-
-
-
       const chordState = (window as any).__pomporaChordSeq as { started: number; first: string } | null | undefined;
 
 
@@ -30096,7 +30940,7 @@ export default function AppShell() {
 
 
 
-          notify({ kind: "info", title: "Zen Mode", message: "Coming next." });
+          toggleZenMode();
 
 
 
@@ -32656,11 +33500,18 @@ export default function AppShell() {
 
 
 
-      <div className="grid h-full grid-rows-[48px_1fr_32px]">
+      <div
+        className="grid h-full"
+        style={{ gridTemplateRows: `${isMenuBarVisible ? "48px" : "0px"} 1fr ${isStatusBarVisible ? "32px" : "0px"}` }}
+      >
 
 
 
-        <header className="bg-bg" onMouseDown={onHeaderMouseDown}>
+        {isMenuBarVisible ? (
+
+
+
+          <header className="bg-bg" onMouseDown={onHeaderMouseDown}>
 
 
 
@@ -32928,7 +33779,7 @@ export default function AppShell() {
 
 
 
-                    }}
+                      }}
 
 
 
@@ -35033,7 +35884,8 @@ export default function AppShell() {
 
 
 
-                              onClick={() => notify({ kind: "info", title: "Zen Mode", message: "Coming next." })}
+                              right={<MenuCheck checked={isZenMode} />}
+                              onClick={() => toggleZenMode()}
 
 
 
@@ -35049,7 +35901,8 @@ export default function AppShell() {
 
 
 
-                              onClick={() => notify({ kind: "info", title: "Centered Layout", message: "Coming next." })}
+                              right={<MenuCheck checked={isCenteredLayout} />}
+                              onClick={() => toggleCenteredLayout()}
 
 
 
@@ -35061,7 +35914,7 @@ export default function AppShell() {
 
 
 
-                            <MenuItem label="Menu Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Menu Bar", message: "Coming next." })} />
+                            <MenuItem label="Menu Bar" right={<MenuCheck checked={isMenuBarVisible} />} onClick={() => toggleMenuBarVisible()} />
 
 
 
@@ -35069,15 +35922,15 @@ export default function AppShell() {
 
 
 
-                            <MenuItem label="Secondary Side Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Secondary Side Bar", message: "Coming next." })} />
+                            <MenuItem label="Secondary Side Bar" right={<MenuCheck checked={isChatDockOpen} />} onClick={() => toggleSecondarySideBar()} />
 
 
 
-                            <MenuItem label="Status Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Status Bar", message: "Coming next." })} />
+                            <MenuItem label="Status Bar" right={<MenuCheck checked={isStatusBarVisible} />} onClick={() => toggleStatusBarVisible()} />
 
 
 
-                            <MenuItem label="Panel" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Panel", message: "Coming next." })} />
+                            <MenuItem label="Panel" right={<MenuCheck checked={isTerminalOpen} />} onClick={() => togglePanelVisible()} />
 
 
 
@@ -35093,7 +35946,8 @@ export default function AppShell() {
 
 
 
-                              onClick={() => notify({ kind: "info", title: "Move Primary Side Bar Right", message: "Coming next." })}
+                              right={<MenuCheck checked={primarySidebarSide === "right"} />}
+                              onClick={() => movePrimarySideBarRight()}
 
 
 
@@ -35161,19 +36015,35 @@ export default function AppShell() {
 
 
 
-                                  <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Default"
+                                      right={<MenuCheck checked={activityBarPosition === "default"} />}
+                                      onClick={() => setActivityBarPosition("default")}
+                                    />
 
 
 
-                                  <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Top"
+                                      right={<MenuCheck checked={activityBarPosition === "top"} />}
+                                      onClick={() => setActivityBarPosition("top")}
+                                    />
 
 
 
-                                  <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Bottom"
+                                      right={<MenuCheck checked={activityBarPosition === "bottom"} />}
+                                      onClick={() => setActivityBarPosition("bottom")}
+                                    />
 
 
 
-                                  <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Activity Bar", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Hidden"
+                                      right={<MenuCheck checked={activityBarPosition === "hidden"} />}
+                                      onClick={() => setActivityBarPosition("hidden")}
+                                    />
 
 
 
@@ -35253,19 +36123,35 @@ export default function AppShell() {
 
 
 
-                                  <MenuItem label="Default" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Default"
+                                      right={<MenuCheck checked={secondaryActivityBarPosition === "default"} />}
+                                      onClick={() => setSecondaryActivityBarPosition("default")}
+                                    />
 
 
 
-                                  <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Top"
+                                      right={<MenuCheck checked={secondaryActivityBarPosition === "top"} />}
+                                      onClick={() => setSecondaryActivityBarPosition("top")}
+                                    />
 
 
 
-                                  <MenuItem label="Bottom" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Bottom"
+                                      right={<MenuCheck checked={secondaryActivityBarPosition === "bottom"} />}
+                                      onClick={() => setSecondaryActivityBarPosition("bottom")}
+                                    />
 
 
 
-                                  <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Secondary Activity Bar", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Hidden"
+                                      right={<MenuCheck checked={secondaryActivityBarPosition === "hidden"} />}
+                                      onClick={() => setSecondaryActivityBarPosition("hidden")}
+                                    />
 
 
 
@@ -35345,19 +36231,19 @@ export default function AppShell() {
 
 
 
-                                  <MenuItem label="Top" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
+                                  <MenuItem label="Top" right={<MenuCheck checked={panelPosition === "top"} />} onClick={() => setPanelPosition("top")} />
 
 
 
-                                  <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
+                                  <MenuItem label="Left" right={<MenuCheck checked={panelPosition === "left"} />} onClick={() => setPanelPosition("left")} />
 
 
 
-                                  <MenuItem label="Right" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
+                                  <MenuItem label="Right" right={<MenuCheck checked={panelPosition === "right"} />} onClick={() => setPanelPosition("right")} />
 
 
 
-                                  <MenuItem label="Bottom" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Panel Position", message: "Coming next." })} />
+                                  <MenuItem label="Bottom" right={<MenuCheck checked={panelPosition === "bottom"} />} onClick={() => setPanelPosition("bottom")} />
 
 
 
@@ -35437,19 +36323,19 @@ export default function AppShell() {
 
 
 
-                                  <MenuItem label="Center" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
+                                  <MenuItem label="Center" right={<MenuCheck checked={panelAlign === "center"} />} onClick={() => setPanelAlign("center")} />
 
 
 
-                                  <MenuItem label="Justify" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
+                                  <MenuItem label="Justify" right={<MenuCheck checked={panelAlign === "justify"} />} onClick={() => setPanelAlign("justify")} />
 
 
 
-                                  <MenuItem label="Left" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
+                                  <MenuItem label="Left" right={<MenuCheck checked={panelAlign === "left"} />} onClick={() => setPanelAlign("left")} />
 
 
 
-                                  <MenuItem label="Right" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Align Panel", message: "Coming next." })} />
+                                  <MenuItem label="Right" right={<MenuCheck checked={panelAlign === "right"} />} onClick={() => setPanelAlign("right")} />
 
 
 
@@ -35529,15 +36415,15 @@ export default function AppShell() {
 
 
 
-                                  <MenuItem label="Multiple Tabs" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
+                                  <MenuItem label="Multiple Tabs" right={<MenuCheck checked={tabBarMode === "multiple"} />} onClick={() => setTabBarMode("multiple")} />
 
 
 
-                                  <MenuItem label="Single Tabs" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
+                                  <MenuItem label="Single Tabs" right={<MenuCheck checked={tabBarMode === "single"} />} onClick={() => setTabBarMode("single")} />
 
 
 
-                                  <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Tab Bar", message: "Coming next." })} />
+                                  <MenuItem label="Hidden" right={<MenuCheck checked={tabBarMode === "hidden"} />} onClick={() => setTabBarMode("hidden")} />
 
 
 
@@ -35617,15 +36503,27 @@ export default function AppShell() {
 
 
 
-                                  <MenuItem label="Tab Bar" right={<MenuCheck checked />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Tab Bar"
+                                      right={<MenuCheck checked={editorActionsPosition === "tabBar"} />}
+                                      onClick={() => setEditorActionsPosition("tabBar")}
+                                    />
 
 
 
-                                  <MenuItem label="Title Bar" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Title Bar"
+                                      right={<MenuCheck checked={editorActionsPosition === "titleBar"} />}
+                                      onClick={() => setEditorActionsPosition("titleBar")}
+                                    />
 
 
 
-                                  <MenuItem label="Hidden" right={<MenuCheck />} onClick={() => notify({ kind: "info", title: "Editor Actions", message: "Coming next." })} />
+                                    <MenuItem
+                                      label="Hidden"
+                                      right={<MenuCheck checked={editorActionsPosition === "hidden"} />}
+                                      onClick={() => setEditorActionsPosition("hidden")}
+                                    />
 
 
 
@@ -37097,7 +37995,11 @@ export default function AppShell() {
 
 
 
-        </header>
+          </header>
+
+
+
+        ) : null}
 
 
 
@@ -37109,7 +38011,11 @@ export default function AppShell() {
 
 
 
-          <aside className="min-w-0 overflow-hidden rounded-2xl bg-panel">
+          {activityBarPosition !== "hidden" ? (
+
+
+
+            <aside className="min-w-0 overflow-hidden rounded-2xl bg-panel" style={{ gridColumn: 1 }}>
 
 
 
@@ -37137,7 +38043,11 @@ export default function AppShell() {
 
 
 
-          </aside>
+            </aside>
+
+
+
+          ) : null}
 
 
 
@@ -37145,7 +38055,7 @@ export default function AppShell() {
 
 
 
-          <aside className="relative min-h-0 min-w-0 overflow-hidden rounded-2xl bg-panel">
+          <aside className="relative min-h-0 min-w-0 overflow-hidden rounded-2xl bg-panel" style={{ gridColumn: primarySidebarSide === "left" ? 2 : 3 }}>
 
 
 
@@ -37153,7 +38063,7 @@ export default function AppShell() {
 
 
 
-              className="absolute right-0 top-0 z-20 h-full w-1 cursor-col-resize"
+              className={`absolute top-0 z-20 h-full w-1 cursor-col-resize ${primarySidebarSide === "left" ? "right-0" : "left-0"}`}
 
 
 
@@ -37541,7 +38451,10 @@ export default function AppShell() {
 
 
 
-          <main className={`min-h-0 min-w-0 overflow-hidden rounded-2xl ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
+          <main
+            className={`min-h-0 min-w-0 overflow-hidden rounded-2xl ${isCoding ? "ws-editor-surface" : "bg-panel"}`}
+            style={{ gridColumn: primarySidebarSide === "left" ? 3 : 2 }}
+          >
 
 
 
@@ -37549,83 +38462,83 @@ export default function AppShell() {
 
 
 
-              <div className={`flex h-14 items-center gap-1 px-2 ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
+              {tabBarMode !== "hidden" ? (
 
 
 
-                <div className="relative min-w-0 flex-1">
+                <div className={`flex h-14 items-center gap-1 px-2 ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
 
 
 
-                  <div
+                  <div className="relative min-w-0 flex-1">
 
 
 
-                    ref={tabsScrollRef}
+                    <div
 
 
 
-                    className="ws-tabs-scroll flex min-w-0 items-center gap-1 overflow-auto"
+                      ref={tabsScrollRef}
 
 
 
-                    onScroll={() => updateTabsIndicator()}
+                      className="ws-tabs-scroll flex min-w-0 items-center gap-1 overflow-auto"
 
 
 
-                    onWheel={(e) => {
+                      onScroll={() => updateTabsIndicator()}
 
 
 
-                      const el = tabsScrollRef.current;
+                      onWheel={(e) => {
 
 
 
-                      if (!el) return;
+                        const el = tabsScrollRef.current;
 
 
 
-                      const canScroll = el.scrollWidth > el.clientWidth;
+                        if (!el) return;
 
 
 
-                      if (!canScroll) return;
+                        const canScroll = el.scrollWidth > el.clientWidth;
 
 
 
+                        if (!canScroll) return;
 
 
 
-
-                      const dy = e.deltaY;
-
-
-
-                      const dx = e.deltaX;
+                        const dy = e.deltaY;
 
 
 
-                      const next = el.scrollLeft + (Math.abs(dx) > Math.abs(dy) ? dx : dy);
+                        const dx = e.deltaX;
 
 
 
-                      if (next !== el.scrollLeft) {
+                        const next = el.scrollLeft + (Math.abs(dx) > Math.abs(dy) ? dx : dy);
 
 
 
-                        e.preventDefault();
+                        if (next !== el.scrollLeft) {
 
 
 
-                        el.scrollLeft = next;
+                          e.preventDefault();
 
 
 
-                        updateTabsIndicator();
+                          el.scrollLeft = next;
 
 
 
-                      }
+                          updateTabsIndicator();
+
+
+
+                        }
 
 
 
@@ -37637,7 +38550,7 @@ export default function AppShell() {
 
 
 
-                    {tabs.map((t) => (
+                    {(tabBarMode === "single" ? (activeTab ? [activeTab] : []) : tabs).map((t) => (
 
 
 
@@ -37705,27 +38618,27 @@ export default function AppShell() {
 
 
 
+                  </div>
+
+
+
+                  <button type="button" className="ws-icon-btn" onClick={() => void openFolder()}>
+
+
+
+                    <Plus className="h-4 w-4" />
+
+
+
+                  </button>
+
+
+
                 </div>
 
 
 
-                <button type="button" className="ws-icon-btn" onClick={() => void openFolder()}>
-
-
-
-                  <Plus className="h-4 w-4" />
-
-
-
-                </button>
-
-
-
-              </div>
-
-
-
-
+              ) : null}
 
 
 
