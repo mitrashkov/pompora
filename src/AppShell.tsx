@@ -206,6 +206,10 @@ import {
 
 
 
+  Menu as MenuIcon,
+
+
+
   Minus,
 
 
@@ -1173,6 +1177,8 @@ function SavedWorkspacesDialog(props: {
 
 
   );
+
+
 
 }
 
@@ -7112,6 +7118,10 @@ function MenuItem(props: {
 
 
 
+  onClickWithEvent?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+
+
+
   onMouseEnter?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 
 
@@ -7140,11 +7150,15 @@ function MenuItem(props: {
 
 
 
-      onClick={() => {
+      onClick={(e) => {
 
 
 
         props.onClick?.();
+
+
+
+        props.onClickWithEvent?.(e);
 
 
 
@@ -9626,6 +9640,22 @@ export default function AppShell() {
 
 
 
+  const [isCompactMenubarOpen, setIsCompactMenubarOpen] = useState(false);
+
+
+
+  const [compactMenubarAnchor, setCompactMenubarAnchor] = useState<DOMRect | null>(null);
+
+
+
+  const [compactMenubarSub, setCompactMenubarSub] = useState<null | "file" | "edit" | "selection" | "view" | "run" | "terminal">(null);
+
+
+
+  const [compactMenubarSubAnchor, setCompactMenubarSubAnchor] = useState<DOMRect | null>(null);
+
+
+
 
 
 
@@ -10522,6 +10552,1694 @@ export default function AppShell() {
 
 
 
+  const closeCompactMenubar = useCallback(() => {
+
+
+
+    setIsCompactMenubarOpen(false);
+
+
+
+    setCompactMenubarAnchor(null);
+
+
+
+    setCompactMenubarSub(null);
+
+
+
+    setCompactMenubarSubAnchor(null);
+
+
+
+  }, []);
+
+
+
+  useEffect(() => {
+
+
+
+    if (!isCompactMenubarOpen) return;
+
+
+
+    const onDocMouseDown = (e: MouseEvent) => {
+
+
+
+      const t = e.target as HTMLElement | null;
+
+
+
+      if (!t) return;
+
+
+
+      if (t.closest("[data-compact-menubar-root]") || t.closest("[data-compact-menubar-portal]")) return;
+
+
+
+      closeCompactMenubar();
+
+
+
+    };
+
+
+
+    window.addEventListener("mousedown", onDocMouseDown);
+
+
+
+    return () => window.removeEventListener("mousedown", onDocMouseDown);
+
+
+
+  }, [closeCompactMenubar, isCompactMenubarOpen]);
+
+
+
+  useEffect(() => {
+
+
+
+    if (isMenuBarVisible) closeCompactMenubar();
+
+
+
+  }, [closeCompactMenubar, isMenuBarVisible]);
+
+
+
+  useEffect(() => {
+
+
+
+    const onClose = () => closeCompactMenubar();
+
+
+
+    window.addEventListener("pompora:menubar-close", onClose);
+
+
+
+    return () => window.removeEventListener("pompora:menubar-close", onClose);
+
+
+
+  }, [closeCompactMenubar]);
+
+
+
+  type MenubarVariant = "menubar" | "compact";
+
+
+
+  const compactPortalAttrs = (variant: MenubarVariant) => (variant === "compact" ? ({ "data-compact-menubar-portal": true } as const) : {});
+
+
+
+  const renderFileMenuPanel = (variant: MenubarVariant) => (
+
+
+
+    <div
+
+
+
+      className={
+
+
+
+        variant === "menubar"
+
+
+
+          ? "absolute left-0 top-full z-[9999] mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+
+
+
+          : "w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+
+
+
+      }
+
+
+
+      {...compactPortalAttrs(variant)}
+
+
+
+    >
+
+
+
+      <MenuItem label="New Window" shortcut="Ctrl+Shift+N" onClick={() => openNewWindow()} />
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label="Open File" shortcut="Ctrl+O" onClick={() => void openStandaloneFile()} />
+
+
+
+      <MenuItem label="Open Folder" shortcut="Ctrl+K Ctrl+O" onClick={() => void openFolder()} />
+
+
+
+      <div className="relative">
+
+
+
+        <MenuItem
+
+
+
+          label="Open Recent"
+
+
+
+          right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+          keepOpen
+
+
+
+          onMouseEnter={(e) => {
+
+
+
+            clearFileRecentCloseTimer();
+
+
+
+            setIsFileMenuRecentOpen(true);
+
+
+
+            setFileRecentAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+          }}
+
+
+
+          onMouseLeave={() => scheduleFileRecentClose()}
+
+
+
+          onClick={() => setIsFileMenuRecentOpen((v) => !v)}
+
+
+
+        />
+
+
+
+        {isFileMenuRecentOpen && fileRecentAnchor ? (
+
+
+
+          <MenuPortal anchor={fileRecentAnchor} approxWidth={320}>
+
+
+
+            <div
+
+
+
+              className="w-max min-w-72 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+
+
+
+              onMouseEnter={() => {
+
+
+
+                clearFileRecentCloseTimer();
+
+
+
+                setIsFileMenuRecentOpen(true);
+
+
+
+              }}
+
+
+
+              onMouseLeave={() => scheduleFileRecentClose()}
+
+
+
+              {...compactPortalAttrs(variant)}
+
+
+
+            >
+
+
+
+              <div className="px-2 py-1 text-[11px] font-medium text-muted">Folders</div>
+
+
+
+              {(workspace.recent.length ? workspace.recent : settings.recent_workspaces).length ? (
+
+
+
+                (workspace.recent.length ? workspace.recent : settings.recent_workspaces).map((p) => (
+
+
+
+                  <MenuItem key={p} label={p} onClick={() => void openRecent(p)} />
+
+
+
+                ))
+
+
+
+              ) : (
+
+
+
+                <div className="px-2 py-1 text-xs text-muted">No recent folders</div>
+
+
+
+              )}
+
+
+
+              <MenuSep />
+
+
+
+              <div className="px-2 py-1 text-[11px] font-medium text-muted">Files</div>
+
+
+
+              {recentFiles.length ? (
+
+
+
+                recentFiles.map((p) => {
+
+
+
+                  const Icon = fileIconFor(p);
+
+
+
+                  return <MenuItem key={p} label={p} left={<Icon className="h-3.5 w-3.5" />} onClick={() => void openRecentFile(p)} />;
+
+
+
+                })
+
+
+
+              ) : (
+
+
+
+                <div className="px-2 py-1 text-xs text-muted">No recent files</div>
+
+
+
+              )}
+
+
+
+            </div>
+
+
+
+          </MenuPortal>
+
+
+
+        ) : null}
+
+
+
+      </div>
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label="Add Folder to Workspace" onClick={() => void addFolderToWorkspace()} />
+
+
+
+      <MenuItem label="Open Saved Workspace" onClick={() => void openSavedWorkspace()} />
+
+
+
+      <MenuItem label="Save Workspace as" onClick={() => void saveWorkspaceAs()} />
+
+
+
+      <MenuItem label="Duplicate Workspace" onClick={() => void duplicateWorkspace()} />
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label="Save" shortcut="Ctrl+S" onClick={() => void saveActiveFile()} />
+
+
+
+      <MenuItem label="Save As" shortcut="Ctrl+Shift+S" onClick={() => void saveAs()} />
+
+
+
+      <MenuItem label="Save All" shortcut="Ctrl+K S" onClick={() => void saveAll()} />
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label={autoSaveEnabled ? "Auto Save: On" : "Auto Save: Off"} onClick={() => setAutoSaveEnabled((v) => !v)} />
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label="Revert File" onClick={() => void revertFile()} />
+
+
+
+      <MenuItem label="Close Editor" shortcut="Ctrl+W" onClick={() => (activeTab ? closeTab(activeTab.path) : undefined)} />
+
+
+
+      <MenuItem label="Close All Editors" shortcut="Ctrl+Shift+W" onClick={() => closeAllTabs()} />
+
+
+
+      <MenuItem label="Close Folder" onClick={() => void closeFolder()} />
+
+
+
+      <MenuItem label="Close Window" shortcut="Alt+F4" onClick={() => exitApp()} />
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label="Exit" onClick={() => exitApp()} />
+
+
+
+    </div>
+
+
+
+  );
+
+
+
+  const renderEditMenuPanel = (variant: MenubarVariant) => (
+
+
+
+    <div
+
+
+
+      className={
+
+
+
+        variant === "menubar"
+
+
+
+          ? "absolute left-0 top-full z-[9999] mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+
+
+
+          : "w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+
+
+
+      }
+
+
+
+      {...compactPortalAttrs(variant)}
+
+
+
+    >
+
+
+
+      <MenuItem label="Undo" shortcut="Ctrl+Z" onClick={() => runEditCommand("undo")} />
+
+
+
+      <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => runEditCommand("redo")} />
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label="Cut" shortcut="Ctrl+X" onClick={() => runEditCommand("cut")} />
+
+
+
+      <MenuItem label="Copy" shortcut="Ctrl+C" onClick={() => runEditCommand("copy")} />
+
+
+
+      <MenuItem label="Paste" shortcut="Ctrl+V" onClick={() => runEditCommand("paste")} />
+
+
+
+      <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => runEditCommand("selectAll")} />
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label="Find" shortcut="Ctrl+F" onClick={() => {
+
+
+
+        const ed = editorRef.current;
+
+
+
+        if (ed) void ed.getAction("actions.find")?.run();
+
+
+
+      }} />
+
+
+
+      <MenuItem label="Replace" shortcut="Ctrl+H" onClick={() => {
+
+
+
+        const ed = editorRef.current;
+
+
+
+        if (ed) void ed.getAction("editor.action.startFindReplaceAction")?.run();
+
+
+
+      }} />
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label="Find in Files" shortcut="Ctrl+Shift+F" onClick={() => setActivity("search")} />
+
+
+
+      <MenuItem label="Replace in Files" shortcut="Ctrl+Shift+H" onClick={() => void replaceInFiles()} />
+
+
+
+      <MenuSep />
+
+
+
+      <MenuItem label="Toggle Line Comment" shortcut="Ctrl+/" onClick={() => {
+
+
+
+        const ok = runEditorAction("editor.action.commentLine");
+
+
+
+        if (!ok) notify({ kind: "info", title: "Toggle Line Comment", message: "No editor is focused." });
+
+
+
+      }} />
+
+
+
+      <MenuItem label="Toggle Block Comment" shortcut="Shift+Alt+A" onClick={() => {
+
+
+
+        const ok = runEditorAction("editor.action.blockComment");
+
+
+
+        if (!ok) notify({ kind: "info", title: "Toggle Block Comment", message: "No editor is focused." });
+
+
+
+      }} />
+
+
+
+      <MenuItem label="Emmet: Expand Abbreviation" shortcut="Tab" onClick={() => {
+
+
+
+        const ed = editorRef.current;
+
+
+
+        if (!ed) {
+
+
+
+          notify({ kind: "info", title: "Emmet", message: "No editor is focused." });
+
+
+
+          return;
+
+
+
+        }
+
+
+
+        const ok = runEditorAction("editor.emmet.action.expandAbbreviation");
+
+
+
+        if (!ok) notify({ kind: "info", title: "Emmet", message: "Emmet is not available in this editor." });
+
+
+
+      }} />
+
+
+
+    </div>
+
+
+
+  );
+
+
+
+  const renderSelectionMenuPanel = (variant: MenubarVariant) => (
+
+
+
+    <div
+      className={
+        variant === "menubar"
+          ? "absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+          : "w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+      }
+      {...compactPortalAttrs(variant)}
+    >
+      <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => runEditCommand("selectAll")} />
+
+      <MenuItem
+        label="Expand Selection"
+        shortcut="Shift+Alt+RightArrow"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Expand Selection", message: "No editor is focused." });
+            return;
+          }
+
+          const ok =
+            runEditorAction("editor.action.smartSelect.expand") ||
+            runEditorAction("editor.action.smartSelect.expand") ||
+            runEditorAction("editor.action.smartSelect.grow");
+          if (!ok) notify({ kind: "info", title: "Expand Selection", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Shrink Selection"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Shrink Selection", message: "No editor is focused." });
+            return;
+          }
+
+          const ok =
+            runEditorAction("editor.action.smartSelect.shrink") ||
+            runEditorAction("editor.action.smartSelect.shrink") ||
+            runEditorAction("editor.action.smartSelect.shrink");
+          if (!ok) notify({ kind: "info", title: "Shrink Selection", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuSep />
+
+      <MenuItem
+        label="Copy Line Up"
+        shortcut="Shift+Alt+UpArrow"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Copy Line Up", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.copyLinesUpAction");
+          if (!ok) notify({ kind: "info", title: "Copy Line Up", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Copy Line Down"
+        shortcut="Shift+Alt+DownArrow"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Copy Line Down", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.copyLinesDownAction");
+          if (!ok) notify({ kind: "info", title: "Copy Line Down", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Move Line Up"
+        shortcut="Alt+UpArrow"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Move Line Up", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.moveLinesUpAction");
+          if (!ok) notify({ kind: "info", title: "Move Line Up", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Move Line Down"
+        shortcut="Alt+DownArrow"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Move Line Down", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.moveLinesDownAction");
+          if (!ok) notify({ kind: "info", title: "Move Line Down", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Duplicate Selection"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Duplicate Selection", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.duplicateSelection");
+          if (!ok) notify({ kind: "info", title: "Duplicate Selection", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuSep />
+
+      <MenuItem
+        label="Add Cursor Above"
+        shortcut="Ctrl+Alt+UpArrow"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Add Cursor Above", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.insertCursorAbove");
+          if (!ok) notify({ kind: "info", title: "Add Cursor Above", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Add Cursor Below"
+        shortcut="Ctrl+Alt+DownArrow"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Add Cursor Below", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.insertCursorBelow");
+          if (!ok) notify({ kind: "info", title: "Add Cursor Below", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Add Cursors to Line End"
+        shortcut="Shift+Alt+I"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Add Cursors to Line End", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.insertCursorAtEndOfEachLineSelected");
+          if (!ok) notify({ kind: "info", title: "Add Cursors to Line End", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Add Next Occurrence"
+        shortcut="Ctrl+D"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Add Next Occurrence", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.addSelectionToNextFindMatch");
+          if (!ok) notify({ kind: "info", title: "Add Next Occurrence", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Add Previous Occurrence"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Add Previous Occurrence", message: "No editor is focused." });
+            return;
+          }
+          const ok = runEditorAction("editor.action.addSelectionToPreviousFindMatch");
+          if (!ok) notify({ kind: "info", title: "Add Previous Occurrence", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuItem
+        label="Select All Occurrences"
+        shortcut="Ctrl+Shift+L"
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Select All Occurrences", message: "No editor is focused." });
+            return;
+          }
+
+          const ok =
+            runEditorAction("editor.action.selectHighlights") ||
+            runEditorAction("editor.action.changeAll") ||
+            runEditorAction("editor.action.addSelectionToNextFindMatch");
+          if (!ok) notify({ kind: "info", title: "Select All Occurrences", message: "This action is not available in this editor." });
+        }}
+      />
+
+      <MenuSep />
+
+      <MenuItem
+        label="Switch to Ctrl+Click for Multi-Cursor"
+        right={(
+          <MenuCheck
+            checked={
+              getEditorOption((ed, monaco) => (ed as any).getOption?.((monaco as any).editor?.EditorOption?.multiCursorModifier) === "ctrlCmd") ===
+              true
+            }
+          />
+        )}
+        keepOpen
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Multi-cursor", message: "No editor is focused." });
+            return;
+          }
+
+          const ok = updateEditorOptions({ multiCursorModifier: "ctrlCmd" });
+          if (!ok) notify({ kind: "info", title: "Multi-cursor", message: "Unable to update editor settings." });
+        }}
+      />
+
+      <MenuItem
+        label="Column Selection Mode"
+        right={(
+          <MenuCheck
+            checked={
+              getEditorOption((ed, monaco) =>
+                Boolean((ed as any).getOption?.((monaco as any).editor?.EditorOption?.columnSelection))
+              ) === true
+            }
+          />
+        )}
+        keepOpen
+        onClick={() => {
+          const ed = editorRef.current;
+          if (!ed) {
+            notify({ kind: "info", title: "Column Selection Mode", message: "No editor is focused." });
+            return;
+          }
+
+          const ok = runEditorAction("editor.action.toggleColumnSelection");
+          if (!ok) notify({ kind: "info", title: "Column Selection Mode", message: "This action is not available in this editor." });
+        }}
+      />
+    </div>
+
+
+
+  );
+
+
+
+  const renderViewMenuPanel = (variant: MenubarVariant) => (
+
+    <div
+      className={
+        variant === "menubar"
+          ? "absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+          : "w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+      }
+      {...compactPortalAttrs(variant)}
+    >
+      <MenuItem
+        label="Command Palette…"
+        shortcut={kbRaw("view.commandPalette") || "Ctrl+Shift+P"}
+        onClick={() => {
+          setIsPaletteOpen(true);
+          if (variant === "menubar") closeMenubarMenus();
+        }}
+      />
+
+      <MenuItem
+        label="Open View…"
+        onClick={() => {
+          void openQuickOpen();
+          if (variant === "menubar") closeMenubarMenus();
+        }}
+      />
+
+      <MenuSep />
+
+      <div className="relative">
+        <MenuItem
+          label="Appearance"
+          right={<ChevronRight className="h-3.5 w-3.5" />}
+          keepOpen
+          onMouseEnter={(e) => {
+            setViewMenuSub("appearance");
+            setViewAppearanceAnchor(e.currentTarget.getBoundingClientRect());
+          }}
+          onClick={() => setViewMenuSub((v) => (v === "appearance" ? null : "appearance"))}
+        />
+
+        {viewMenuSub === "appearance" && viewAppearanceAnchor ? (
+          <MenuPortal anchor={viewAppearanceAnchor} approxWidth={360}>
+            <div
+              className="w-max min-w-80 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+              onMouseEnter={() => setViewMenuSub("appearance")}
+              onMouseLeave={() => {
+                setViewMenuSub(null);
+                setViewAppearanceSub(null);
+                setViewAppearanceSubAnchor(null);
+              }}
+              {...compactPortalAttrs(variant)}
+              {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+            >
+              <MenuItem label="Full Screen" shortcut="F11" onClick={() => toggleFullscreenApp()} />
+
+              <MenuItem label="Zen Mode" shortcut="Ctrl+K Z" right={<MenuCheck checked={isZenMode} />} onClick={() => toggleZenMode()} />
+
+              <MenuItem label="Centered Layout" right={<MenuCheck checked={isCenteredLayout} />} onClick={() => toggleCenteredLayout()} />
+
+              <MenuSep />
+
+              <MenuItem label="Menu Bar" right={<MenuCheck checked={isMenuBarVisible} />} onClick={() => toggleMenuBarVisible()} />
+
+              <MenuItem label="Primary Side Bar" shortcut={kbRaw("view.primarySidebar") || "Ctrl+B"} right={<MenuCheck checked={isPrimarySidebarOpen} />} onClick={() => togglePrimarySidebar()} />
+
+              <MenuItem label="Secondary Side Bar" right={<MenuCheck checked={isChatDockOpen} />} onClick={() => toggleSecondarySideBar()} />
+
+              <MenuItem label="Status Bar" right={<MenuCheck checked={isStatusBarVisible} />} onClick={() => toggleStatusBarVisible()} />
+
+              <MenuItem label="Panel" right={<MenuCheck checked={isTerminalOpen} />} onClick={() => togglePanelVisible()} />
+
+              <MenuSep />
+
+              <MenuItem label="Move Primary Side Bar Right" right={<MenuCheck checked={primarySidebarSide === "right"} />} onClick={() => movePrimarySideBarRight()} />
+
+              <div className="relative">
+                <MenuItem
+                  label="Activity Bar Position"
+                  right={<ChevronRight className="h-3.5 w-3.5" />}
+                  keepOpen
+                  onMouseEnter={(e) => {
+                    setViewAppearanceSub("activityBarPosition");
+                    setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                  }}
+                  onClick={() => setViewAppearanceSub((v) => (v === "activityBarPosition" ? null : "activityBarPosition"))}
+                />
+
+                {viewAppearanceSub === "activityBarPosition" && viewAppearanceSubAnchor ? (
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                    <div
+                      className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                      {...compactPortalAttrs(variant)}
+                      {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+                    >
+                      <MenuItem label="Default" right={<MenuCheck checked={activityBarPosition === "default"} />} onClick={() => setActivityBarPosition("default")} />
+                      <MenuItem label="Top" right={<MenuCheck checked={activityBarPosition === "top"} />} onClick={() => setActivityBarPosition("top")} />
+                      <MenuItem label="Bottom" right={<MenuCheck checked={activityBarPosition === "bottom"} />} onClick={() => setActivityBarPosition("bottom")} />
+                      <MenuItem label="Hidden" right={<MenuCheck checked={activityBarPosition === "hidden"} />} onClick={() => setActivityBarPosition("hidden")} />
+                    </div>
+                  </MenuPortal>
+                ) : null}
+              </div>
+
+              <div className="relative">
+                <MenuItem
+                  label="Secondary Activity Bar Position"
+                  right={<ChevronRight className="h-3.5 w-3.5" />}
+                  keepOpen
+                  onMouseEnter={(e) => {
+                    setViewAppearanceSub("secondaryActivityBarPosition");
+                    setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                  }}
+                  onClick={() => setViewAppearanceSub((v) => (v === "secondaryActivityBarPosition" ? null : "secondaryActivityBarPosition"))}
+                />
+
+                {viewAppearanceSub === "secondaryActivityBarPosition" && viewAppearanceSubAnchor ? (
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                    <div
+                      className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                      {...compactPortalAttrs(variant)}
+                      {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+                    >
+                      <MenuItem label="Default" right={<MenuCheck checked={secondaryActivityBarPosition === "default"} />} onClick={() => setSecondaryActivityBarPosition("default")} />
+                      <MenuItem label="Top" right={<MenuCheck checked={secondaryActivityBarPosition === "top"} />} onClick={() => setSecondaryActivityBarPosition("top")} />
+                      <MenuItem label="Bottom" right={<MenuCheck checked={secondaryActivityBarPosition === "bottom"} />} onClick={() => setSecondaryActivityBarPosition("bottom")} />
+                      <MenuItem label="Hidden" right={<MenuCheck checked={secondaryActivityBarPosition === "hidden"} />} onClick={() => setSecondaryActivityBarPosition("hidden")} />
+                    </div>
+                  </MenuPortal>
+                ) : null}
+              </div>
+
+              <div className="relative">
+                <MenuItem
+                  label="Panel Position"
+                  right={<ChevronRight className="h-3.5 w-3.5" />}
+                  keepOpen
+                  onMouseEnter={(e) => {
+                    setViewAppearanceSub("panelPosition");
+                    setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                  }}
+                  onClick={() => setViewAppearanceSub((v) => (v === "panelPosition" ? null : "panelPosition"))}
+                />
+
+                {viewAppearanceSub === "panelPosition" && viewAppearanceSubAnchor ? (
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                    <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]" {...compactPortalAttrs(variant)}>
+                      <MenuItem label="Top" right={<MenuCheck checked={panelPosition === "top"} />} onClick={() => setPanelPosition("top")} />
+                      <MenuItem label="Left" right={<MenuCheck checked={panelPosition === "left"} />} onClick={() => setPanelPosition("left")} />
+                      <MenuItem label="Right" right={<MenuCheck checked={panelPosition === "right"} />} onClick={() => setPanelPosition("right")} />
+                      <MenuItem label="Bottom" right={<MenuCheck checked={panelPosition === "bottom"} />} onClick={() => setPanelPosition("bottom")} />
+                    </div>
+                  </MenuPortal>
+                ) : null}
+              </div>
+
+              <div className="relative">
+                <MenuItem
+                  label="Align Panel"
+                  right={<ChevronRight className="h-3.5 w-3.5" />}
+                  keepOpen
+                  onMouseEnter={(e) => {
+                    setViewAppearanceSub("alignPanel");
+                    setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                  }}
+                  onClick={() => setViewAppearanceSub((v) => (v === "alignPanel" ? null : "alignPanel"))}
+                />
+
+                {viewAppearanceSub === "alignPanel" && viewAppearanceSubAnchor ? (
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                    <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]" {...compactPortalAttrs(variant)}>
+                      <MenuItem label="Center" right={<MenuCheck checked={panelAlign === "center"} />} onClick={() => setPanelAlign("center")} />
+                      <MenuItem label="Justify" right={<MenuCheck checked={panelAlign === "justify"} />} onClick={() => setPanelAlign("justify")} />
+                      <MenuItem label="Left" right={<MenuCheck checked={panelAlign === "left"} />} onClick={() => setPanelAlign("left")} />
+                      <MenuItem label="Right" right={<MenuCheck checked={panelAlign === "right"} />} onClick={() => setPanelAlign("right")} />
+                    </div>
+                  </MenuPortal>
+                ) : null}
+              </div>
+
+              <div className="relative">
+                <MenuItem
+                  label="Tab Bar"
+                  right={<ChevronRight className="h-3.5 w-3.5" />}
+                  keepOpen
+                  onMouseEnter={(e) => {
+                    setViewAppearanceSub("tabBar");
+                    setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                  }}
+                  onClick={() => setViewAppearanceSub((v) => (v === "tabBar" ? null : "tabBar"))}
+                />
+
+                {viewAppearanceSub === "tabBar" && viewAppearanceSubAnchor ? (
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                    <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]" {...compactPortalAttrs(variant)}>
+                      <MenuItem label="Multiple Tabs" right={<MenuCheck checked={tabBarMode === "multiple"} />} onClick={() => setTabBarMode("multiple")} />
+                      <MenuItem label="Single Tabs" right={<MenuCheck checked={tabBarMode === "single"} />} onClick={() => setTabBarMode("single")} />
+                      <MenuItem label="Hidden" right={<MenuCheck checked={tabBarMode === "hidden"} />} onClick={() => setTabBarMode("hidden")} />
+                    </div>
+                  </MenuPortal>
+                ) : null}
+              </div>
+
+              <div className="relative">
+                <MenuItem
+                  label="Editor Actions Position"
+                  right={<ChevronRight className="h-3.5 w-3.5" />}
+                  keepOpen
+                  onMouseEnter={(e) => {
+                    setViewAppearanceSub("editorActionsPosition");
+                    setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+                  }}
+                  onClick={() => setViewAppearanceSub((v) => (v === "editorActionsPosition" ? null : "editorActionsPosition"))}
+                />
+
+                {viewAppearanceSub === "editorActionsPosition" && viewAppearanceSubAnchor ? (
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                    <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]" {...compactPortalAttrs(variant)}>
+                      <MenuItem label="Tab Bar" right={<MenuCheck checked={editorActionsPosition === "tabBar"} />} onClick={() => setEditorActionsPosition("tabBar")} />
+                      <MenuItem label="Title Bar" right={<MenuCheck checked={editorActionsPosition === "titleBar"} />} onClick={() => setEditorActionsPosition("titleBar")} />
+                      <MenuItem label="Hidden" right={<MenuCheck checked={editorActionsPosition === "hidden"} />} onClick={() => setEditorActionsPosition("hidden")} />
+                    </div>
+                  </MenuPortal>
+                ) : null}
+              </div>
+
+              <MenuSep />
+
+              <MenuItem label="Minimap" right={<MenuCheck checked={isMinimapEnabled} />} onClick={() => toggleMinimap()} />
+              <MenuItem label="Breadcrumbs" right={<MenuCheck checked={isBreadcrumbsEnabled} />} onClick={() => toggleBreadcrumbs()} />
+              <MenuItem label="Sticky Scroll" right={<MenuCheck checked={isStickyScrollEnabled} />} onClick={() => toggleStickyScroll()} />
+              <MenuItem label="Render Whitespace" right={<MenuCheck checked={isRenderWhitespaceEnabled} />} onClick={() => toggleRenderWhitespace()} />
+              <MenuItem label="Render Control Characters" right={<MenuCheck checked={isRenderControlCharsEnabled} />} onClick={() => toggleRenderControlChars()} />
+            </div>
+          </MenuPortal>
+        ) : null}
+      </div>
+
+      <MenuSep />
+
+      <MenuItem label="Zoom In" shortcut={kbRaw("view.zoomIn") || "Ctrl+="} onClick={() => zoomIn()} />
+      <MenuItem label="Zoom Out" shortcut={kbRaw("view.zoomOut") || "Ctrl+-"} onClick={() => zoomOut()} />
+      <MenuItem label="Reset Zoom" shortcut={kbRaw("view.zoomReset") || "Ctrl+0"} onClick={() => zoomReset()} />
+
+      <MenuSep />
+
+      <div className="relative">
+        <MenuItem
+          label="Editor Layout"
+          right={<ChevronRight className="h-3.5 w-3.5" />}
+          keepOpen
+          onMouseEnter={(e) => {
+            setViewMenuSub("editorLayout");
+            setViewEditorLayoutAnchor(e.currentTarget.getBoundingClientRect());
+          }}
+          onClick={() => setViewMenuSub((v) => (v === "editorLayout" ? null : "editorLayout"))}
+        />
+
+        {viewMenuSub === "editorLayout" && viewEditorLayoutAnchor ? (
+          <MenuPortal anchor={viewEditorLayoutAnchor} approxWidth={320}>
+            <div
+              className="w-max min-w-64 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+              onMouseEnter={() => setViewMenuSub("editorLayout")}
+              onMouseLeave={() => setViewMenuSub(null)}
+              {...compactPortalAttrs(variant)}
+            >
+              <MenuItem label="Split Up" shortcut={kbRaw("view.splitEditorInGroup") || "Ctrl+K Ctrl+\\"} onClick={() => notify({ kind: "info", title: "Split Up", message: "Coming next." })} />
+              <MenuItem label="Split Down" shortcut={kbRaw("view.splitEditor") || "Ctrl+\\"} onClick={() => notify({ kind: "info", title: "Split Down", message: "Coming next." })} />
+              <MenuItem label="Split Left" onClick={() => notify({ kind: "info", title: "Split Left", message: "Coming next." })} />
+              <MenuItem label="Split Right" onClick={() => notify({ kind: "info", title: "Split Right", message: "Coming next." })} />
+              <MenuSep />
+              <MenuItem label="Split in Group" shortcut="Ctrl+Shift+\\" onClick={() => notify({ kind: "info", title: "Split in Group", message: "Coming next." })} />
+              <MenuSep />
+              <MenuItem label="Single" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+              <MenuItem label="Two Columns" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+              <MenuItem label="Three Columns" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+              <MenuItem label="Two Rows" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+              <MenuItem label="Three Rows" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+              <MenuItem label="Grid 2x2" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+              <MenuItem label="Two Rows Right" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+              <MenuItem label="Two Columns Bottom" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+              <MenuSep />
+              <MenuItem label="Flip Layout" shortcut="Shift+Alt+0" onClick={() => notify({ kind: "info", title: "Flip Layout", message: "Coming next." })} />
+            </div>
+          </MenuPortal>
+        ) : null}
+      </div>
+
+      <MenuSep />
+
+      <MenuItem label="Explorer" shortcut={kbRaw("view.explorer") || "Ctrl+Shift+E"} onClick={() => setActivity("explorer")} />
+      <MenuItem label="Search" shortcut={kbRaw("view.search") || "Ctrl+Shift+F"} onClick={() => setActivity("search")} />
+      <MenuItem label="Source Control" shortcut={kbRaw("view.sourceControl") || "Ctrl+Shift+G"} onClick={() => setActivity("scm")} />
+      <MenuItem label="Run" shortcut={kbRaw("view.runDebug") || "Ctrl+Shift+D"} onClick={() => notify({ kind: "info", title: "Run", message: "Coming next." })} />
+      <MenuItem label="Extensions" shortcut={kbRaw("view.extensions") || "Ctrl+Shift+X"} onClick={() => notify({ kind: "info", title: "Extensions", message: "Coming next." })} />
+
+      <MenuSep />
+
+      <MenuItem label="Problems" shortcut="Ctrl+Shift+M" onClick={() => notify({ kind: "info", title: "Problems", message: "Coming next." })} />
+      <MenuItem label="Output" shortcut="Ctrl+Shift+U" onClick={() => notify({ kind: "info", title: "Output", message: "Coming next." })} />
+      <MenuItem label="Debug Console" shortcut="Ctrl+Shift+Y" onClick={() => notify({ kind: "info", title: "Debug Console", message: "Coming next." })} />
+      <MenuItem label="Terminal" shortcut="Ctrl+`" onClick={() => toggleTerminal()} />
+
+      <MenuSep />
+
+      <MenuItem label="Word Wrap" shortcut="Alt+Z" onClick={() => notify({ kind: "info", title: "Word Wrap", message: "Coming next." })} />
+    </div>
+
+
+
+  );
+
+
+
+  const renderRunMenuPanel = (variant: MenubarVariant) => (
+
+    <div
+      className={
+        variant === "menubar"
+          ? "absolute left-0 top-full z-[9999] mt-1 w-72 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow"
+          : "w-72 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow"
+      }
+      {...compactPortalAttrs(variant)}
+    >
+      <MenuItem label="Start Debugging" shortcut="F5" onClick={() => notify({ kind: "info", title: "Start Debugging", message: "Coming next." })} />
+      <MenuItem label="Run Without Debugging" shortcut="Ctrl+F5" onClick={() => notify({ kind: "info", title: "Run Without Debugging", message: "Coming next." })} />
+      <MenuItem label="Stop Debugging" shortcut="Shift+F5" onClick={() => notify({ kind: "info", title: "Stop Debugging", message: "Coming next." })} />
+      <MenuItem label="Restart Debugging" shortcut="Ctrl+Shift+F5" onClick={() => notify({ kind: "info", title: "Restart Debugging", message: "Coming next." })} />
+    </div>
+
+
+
+  );
+
+
+
+  const renderTerminalMenuPanel = (variant: MenubarVariant) => (
+
+    <div
+      className={
+        variant === "menubar"
+          ? "absolute left-0 top-full z-[9999] mt-1 w-80 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow"
+          : "w-80 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow"
+      }
+      {...compactPortalAttrs(variant)}
+    >
+      <MenuItem
+        label="New Terminal"
+        shortcut="Ctrl+Shift+`"
+        onClick={() => {
+          void closeTerminal().finally(() => {
+            toggleTerminal();
+          });
+        }}
+      />
+
+      <MenuItem
+        label="Split Terminal"
+        shortcut="Ctrl+Shift+5"
+        onClick={() => notify({ kind: "info", title: "Split Terminal", message: "Coming next." })}
+      />
+
+      <MenuItem
+        label="New Terminal Window"
+        shortcut="Ctrl+Shift+Alt+`"
+        onClick={() => notify({ kind: "info", title: "New Terminal Window", message: "Coming next." })}
+      />
+
+      <MenuSep />
+
+      <MenuItem label="Run Task…" onClick={() => notify({ kind: "info", title: "Run Task", message: "Coming next." })} />
+
+      <MenuItem
+        label="Run Build Task…"
+        shortcut="Ctrl+Shift+B"
+        onClick={() => notify({ kind: "info", title: "Run Build Task", message: "Coming next." })}
+      />
+
+      <MenuItem label="Run Active File" onClick={() => notify({ kind: "info", title: "Run Active File", message: "Coming next." })} />
+
+      <MenuItem label="Run Selected Text" onClick={() => notify({ kind: "info", title: "Run Selected Text", message: "Coming next." })} />
+
+      <MenuSep />
+
+      <MenuItem label="Show Running Tasks…" onClick={() => notify({ kind: "info", title: "Show Running Tasks", message: "Coming next." })} />
+
+      <MenuItem label="Restart Running Tasks…" onClick={() => notify({ kind: "info", title: "Restart Running Tasks", message: "Coming next." })} />
+
+      <MenuItem label="Terminate Task…" onClick={() => notify({ kind: "info", title: "Terminate Task", message: "Coming next." })} />
+
+      <MenuSep />
+
+      <MenuItem label="Configure Tasks…" onClick={() => notify({ kind: "info", title: "Configure Tasks", message: "Coming next." })} />
+
+      <MenuItem label="Configure Default Build Task…" onClick={() => notify({ kind: "info", title: "Configure Default Build Task", message: "Coming next." })} />
+    </div>
+
+
+
+  );
+
+
+
+  const renderCompactMenubarRootContent = () => (
+
+
+
+    <div className="w-max min-w-56 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow" data-compact-menubar-portal>
+
+
+
+      <MenuItem
+
+
+
+        label="File"
+
+
+
+        right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+        keepOpen
+
+
+
+        onMouseEnter={(e) => {
+
+
+
+          setCompactMenubarSub("file");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+        onClickWithEvent={(e) => {
+
+
+
+          setCompactMenubarSub("file");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+      />
+
+
+
+      <MenuItem
+
+
+
+        label="Edit"
+
+
+
+        right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+        keepOpen
+
+
+
+        onMouseEnter={(e) => {
+
+
+
+          setCompactMenubarSub("edit");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+        onClickWithEvent={(e) => {
+
+
+
+          setCompactMenubarSub("edit");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+      />
+
+
+
+      <MenuItem
+
+
+
+        label="Selection"
+
+
+
+        right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+        keepOpen
+
+
+
+        onMouseEnter={(e) => {
+
+
+
+          setCompactMenubarSub("selection");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+        onClickWithEvent={(e) => {
+
+
+
+          setCompactMenubarSub("selection");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+      />
+
+
+
+      <MenuItem
+
+
+
+        label="View"
+
+
+
+        right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+        keepOpen
+
+
+
+        onMouseEnter={(e) => {
+
+
+
+          setCompactMenubarSub("view");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+        onClickWithEvent={(e) => {
+
+
+
+          setCompactMenubarSub("view");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+      />
+
+
+
+      <MenuItem
+
+
+
+        label="Run"
+
+
+
+        right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+        keepOpen
+
+
+
+        onMouseEnter={(e) => {
+
+
+
+          setCompactMenubarSub("run");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+        onClickWithEvent={(e) => {
+
+
+
+          setCompactMenubarSub("run");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+      />
+
+
+
+      <MenuItem
+
+
+
+        label="Terminal"
+
+
+
+        right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+        keepOpen
+
+
+
+        onMouseEnter={(e) => {
+
+
+
+          setCompactMenubarSub("terminal");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+        onClickWithEvent={(e) => {
+
+
+
+          setCompactMenubarSub("terminal");
+
+
+
+          setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+        }}
+
+
+
+      />
+
+
+
+    </div>
+
+
+
+  );
+
+
+
+  const renderCompactMenubarFileContent = () => (
+
+
+
+    renderFileMenuPanel("compact")
+
+
+
+  );
+
+
+
+  const renderCompactMenubarEditContent = () => (
+
+
+
+    renderEditMenuPanel("compact")
+
+
+
+  );
+
+
+
+  const renderCompactMenubarSelectionContent = () => (
+
+
+
+    renderSelectionMenuPanel("compact")
+
+
+
+  );
+
+
+
+  const renderCompactMenubarViewContent = () => (
+
+
+
+    renderViewMenuPanel("compact")
+
+
+
+  );
+
+
+
+  const renderCompactMenubarRunContent = () => (
+
+
+
+    renderRunMenuPanel("compact")
+
+
+
+  );
+
+
+
+  const renderCompactMenubarTerminalContent = () => (
+
+
+
+    renderTerminalMenuPanel("compact")
+
+
+
+  );
+
+
+
 
 
 
@@ -10935,6 +12653,7 @@ export default function AppShell() {
 
 
         logs: [],
+
 
 
 
@@ -32644,7 +34363,7 @@ export default function AppShell() {
 
 
 
-      if (!t.closest("[data-menubar-root]")) {
+      if (!t.closest("[data-menubar-root]") && !t.closest("[data-menubar-portal]")) {
 
 
 
@@ -33502,16 +35221,12 @@ export default function AppShell() {
 
       <div
         className="grid h-full"
-        style={{ gridTemplateRows: `${isMenuBarVisible ? "48px" : "0px"} 1fr ${isStatusBarVisible ? "32px" : "0px"}` }}
+        style={{ gridTemplateRows: `48px 1fr ${isStatusBarVisible ? "32px" : "0px"}` }}
       >
 
 
 
-        {isMenuBarVisible ? (
-
-
-
-          <header className="bg-bg" onMouseDown={onHeaderMouseDown}>
+        <header className="bg-bg" onMouseDown={onHeaderMouseDown}>
 
 
 
@@ -33715,7 +35430,11 @@ export default function AppShell() {
 
 
 
-              <div className="ws-titlebar-pill min-w-0 text-xs text-muted" data-no-drag="true">
+              {isMenuBarVisible ? (
+
+
+
+                <div className="ws-titlebar-pill min-w-0 text-xs text-muted" data-no-drag="true">
 
 
 
@@ -34679,927 +36398,7 @@ export default function AppShell() {
 
 
 
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
-
-
-
-                      <MenuItem
-
-
-
-                        label="Select All"
-
-
-
-                        shortcut="Ctrl+A"
-
-
-
-                        onClick={() => {
-
-
-
-                          runEditCommand("selectAll");
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Expand Selection"
-
-
-
-                        shortcut="Shift+Alt+RightArrow"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Expand Selection", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok =
-
-
-
-                            runEditorAction("editor.action.smartSelect.expand") ||
-
-
-
-                            runEditorAction("editor.action.smartSelect.expand") ||
-
-
-
-                            runEditorAction("editor.action.smartSelect.grow");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Expand Selection", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Shrink Selection"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Shrink Selection", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok =
-
-
-
-                            runEditorAction("editor.action.smartSelect.shrink") ||
-
-
-
-                            runEditorAction("editor.action.smartSelect.shrink") ||
-
-
-
-                            runEditorAction("editor.action.smartSelect.shrink");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Shrink Selection", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Copy Line Up"
-
-
-
-                        shortcut="Shift+Alt+UpArrow"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Copy Line Up", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.copyLinesUpAction");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Copy Line Up", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Copy Line Down"
-
-
-
-                        shortcut="Shift+Alt+DownArrow"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Copy Line Down", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.copyLinesDownAction");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Copy Line Down", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Move Line Up"
-
-
-
-                        shortcut="Alt+UpArrow"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Move Line Up", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.moveLinesUpAction");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Move Line Up", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Move Line Down"
-
-
-
-                        shortcut="Alt+DownArrow"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Move Line Down", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.moveLinesDownAction");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Move Line Down", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Duplicate Selection"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Duplicate Selection", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.duplicateSelection");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Duplicate Selection", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Add Cursor Above"
-
-
-
-                        shortcut="Ctrl+Alt+UpArrow"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Add Cursor Above", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.insertCursorAbove");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Add Cursor Above", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Add Cursor Below"
-
-
-
-                        shortcut="Ctrl+Alt+DownArrow"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Add Cursor Below", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.insertCursorBelow");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Add Cursor Below", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Add Cursors to Line End"
-
-
-
-                        shortcut="Shift+Alt+I"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Add Cursors to Line End", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.insertCursorAtEndOfEachLineSelected");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Add Cursors to Line End", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Add Next Occurrence"
-
-
-
-                        shortcut="Ctrl+D"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Add Next Occurrence", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.addSelectionToNextFindMatch");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Add Next Occurrence", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Add Previous Occurrence"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Add Previous Occurrence", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.addSelectionToPreviousFindMatch");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Add Previous Occurrence", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Select All Occurrences"
-
-
-
-                        shortcut="Ctrl+Shift+L"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Select All Occurrences", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok =
-
-
-
-                            runEditorAction("editor.action.selectHighlights") ||
-
-
-
-                            runEditorAction("editor.action.changeAll") ||
-
-
-
-                            runEditorAction("editor.action.addSelectionToNextFindMatch");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Select All Occurrences", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Switch to Ctrl+Click for Multi-Cursor"
-
-
-
-                        right={(
-
-
-
-                          <MenuCheck
-
-
-
-                            checked={
-
-
-
-                              getEditorOption((ed, monaco) =>
-
-
-
-                                (ed as any).getOption?.((monaco as any).editor?.EditorOption?.multiCursorModifier) === "ctrlCmd"
-
-
-
-                              ) === true
-
-
-
-                            }
-
-
-
-                          />
-
-
-
-                        )}
-
-
-
-                        keepOpen
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Multi-cursor", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = updateEditorOptions({ multiCursorModifier: "ctrlCmd" });
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Multi-cursor", message: "Unable to update editor settings." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Column Selection Mode"
-
-
-
-                        right={(
-
-
-
-                          <MenuCheck
-
-
-
-                            checked={
-
-
-
-                              getEditorOption((ed, monaco) =>
-
-
-
-                                Boolean((ed as any).getOption?.((monaco as any).editor?.EditorOption?.columnSelection))
-
-
-
-                              ) === true
-
-
-
-                            }
-
-
-
-                          />
-
-
-
-                        )}
-
-
-
-                        keepOpen
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Column Selection Mode", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.action.toggleColumnSelection");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Column Selection Mode", message: "This action is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                    </div>
+                    renderSelectionMenuPanel("menubar")
 
 
 
@@ -35739,1215 +36538,10 @@ export default function AppShell() {
 
 
 
-                    <div
+                    renderViewMenuPanel("menubar") 
 
 
 
-                      className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-
-
-
-                    >
-
-
-
-                      <MenuItem
-                        label="Command Palette…"
-                        shortcut={kbRaw("view.commandPalette") || "Ctrl+Shift+P"}
-                        onClick={() => {
-                          setIsPaletteOpen(true);
-                          closeMenubarMenus();
-                        }}
-                      />
-
-
-
-                      <MenuItem
-                        label="Open View…"
-                        onClick={() => {
-                          void openQuickOpen();
-                          closeMenubarMenus();
-                        }}
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-
-
-
-
-                      <div className="relative">
-
-
-
-                        <MenuItem
-
-
-
-                          label="Appearance"
-
-
-
-                          right={<ChevronRight className="h-3.5 w-3.5" />}
-
-
-
-                          keepOpen
-
-
-
-                          onMouseEnter={(e) => {
-
-
-
-                            setViewMenuSub("appearance");
-
-
-
-                            setViewAppearanceAnchor(e.currentTarget.getBoundingClientRect());
-
-
-
-                          }}
-
-
-
-                          onClick={() => setViewMenuSub((v) => (v === "appearance" ? null : "appearance"))}
-
-
-
-                        />
-
-
-
-                        {viewMenuSub === "appearance" && viewAppearanceAnchor ? (
-
-
-
-                          <MenuPortal anchor={viewAppearanceAnchor} approxWidth={360}>
-
-
-
-                            <div
-
-
-
-                              className="w-max min-w-80 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-
-
-
-                              onMouseEnter={() => setViewMenuSub("appearance")}
-
-
-
-                              onMouseLeave={() => {
-
-
-
-                                setViewMenuSub(null);
-
-
-
-                                setViewAppearanceSub(null);
-
-
-
-                                setViewAppearanceSubAnchor(null);
-
-
-
-                              }}
-
-
-
-                            >
-
-
-
-                            <MenuItem label="Full Screen" shortcut="F11" onClick={() => toggleFullscreenApp()} />
-
-
-
-                            <MenuItem
-
-
-
-                              label="Zen Mode"
-
-
-
-                              shortcut="Ctrl+K Z"
-
-
-
-                              right={<MenuCheck checked={isZenMode} />}
-                              onClick={() => toggleZenMode()}
-
-
-
-                            />
-
-
-
-                            <MenuItem
-
-
-
-                              label="Centered Layout"
-
-
-
-                              right={<MenuCheck checked={isCenteredLayout} />}
-                              onClick={() => toggleCenteredLayout()}
-
-
-
-                            />
-
-
-
-                            <MenuSep />
-
-
-
-                            <MenuItem label="Menu Bar" right={<MenuCheck checked={isMenuBarVisible} />} onClick={() => toggleMenuBarVisible()} />
-
-
-
-                            <MenuItem label="Primary Side Bar" shortcut={kbRaw("view.primarySidebar") || "Ctrl+B"} right={<MenuCheck checked={isPrimarySidebarOpen} />} onClick={() => togglePrimarySidebar()} />
-
-
-
-                            <MenuItem label="Secondary Side Bar" right={<MenuCheck checked={isChatDockOpen} />} onClick={() => toggleSecondarySideBar()} />
-
-
-
-                            <MenuItem label="Status Bar" right={<MenuCheck checked={isStatusBarVisible} />} onClick={() => toggleStatusBarVisible()} />
-
-
-
-                            <MenuItem label="Panel" right={<MenuCheck checked={isTerminalOpen} />} onClick={() => togglePanelVisible()} />
-
-
-
-                            <MenuSep />
-
-
-
-                            <MenuItem
-
-
-
-                              label="Move Primary Side Bar Right"
-
-
-
-                              right={<MenuCheck checked={primarySidebarSide === "right"} />}
-                              onClick={() => movePrimarySideBarRight()}
-
-
-
-                            />
-
-
-
-
-
-
-
-                            <div className="relative">
-
-
-
-                              <MenuItem
-
-
-
-                                label="Activity Bar Position"
-
-
-
-                                right={<ChevronRight className="h-3.5 w-3.5" />}
-
-
-
-                                keepOpen
-
-
-
-                                onMouseEnter={(e) => {
-
-
-
-                                  setViewAppearanceSub("activityBarPosition");
-
-
-
-                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
-
-
-
-                                }}
-
-
-
-                                onClick={() => setViewAppearanceSub((v) => (v === "activityBarPosition" ? null : "activityBarPosition"))}
-
-
-
-                              />
-
-
-
-                              {viewAppearanceSub === "activityBarPosition" && viewAppearanceSubAnchor ? (
-
-
-
-                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-
-
-
-                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
-
-
-
-                                    <MenuItem
-                                      label="Default"
-                                      right={<MenuCheck checked={activityBarPosition === "default"} />}
-                                      onClick={() => setActivityBarPosition("default")}
-                                    />
-
-
-
-                                    <MenuItem
-                                      label="Top"
-                                      right={<MenuCheck checked={activityBarPosition === "top"} />}
-                                      onClick={() => setActivityBarPosition("top")}
-                                    />
-
-
-
-                                    <MenuItem
-                                      label="Bottom"
-                                      right={<MenuCheck checked={activityBarPosition === "bottom"} />}
-                                      onClick={() => setActivityBarPosition("bottom")}
-                                    />
-
-
-
-                                    <MenuItem
-                                      label="Hidden"
-                                      right={<MenuCheck checked={activityBarPosition === "hidden"} />}
-                                      onClick={() => setActivityBarPosition("hidden")}
-                                    />
-
-
-
-                                  </div>
-
-
-
-                                </MenuPortal>
-
-
-
-                              ) : null}
-
-
-
-                            </div>
-
-
-
-
-
-
-
-                            <div className="relative">
-
-
-
-                              <MenuItem
-
-
-
-                                label="Secondary Activity Bar Position"
-
-
-
-                                right={<ChevronRight className="h-3.5 w-3.5" />}
-
-
-
-                                keepOpen
-
-
-
-                                onMouseEnter={(e) => {
-
-
-
-                                  setViewAppearanceSub("secondaryActivityBarPosition");
-
-
-
-                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
-
-
-
-                                }}
-
-
-
-                                onClick={() => setViewAppearanceSub((v) => (v === "secondaryActivityBarPosition" ? null : "secondaryActivityBarPosition"))}
-
-
-
-                              />
-
-
-
-                              {viewAppearanceSub === "secondaryActivityBarPosition" && viewAppearanceSubAnchor ? (
-
-
-
-                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-
-
-
-                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
-
-
-
-                                    <MenuItem
-                                      label="Default"
-                                      right={<MenuCheck checked={secondaryActivityBarPosition === "default"} />}
-                                      onClick={() => setSecondaryActivityBarPosition("default")}
-                                    />
-
-
-
-                                    <MenuItem
-                                      label="Top"
-                                      right={<MenuCheck checked={secondaryActivityBarPosition === "top"} />}
-                                      onClick={() => setSecondaryActivityBarPosition("top")}
-                                    />
-
-
-
-                                    <MenuItem
-                                      label="Bottom"
-                                      right={<MenuCheck checked={secondaryActivityBarPosition === "bottom"} />}
-                                      onClick={() => setSecondaryActivityBarPosition("bottom")}
-                                    />
-
-
-
-                                    <MenuItem
-                                      label="Hidden"
-                                      right={<MenuCheck checked={secondaryActivityBarPosition === "hidden"} />}
-                                      onClick={() => setSecondaryActivityBarPosition("hidden")}
-                                    />
-
-
-
-                                  </div>
-
-
-
-                                </MenuPortal>
-
-
-
-                              ) : null}
-
-
-
-                            </div>
-
-
-
-
-
-
-
-                            <div className="relative">
-
-
-
-                              <MenuItem
-
-
-
-                                label="Panel Position"
-
-
-
-                                right={<ChevronRight className="h-3.5 w-3.5" />}
-
-
-
-                                keepOpen
-
-
-
-                                onMouseEnter={(e) => {
-
-
-
-                                  setViewAppearanceSub("panelPosition");
-
-
-
-                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
-
-
-
-                                }}
-
-
-
-                                onClick={() => setViewAppearanceSub((v) => (v === "panelPosition" ? null : "panelPosition"))}
-
-
-
-                              />
-
-
-
-                              {viewAppearanceSub === "panelPosition" && viewAppearanceSubAnchor ? (
-
-
-
-                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-
-
-
-                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
-
-
-
-                                  <MenuItem label="Top" right={<MenuCheck checked={panelPosition === "top"} />} onClick={() => setPanelPosition("top")} />
-
-
-
-                                  <MenuItem label="Left" right={<MenuCheck checked={panelPosition === "left"} />} onClick={() => setPanelPosition("left")} />
-
-
-
-                                  <MenuItem label="Right" right={<MenuCheck checked={panelPosition === "right"} />} onClick={() => setPanelPosition("right")} />
-
-
-
-                                  <MenuItem label="Bottom" right={<MenuCheck checked={panelPosition === "bottom"} />} onClick={() => setPanelPosition("bottom")} />
-
-
-
-                                  </div>
-
-
-
-                                </MenuPortal>
-
-
-
-                              ) : null}
-
-
-
-                            </div>
-
-
-
-
-
-
-
-                            <div className="relative">
-
-
-
-                              <MenuItem
-
-
-
-                                label="Align Panel"
-
-
-
-                                right={<ChevronRight className="h-3.5 w-3.5" />}
-
-
-
-                                keepOpen
-
-
-
-                                onMouseEnter={(e) => {
-
-
-
-                                  setViewAppearanceSub("alignPanel");
-
-
-
-                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
-
-
-
-                                }}
-
-
-
-                                onClick={() => setViewAppearanceSub((v) => (v === "alignPanel" ? null : "alignPanel"))}
-
-
-
-                              />
-
-
-
-                              {viewAppearanceSub === "alignPanel" && viewAppearanceSubAnchor ? (
-
-
-
-                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-
-
-
-                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
-
-
-
-                                  <MenuItem label="Center" right={<MenuCheck checked={panelAlign === "center"} />} onClick={() => setPanelAlign("center")} />
-
-
-
-                                  <MenuItem label="Justify" right={<MenuCheck checked={panelAlign === "justify"} />} onClick={() => setPanelAlign("justify")} />
-
-
-
-                                  <MenuItem label="Left" right={<MenuCheck checked={panelAlign === "left"} />} onClick={() => setPanelAlign("left")} />
-
-
-
-                                  <MenuItem label="Right" right={<MenuCheck checked={panelAlign === "right"} />} onClick={() => setPanelAlign("right")} />
-
-
-
-                                  </div>
-
-
-
-                                </MenuPortal>
-
-
-
-                              ) : null}
-
-
-
-                            </div>
-
-
-
-
-
-
-
-                            <div className="relative">
-
-
-
-                              <MenuItem
-
-
-
-                                label="Tab Bar"
-
-
-
-                                right={<ChevronRight className="h-3.5 w-3.5" />}
-
-
-
-                                keepOpen
-
-
-
-                                onMouseEnter={(e) => {
-
-
-
-                                  setViewAppearanceSub("tabBar");
-
-
-
-                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
-
-
-
-                                }}
-
-
-
-                                onClick={() => setViewAppearanceSub((v) => (v === "tabBar" ? null : "tabBar"))}
-
-
-
-                              />
-
-
-
-                              {viewAppearanceSub === "tabBar" && viewAppearanceSubAnchor ? (
-
-
-
-                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-
-
-
-                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
-
-
-
-                                  <MenuItem label="Multiple Tabs" right={<MenuCheck checked={tabBarMode === "multiple"} />} onClick={() => setTabBarMode("multiple")} />
-
-
-
-                                  <MenuItem label="Single Tabs" right={<MenuCheck checked={tabBarMode === "single"} />} onClick={() => setTabBarMode("single")} />
-
-
-
-                                  <MenuItem label="Hidden" right={<MenuCheck checked={tabBarMode === "hidden"} />} onClick={() => setTabBarMode("hidden")} />
-
-
-
-                                  </div>
-
-
-
-                                </MenuPortal>
-
-
-
-                              ) : null}
-
-
-
-                            </div>
-
-
-
-
-
-
-
-                            <div className="relative">
-
-
-
-                              <MenuItem
-
-
-
-                                label="Editor Actions Position"
-
-
-
-                                right={<ChevronRight className="h-3.5 w-3.5" />}
-
-
-
-                                keepOpen
-
-
-
-                                onMouseEnter={(e) => {
-
-
-
-                                  setViewAppearanceSub("editorActionsPosition");
-
-
-
-                                  setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
-
-
-
-                                }}
-
-
-
-                                onClick={() => setViewAppearanceSub((v) => (v === "editorActionsPosition" ? null : "editorActionsPosition"))}
-
-
-
-                              />
-
-
-
-                              {viewAppearanceSub === "editorActionsPosition" && viewAppearanceSubAnchor ? (
-
-
-
-                                <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-
-
-
-                                  <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
-
-
-
-                                    <MenuItem
-                                      label="Tab Bar"
-                                      right={<MenuCheck checked={editorActionsPosition === "tabBar"} />}
-                                      onClick={() => setEditorActionsPosition("tabBar")}
-                                    />
-
-
-
-                                    <MenuItem
-                                      label="Title Bar"
-                                      right={<MenuCheck checked={editorActionsPosition === "titleBar"} />}
-                                      onClick={() => setEditorActionsPosition("titleBar")}
-                                    />
-
-
-
-                                    <MenuItem
-                                      label="Hidden"
-                                      right={<MenuCheck checked={editorActionsPosition === "hidden"} />}
-                                      onClick={() => setEditorActionsPosition("hidden")}
-                                    />
-
-
-
-                                  </div>
-
-
-
-                                </MenuPortal>
-
-
-
-                              ) : null}
-
-
-
-                            </div>
-
-
-
-
-
-
-
-                            <MenuSep />
-
-
-
-                            <MenuItem label="Minimap" right={<MenuCheck checked={isMinimapEnabled} />} onClick={() => toggleMinimap()} />
-
-
-
-                            <MenuItem label="Breadcrumbs" right={<MenuCheck checked={isBreadcrumbsEnabled} />} onClick={() => toggleBreadcrumbs()} />
-
-
-
-                            <MenuItem label="Sticky Scroll" right={<MenuCheck checked={isStickyScrollEnabled} />} onClick={() => toggleStickyScroll()} />
-
-
-
-                            <MenuItem label="Render Whitespace" right={<MenuCheck checked={isRenderWhitespaceEnabled} />} onClick={() => toggleRenderWhitespace()} />
-
-
-
-                            <MenuItem label="Render Control Characters" right={<MenuCheck checked={isRenderControlCharsEnabled} />} onClick={() => toggleRenderControlChars()} />
-
-
-
-                            </div>
-
-
-
-                          </MenuPortal>
-
-
-
-                        ) : null}
-
-
-
-                      </div>
-
-
-
-
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem label="Zoom In" shortcut={kbRaw("view.zoomIn") || "Ctrl+="} onClick={() => zoomIn()} />
-
-
-
-                      <MenuItem label="Zoom Out" shortcut={kbRaw("view.zoomOut") || "Ctrl+-"} onClick={() => zoomOut()} />
-
-
-
-                      <MenuItem label="Reset Zoom" shortcut={kbRaw("view.zoomReset") || "Ctrl+0"} onClick={() => zoomReset()} />
-
-
-
-                      <MenuSep />
-
-
-
-
-
-
-
-                      <div className="relative">
-
-
-
-                        <MenuItem
-
-
-
-                          label="Editor Layout"
-
-
-
-                          right={<ChevronRight className="h-3.5 w-3.5" />}
-
-
-
-                          keepOpen
-
-
-
-                          onMouseEnter={(e) => {
-
-
-
-                            setViewMenuSub("editorLayout");
-
-
-
-                            setViewEditorLayoutAnchor(e.currentTarget.getBoundingClientRect());
-
-
-
-                          }}
-
-
-
-                          onClick={() => setViewMenuSub((v) => (v === "editorLayout" ? null : "editorLayout"))}
-
-
-
-                        />
-
-
-
-                        {viewMenuSub === "editorLayout" && viewEditorLayoutAnchor ? (
-
-
-
-                          <MenuPortal anchor={viewEditorLayoutAnchor} approxWidth={320}>
-
-
-
-                            <div
-
-
-
-                              className="w-max min-w-64 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-
-
-
-                              onMouseEnter={() => setViewMenuSub("editorLayout")}
-
-
-
-                              onMouseLeave={() => setViewMenuSub(null)}
-
-
-
-                            >
-
-
-
-                            <MenuItem label="Split Up" shortcut={kbRaw("view.splitEditorInGroup") || "Ctrl+K Ctrl+\\"} onClick={() => notify({ kind: "info", title: "Split Up", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Split Down" shortcut={kbRaw("view.splitEditor") || "Ctrl+\\"} onClick={() => notify({ kind: "info", title: "Split Down", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Split Left" onClick={() => notify({ kind: "info", title: "Split Left", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Split Right" onClick={() => notify({ kind: "info", title: "Split Right", message: "Coming next." })} />
-
-
-
-                            <MenuSep />
-
-
-
-                            <MenuItem
-
-
-
-                              label="Split in Group"
-
-
-
-                              shortcut="Ctrl+Shift+\\"
-
-
-
-                              onClick={() => notify({ kind: "info", title: "Split in Group", message: "Coming next." })}
-
-
-
-                            />
-
-
-
-                            <MenuSep />
-
-
-
-                            <MenuItem label="Single" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Two Columns" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Three Columns" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Two Rows" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Three Rows" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Grid 2x2" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Two Rows Right" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
-
-
-
-                            <MenuItem label="Two Columns Bottom" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
-
-
-
-                            <MenuSep />
-
-
-
-                            <MenuItem
-
-
-
-                              label="Flip Layout"
-
-
-
-                              shortcut="Shift+Alt+0"
-
-
-
-                              onClick={() => notify({ kind: "info", title: "Flip Layout", message: "Coming next." })}
-
-
-
-                            />
-
-
-
-                            </div>
-
-
-
-                          </MenuPortal>
-
-
-
-                        ) : null}
-
-
-
-                      </div>
-
-
-
-
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem label="Explorer" shortcut={kbRaw("view.explorer") || "Ctrl+Shift+E"} onClick={() => setActivity("explorer")} />
-
-
-
-                      <MenuItem label="Search" shortcut={kbRaw("view.search") || "Ctrl+Shift+F"} onClick={() => setActivity("search")} />
-
-
-
-                      <MenuItem label="Source Control" shortcut={kbRaw("view.sourceControl") || "Ctrl+Shift+G"} onClick={() => setActivity("scm")} />
-
-
-
-                      <MenuItem label="Run" shortcut={kbRaw("view.runDebug") || "Ctrl+Shift+D"} onClick={() => notify({ kind: "info", title: "Run", message: "Coming next." })} />
-
-
-
-                      <MenuItem label="Extensions" shortcut={kbRaw("view.extensions") || "Ctrl+Shift+X"} onClick={() => notify({ kind: "info", title: "Extensions", message: "Coming next." })} />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Problems"
-
-
-
-                        shortcut="Ctrl+Shift+M"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Problems", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Output"
-
-
-
-                        shortcut="Ctrl+Shift+U"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Output", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Debug Console"
-
-
-
-                        shortcut="Ctrl+Shift+Y"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Debug Console", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Terminal"
-
-
-
-                        shortcut="Ctrl+`"
-
-
-
-                        onClick={() => {
-
-
-
-                          toggleTerminal();
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Word Wrap"
-
-
-
-                        shortcut="Alt+Z"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Word Wrap", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                    </div>
 
 
 
@@ -37087,75 +36681,7 @@ export default function AppShell() {
 
 
 
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-72 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow">
-
-
-
-                      <MenuItem label="Start Debugging" shortcut="F5" onClick={() => notify({ kind: "info", title: "Start Debugging", message: "Coming next." })} />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Run Without Debugging"
-
-
-
-                        shortcut="Ctrl+F5"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Run Without Debugging", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Stop Debugging"
-
-
-
-                        shortcut="Shift+F5"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Stop Debugging", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Restart Debugging"
-
-
-
-                        shortcut="Ctrl+Shift+F5"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Restart Debugging", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                    </div>
+                    renderRunMenuPanel("menubar")
 
 
 
@@ -37295,223 +36821,7 @@ export default function AppShell() {
 
 
 
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-80 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow">
-
-
-
-                      <MenuItem
-
-
-
-                        label="New Terminal"
-
-
-
-                        shortcut="Ctrl+Shift+`"
-
-
-
-                        onClick={() => {
-
-
-
-                          void closeTerminal().finally(() => {
-
-
-
-                            toggleTerminal();
-
-
-
-                          });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Split Terminal"
-
-
-
-                        shortcut="Ctrl+Shift+5"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Split Terminal", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="New Terminal Window"
-
-
-
-                        shortcut="Ctrl+Shift+Alt+`"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "New Terminal Window", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem label="Run Task…" onClick={() => notify({ kind: "info", title: "Run Task", message: "Coming next." })} />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Run Build Task…"
-
-
-
-                        shortcut="Ctrl+Shift+B"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Run Build Task", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem label="Run Active File" onClick={() => notify({ kind: "info", title: "Run Active File", message: "Coming next." })} />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Run Selected Text"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Run Selected Text", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Show Running Tasks…"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Show Running Tasks", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Restart Running Tasks…"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Restart Running Tasks", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Terminate Task…"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Terminate Task", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Configure Tasks…"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Configure Tasks", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Configure Default Build Task…"
-
-
-
-                        onClick={() => notify({ kind: "info", title: "Configure Default Build Task", message: "Coming next." })}
-
-
-
-                      />
-
-
-
-                    </div>
+                    renderTerminalMenuPanel("menubar")
 
 
 
@@ -37532,6 +36842,10 @@ export default function AppShell() {
 
 
               </div>
+
+
+
+              ) : null}
 
 
 
@@ -37995,11 +37309,7 @@ export default function AppShell() {
 
 
 
-          </header>
-
-
-
-        ) : null}
+        </header>
 
 
 
@@ -38007,7 +37317,19 @@ export default function AppShell() {
 
 
 
-        <div className="grid min-h-0 flex-1 gap-1.5 overflow-hidden bg-bg p-1.5" style={{ gridTemplateColumns: mainGridTemplateColumns }}>
+        <div
+
+
+
+          className="grid min-h-0 flex-1 gap-1.5 overflow-hidden bg-bg p-1.5"
+
+
+
+          style={{ gridRow: 2, gridTemplateColumns: mainGridTemplateColumns }}
+
+
+
+        >
 
 
 
@@ -38020,6 +37342,230 @@ export default function AppShell() {
 
 
             <div className="flex h-full flex-col items-center gap-2 py-2">
+
+
+
+              {!isMenuBarVisible ? (
+
+
+
+                <div className="relative" data-compact-menubar-root>
+
+
+
+                  <button
+
+
+
+                    type="button"
+
+
+
+                    className="relative mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-panel text-muted transition-colors hover:bg-panel2 hover:text-text"
+
+
+
+                    onClick={(e) => {
+
+
+
+                      if (isCompactMenubarOpen) {
+
+
+
+                        closeCompactMenubar();
+
+
+
+                        return;
+
+
+
+                      }
+
+
+
+                      setIsCompactMenubarOpen(true);
+
+
+
+                      setCompactMenubarAnchor((e.currentTarget as HTMLButtonElement).getBoundingClientRect());
+
+
+
+                      setCompactMenubarSub(null);
+
+
+
+                      setCompactMenubarSubAnchor(null);
+
+
+
+                    }}
+
+
+
+                    aria-label="Menu"
+
+
+
+                  >
+
+
+
+                    <MenuIcon className="h-5 w-5" />
+
+
+
+                  </button>
+
+
+
+                  {isCompactMenubarOpen && compactMenubarAnchor ? (
+
+
+
+                    <MenuPortal anchor={compactMenubarAnchor} approxWidth={240}>
+
+
+
+                      {renderCompactMenubarRootContent()}
+
+
+
+                      {compactMenubarSub === "file" && compactMenubarSubAnchor ? (
+
+
+
+                        <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
+
+
+                          {renderCompactMenubarFileContent()}
+
+
+
+                        </MenuPortal>
+
+
+
+                      ) : null}
+
+
+
+                      {compactMenubarSub === "edit" && compactMenubarSubAnchor ? (
+
+
+
+                        <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+
+
+
+                          {renderCompactMenubarEditContent()}
+
+
+
+                        </MenuPortal>
+
+
+
+                      ) : null}
+
+
+
+                      {compactMenubarSub === "selection" && compactMenubarSubAnchor ? (
+
+
+
+                        <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={260}>
+
+
+
+                          {renderCompactMenubarSelectionContent()}
+
+
+
+                        </MenuPortal>
+
+
+
+                      ) : null}
+
+
+
+                      {compactMenubarSub === "view" && compactMenubarSubAnchor ? (
+
+
+
+                        <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
+
+
+                          {renderCompactMenubarViewContent()}
+
+
+
+                        </MenuPortal>
+
+
+
+                      ) : null}
+
+
+
+                      {compactMenubarSub === "run" && compactMenubarSubAnchor ? (
+
+
+
+                        <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
+
+
+                          {renderCompactMenubarRunContent()}
+
+
+
+                        </MenuPortal>
+
+
+
+                      ) : null}
+
+
+
+                      {compactMenubarSub === "terminal" && compactMenubarSubAnchor ? (
+
+
+
+                        <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+
+
+
+                          {renderCompactMenubarTerminalContent()}
+
+
+
+                        </MenuPortal>
+
+
+
+                      ) : null}
+
+
+
+                    </MenuPortal>
+
+
+
+                  ) : null}
+
+
+
+                </div>
+
+
+
+              ) : null}
 
 
 
@@ -44324,7 +43870,19 @@ export default function AppShell() {
 
 
 
-        <footer className="flex h-[32px] -translate-y-[1px] items-center justify-between gap-3 bg-bg px-3 pb-px text-[12px] leading-none text-muted">
+        <footer
+
+
+
+          className="flex h-[32px] -translate-y-[1px] items-center justify-between gap-3 bg-bg px-3 pb-px text-[12px] leading-none text-muted"
+
+
+
+          style={{ gridRow: 3 }}
+
+
+
+        >
 
 
 
