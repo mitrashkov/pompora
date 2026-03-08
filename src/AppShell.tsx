@@ -811,84 +811,50 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+function menuPanelClass(variant: "menubar" | "compact", extra?: string) {
 
+  const base = "overflow-x-visible overflow-y-auto rounded-xl border border-border/60 bg-panel p-1 shadow-2xl";
+
+  const pos = variant === "menubar" ? "absolute left-0 top-full z-[9999] mt-1" : "";
+
+  return [pos, base, extra].filter(Boolean).join(" ");
+}
 
 
 function SavedWorkspacesDialog(props: {
 
-
-
   items: SavedWorkspace[];
-
-
 
   onClose: () => void;
 
-
-
   onPick: (name: string) => void;
-
-
 
   onRename: (name: string) => void;
 
-
-
   onDelete: (name: string) => void;
-
-
 
 }) {
 
-
-
   useEffect(() => {
-
-
 
     const onKeyDown = (e: KeyboardEvent) => {
 
-
-
       if (e.key === "Escape") {
-
-
 
         e.preventDefault();
 
-
-
         props.onClose();
 
-
-
       }
-
-
-
     };
-
-
 
     window.addEventListener("keydown", onKeyDown);
 
-
-
     return () => window.removeEventListener("keydown", onKeyDown);
-
-
 
   }, [props]);
 
-
-
-
-
-
-
   return (
-
-
 
     <div className="fixed inset-0 z-50 bg-black/50" onMouseDown={props.onClose}>
 
@@ -7062,7 +7028,7 @@ function MenuSep() {
 
 
 
-  return <div className="my-1 h-px bg-transparent" />;
+  return <div className="mx-2 my-1 h-px bg-border/60" />;
 
 
 
@@ -7146,7 +7112,7 @@ function MenuItem(props: {
 
 
 
-      className="flex w-full items-center justify-between rounded px-2 py-1 text-left text-xs text-text hover:bg-bg"
+      className="group flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-muted transition-colors hover:bg-panel2 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border/70"
 
 
 
@@ -7194,7 +7160,7 @@ function MenuItem(props: {
 
 
 
-        {props.left ? <span className="shrink-0 text-muted">{props.left}</span> : null}
+        {props.left ? <span className="shrink-0 text-muted group-hover:text-text">{props.left}</span> : null}
 
 
 
@@ -10668,23 +10634,7 @@ export default function AppShell() {
 
 
 
-      className={
-
-
-
-        variant === "menubar"
-
-
-
-          ? "absolute left-0 top-full z-[9999] mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-
-
-
-          : "w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-
-
-
-      }
+      className={menuPanelClass(variant, "w-max min-w-64 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
 
 
 
@@ -10776,7 +10726,7 @@ export default function AppShell() {
 
 
 
-              className="w-max min-w-72 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+              className={menuPanelClass(variant, "w-max min-w-72 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
 
 
 
@@ -10988,23 +10938,7 @@ export default function AppShell() {
 
 
 
-      className={
-
-
-
-        variant === "menubar"
-
-
-
-          ? "absolute left-0 top-full z-[9999] mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-
-
-
-          : "w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-
-
-
-      }
+      className={menuPanelClass(variant, "w-max min-w-72 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
 
 
 
@@ -11177,11 +11111,7 @@ export default function AppShell() {
 
 
     <div
-      className={
-        variant === "menubar"
-          ? "absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-          : "w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-      }
+      className={menuPanelClass(variant, "w-max min-w-80 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
       {...compactPortalAttrs(variant)}
     >
       <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => runEditCommand("selectAll")} />
@@ -11439,14 +11369,9 @@ export default function AppShell() {
 
   const renderViewMenuPanel = (variant: MenubarVariant) => (
 
-    <div
-      className={
-        variant === "menubar"
-          ? "absolute left-0 top-full z-[9999] mt-1 w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-          : "w-max min-w-80 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
-      }
-      {...compactPortalAttrs(variant)}
-    >
+
+
+    <div className={menuPanelClass(variant, "w-max min-w-80 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
       <MenuItem
         label="Command Palette…"
         shortcut={kbRaw("view.commandPalette") || "Ctrl+Shift+P"}
@@ -11481,7 +11406,7 @@ export default function AppShell() {
         {viewMenuSub === "appearance" && viewAppearanceAnchor ? (
           <MenuPortal anchor={viewAppearanceAnchor} approxWidth={360}>
             <div
-              className="w-max min-w-80 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+              className={menuPanelClass(variant, "w-max min-w-80 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
               onMouseEnter={() => setViewMenuSub("appearance")}
               onMouseLeave={() => {
                 setViewMenuSub(null);
@@ -11492,25 +11417,15 @@ export default function AppShell() {
               {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
             >
               <MenuItem label="Full Screen" shortcut="F11" onClick={() => toggleFullscreenApp()} />
-
               <MenuItem label="Zen Mode" shortcut="Ctrl+K Z" right={<MenuCheck checked={isZenMode} />} onClick={() => toggleZenMode()} />
-
               <MenuItem label="Centered Layout" right={<MenuCheck checked={isCenteredLayout} />} onClick={() => toggleCenteredLayout()} />
-
               <MenuSep />
-
               <MenuItem label="Menu Bar" right={<MenuCheck checked={isMenuBarVisible} />} onClick={() => toggleMenuBarVisible()} />
-
               <MenuItem label="Primary Side Bar" shortcut={kbRaw("view.primarySidebar") || "Ctrl+B"} right={<MenuCheck checked={isPrimarySidebarOpen} />} onClick={() => togglePrimarySidebar()} />
-
               <MenuItem label="Secondary Side Bar" right={<MenuCheck checked={isChatDockOpen} />} onClick={() => toggleSecondarySideBar()} />
-
               <MenuItem label="Status Bar" right={<MenuCheck checked={isStatusBarVisible} />} onClick={() => toggleStatusBarVisible()} />
-
               <MenuItem label="Panel" right={<MenuCheck checked={isTerminalOpen} />} onClick={() => togglePanelVisible()} />
-
               <MenuSep />
-
               <MenuItem label="Move Primary Side Bar Right" right={<MenuCheck checked={primarySidebarSide === "right"} />} onClick={() => movePrimarySideBarRight()} />
 
               <div className="relative">
@@ -11528,7 +11443,7 @@ export default function AppShell() {
                 {viewAppearanceSub === "activityBarPosition" && viewAppearanceSubAnchor ? (
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
                     <div
-                      className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                      className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
                       {...compactPortalAttrs(variant)}
                       {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
                     >
@@ -11556,7 +11471,7 @@ export default function AppShell() {
                 {viewAppearanceSub === "secondaryActivityBarPosition" && viewAppearanceSubAnchor ? (
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
                     <div
-                      className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                      className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
                       {...compactPortalAttrs(variant)}
                       {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
                     >
@@ -11583,7 +11498,7 @@ export default function AppShell() {
 
                 {viewAppearanceSub === "panelPosition" && viewAppearanceSubAnchor ? (
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-                    <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]" {...compactPortalAttrs(variant)}>
+                    <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
                       <MenuItem label="Top" right={<MenuCheck checked={panelPosition === "top"} />} onClick={() => setPanelPosition("top")} />
                       <MenuItem label="Left" right={<MenuCheck checked={panelPosition === "left"} />} onClick={() => setPanelPosition("left")} />
                       <MenuItem label="Right" right={<MenuCheck checked={panelPosition === "right"} />} onClick={() => setPanelPosition("right")} />
@@ -11607,7 +11522,7 @@ export default function AppShell() {
 
                 {viewAppearanceSub === "alignPanel" && viewAppearanceSubAnchor ? (
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-                    <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]" {...compactPortalAttrs(variant)}>
+                    <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
                       <MenuItem label="Center" right={<MenuCheck checked={panelAlign === "center"} />} onClick={() => setPanelAlign("center")} />
                       <MenuItem label="Justify" right={<MenuCheck checked={panelAlign === "justify"} />} onClick={() => setPanelAlign("justify")} />
                       <MenuItem label="Left" right={<MenuCheck checked={panelAlign === "left"} />} onClick={() => setPanelAlign("left")} />
@@ -11631,7 +11546,7 @@ export default function AppShell() {
 
                 {viewAppearanceSub === "tabBar" && viewAppearanceSubAnchor ? (
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-                    <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]" {...compactPortalAttrs(variant)}>
+                    <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
                       <MenuItem label="Multiple Tabs" right={<MenuCheck checked={tabBarMode === "multiple"} />} onClick={() => setTabBarMode("multiple")} />
                       <MenuItem label="Single Tabs" right={<MenuCheck checked={tabBarMode === "single"} />} onClick={() => setTabBarMode("single")} />
                       <MenuItem label="Hidden" right={<MenuCheck checked={tabBarMode === "hidden"} />} onClick={() => setTabBarMode("hidden")} />
@@ -11654,7 +11569,7 @@ export default function AppShell() {
 
                 {viewAppearanceSub === "editorActionsPosition" && viewAppearanceSubAnchor ? (
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
-                    <div className="w-max min-w-56 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]" {...compactPortalAttrs(variant)}>
+                    <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
                       <MenuItem label="Tab Bar" right={<MenuCheck checked={editorActionsPosition === "tabBar"} />} onClick={() => setEditorActionsPosition("tabBar")} />
                       <MenuItem label="Title Bar" right={<MenuCheck checked={editorActionsPosition === "titleBar"} />} onClick={() => setEditorActionsPosition("titleBar")} />
                       <MenuItem label="Hidden" right={<MenuCheck checked={editorActionsPosition === "hidden"} />} onClick={() => setEditorActionsPosition("hidden")} />
@@ -11664,7 +11579,6 @@ export default function AppShell() {
               </div>
 
               <MenuSep />
-
               <MenuItem label="Minimap" right={<MenuCheck checked={isMinimapEnabled} />} onClick={() => toggleMinimap()} />
               <MenuItem label="Breadcrumbs" right={<MenuCheck checked={isBreadcrumbsEnabled} />} onClick={() => toggleBreadcrumbs()} />
               <MenuItem label="Sticky Scroll" right={<MenuCheck checked={isStickyScrollEnabled} />} onClick={() => toggleStickyScroll()} />
@@ -11676,13 +11590,11 @@ export default function AppShell() {
       </div>
 
       <MenuSep />
-
       <MenuItem label="Zoom In" shortcut={kbRaw("view.zoomIn") || "Ctrl+="} onClick={() => zoomIn()} />
       <MenuItem label="Zoom Out" shortcut={kbRaw("view.zoomOut") || "Ctrl+-"} onClick={() => zoomOut()} />
       <MenuItem label="Reset Zoom" shortcut={kbRaw("view.zoomReset") || "Ctrl+0"} onClick={() => zoomReset()} />
 
       <MenuSep />
-
       <div className="relative">
         <MenuItem
           label="Editor Layout"
@@ -11698,7 +11610,7 @@ export default function AppShell() {
         {viewMenuSub === "editorLayout" && viewEditorLayoutAnchor ? (
           <MenuPortal anchor={viewEditorLayoutAnchor} approxWidth={320}>
             <div
-              className="w-max min-w-64 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+              className={menuPanelClass(variant, "w-max min-w-64 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
               onMouseEnter={() => setViewMenuSub("editorLayout")}
               onMouseLeave={() => setViewMenuSub(null)}
               {...compactPortalAttrs(variant)}
@@ -11726,7 +11638,6 @@ export default function AppShell() {
       </div>
 
       <MenuSep />
-
       <MenuItem label="Explorer" shortcut={kbRaw("view.explorer") || "Ctrl+Shift+E"} onClick={() => setActivity("explorer")} />
       <MenuItem label="Search" shortcut={kbRaw("view.search") || "Ctrl+Shift+F"} onClick={() => setActivity("search")} />
       <MenuItem label="Source Control" shortcut={kbRaw("view.sourceControl") || "Ctrl+Shift+G"} onClick={() => setActivity("scm")} />
@@ -11734,14 +11645,12 @@ export default function AppShell() {
       <MenuItem label="Extensions" shortcut={kbRaw("view.extensions") || "Ctrl+Shift+X"} onClick={() => notify({ kind: "info", title: "Extensions", message: "Coming next." })} />
 
       <MenuSep />
-
       <MenuItem label="Problems" shortcut="Ctrl+Shift+M" onClick={() => notify({ kind: "info", title: "Problems", message: "Coming next." })} />
       <MenuItem label="Output" shortcut="Ctrl+Shift+U" onClick={() => notify({ kind: "info", title: "Output", message: "Coming next." })} />
       <MenuItem label="Debug Console" shortcut="Ctrl+Shift+Y" onClick={() => notify({ kind: "info", title: "Debug Console", message: "Coming next." })} />
       <MenuItem label="Terminal" shortcut="Ctrl+`" onClick={() => toggleTerminal()} />
 
       <MenuSep />
-
       <MenuItem label="Word Wrap" shortcut="Alt+Z" onClick={() => notify({ kind: "info", title: "Word Wrap", message: "Coming next." })} />
     </div>
 
@@ -11754,11 +11663,7 @@ export default function AppShell() {
   const renderRunMenuPanel = (variant: MenubarVariant) => (
 
     <div
-      className={
-        variant === "menubar"
-          ? "absolute left-0 top-full z-[9999] mt-1 w-72 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow"
-          : "w-72 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow"
-      }
+      className={menuPanelClass(variant, "w-72 overflow-hidden")}
       {...compactPortalAttrs(variant)}
     >
       <MenuItem label="Start Debugging" shortcut="F5" onClick={() => notify({ kind: "info", title: "Start Debugging", message: "Coming next." })} />
@@ -11776,11 +11681,7 @@ export default function AppShell() {
   const renderTerminalMenuPanel = (variant: MenubarVariant) => (
 
     <div
-      className={
-        variant === "menubar"
-          ? "absolute left-0 top-full z-[9999] mt-1 w-80 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow"
-          : "w-80 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow"
-      }
+      className={menuPanelClass(variant, "w-80 overflow-hidden")}
       {...compactPortalAttrs(variant)}
     >
       <MenuItem
@@ -11844,7 +11745,7 @@ export default function AppShell() {
 
 
 
-    <div className="w-max min-w-56 overflow-hidden rounded-xl border border-[#1A191C] bg-panel p-1 shadow" data-compact-menubar-portal>
+    <div className={menuPanelClass("compact", "w-max min-w-56 overflow-hidden")} data-compact-menubar-portal>
 
 
 
@@ -35562,7 +35463,7 @@ export default function AppShell() {
 
 
 
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-64 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className={menuPanelClass("menubar", "w-max min-w-64 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}>
 
 
 
@@ -35646,7 +35547,7 @@ export default function AppShell() {
 
 
 
-                              className="w-max min-w-72 max-w-[calc(100vw-16px)] overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]"
+                              className={menuPanelClass("menubar", "w-max min-w-72 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
 
 
 
@@ -36010,7 +35911,7 @@ export default function AppShell() {
 
 
 
-                    <div className="absolute left-0 top-full z-[9999] mt-1 w-max min-w-72 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className={menuPanelClass("menubar", "w-max min-w-72 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}>
 
 
 
@@ -36973,7 +36874,7 @@ export default function AppShell() {
 
 
 
-                    <div className="absolute right-0 top-full z-[9999] mt-1 w-72 max-w-[calc(100vw-16px)] overflow-x-visible overflow-y-auto rounded-xl border border-[#1A191C] bg-panel p-1 shadow max-h-[calc(100vh-80px)]">
+                    <div className={["absolute right-0 top-full z-[9999] mt-1", menuPanelClass("compact", "w-72 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")].join(" ")}>
 
 
 
@@ -47674,7 +47575,7 @@ function ContextMenu(props: {
 
 
 
-        className="absolute w-max min-w-64 max-w-[calc(100vw-16px)] overflow-hidden rounded-2xl border border-[#1A191C] bg-panel p-1 shadow-2xl"
+        className={menuPanelClass("compact", "absolute w-max min-w-64 max-w-[calc(100vw-16px)] overflow-hidden")}
 
 
 
