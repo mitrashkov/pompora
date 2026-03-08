@@ -813,7 +813,7 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 function menuPanelClass(variant: "menubar" | "compact", extra?: string) {
 
-  const base = "overflow-x-visible overflow-y-auto rounded-xl border border-border/60 bg-panel p-1 shadow-2xl";
+  const base = "overflow-x-visible overflow-y-auto rounded-xl border border-border/60 bg-panel p-1";
 
   const pos = variant === "menubar" ? "absolute left-0 top-full z-[9999] mt-1" : "";
 
