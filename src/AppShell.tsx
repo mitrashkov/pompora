@@ -1,4 +1,4 @@
-import React, { Component, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type ReactElement } from "react";
+import React, { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode, type ReactElement } from "react";
 
 
 
@@ -811,13 +811,74 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
-function menuPanelClass(variant: "menubar" | "compact", extra?: string) {
+function menuPanelClass(_variant: "menubar" | "compact", extra?: string) {
 
   const base = "overflow-x-visible overflow-y-auto rounded-xl border border-border/60 bg-panel p-1";
 
-  const pos = variant === "menubar" ? "absolute left-0 top-full z-[9999] mt-1" : "";
+  return [base, extra].filter(Boolean).join(" ");
+}
 
-  return [pos, base, extra].filter(Boolean).join(" ");
+
+
+function MenubarRootPortal(props: { anchor: DOMRect; children: React.ReactNode }) {
+
+
+
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+
+
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: props.anchor.left, y: props.anchor.bottom + 6 });
+
+
+
+  useEffect(() => {
+    setPos({ x: props.anchor.left, y: props.anchor.bottom + 6 });
+  }, [props.anchor.left, props.anchor.bottom]);
+
+
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+
+    const pad = 8;
+
+    const place = () => {
+      const rect = el.getBoundingClientRect();
+      const maxX = Math.max(pad, window.innerWidth - rect.width - pad);
+      const maxY = Math.max(pad, window.innerHeight - rect.height - pad);
+
+      const belowY = props.anchor.bottom + 6;
+      const aboveY = props.anchor.top - rect.height - 6;
+      const canOpenBelow = belowY + rect.height <= window.innerHeight - pad;
+
+      const x = clamp(props.anchor.left, pad, maxX);
+      const y = clamp(canOpenBelow ? belowY : aboveY, pad, maxY);
+
+      setPos((prev) => (prev.x === x && prev.y === y ? prev : { x, y }));
+    };
+
+    const raf = window.requestAnimationFrame(place);
+    window.addEventListener("resize", place);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", place);
+    };
+  }, [props.anchor.left, props.anchor.top, props.anchor.bottom]);
+
+
+
+  return createPortal(
+    <div
+      ref={rootRef}
+      style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 100000 }}
+      data-menubar-portal
+    >
+      {props.children}
+    </div>,
+    document.body,
+  );
 }
 
 
@@ -3022,36 +3083,41 @@ function MenuPortal(props: {
 
 }) {
 
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [measured, setMeasured] = useState<{ w: number; h: number } | null>(null);
 
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
 
-  const pos = computeSubmenuPos(props.anchor, props.approxWidth, { preferLeft: props.preferLeft, approxHeight: props.approxHeight });
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      const w = Math.max(1, Math.ceil(rect.width));
+      const h = Math.max(1, Math.ceil(rect.height));
+      setMeasured((prev) => (prev && prev.w === w && prev.h === h ? prev : { w, h }));
+    };
 
+    measure();
 
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [props.anchor.left, props.anchor.top, props.anchor.right, props.anchor.bottom, props.approxWidth, props.approxHeight]);
+
+  const w = measured?.w ?? props.approxWidth;
+  const h = measured?.h ?? props.approxHeight;
+  const pos = computeSubmenuPos(props.anchor, w, { preferLeft: props.preferLeft, approxHeight: h });
 
   return createPortal(
-
-
-
-    <div style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 100000 }}>
-
-
-
+    <div ref={rootRef} style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 100000 }}>
       {props.children}
-
-
-
     </div>,
-
-
-
     document.body,
-
-
-
   );
-
-
-
 }
 
 
@@ -3065,6 +3131,7 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
 
 
   const pad = 8;
+  const gap = 2;
 
 
 
@@ -3076,11 +3143,11 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
 
 
 
-  const rightX = anchor.right;
+  const rightX = anchor.right + gap;
 
 
 
-  const leftX = anchor.left - approxWidth;
+  const leftX = anchor.left - approxWidth - gap;
 
 
 
@@ -3093,44 +3160,45 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
 
 
   const preferLeft = !!opts?.preferLeft;
+  const maxX = Math.max(pad, window.innerWidth - approxWidth - pad);
+  const chooseOpenRight = () => {
+    if (preferLeft) {
+      if (canOpenLeft) return false;
+      if (canOpenRight) return true;
+    } else {
+      if (canOpenRight) return true;
+      if (canOpenLeft) return false;
+    }
 
+    const spaceRight = window.innerWidth - pad - rightX;
+    const spaceLeft = anchor.left - pad;
+    return spaceRight >= spaceLeft;
+  };
 
-
-
-
-
-
-  const openRight = preferLeft ? !canOpenLeft : canOpenRight;
-
-
-
+  const openRight = chooseOpenRight();
   const desiredX = openRight ? rightX : leftX;
 
+  const clampedX = clamp(desiredX, pad, maxX);
+  const wouldOverlapParent = openRight ? clampedX < anchor.right - 4 : clampedX + approxWidth > anchor.left + 4;
 
+  const oppositeCanFit = openRight ? canOpenLeft : canOpenRight;
+  const neitherSideFits = !canOpenRight && !canOpenLeft;
 
-  const x = clamp(desiredX, pad, Math.max(pad, window.innerWidth - approxWidth - pad));
+  const dockedX = clamp(anchor.right - approxWidth - gap, pad, maxX);
 
+  const finalX = neitherSideFits
+    ? dockedX
+    : wouldOverlapParent && oppositeCanFit
+      ? clamp(openRight ? leftX : rightX, pad, maxX)
+      : wouldOverlapParent
+        ? dockedX
+        : clampedX;
 
-
-
-
-
-
-  const belowY = anchor.bottom + 6;
-
-
-
-  const aboveY = anchor.top - approxHeight - 6;
-
-
-
-  const canOpenBelow = belowY + approxHeight <= window.innerHeight - pad;
+  const x = finalX;
 
 
 
-  const desiredY = canOpenBelow ? belowY : aboveY;
-
-
+  const desiredY = anchor.top - 4;
 
   const y = clamp(desiredY, pad, Math.max(pad, window.innerHeight - approxHeight - pad));
 
@@ -9606,6 +9674,30 @@ export default function AppShell() {
 
 
 
+  const [fileMenuAnchor, setFileMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+  const [editMenuAnchor, setEditMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+  const [selectionMenuAnchor, setSelectionMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+  const [viewMenuAnchor, setViewMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+  const [runMenuAnchor, setRunMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+  const [terminalMenuAnchor, setTerminalMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
   const [isCompactMenubarOpen, setIsCompactMenubarOpen] = useState(false);
 
 
@@ -11441,7 +11533,7 @@ export default function AppShell() {
                 />
 
                 {viewAppearanceSub === "activityBarPosition" && viewAppearanceSubAnchor ? (
-                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
                     <div
                       className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
                       {...compactPortalAttrs(variant)}
@@ -11469,7 +11561,7 @@ export default function AppShell() {
                 />
 
                 {viewAppearanceSub === "secondaryActivityBarPosition" && viewAppearanceSubAnchor ? (
-                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
                     <div
                       className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
                       {...compactPortalAttrs(variant)}
@@ -11497,7 +11589,7 @@ export default function AppShell() {
                 />
 
                 {viewAppearanceSub === "panelPosition" && viewAppearanceSubAnchor ? (
-                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
                     <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
                       <MenuItem label="Top" right={<MenuCheck checked={panelPosition === "top"} />} onClick={() => setPanelPosition("top")} />
                       <MenuItem label="Left" right={<MenuCheck checked={panelPosition === "left"} />} onClick={() => setPanelPosition("left")} />
@@ -11521,7 +11613,7 @@ export default function AppShell() {
                 />
 
                 {viewAppearanceSub === "alignPanel" && viewAppearanceSubAnchor ? (
-                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
                     <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
                       <MenuItem label="Center" right={<MenuCheck checked={panelAlign === "center"} />} onClick={() => setPanelAlign("center")} />
                       <MenuItem label="Justify" right={<MenuCheck checked={panelAlign === "justify"} />} onClick={() => setPanelAlign("justify")} />
@@ -11545,7 +11637,7 @@ export default function AppShell() {
                 />
 
                 {viewAppearanceSub === "tabBar" && viewAppearanceSubAnchor ? (
-                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
                     <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
                       <MenuItem label="Multiple Tabs" right={<MenuCheck checked={tabBarMode === "multiple"} />} onClick={() => setTabBarMode("multiple")} />
                       <MenuItem label="Single Tabs" right={<MenuCheck checked={tabBarMode === "single"} />} onClick={() => setTabBarMode("single")} />
@@ -11568,7 +11660,7 @@ export default function AppShell() {
                 />
 
                 {viewAppearanceSub === "editorActionsPosition" && viewAppearanceSubAnchor ? (
-                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240} preferLeft>
+                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
                     <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
                       <MenuItem label="Tab Bar" right={<MenuCheck checked={editorActionsPosition === "tabBar"} />} onClick={() => setEditorActionsPosition("tabBar")} />
                       <MenuItem label="Title Bar" right={<MenuCheck checked={editorActionsPosition === "titleBar"} />} onClick={() => setEditorActionsPosition("titleBar")} />
@@ -35355,7 +35447,7 @@ export default function AppShell() {
 
 
 
-                    onMouseEnter={() => {
+                    onMouseEnter={(e) => {
 
 
 
@@ -35364,6 +35456,10 @@ export default function AppShell() {
 
 
                       setIsFileMenuOpen(true);
+
+
+
+                      setFileMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -35403,11 +35499,15 @@ export default function AppShell() {
 
 
 
-                    onClick={() => {
+                    onClick={(e) => {
 
 
 
                       setIsFileMenuOpen((v) => !v);
+
+
+
+                      setFileMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -35463,7 +35563,9 @@ export default function AppShell() {
 
 
 
-                    <div className={menuPanelClass("menubar", "w-max min-w-64 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}>
+                    fileMenuAnchor ? (
+                      <MenubarRootPortal anchor={fileMenuAnchor}>
+                        <div className={menuPanelClass("menubar", "w-max min-w-64 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}>
 
 
 
@@ -35771,7 +35873,9 @@ export default function AppShell() {
 
 
 
-                    </div>
+                        </div>
+                      </MenubarRootPortal>
+                    ) : null
 
 
 
@@ -35803,7 +35907,7 @@ export default function AppShell() {
 
 
 
-                    onMouseEnter={() => {
+                    onMouseEnter={(e) => {
 
 
 
@@ -35812,6 +35916,10 @@ export default function AppShell() {
 
 
                       setIsEditMenuOpen(true);
+
+
+
+                      setEditMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -35851,11 +35959,15 @@ export default function AppShell() {
 
 
 
-                    onClick={() => {
+                    onClick={(e) => {
 
 
 
                       setIsEditMenuOpen((v) => !v);
+
+
+
+                      setEditMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -35911,255 +36023,9 @@ export default function AppShell() {
 
 
 
-                    <div className={menuPanelClass("menubar", "w-max min-w-72 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}>
-
-
-
-                      <MenuItem label="Undo" shortcut="Ctrl+Z" onClick={() => runEditCommand("undo")} />
-
-
-
-                      <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => runEditCommand("redo")} />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem label="Cut" shortcut="Ctrl+X" onClick={() => runEditCommand("cut")} />
-
-
-
-                      <MenuItem label="Copy" shortcut="Ctrl+C" onClick={() => runEditCommand("copy")} />
-
-
-
-                      <MenuItem label="Paste" shortcut="Ctrl+V" onClick={() => runEditCommand("paste")} />
-
-
-
-                      <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => runEditCommand("selectAll")} />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Find"
-
-
-
-                        shortcut="Ctrl+F"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (ed) void ed.getAction("actions.find")?.run();
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Replace"
-
-
-
-                        shortcut="Ctrl+H"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (ed) void ed.getAction("editor.action.startFindReplaceAction")?.run();
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem label="Find in Files" shortcut="Ctrl+Shift+F" onClick={() => setActivity("search")} />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Replace in Files"
-
-
-
-                        shortcut="Ctrl+Shift+H"
-
-
-
-                        onClick={() => void replaceInFiles()}
-
-
-
-                      />
-
-
-
-                      <MenuSep />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Toggle Line Comment"
-
-
-
-                        shortcut="Ctrl+/"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ok = runEditorAction("editor.action.commentLine");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Toggle Line Comment", message: "No editor is focused." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Toggle Block Comment"
-
-
-
-                        shortcut="Shift+Alt+A"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ok = runEditorAction("editor.action.blockComment");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Toggle Block Comment", message: "No editor is focused." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                      <MenuItem
-
-
-
-                        label="Emmet: Expand Abbreviation"
-
-
-
-                        shortcut="Tab"
-
-
-
-                        onClick={() => {
-
-
-
-                          const ed = editorRef.current;
-
-
-
-                          if (!ed) {
-
-
-
-                            notify({ kind: "info", title: "Emmet", message: "No editor is focused." });
-
-
-
-                            return;
-
-
-
-                          }
-
-
-
-                          const ok = runEditorAction("editor.emmet.action.expandAbbreviation");
-
-
-
-                          if (!ok) notify({ kind: "info", title: "Emmet", message: "Emmet is not available in this editor." });
-
-
-
-                        }}
-
-
-
-                      />
-
-
-
-                    </div>
+                    editMenuAnchor ? (
+                      <MenubarRootPortal anchor={editMenuAnchor}>{renderEditMenuPanel("menubar")}</MenubarRootPortal>
+                    ) : null
 
 
 
@@ -36191,7 +36057,7 @@ export default function AppShell() {
 
 
 
-                    onMouseEnter={() => {
+                    onMouseEnter={(e) => {
 
 
 
@@ -36200,6 +36066,10 @@ export default function AppShell() {
 
 
                       setIsSelectionMenuOpen(true);
+
+
+
+                      setSelectionMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -36239,11 +36109,15 @@ export default function AppShell() {
 
 
 
-                    onClick={() => {
+                    onClick={(e) => {
 
 
 
                       setIsSelectionMenuOpen((v) => !v);
+
+
+
+                      setSelectionMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -36299,7 +36173,11 @@ export default function AppShell() {
 
 
 
-                    renderSelectionMenuPanel("menubar")
+                    selectionMenuAnchor ? (
+                      <MenubarRootPortal anchor={selectionMenuAnchor}>
+                        {renderSelectionMenuPanel("menubar")}
+                      </MenubarRootPortal>
+                    ) : null
 
 
 
@@ -36331,7 +36209,7 @@ export default function AppShell() {
 
 
 
-                    onMouseEnter={() => {
+                    onMouseEnter={(e) => {
 
 
 
@@ -36340,6 +36218,10 @@ export default function AppShell() {
 
 
                       setIsViewMenuOpen(true);
+
+
+
+                      setViewMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -36379,11 +36261,15 @@ export default function AppShell() {
 
 
 
-                    onClick={() => {
+                    onClick={(e) => {
 
 
 
                       setIsViewMenuOpen((v) => !v);
+
+
+
+                      setViewMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -36439,10 +36325,11 @@ export default function AppShell() {
 
 
 
-                    renderViewMenuPanel("menubar") 
-
-
-
+                    viewMenuAnchor ? (
+                      <MenubarRootPortal anchor={viewMenuAnchor}>
+                        {renderViewMenuPanel("menubar")}
+                      </MenubarRootPortal>
+                    ) : null
 
 
 
@@ -36474,7 +36361,7 @@ export default function AppShell() {
 
 
 
-                    onMouseEnter={() => {
+                    onMouseEnter={(e) => {
 
 
 
@@ -36483,6 +36370,10 @@ export default function AppShell() {
 
 
                       setIsRunMenuOpen(true);
+
+
+
+                      setRunMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -36522,11 +36413,15 @@ export default function AppShell() {
 
 
 
-                    onClick={() => {
+                    onClick={(e) => {
 
 
 
                       setIsRunMenuOpen((v) => !v);
+
+
+
+                      setRunMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -36582,7 +36477,11 @@ export default function AppShell() {
 
 
 
-                    renderRunMenuPanel("menubar")
+                    runMenuAnchor ? (
+                      <MenubarRootPortal anchor={runMenuAnchor}>
+                        {renderRunMenuPanel("menubar")}
+                      </MenubarRootPortal>
+                    ) : null
 
 
 
@@ -36614,7 +36513,7 @@ export default function AppShell() {
 
 
 
-                    onMouseEnter={() => {
+                    onMouseEnter={(e) => {
 
 
 
@@ -36623,6 +36522,10 @@ export default function AppShell() {
 
 
                       setIsTerminalMenuOpen(true);
+
+
+
+                      setTerminalMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -36662,11 +36565,15 @@ export default function AppShell() {
 
 
 
-                    onClick={() => {
+                    onClick={(e) => {
 
 
 
                       setIsTerminalMenuOpen((v) => !v);
+
+
+
+                      setTerminalMenuAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
@@ -36722,7 +36629,11 @@ export default function AppShell() {
 
 
 
-                    renderTerminalMenuPanel("menubar")
+                    terminalMenuAnchor ? (
+                      <MenubarRootPortal anchor={terminalMenuAnchor}>
+                        {renderTerminalMenuPanel("menubar")}
+                      </MenubarRootPortal>
+                    ) : null
 
 
 
