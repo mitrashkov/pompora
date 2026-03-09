@@ -7112,7 +7112,23 @@ function MenuCheck(props: { checked?: boolean }) {
 
 
 
-  return props.checked ? <span className="text-[11px] text-muted">✓</span> : null;
+  return (
+    <span aria-hidden className="inline-flex h-4 w-4 items-center justify-center">
+      <svg
+        viewBox="0 0 16 16"
+        className={props.checked ? "h-3.5 w-3.5 text-muted" : "h-3.5 w-3.5 text-transparent"}
+        fill="none"
+      >
+        <path
+          d="M3.2 8.4l2.7 2.7 6.9-6.9"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+  );
 
 
 
