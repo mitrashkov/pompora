@@ -3075,6 +3075,8 @@ function MenuPortal(props: {
 
   preferLeft?: boolean;
 
+  forceRight?: boolean;
+
 
 
   children: React.ReactNode;
@@ -3110,7 +3112,7 @@ function MenuPortal(props: {
 
   const w = measured?.w ?? props.approxWidth;
   const h = measured?.h ?? props.approxHeight;
-  const pos = computeSubmenuPos(props.anchor, w, { preferLeft: props.preferLeft, approxHeight: h });
+  const pos = computeSubmenuPos(props.anchor, w, { preferLeft: props.preferLeft, forceRight: props.forceRight, approxHeight: h });
 
   return createPortal(
     <div ref={rootRef} style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 100000 }}>
@@ -3126,7 +3128,7 @@ function MenuPortal(props: {
 
 
 
-function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { preferLeft?: boolean; approxHeight?: number }) {
+function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { preferLeft?: boolean; forceRight?: boolean; approxHeight?: number }) {
 
 
 
@@ -3160,8 +3162,13 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
 
 
   const preferLeft = !!opts?.preferLeft;
+  const forceRight = !!opts?.forceRight;
   const maxX = Math.max(pad, window.innerWidth - approxWidth - pad);
   const chooseOpenRight = () => {
+    if (forceRight) {
+      if (canOpenRight) return true;
+      if (canOpenLeft) return false;
+    }
     if (preferLeft) {
       if (canOpenLeft) return false;
       if (canOpenRight) return true;
@@ -3190,9 +3197,7 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
     ? dockedX
     : wouldOverlapParent && oppositeCanFit
       ? clamp(openRight ? leftX : rightX, pad, maxX)
-      : wouldOverlapParent
-        ? dockedX
-        : clampedX;
+      : clampedX;
 
   const x = finalX;
 
@@ -7112,22 +7117,18 @@ function MenuCheck(props: { checked?: boolean }) {
 
 
 
+  if (!props.checked) return null;
+
   return (
-    <span aria-hidden className="inline-flex h-4 w-4 items-center justify-center">
-      <svg
-        viewBox="0 0 16 16"
-        className={props.checked ? "h-3.5 w-3.5 text-muted" : "h-3.5 w-3.5 text-transparent"}
-        fill="none"
-      >
-        <path
-          d="M3.2 8.4l2.7 2.7 6.9-6.9"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </span>
+    <svg aria-hidden viewBox="0 0 16 16" className="h-3.5 w-3.5 text-muted" fill="none">
+      <path
+        d="M3.2 8.4l2.7 2.7 6.9-6.9"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 
 
@@ -35644,7 +35645,6 @@ export default function AppShell() {
                           onMouseLeave={() => scheduleFileRecentClose()}
 
 
-
                           onClick={() => setIsFileMenuRecentOpen((v) => !v)}
 
 
@@ -35654,129 +35654,36 @@ export default function AppShell() {
 
 
                         {isFileMenuRecentOpen && fileRecentAnchor ? (
-
-
-
-                          <MenuPortal anchor={fileRecentAnchor} approxWidth={320}>
-
-
-
+                          <MenuPortal anchor={fileRecentAnchor} approxWidth={320} forceRight>
                             <div
-
-
-
                               className={menuPanelClass("menubar", "w-max min-w-72 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
-
-
-
                               onMouseEnter={() => {
-
-
-
                                 clearFileRecentCloseTimer();
-
-
-
                                 setIsFileMenuRecentOpen(true);
-
-
-
                               }}
-
-
-
                               onMouseLeave={() => scheduleFileRecentClose()}
-
-
-
                             >
-
-
-
                               <div className="px-2 py-1 text-[11px] font-medium text-muted">Folders</div>
-
-
-
                               {(workspace.recent.length ? workspace.recent : settings.recent_workspaces).length ? (
-
-
-
                                 (workspace.recent.length ? workspace.recent : settings.recent_workspaces).map((p) => (
-
-
-
                                   <MenuItem key={p} label={p} onClick={() => void openRecent(p)} />
-
-
-
                                 ))
-
-
-
                               ) : (
-
-
-
                                 <div className="px-2 py-1 text-xs text-muted">No recent folders</div>
-
-
-
                               )}
-
-
-
-
-
-
 
                               <MenuSep />
-
-
-
                               <div className="px-2 py-1 text-[11px] font-medium text-muted">Files</div>
-
-
-
                               {recentFiles.length ? (
-
-
-
                                 recentFiles.map((p) => {
-
-
-
                                   const Icon = fileIconFor(p);
-
-
-
                                   return <MenuItem key={p} label={p} left={<Icon className="h-3.5 w-3.5" />} onClick={() => void openRecentFile(p)} />;
-
-
-
                                 })
-
-
-
                               ) : (
-
-
-
                                 <div className="px-2 py-1 text-xs text-muted">No recent files</div>
-
-
-
                               )}
-
-
-
                             </div>
-
-
-
                           </MenuPortal>
-
-
-
                         ) : null}
 
 
