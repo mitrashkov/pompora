@@ -12546,6 +12546,134 @@ export default function AppShell() {
 
 
 
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+
+
+  const searchResultsScrollRef = useRef<HTMLDivElement | null>(null);
+
+
+
+  const searchResultsSentinelRef = useRef<HTMLDivElement | null>(null);
+
+
+
+  const searchPageSize = 40;
+
+
+
+  const [searchVisibleCount, setSearchVisibleCount] = useState(searchPageSize);
+
+
+
+  const visibleSearchResults = useMemo(() => {
+
+
+
+    return searchResults.slice(0, Math.max(0, Math.min(searchVisibleCount, searchResults.length)));
+
+
+
+  }, [searchResults, searchVisibleCount]);
+
+
+
+  const loadMoreSearchResults = useCallback(() => {
+
+
+
+    setSearchVisibleCount((c) => Math.min(searchResults.length, c + searchPageSize));
+
+
+
+  }, [searchResults.length]);
+
+
+
+  useEffect(() => {
+
+
+
+    const rootEl = searchResultsScrollRef.current;
+
+
+
+    const sentinel = searchResultsSentinelRef.current;
+
+
+
+    if (!rootEl || !sentinel) return;
+
+
+
+    if (isSearching) return;
+
+
+
+    if (visibleSearchResults.length >= searchResults.length) return;
+
+
+
+    const observer = new IntersectionObserver(
+
+
+
+      (entries) => {
+
+
+
+        const [entry] = entries;
+
+
+
+        if (!entry?.isIntersecting) return;
+
+
+
+        loadMoreSearchResults();
+
+
+
+      },
+
+
+
+      {
+
+
+
+        root: rootEl,
+
+
+
+        rootMargin: "200px 0px 200px 0px",
+
+
+
+        threshold: 0,
+
+
+
+      },
+
+
+
+    );
+
+
+
+    observer.observe(sentinel);
+
+
+
+    return () => observer.disconnect();
+
+
+
+  }, [isSearching, loadMoreSearchResults, searchResults.length, visibleSearchResults.length]);
+
+
+
   const [pendingReveal, setPendingReveal] = useState<{ path: string; line: number; text: string } | null>(null);
 
 
@@ -27419,6 +27547,10 @@ export default function AppShell() {
 
 
 
+      setSearchVisibleCount(0);
+
+
+
       return;
 
 
@@ -27432,6 +27564,10 @@ export default function AppShell() {
 
 
       setSearchResults([]);
+
+
+
+      setSearchVisibleCount(0);
 
 
 
@@ -27471,6 +27607,10 @@ export default function AppShell() {
 
 
 
+          setSearchVisibleCount(Math.min(searchPageSize, res.length));
+
+
+
         })
 
 
@@ -27484,6 +27624,10 @@ export default function AppShell() {
 
 
           setSearchResults([]);
+
+
+
+          setSearchVisibleCount(0);
 
 
 
@@ -37540,47 +37684,111 @@ export default function AppShell() {
 
 
 
-                  <div className="space-y-3">
+                  <div className="flex h-full min-h-0 flex-col gap-3">
 
 
 
-                    <input
+                    <div className="relative">
 
 
 
-                      className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted"
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
 
 
 
-                      placeholder="Find in files"
+                      <input
 
 
 
-                      value={searchQuery}
+                        ref={searchInputRef}
 
 
 
-                      onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                        className="w-full rounded-lg border border-border bg-bg py-2 pl-9 pr-9 text-sm text-text placeholder:text-muted shadow-sm focus:border-accent focus:outline-none"
 
 
 
-                      autoFocus
+                        placeholder="Find in files"
 
 
 
-                    />
+                        value={searchQuery}
 
 
 
+                        onChange={(e) => setSearchQuery(e.currentTarget.value)}
 
 
 
-
-                    <div className="text-xs text-muted">
-
+                        onKeyDown={(e) => {
 
 
-                      {isSearching ? "Searching..." : `${searchResults.length} results`}
+
+                          if (e.key === "Escape") setSearchQuery("");
+
+
+
+                        }}
+
+
+
+                        autoFocus
+
+
+
+                      />
+
+
+
+                      {searchQuery.trim() ? (
+
+
+
+                        <button
+
+
+
+                          type="button"
+
+
+
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted hover:bg-border hover:text-text"
+
+
+
+                          onClick={() => {
+
+
+
+                            setSearchQuery("");
+
+
+
+                            searchInputRef.current?.focus();
+
+
+
+                          }}
+
+
+
+                          aria-label="Clear search"
+
+
+
+                        >
+
+
+
+                          <X className="h-4 w-4" />
+
+
+
+                        </button>
+
+
+
+                      ) : null}
 
 
 
@@ -37592,11 +37800,83 @@ export default function AppShell() {
 
 
 
-                    <div className="space-y-1">
+                    <div className="flex items-center justify-between gap-2 text-xs text-muted">
 
 
 
-                      {searchResults.map((m, idx) => (
+                      {isSearching
+
+
+
+                        ? "Searching..."
+
+
+
+                        : searchResults.length
+
+
+
+                          ? `Showing ${visibleSearchResults.length} of ${searchResults.length} results`
+
+
+
+                          : "0 results"}
+
+
+
+                      {!isSearching && searchQuery.trim() && !searchResults.length ? <span>No matches</span> : null}
+
+
+
+                    </div>
+
+
+
+
+
+
+
+                    <div
+
+
+
+                      ref={searchResultsScrollRef}
+
+
+
+                      className="min-h-0 flex-1 overflow-auto rounded-xl border border-border bg-panel/40 p-2 pr-1"
+
+
+
+                    >
+
+
+
+                      {!searchQuery.trim() ? (
+
+
+
+                        <div className="px-2 py-6 text-center text-sm text-muted">Type to search in files</div>
+
+
+
+                      ) : null}
+
+
+
+                      {searchQuery.trim() && isSearching && !searchResults.length ? (
+
+
+
+                        <div className="px-2 py-6 text-center text-sm text-muted">Searching...</div>
+
+
+
+                      ) : null}
+
+
+
+                      {visibleSearchResults.map((m, idx) => (
 
 
 
@@ -37612,7 +37892,7 @@ export default function AppShell() {
 
 
 
-                          className="w-full rounded border border-border bg-bg px-3 py-2 text-left text-sm text-muted hover:border-accent hover:text-text"
+                          className="w-full rounded-lg border border-border/70 bg-bg px-3 py-2 text-left text-sm text-muted hover:border-accent hover:bg-panel hover:text-text"
 
 
 
@@ -37685,6 +37965,10 @@ export default function AppShell() {
 
 
                       ))}
+
+
+
+                      <div ref={searchResultsSentinelRef} className="h-1" />
 
 
 
