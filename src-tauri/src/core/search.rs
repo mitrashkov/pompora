@@ -37,6 +37,40 @@ fn is_likely_text(bytes: &[u8]) -> bool {
     !bytes.iter().any(|b| *b == 0)
 }
 
+fn contains_case_insensitive_ascii(haystack: &str, needle: &str) -> bool {
+    if needle.is_empty() {
+        return true;
+    }
+
+    let h = haystack.as_bytes();
+    let n = needle.as_bytes();
+    if n.len() > h.len() {
+        return false;
+    }
+
+    // ASCII-only compare: fold A-Z -> a-z
+    for i in 0..=(h.len() - n.len()) {
+        let mut ok = true;
+        for j in 0..n.len() {
+            let hb = h[i + j];
+            let nb = n[j];
+
+            let hb_fold = if (b'A'..=b'Z').contains(&hb) { hb + 32 } else { hb };
+            let nb_fold = if (b'A'..=b'Z').contains(&nb) { nb + 32 } else { nb };
+
+            if hb_fold != nb_fold {
+                ok = false;
+                break;
+            }
+        }
+        if ok {
+            return true;
+        }
+    }
+
+    false
+}
+
 pub fn workspace_search(query: &str, max_results: usize) -> Result<Vec<SearchMatch>> {
     let q = query.trim();
     if q.is_empty() {
@@ -45,6 +79,7 @@ pub fn workspace_search(query: &str, max_results: usize) -> Result<Vec<SearchMat
 
     let root = workspace_root_path()?;
     let q_lower = q.to_lowercase();
+    let q_is_ascii = q.is_ascii();
 
     let mut out: Vec<SearchMatch> = Vec::new();
 
@@ -91,25 +126,31 @@ pub fn workspace_search(query: &str, max_results: usize) -> Result<Vec<SearchMat
             continue;
         }
 
-        let s = match String::from_utf8(bytes) {
+        let s = match std::str::from_utf8(&bytes) {
             Ok(v) => v,
             Err(_) => continue,
         };
+
+        let rel = path
+            .strip_prefix(&root)
+            .with_context(|| format!("strip prefix: {}", root.display()))?
+            .to_string_lossy()
+            .replace('\\', "/");
 
         for (i, line) in s.lines().enumerate() {
             if out.len() >= max_results {
                 break;
             }
 
-            if line.to_lowercase().contains(&q_lower) {
-                let rel = path
-                    .strip_prefix(&root)
-                    .with_context(|| format!("strip prefix: {}", root.display()))?
-                    .to_string_lossy()
-                    .replace('\\', "/");
+            let is_match = if q_is_ascii {
+                contains_case_insensitive_ascii(line, q)
+            } else {
+                line.to_lowercase().contains(&q_lower)
+            };
 
+            if is_match {
                 out.push(SearchMatch {
-                    path: rel,
+                    path: rel.clone(),
                     line: (i as u32) + 1,
                     text: line.trim_end().to_string(),
                 });

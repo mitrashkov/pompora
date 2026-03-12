@@ -12558,6 +12558,10 @@ export default function AppShell() {
 
 
 
+  const searchRequestGenRef = useRef(0);
+
+
+
   const searchPageSize = 40;
 
 
@@ -27535,6 +27539,10 @@ export default function AppShell() {
 
 
 
+    const myGen = ++searchRequestGenRef.current;
+
+
+
     const q = searchQuery.trim();
 
 
@@ -27591,7 +27599,7 @@ export default function AppShell() {
 
 
 
-      workspaceSearch(q, 200)
+      workspaceSearch(q, q.length >= 8 ? 160 : 120)
 
 
 
@@ -27600,6 +27608,10 @@ export default function AppShell() {
 
 
           if (cancelled) return;
+
+
+
+          if (searchRequestGenRef.current !== myGen) return;
 
 
 
@@ -27623,6 +27635,10 @@ export default function AppShell() {
 
 
 
+          if (searchRequestGenRef.current !== myGen) return;
+
+
+
           setSearchResults([]);
 
 
@@ -27643,6 +27659,10 @@ export default function AppShell() {
 
 
 
+          if (searchRequestGenRef.current !== myGen) return;
+
+
+
           setIsSearching(false);
 
 
@@ -27651,7 +27671,7 @@ export default function AppShell() {
 
 
 
-    }, 180);
+    }, q.length >= 8 ? 650 : q.length >= 4 ? 450 : 220);
 
 
 
@@ -37704,7 +37724,7 @@ export default function AppShell() {
 
 
 
-                        className="w-full rounded-lg border border-border bg-bg py-2 pl-9 pr-9 text-sm text-text placeholder:text-muted shadow-sm focus:border-accent focus:outline-none"
+                        className="w-full rounded-lg border border-border bg-bg py-2 pl-9 pr-9 text-sm text-text placeholder:text-muted shadow-sm outline-none focus:border-border focus:bg-panel focus:outline-none focus-visible:outline-none focus-visible:ring-0"
 
 
 
@@ -37752,7 +37772,7 @@ export default function AppShell() {
 
 
 
-                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted hover:bg-border hover:text-text"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted outline-none hover:bg-border hover:text-text focus:outline-none focus-visible:outline-none focus-visible:ring-0"
 
 
 
@@ -37892,7 +37912,7 @@ export default function AppShell() {
 
 
 
-                          className="w-full rounded-lg border border-border/70 bg-bg px-3 py-2 text-left text-sm text-muted hover:border-accent hover:bg-panel hover:text-text"
+                          className="w-full rounded-lg border border-border/70 bg-bg px-3 py-2 text-left text-sm text-muted outline-none hover:border-border hover:bg-panel hover:text-text focus:outline-none focus-visible:border-border focus-visible:bg-panel focus-visible:outline-none focus-visible:ring-0 active:bg-panel"
 
 
 
