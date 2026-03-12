@@ -1211,6 +1211,110 @@ function SavedWorkspacesDialog(props: {
 
 
 
+function ActivityButtonInline(props: {
+
+
+
+  id: ActivityId;
+
+
+
+  active: boolean;
+
+
+
+  onClick: (id: ActivityId) => void;
+
+
+
+  Icon: typeof FolderOpen;
+
+
+
+}) {
+
+
+
+  const { id, active, onClick, Icon } = props;
+
+
+
+  return (
+
+
+
+    <button
+
+
+
+      type="button"
+
+
+
+      className={`relative flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+
+
+
+        active ? "bg-panel2 text-text" : "bg-panel text-muted hover:bg-panel2 hover:text-text"
+
+
+
+      }`}
+
+
+
+      onClick={() => onClick(id)}
+
+
+
+      aria-current={active ? "page" : undefined}
+
+
+
+    >
+
+
+
+      <span
+
+
+
+        aria-hidden
+
+
+
+        className={`absolute bottom-0 left-1 right-1 h-0.5 rounded bg-accent transition-opacity ${
+
+
+
+          active ? "opacity-100" : "opacity-0"
+
+
+
+        }`}
+
+
+
+      />
+
+
+
+      <Icon className="h-5 w-5" />
+
+
+
+    </button>
+
+
+
+  );
+
+
+
+}
+
+
+
 
 
 
@@ -14203,7 +14307,7 @@ export default function AppShell() {
 
 
 
-    const activityCol = activityBarPosition === "hidden" ? "0px" : "52px";
+    const activityCol = activityBarPosition === "default" ? "52px" : "0px";
 
 
 
@@ -37232,7 +37336,7 @@ export default function AppShell() {
 
 
 
-          {activityBarPosition !== "hidden" ? (
+          {activityBarPosition === "default" ? (
 
 
 
@@ -37529,6 +37633,83 @@ export default function AppShell() {
 
 
 
+
+
+
+            <div className="flex h-full min-h-0 flex-col">
+
+
+
+              {activityBarPosition === "top" ? (
+                <div className="flex items-center gap-0.5 border-b border-border bg-panel px-1 py-1">
+                  {!isMenuBarVisible ? (
+                    <div className="relative" data-compact-menubar-root>
+                      <button
+                        type="button"
+                        className="ws-icon-btn h-8 w-8"
+                        onClick={(e) => {
+                          if (isCompactMenubarOpen) {
+                            closeCompactMenubar();
+                            return;
+                          }
+                          setIsCompactMenubarOpen(true);
+                          setCompactMenubarAnchor((e.currentTarget as HTMLButtonElement).getBoundingClientRect());
+                          setCompactMenubarSub(null);
+                          setCompactMenubarSubAnchor(null);
+                        }}
+                        aria-label="Menu"
+                      >
+                        <MenuIcon className="h-5 w-5" />
+                      </button>
+
+                      {isCompactMenubarOpen && compactMenubarAnchor ? (
+                        <MenuPortal anchor={compactMenubarAnchor} approxWidth={240}>
+                          {renderCompactMenubarRootContent()}
+                          {compactMenubarSub === "file" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+                              {renderCompactMenubarFileContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "edit" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+                              {renderCompactMenubarEditContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "selection" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={260}>
+                              {renderCompactMenubarSelectionContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "view" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+                              {renderCompactMenubarViewContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "run" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+                              {renderCompactMenubarRunContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "terminal" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+                              {renderCompactMenubarTerminalContent()}
+                            </MenuPortal>
+                          ) : null}
+                        </MenuPortal>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  <ActivityButtonInline id="explorer" active={activity === "explorer"} onClick={setActivity} Icon={FolderOpen} />
+                  <ActivityButtonInline id="search" active={activity === "search"} onClick={setActivity} Icon={Search} />
+                  <ActivityButtonInline id="scm" active={activity === "scm"} onClick={setActivity} Icon={GitBranch} />
+                  <div className="flex-1" />
+                </div>
+              ) : null}
+
+
+
+              <div className="min-h-0 flex-1 overflow-hidden">
 
 
 
@@ -38025,6 +38206,83 @@ export default function AppShell() {
 
 
             ) : null}
+
+
+
+              </div>
+
+
+
+              {activityBarPosition === "bottom" ? (
+                <div className="flex items-center gap-0.5 border-t border-border bg-panel px-1 py-1">
+                  {!isMenuBarVisible ? (
+                    <div className="relative" data-compact-menubar-root>
+                      <button
+                        type="button"
+                        className="ws-icon-btn h-8 w-8"
+                        onClick={(e) => {
+                          if (isCompactMenubarOpen) {
+                            closeCompactMenubar();
+                            return;
+                          }
+                          setIsCompactMenubarOpen(true);
+                          setCompactMenubarAnchor((e.currentTarget as HTMLButtonElement).getBoundingClientRect());
+                          setCompactMenubarSub(null);
+                          setCompactMenubarSubAnchor(null);
+                        }}
+                        aria-label="Menu"
+                      >
+                        <MenuIcon className="h-5 w-5" />
+                      </button>
+
+                      {isCompactMenubarOpen && compactMenubarAnchor ? (
+                        <MenuPortal anchor={compactMenubarAnchor} approxWidth={240}>
+                          {renderCompactMenubarRootContent()}
+                          {compactMenubarSub === "file" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+                              {renderCompactMenubarFileContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "edit" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+                              {renderCompactMenubarEditContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "selection" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={260}>
+                              {renderCompactMenubarSelectionContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "view" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+                              {renderCompactMenubarViewContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "run" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+                              {renderCompactMenubarRunContent()}
+                            </MenuPortal>
+                          ) : null}
+                          {compactMenubarSub === "terminal" && compactMenubarSubAnchor ? (
+                            <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+                              {renderCompactMenubarTerminalContent()}
+                            </MenuPortal>
+                          ) : null}
+                        </MenuPortal>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  <ActivityButtonInline id="explorer" active={activity === "explorer"} onClick={setActivity} Icon={FolderOpen} />
+                  <ActivityButtonInline id="search" active={activity === "search"} onClick={setActivity} Icon={Search} />
+                  <ActivityButtonInline id="scm" active={activity === "scm"} onClick={setActivity} Icon={GitBranch} />
+                  <div className="flex-1" />
+                </div>
+              ) : null}
+
+
+
+            </div>
 
 
 
