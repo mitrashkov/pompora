@@ -9842,47 +9842,14 @@ export default function AppShell() {
   const [viewMenuSub, setViewMenuSub] = useState<null | "appearance" | "editorLayout">(null);
 
 
-
   const [viewAppearanceSub, setViewAppearanceSub] = useState<
-
-
-
     | null
-
-
-
     | "activityBarPosition"
-
-
-
-    | "secondaryActivityBarPosition"
-
-
-
     | "panelPosition"
-
-
-
     | "alignPanel"
-
-
-
     | "tabBar"
-
-
-
     | "editorActionsPosition"
-
-
-
   >(null);
-
-
-
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
-
-
-
 
 
 
@@ -9920,6 +9887,34 @@ export default function AppShell() {
 
 
   const [isRenderControlCharsEnabled, setIsRenderControlCharsEnabled] = useState(false);
+
+
+
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(() => {
+
+
+
+    try {
+
+
+
+      return window.localStorage.getItem("pompora.view.autoSaveEnabled") !== "0";
+
+
+
+    } catch {
+
+
+
+      return true;
+
+
+
+    }
+
+
+
+  });
 
 
 
@@ -10076,38 +10071,6 @@ export default function AppShell() {
 
 
       const v = window.localStorage.getItem("pompora.view.activityBarPosition");
-
-
-
-      return v === "top" || v === "bottom" || v === "hidden" ? v : "default";
-
-
-
-    } catch {
-
-
-
-      return "default";
-
-
-
-    }
-
-
-
-  });
-
-
-
-  const [secondaryActivityBarPosition, setSecondaryActivityBarPosition] = useState<"default" | "top" | "bottom" | "hidden">(() => {
-
-
-
-    try {
-
-
-
-      const v = window.localStorage.getItem("pompora.view.secondaryActivityBarPosition");
 
 
 
@@ -10391,6 +10354,30 @@ export default function AppShell() {
 
 
 
+      window.localStorage.setItem("pompora.view.autoSaveEnabled", autoSaveEnabled ? "1" : "0");
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, [autoSaveEnabled]);
+
+
+
+  useEffect(() => {
+
+
+
+    try {
+
+
+
       window.localStorage.setItem("pompora.view.primarySidebarSide", primarySidebarSide);
 
 
@@ -10428,30 +10415,6 @@ export default function AppShell() {
 
 
   }, [activityBarPosition]);
-
-
-
-  useEffect(() => {
-
-
-
-    try {
-
-
-
-      window.localStorage.setItem("pompora.view.secondaryActivityBarPosition", secondaryActivityBarPosition);
-
-
-
-    } catch {
-
-
-
-    }
-
-
-
-  }, [secondaryActivityBarPosition]);
 
 
 
@@ -11664,34 +11627,6 @@ export default function AppShell() {
                       <MenuItem label="Top" right={<MenuCheck checked={activityBarPosition === "top"} />} onClick={() => setActivityBarPosition("top")} />
                       <MenuItem label="Bottom" right={<MenuCheck checked={activityBarPosition === "bottom"} />} onClick={() => setActivityBarPosition("bottom")} />
                       <MenuItem label="Hidden" right={<MenuCheck checked={activityBarPosition === "hidden"} />} onClick={() => setActivityBarPosition("hidden")} />
-                    </div>
-                  </MenuPortal>
-                ) : null}
-              </div>
-
-              <div className="relative">
-                <MenuItem
-                  label="Secondary Activity Bar Position"
-                  right={<ChevronRight className="h-3.5 w-3.5" />}
-                  keepOpen
-                  onMouseEnter={(e) => {
-                    setViewAppearanceSub("secondaryActivityBarPosition");
-                    setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
-                  }}
-                  onClick={() => setViewAppearanceSub((v) => (v === "secondaryActivityBarPosition" ? null : "secondaryActivityBarPosition"))}
-                />
-
-                {viewAppearanceSub === "secondaryActivityBarPosition" && viewAppearanceSubAnchor ? (
-                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
-                    <div
-                      className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
-                      {...compactPortalAttrs(variant)}
-                      {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
-                    >
-                      <MenuItem label="Default" right={<MenuCheck checked={secondaryActivityBarPosition === "default"} />} onClick={() => setSecondaryActivityBarPosition("default")} />
-                      <MenuItem label="Top" right={<MenuCheck checked={secondaryActivityBarPosition === "top"} />} onClick={() => setSecondaryActivityBarPosition("top")} />
-                      <MenuItem label="Bottom" right={<MenuCheck checked={secondaryActivityBarPosition === "bottom"} />} onClick={() => setSecondaryActivityBarPosition("bottom")} />
-                      <MenuItem label="Hidden" right={<MenuCheck checked={secondaryActivityBarPosition === "hidden"} />} onClick={() => setSecondaryActivityBarPosition("hidden")} />
                     </div>
                   </MenuPortal>
                 ) : null}
