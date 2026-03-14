@@ -9852,7 +9852,6 @@ export default function AppShell() {
     | "panelPosition"
     | "alignPanel"
     | "tabBar"
-    | "editorActionsPosition"
   >(null);
 
 
@@ -10130,7 +10129,7 @@ export default function AppShell() {
 
 
 
-  const [panelAlign, setPanelAlign] = useState<"center" | "justify" | "left" | "right">(() => {
+  const [panelAlign] = useState<"center" | "justify" | "left" | "right">(() => {
 
 
 
@@ -10183,38 +10182,6 @@ export default function AppShell() {
 
 
       return "multiple";
-
-
-
-    }
-
-
-
-  });
-
-
-
-  const [editorActionsPosition, setEditorActionsPosition] = useState<"tabBar" | "titleBar" | "hidden">(() => {
-
-
-
-    try {
-
-
-
-      const v = window.localStorage.getItem("pompora.view.editorActionsPosition");
-
-
-
-      return v === "titleBar" || v === "hidden" ? v : "tabBar";
-
-
-
-    } catch {
-
-
-
-      return "tabBar";
 
 
 
@@ -10494,35 +10461,15 @@ export default function AppShell() {
 
 
 
-  useEffect(() => {
-
-
-
-    try {
-
-
-
-      window.localStorage.setItem("pompora.view.editorActionsPosition", editorActionsPosition);
-
-
-
-    } catch {
-
-
-
-    }
-
-
-
-  }, [editorActionsPosition]);
 
 
 
 
+  const closeMenubarMenus = useCallback(() => 
 
 
 
-  const closeMenubarMenus = useCallback(() => {
+  {
 
 
 
@@ -11722,37 +11669,6 @@ export default function AppShell() {
                       <MenuItem label="Multiple Tabs" right={<MenuCheck checked={tabBarMode === "multiple"} />} onClick={() => setTabBarMode("multiple")} />
                       <MenuItem label="Single Tabs" right={<MenuCheck checked={tabBarMode === "single"} />} onClick={() => setTabBarMode("single")} />
                       <MenuItem label="Hidden" right={<MenuCheck checked={tabBarMode === "hidden"} />} onClick={() => setTabBarMode("hidden")} />
-                    </div>
-                  </MenuPortal>
-                ) : null}
-              </div>
-
-              <div className="relative">
-                <MenuItem
-                  label="Editor Actions Position"
-                  right={<ChevronRight className="h-3.5 w-3.5" />}
-                  keepOpen
-                  onMouseEnter={(e) => {
-                    setViewAppearanceSub("editorActionsPosition");
-                    setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
-                  }}
-                  onClick={() => setViewAppearanceSub((v) => (v === "editorActionsPosition" ? null : "editorActionsPosition"))}
-                />
-
-                {viewAppearanceSub === "editorActionsPosition" && viewAppearanceSubAnchor ? (
-                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
-                    <div
-                      className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
-                      onMouseEnter={() => {
-                        setViewMenuSub("appearance");
-                        setViewAppearanceSub("editorActionsPosition");
-                      }}
-                      {...compactPortalAttrs(variant)}
-                      {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
-                    >
-                      <MenuItem label="Tab Bar" right={<MenuCheck checked={editorActionsPosition === "tabBar"} />} onClick={() => setEditorActionsPosition("tabBar")} />
-                      <MenuItem label="Title Bar" right={<MenuCheck checked={editorActionsPosition === "titleBar"} />} onClick={() => setEditorActionsPosition("titleBar")} />
-                      <MenuItem label="Hidden" right={<MenuCheck checked={editorActionsPosition === "hidden"} />} onClick={() => setEditorActionsPosition("hidden")} />
                     </div>
                   </MenuPortal>
                 ) : null}
