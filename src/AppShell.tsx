@@ -45543,7 +45543,7 @@ export default function AppShell() {
 
 
 
-            {workspace.root && footerRelPath ? (
+            {isBreadcrumbsEnabled && workspace.root && footerRelPath ? (
 
 
 
