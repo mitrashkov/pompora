@@ -11710,7 +11710,15 @@ export default function AppShell() {
 
                 {viewAppearanceSub === "tabBar" && viewAppearanceSubAnchor ? (
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
-                    <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
+                    <div
+                      className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+                      onMouseEnter={() => {
+                        setViewMenuSub("appearance");
+                        setViewAppearanceSub("tabBar");
+                      }}
+                      {...compactPortalAttrs(variant)}
+                      {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+                    >
                       <MenuItem label="Multiple Tabs" right={<MenuCheck checked={tabBarMode === "multiple"} />} onClick={() => setTabBarMode("multiple")} />
                       <MenuItem label="Single Tabs" right={<MenuCheck checked={tabBarMode === "single"} />} onClick={() => setTabBarMode("single")} />
                       <MenuItem label="Hidden" right={<MenuCheck checked={tabBarMode === "hidden"} />} onClick={() => setTabBarMode("hidden")} />
@@ -11733,7 +11741,15 @@ export default function AppShell() {
 
                 {viewAppearanceSub === "editorActionsPosition" && viewAppearanceSubAnchor ? (
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
-                    <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
+                    <div
+                      className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+                      onMouseEnter={() => {
+                        setViewMenuSub("appearance");
+                        setViewAppearanceSub("editorActionsPosition");
+                      }}
+                      {...compactPortalAttrs(variant)}
+                      {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+                    >
                       <MenuItem label="Tab Bar" right={<MenuCheck checked={editorActionsPosition === "tabBar"} />} onClick={() => setEditorActionsPosition("tabBar")} />
                       <MenuItem label="Title Bar" right={<MenuCheck checked={editorActionsPosition === "titleBar"} />} onClick={() => setEditorActionsPosition("titleBar")} />
                       <MenuItem label="Hidden" right={<MenuCheck checked={editorActionsPosition === "hidden"} />} onClick={() => setEditorActionsPosition("hidden")} />
@@ -12378,6 +12394,26 @@ export default function AppShell() {
 
 
   const [activeTabPath, setActiveTabPath] = useState<string | null>(null);
+
+
+
+  useEffect(() => {
+
+
+
+    if (!tabs.length) return;
+
+
+
+    if (activeTabPath && tabs.some((t) => t.path === activeTabPath)) return;
+
+
+
+    setActiveTabPath(tabs[tabs.length - 1]!.path);
+
+
+
+  }, [activeTabPath, tabs]);
 
 
 
@@ -39595,7 +39631,11 @@ export default function AppShell() {
 
 
 
-                <div className={`flex h-14 min-w-0 items-center gap-1 px-2 ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
+                <div
+                  className={`flex h-14 min-w-0 items-center gap-1 px-2 ${
+                    tabBarMode === "single" ? "bg-transparent" : isCoding ? "ws-editor-surface" : "bg-panel"
+                  }`}
+                >
 
 
 
@@ -39692,6 +39732,10 @@ export default function AppShell() {
 
 
                         tab={t}
+
+
+
+                        singleMode={tabBarMode === "single"}
 
 
 
@@ -49511,6 +49555,10 @@ function TabButton(props: {
 
 
 
+  singleMode?: boolean;
+
+
+
   active: boolean;
 
 
@@ -49547,7 +49595,20 @@ function TabButton(props: {
 
 
 
-          props.active ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+
+          props.singleMode
+
+            ? props.active
+
+              ? "bg-transparent text-text"
+
+              : "text-muted hover:bg-transparent hover:text-text"
+
+            : props.active
+
+              ? "bg-bg text-text"
+
+              : "text-muted hover:bg-bg hover:text-text"
 
 
 
