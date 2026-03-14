@@ -9303,7 +9303,11 @@ export default function AppShell() {
 
 
 
-      updateEditorOptions({ minimap: { enabled: next } });
+      updateEditorOptions({
+        minimap: { enabled: next },
+        scrollbar: { vertical: next ? "hidden" : "auto" },
+        overviewRulerLanes: next ? 0 : 3,
+      });
 
 
 
@@ -40849,7 +40853,7 @@ export default function AppShell() {
 
 
 
-                            minimap: { enabled: true },
+                            minimap: { enabled: isMinimapEnabled },
 
 
 
@@ -40865,7 +40869,11 @@ export default function AppShell() {
 
 
 
-                            scrollbar: { horizontal: "auto", vertical: "auto" },
+                            scrollbar: { horizontal: "auto", vertical: isMinimapEnabled ? "hidden" : "auto" },
+
+
+
+                            overviewRulerLanes: isMinimapEnabled ? 0 : 3,
 
 
 
@@ -41497,7 +41505,7 @@ export default function AppShell() {
 
 
 
-                            minimap: { enabled: true },
+                            minimap: { enabled: isMinimapEnabled },
 
 
 
@@ -41513,7 +41521,11 @@ export default function AppShell() {
 
 
 
-                            scrollbar: { horizontal: "auto", vertical: "auto" },
+                            scrollbar: { horizontal: "auto", vertical: isMinimapEnabled ? "hidden" : "auto" },
+
+
+
+                            overviewRulerLanes: isMinimapEnabled ? 0 : 3,
 
 
 
