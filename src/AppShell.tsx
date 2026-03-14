@@ -254,6 +254,10 @@ import {
 
 
 
+  MoreHorizontal,
+
+
+
   X,
 
 
@@ -11694,30 +11698,6 @@ export default function AppShell() {
 
               <div className="relative">
                 <MenuItem
-                  label="Align Panel"
-                  right={<ChevronRight className="h-3.5 w-3.5" />}
-                  keepOpen
-                  onMouseEnter={(e) => {
-                    setViewAppearanceSub("alignPanel");
-                    setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
-                  }}
-                  onClick={() => setViewAppearanceSub((v) => (v === "alignPanel" ? null : "alignPanel"))}
-                />
-
-                {viewAppearanceSub === "alignPanel" && viewAppearanceSubAnchor ? (
-                  <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
-                    <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
-                      <MenuItem label="Center" right={<MenuCheck checked={panelAlign === "center"} />} onClick={() => setPanelAlign("center")} />
-                      <MenuItem label="Justify" right={<MenuCheck checked={panelAlign === "justify"} />} onClick={() => setPanelAlign("justify")} />
-                      <MenuItem label="Left" right={<MenuCheck checked={panelAlign === "left"} />} onClick={() => setPanelAlign("left")} />
-                      <MenuItem label="Right" right={<MenuCheck checked={panelAlign === "right"} />} onClick={() => setPanelAlign("right")} />
-                    </div>
-                  </MenuPortal>
-                ) : null}
-              </div>
-
-              <div className="relative">
-                <MenuItem
                   label="Tab Bar"
                   right={<ChevronRight className="h-3.5 w-3.5" />}
                   keepOpen
@@ -12915,6 +12895,110 @@ export default function AppShell() {
 
 
   const [terminalWidth, setTerminalWidth] = useState(360);
+
+
+
+  const [panelTabsMenuAnchor, setPanelTabsMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+  const [isPanelTabsMenuOpen, setIsPanelTabsMenuOpen] = useState(false);
+
+
+
+  const panelTabsMenuRootRef = useRef<HTMLDivElement | null>(null);
+
+
+
+  const closePanelTabsMenu = useCallback(() => {
+
+
+
+    setIsPanelTabsMenuOpen(false);
+
+
+
+    setPanelTabsMenuAnchor(null);
+
+
+
+  }, []);
+
+
+
+  useEffect(() => {
+
+
+
+    if (!isPanelTabsMenuOpen) return;
+
+
+
+    const onDown = (ev: MouseEvent) => {
+
+
+
+      const root = panelTabsMenuRootRef.current;
+
+
+
+      if (!root) return;
+
+
+
+      const t = ev.target as Node | null;
+
+
+
+      if (t && root.contains(t)) return;
+
+
+
+      closePanelTabsMenu();
+
+
+
+    };
+
+
+
+    const onKey = (ev: KeyboardEvent) => {
+
+
+
+      if (ev.key === "Escape") closePanelTabsMenu();
+
+
+
+    };
+
+
+
+    window.addEventListener("mousedown", onDown, true);
+
+
+
+    window.addEventListener("keydown", onKey, true);
+
+
+
+    return () => {
+
+
+
+      window.removeEventListener("mousedown", onDown, true);
+
+
+
+      window.removeEventListener("keydown", onKey, true);
+
+
+
+    };
+
+
+
+  }, [closePanelTabsMenu, isPanelTabsMenuOpen]);
 
 
 
@@ -14446,6 +14530,10 @@ export default function AppShell() {
 
 
 
+  const termAttachedHostRef = useRef<HTMLDivElement | null>(null);
+
+
+
   const termUnlistenRef = useRef<(() => void) | null>(null);
 
 
@@ -15870,7 +15958,67 @@ export default function AppShell() {
 
 
 
-    if (termRef.current && termIdRef.current) return;
+    const hostNow = termHostRef.current;
+
+
+
+    if (termRef.current && termIdRef.current) {
+
+
+
+      if (hostNow && termAttachedHostRef.current !== hostNow) {
+
+
+
+        try {
+
+
+
+          hostNow.innerHTML = "";
+
+
+
+        } catch {
+
+
+
+        }
+
+
+
+        try {
+
+
+
+          termRef.current.open(hostNow);
+
+
+
+          termAttachedHostRef.current = hostNow;
+
+
+
+          fitAddonRef.current?.fit();
+
+
+
+        } catch {
+
+
+
+        }
+
+
+
+      }
+
+
+
+      return;
+
+
+
+    }
 
 
 
@@ -15987,6 +16135,10 @@ export default function AppShell() {
 
 
       t.open(host);
+
+
+
+      termAttachedHostRef.current = host;
 
 
 
@@ -16354,6 +16506,18 @@ export default function AppShell() {
 
 
 
+    window.setTimeout(() => {
+
+
+
+      resizeTerminal();
+
+
+
+    }, 0);
+
+
+
     const host = termHostRef.current;
 
 
@@ -16374,7 +16538,7 @@ export default function AppShell() {
 
 
 
-  }, [ensureTerminal, isTerminalOpen, panelTab, resizeTerminal, terminalHeight]);
+  }, [ensureTerminal, isTerminalOpen, panelPosition, panelTab, resizeTerminal, terminalHeight, terminalWidth]);
 
 
 
@@ -38644,115 +38808,326 @@ export default function AppShell() {
 
 
 
-                            {([
+                            {panelPosition === "left" || panelPosition === "right" ? (
 
 
 
-                              { id: "problems", label: "Problems" },
+                              <>
 
 
 
-                              { id: "output", label: "Output" },
+                                <button
 
 
 
-                              { id: "debug", label: "Debug Console" },
+                                  type="button"
 
 
 
-                              { id: "terminal", label: "Terminal" },
+                                  className="ws-icon-btn"
 
 
 
-                              { id: "ports", label: "Ports" },
+                                  onClick={(e) => {
 
 
 
-                            ] as const).map((t) => (
+                                    try {
 
 
 
-                              <button
+                                      e.preventDefault();
 
 
 
-                                key={t.id}
+                                      e.stopPropagation();
 
 
 
-                                type="button"
+                                    } catch {
 
 
 
-                                className={`rounded-md px-2 py-1 text-[11px] ${
+                                    }
 
 
 
-                                  panelTab === t.id ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+                                    const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
 
 
 
-                                }`}
+                                    setPanelTabsMenuAnchor(rect);
 
 
 
-                                onClick={() => {
+                                    setIsPanelTabsMenuOpen((v) => !v);
 
 
 
-                                  setPanelTab(t.id);
+                                  }}
 
 
 
-                                  if (t.id === "terminal") {
+                                >
 
 
 
-                                    window.setTimeout(() => {
+                                  <MoreHorizontal className="h-4 w-4" />
 
 
 
-                                      void ensureTerminal().then(() => {
 
 
 
-                                        resizeTerminal();
+                                </button>
 
 
 
-                                        termRef.current?.focus();
+                                {isPanelTabsMenuOpen && panelTabsMenuAnchor ? (
 
 
 
-                                      });
+                                  <MenuPortal anchor={panelTabsMenuAnchor} approxWidth={180}>
 
 
 
-                                    }, 0);
+                                    <div ref={panelTabsMenuRootRef} className={menuPanelClass("compact", "w-max min-w-44")}> 
 
 
 
-                                  }
+                                      {([
 
 
 
-                                }}
+                                        { id: "problems", label: "Problems" },
 
 
 
-                              >
+                                        { id: "output", label: "Output" },
 
 
 
-                                {t.label}
+                                        { id: "debug", label: "Debug Console" },
 
 
 
-                              </button>
+                                        { id: "terminal", label: "Terminal" },
 
 
 
-                            ))}
+                                        { id: "ports", label: "Ports" },
+
+
+
+                                      ] as const).map((t) => (
+
+
+
+                                        <MenuItem
+
+
+
+                                          key={t.id}
+
+
+
+                                          label={t.label}
+
+
+
+                                          right={<MenuCheck checked={panelTab === t.id} />}
+
+
+
+                                          onClick={() => {
+
+
+
+                                            setPanelTab(t.id);
+
+
+
+                                            closePanelTabsMenu();
+
+
+
+                                            if (t.id === "terminal") {
+
+
+
+                                              window.setTimeout(() => {
+
+
+
+                                                void ensureTerminal().then(() => {
+
+
+
+                                                  resizeTerminal();
+
+
+
+                                                  termRef.current?.focus();
+
+
+
+                                                });
+
+
+
+                                              }, 0);
+
+
+
+                                            }
+
+
+
+                                          }}
+
+
+
+                                        />
+
+
+
+                                      ))}
+
+
+
+                                    </div>
+
+
+
+                                  </MenuPortal>
+
+
+
+                                ) : null}
+
+
+
+                              </>
+
+
+
+                            ) : (
+
+
+
+                              ([
+
+
+
+                                { id: "problems", label: "Problems" },
+
+
+
+                                { id: "output", label: "Output" },
+
+
+
+                                { id: "debug", label: "Debug Console" },
+
+
+
+                                { id: "terminal", label: "Terminal" },
+
+
+
+                                { id: "ports", label: "Ports" },
+
+
+
+                              ] as const).map((t) => (
+
+
+
+                                <button
+
+
+
+                                  key={t.id}
+
+
+
+                                  type="button"
+
+
+
+                                  className={`rounded-md px-2 py-1 text-[11px] ${
+
+
+
+                                    panelTab === t.id ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+
+
+
+                                  }`}
+
+
+
+                                  onClick={() => {
+
+
+
+                                    setPanelTab(t.id);
+
+
+
+                                    if (t.id === "terminal") {
+
+
+
+                                      window.setTimeout(() => {
+
+
+
+                                        void ensureTerminal().then(() => {
+
+
+
+                                          resizeTerminal();
+
+
+
+                                          termRef.current?.focus();
+
+
+
+                                        });
+
+
+
+                                      }, 0);
+
+
+
+                                    }
+
+
+
+                                  }}
+
+
+
+                                >
+
+
+
+                                  {t.label}
+
+
+
+                                </button>
+
+
+
+                              ))
+
+
+
+                            )}
 
 
 
