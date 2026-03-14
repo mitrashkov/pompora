@@ -11646,11 +11646,47 @@ export default function AppShell() {
 
                 {viewAppearanceSub === "panelPosition" && viewAppearanceSubAnchor ? (
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
-                    <div className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
-                      <MenuItem label="Top" right={<MenuCheck checked={panelPosition === "top"} />} onClick={() => setPanelPosition("top")} />
-                      <MenuItem label="Left" right={<MenuCheck checked={panelPosition === "left"} />} onClick={() => setPanelPosition("left")} />
-                      <MenuItem label="Right" right={<MenuCheck checked={panelPosition === "right"} />} onClick={() => setPanelPosition("right")} />
-                      <MenuItem label="Bottom" right={<MenuCheck checked={panelPosition === "bottom"} />} onClick={() => setPanelPosition("bottom")} />
+                    <div
+                      className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+                      onMouseEnter={() => {
+                        setViewMenuSub("appearance");
+                        setViewAppearanceSub("panelPosition");
+                      }}
+                      {...compactPortalAttrs(variant)}
+                      {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+                    >
+                      <MenuItem
+                        label="Top"
+                        right={<MenuCheck checked={panelPosition === "top"} />}
+                        onClick={() => {
+                          setPanelPosition("top");
+                          setIsTerminalOpen(true);
+                        }}
+                      />
+                      <MenuItem
+                        label="Left"
+                        right={<MenuCheck checked={panelPosition === "left"} />}
+                        onClick={() => {
+                          setPanelPosition("left");
+                          setIsTerminalOpen(true);
+                        }}
+                      />
+                      <MenuItem
+                        label="Right"
+                        right={<MenuCheck checked={panelPosition === "right"} />}
+                        onClick={() => {
+                          setPanelPosition("right");
+                          setIsTerminalOpen(true);
+                        }}
+                      />
+                      <MenuItem
+                        label="Bottom"
+                        right={<MenuCheck checked={panelPosition === "bottom"} />}
+                        onClick={() => {
+                          setPanelPosition("bottom");
+                          setIsTerminalOpen(true);
+                        }}
+                      />
                     </div>
                   </MenuPortal>
                 ) : null}
@@ -12549,30 +12585,6 @@ export default function AppShell() {
 
 
 
-  useEffect(() => {
-
-
-
-    return () => {
-
-
-
-      if (tabsIndicatorHideTimerRef.current) window.clearTimeout(tabsIndicatorHideTimerRef.current);
-
-
-
-    };
-
-
-
-  }, []);
-
-
-
-
-
-
-
   const [searchQuery, setSearchQuery] = useState("");
 
 
@@ -12899,6 +12911,62 @@ export default function AppShell() {
 
 
   const [terminalHeight, setTerminalHeight] = useState(240);
+
+
+
+  const [terminalWidth, setTerminalWidth] = useState(360);
+
+
+
+  useEffect(() => {
+
+
+
+    const ed = editorRef.current;
+
+
+
+    if (!ed) return;
+
+
+
+    const raf = window.requestAnimationFrame(() => {
+
+
+
+      try {
+
+
+
+        ed.layout();
+
+
+
+        const p = ed.getPosition();
+
+
+
+        if (p) ed.revealPositionInCenterIfOutsideViewport(p);
+
+
+
+      } catch {
+
+
+
+      }
+
+
+
+    });
+
+
+
+    return () => window.cancelAnimationFrame(raf);
+
+
+
+  }, [isTerminalOpen, panelPosition, terminalWidth, terminalHeight]);
 
 
 
@@ -14154,7 +14222,167 @@ export default function AppShell() {
 
 
 
-  const terminalResizeStateRef = useRef<{ startY: number; startH: number } | null>(null);
+  const terminalResizeStateRef = useRef<{ startY: number; startH: number; dock: "top" | "bottom" } | null>(null);
+
+
+
+  const terminalResizeXStateRef = useRef<{ startX: number; startW: number; dock: "left" | "right" } | null>(null);
+
+
+
+  const dragUserSelectRestoreRef = useRef<string | null>(null);
+
+
+
+  const dragCursorRestoreRef = useRef<string | null>(null);
+
+
+
+  const dragPreventHandlerRef = useRef<((e: Event) => void) | null>(null);
+
+
+
+  const beginResizeDrag = useCallback((cursor: string) => {
+
+
+
+    try {
+
+
+
+      if (dragUserSelectRestoreRef.current === null) dragUserSelectRestoreRef.current = document.body.style.userSelect || "";
+
+
+
+      if (dragCursorRestoreRef.current === null) dragCursorRestoreRef.current = document.body.style.cursor || "";
+
+
+
+      document.body.style.userSelect = "none";
+
+
+
+      document.body.style.cursor = cursor;
+
+
+
+      if (!dragPreventHandlerRef.current) {
+
+
+
+        dragPreventHandlerRef.current = (ev: Event) => {
+
+
+
+          try {
+
+
+
+            ev.preventDefault();
+
+
+
+          } catch {
+
+
+
+          }
+
+
+
+        };
+
+
+
+        document.addEventListener("selectstart", dragPreventHandlerRef.current, true);
+
+
+
+        document.addEventListener("dragstart", dragPreventHandlerRef.current, true);
+
+
+
+      }
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+  }, []);
+
+
+
+  const endResizeDrag = useCallback(() => {
+
+
+
+    try {
+
+
+
+      if (dragUserSelectRestoreRef.current !== null) document.body.style.userSelect = dragUserSelectRestoreRef.current;
+
+
+
+      if (dragCursorRestoreRef.current !== null) document.body.style.cursor = dragCursorRestoreRef.current;
+
+
+
+    } catch {
+
+
+
+    }
+
+
+
+    dragUserSelectRestoreRef.current = null;
+
+
+
+    dragCursorRestoreRef.current = null;
+
+
+
+    if (dragPreventHandlerRef.current) {
+
+
+
+      try {
+
+
+
+        document.removeEventListener("selectstart", dragPreventHandlerRef.current, true);
+
+
+
+        document.removeEventListener("dragstart", dragPreventHandlerRef.current, true);
+
+
+
+      } catch {
+
+
+
+      }
+
+
+
+      dragPreventHandlerRef.current = null;
+
+
+
+    }
+
+
+
+  }, []);
 
 
 
@@ -15518,7 +15746,7 @@ export default function AppShell() {
 
 
 
-        const { startY, startH } = terminalResizeStateRef.current;
+        const { startY, startH, dock } = terminalResizeStateRef.current;
 
 
 
@@ -15526,11 +15754,43 @@ export default function AppShell() {
 
 
 
-        const next = clamp(startH + (startY - e.clientY), 160, max);
+        const delta = dock === "bottom" ? startY - e.clientY : e.clientY - startY;
+
+
+
+        const next = clamp(startH + delta, 160, max);
 
 
 
         setTerminalHeight(next);
+
+
+
+      }
+
+
+
+      if (terminalResizeXStateRef.current) {
+
+
+
+        const { startX, startW, dock } = terminalResizeXStateRef.current;
+
+
+
+        const max = Math.max(240, Math.min(720, Math.floor(window.innerWidth * 0.7)));
+
+
+
+        const delta = dock === "left" ? e.clientX - startX : startX - e.clientX;
+
+
+
+        const next = clamp(startW + delta, 240, max);
+
+
+
+        setTerminalWidth(next);
 
 
 
@@ -15558,6 +15818,14 @@ export default function AppShell() {
 
 
 
+      terminalResizeXStateRef.current = null;
+
+
+
+      endResizeDrag();
+
+
+
     };
 
 
@@ -15582,11 +15850,15 @@ export default function AppShell() {
 
 
 
+      endResizeDrag();
+
+
+
     };
 
 
 
-  }, []);
+  }, [endResizeDrag]);
 
 
 
@@ -37559,6 +37831,30 @@ export default function AppShell() {
 
 
 
+                try {
+
+
+
+                  e.preventDefault();
+
+
+
+                  e.stopPropagation();
+
+
+
+                } catch {
+
+
+
+                }
+
+
+
+                beginResizeDrag("col-resize");
+
+
+
               }}
 
 
@@ -38236,7 +38532,687 @@ export default function AppShell() {
 
 
 
-            <div className="flex h-full min-h-0 flex-col">
+            <div
+              className={`flex h-full min-h-0 min-w-0 ${
+                panelPosition === "left" || panelPosition === "right" ? "flex-row" : "flex-col"
+              }`}
+            >
+
+
+
+              {panelPosition === "left" || panelPosition === "right" ? (
+
+
+
+                (() => {
+
+
+
+                  if (!isTerminalOpen) return null;
+
+
+
+                  const dockLeft = panelPosition === "left";
+
+
+
+                  return (
+
+
+
+                    <div
+
+
+
+                      className={`relative bg-panel ${
+
+
+
+                        panelPosition === "left" ? "order-first border-r border-border/70" : "order-last border-l border-border/70"
+
+
+
+                      }`}
+
+
+
+                      style={{ width: terminalWidth }}
+
+
+
+                    >
+
+
+
+                      <div
+
+
+
+                        className={`absolute top-0 z-20 h-full w-1 ${dockLeft ? "right-0 cursor-e-resize" : "left-0 cursor-w-resize"}`}
+
+
+
+                        onMouseDown={(e) => {
+
+
+
+                          try {
+
+
+
+                            e.preventDefault();
+
+
+
+                            e.stopPropagation();
+
+
+
+                          } catch {
+
+
+
+                          }
+
+
+
+                          beginResizeDrag(dockLeft ? "e-resize" : "w-resize");
+
+
+
+                          terminalResizeXStateRef.current = { startX: e.clientX, startW: terminalWidth, dock: dockLeft ? "left" : "right" };
+
+
+
+                        }}
+
+
+
+                      />
+
+
+
+                      <div className="flex h-full min-h-0 flex-col">
+
+
+
+                        <div className="flex items-center justify-between bg-panel px-2 py-1.5">
+
+
+
+                          <div className="flex min-w-0 items-center gap-1">
+
+
+
+                            {([
+
+
+
+                              { id: "problems", label: "Problems" },
+
+
+
+                              { id: "output", label: "Output" },
+
+
+
+                              { id: "debug", label: "Debug Console" },
+
+
+
+                              { id: "terminal", label: "Terminal" },
+
+
+
+                              { id: "ports", label: "Ports" },
+
+
+
+                            ] as const).map((t) => (
+
+
+
+                              <button
+
+
+
+                                key={t.id}
+
+
+
+                                type="button"
+
+
+
+                                className={`rounded-md px-2 py-1 text-[11px] ${
+
+
+
+                                  panelTab === t.id ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+
+
+
+                                }`}
+
+
+
+                                onClick={() => {
+
+
+
+                                  setPanelTab(t.id);
+
+
+
+                                  if (t.id === "terminal") {
+
+
+
+                                    window.setTimeout(() => {
+
+
+
+                                      void ensureTerminal().then(() => {
+
+
+
+                                        resizeTerminal();
+
+
+
+                                        termRef.current?.focus();
+
+
+
+                                      });
+
+
+
+                                    }, 0);
+
+
+
+                                  }
+
+
+
+                                }}
+
+
+
+                              >
+
+
+
+                                {t.label}
+
+
+
+                              </button>
+
+
+
+                            ))}
+
+
+
+                          </div>
+
+
+
+                          <div className="flex items-center gap-1">
+
+
+
+                            <button
+
+
+
+                              type="button"
+
+
+
+                              className="ws-icon-btn"
+
+
+
+                              onClick={() => {
+
+
+
+                                setPanelTab("terminal");
+
+
+
+                                window.setTimeout(() => {
+
+
+
+                                  void ensureTerminal().then(() => {
+
+
+
+                                    resizeTerminal();
+
+
+
+                                    termRef.current?.focus();
+
+
+
+                                  });
+
+
+
+                                }, 0);
+
+
+
+                              }}
+
+
+
+                            >
+
+
+
+                              <Terminal className="h-4 w-4" />
+
+
+
+                            </button>
+
+
+
+                            <button type="button" className="ws-icon-btn" onClick={() => void closeTerminal()}>
+
+
+
+                              <X className="h-4 w-4" />
+
+
+
+                            </button>
+
+
+
+                          </div>
+
+
+
+                        </div>
+
+
+
+                        <div className="relative min-h-0 flex-1 bg-bg">
+
+
+
+                          <div className={panelTab === "terminal" ? "absolute inset-0" : "absolute inset-0 hidden"}>
+
+
+
+                            <div ref={termHostRef} className="h-full w-full" />
+
+
+
+                          </div>
+
+
+
+                          {panelTab !== "terminal" ? <div className="absolute inset-0 p-3 text-xs text-muted">{panelTab} is coming next.</div> : null}
+
+
+
+                        </div>
+
+
+
+                      </div>
+
+
+
+                    </div>
+
+
+
+                  );
+
+
+
+                })()
+
+
+
+              ) : null}
+
+
+
+              <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+
+
+
+                {panelPosition === "top" ? (
+
+
+
+                  (() => {
+
+
+
+                    if (!isTerminalOpen) return null;
+
+
+
+                    return (
+
+
+
+                      <div className="relative bg-panel border-b border-border/70" style={{ height: terminalHeight }}>
+
+
+
+                        <div
+
+
+
+                          className="absolute left-0 bottom-0 z-20 h-1 w-full cursor-s-resize"
+
+
+
+                          onMouseDown={(e) => {
+
+
+
+                            try {
+
+
+
+                              e.preventDefault();
+
+
+
+                              e.stopPropagation();
+
+
+
+                            } catch {
+
+
+
+                            }
+
+
+
+                            beginResizeDrag("s-resize");
+
+
+
+                            terminalResizeStateRef.current = { startY: e.clientY, startH: terminalHeight, dock: "top" };
+
+
+
+                          }}
+
+
+
+                        />
+
+
+
+                        <div className="flex h-full min-h-0 flex-col">
+
+
+
+                          <div className="flex items-center justify-between bg-panel px-2 py-1.5">
+
+
+
+                            <div className="flex min-w-0 items-center gap-1">
+
+
+
+                              {([
+
+
+
+                                { id: "problems", label: "Problems" },
+
+
+
+                                { id: "output", label: "Output" },
+
+
+
+                                { id: "debug", label: "Debug Console" },
+
+
+
+                                { id: "terminal", label: "Terminal" },
+
+
+
+                                { id: "ports", label: "Ports" },
+
+
+
+                              ] as const).map((t) => (
+
+
+
+                                <button
+
+
+
+                                  key={t.id}
+
+
+
+                                  type="button"
+
+
+
+                                  className={`rounded-md px-2 py-1 text-[11px] ${
+
+
+
+                                    panelTab === t.id ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+
+
+
+                                  }`}
+
+
+
+                                  onClick={() => {
+
+
+
+                                    setPanelTab(t.id);
+
+
+
+                                    if (t.id === "terminal") {
+
+
+
+                                      window.setTimeout(() => {
+
+
+
+                                        void ensureTerminal().then(() => {
+
+
+
+                                          resizeTerminal();
+
+
+
+                                          termRef.current?.focus();
+
+
+
+                                        });
+
+
+
+                                      }, 0);
+
+
+
+                                    }
+
+
+
+                                  }}
+
+
+
+                                >
+
+
+
+                                  {t.label}
+
+
+
+                                </button>
+
+
+
+                              ))}
+
+
+
+                            </div>
+
+
+
+                            <div className="flex items-center gap-1">
+
+
+
+                              <button
+
+
+
+                                type="button"
+
+
+
+                                className="ws-icon-btn"
+
+
+
+                                onClick={() => {
+
+
+
+                                  setPanelTab("terminal");
+
+
+
+                                  window.setTimeout(() => {
+
+
+
+                                    void ensureTerminal().then(() => {
+
+
+
+                                      resizeTerminal();
+
+
+
+                                      termRef.current?.focus();
+
+
+
+                                    });
+
+
+
+                                  }, 0);
+
+
+
+                                }}
+
+
+
+                              >
+
+
+
+                                <Terminal className="h-4 w-4" />
+
+
+
+                              </button>
+
+
+
+                              <button type="button" className="ws-icon-btn" onClick={() => void closeTerminal()}>
+
+
+
+                                <X className="h-4 w-4" />
+
+
+
+                              </button>
+
+
+
+                            </div>
+
+
+
+                          </div>
+
+
+
+                          <div className="relative min-h-0 flex-1 bg-bg">
+
+
+
+                            <div className={panelTab === "terminal" ? "absolute inset-0" : "absolute inset-0 hidden"}>
+
+
+
+                              <div ref={termHostRef} className="h-full w-full" />
+
+
+
+                            </div>
+
+
+
+                            {panelTab !== "terminal" ? <div className="absolute inset-0 p-3 text-xs text-muted">{panelTab} is coming next.</div> : null}
+
+
+
+                          </div>
+
+
+
+                        </div>
+
+
+
+                      </div>
+
+
+
+                    );
+
+
+
+                  })()
+
+
+
+                ) : null}
 
 
 
@@ -38244,7 +39220,7 @@ export default function AppShell() {
 
 
 
-                <div className={`flex h-14 items-center gap-1 px-2 ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
+                <div className={`flex h-14 min-w-0 items-center gap-1 px-2 ${isCoding ? "ws-editor-surface" : "bg-panel"}`}>
 
 
 
@@ -39532,17 +40508,39 @@ export default function AppShell() {
 
                             letterSpacing: 0.4,
 
+
+
                             fontLigatures: true,
+
+
 
                             minimap: { enabled: true },
 
+
+
                             scrollBeyondLastLine: false,
 
-                            wordWrap: "on",
+
+
+                            wordWrap: "off",
+
+
+
+                            scrollBeyondLastColumn: 2,
+
+
+
+                            scrollbar: { horizontal: "auto", vertical: "auto" },
+
+
 
                             automaticLayout: true,
 
+
+
                             smoothScrolling: true,
+
+
 
                             cursorSmoothCaretAnimation: "off",
 
@@ -40172,7 +41170,15 @@ export default function AppShell() {
 
 
 
-                            wordWrap: "on",
+                            wordWrap: "off",
+
+
+
+                            scrollBeyondLastColumn: 2,
+
+
+
+                            scrollbar: { horizontal: "auto", vertical: "auto" },
 
 
 
@@ -40520,47 +41526,79 @@ export default function AppShell() {
 
 
 
-              {isTerminalOpen ? (
+              {panelPosition === "bottom" ? (
 
 
 
-                <div className="relative bg-panel" style={{ height: terminalHeight }}>
+                (() => {
 
 
 
-                  <div
+                  if (!isTerminalOpen) return null;
 
 
 
-                    className="absolute left-0 top-0 z-20 h-1 w-full cursor-row-resize"
+                  return (
 
 
 
-                    onMouseDown={(e) => {
+                    <div className="relative bg-panel border-t border-border/70" style={{ height: terminalHeight }}>
 
 
 
-                      terminalResizeStateRef.current = { startY: e.clientY, startH: terminalHeight };
+                      <div
 
 
 
-                    }}
+                        className="absolute left-0 top-0 z-20 h-1 w-full cursor-n-resize"
 
 
 
-                  />
+                        onMouseDown={(e) => {
 
 
 
+                          try {
 
 
 
-
-                  <div className="flex h-full min-h-0 flex-col">
-
+                            e.preventDefault();
 
 
-                    <div className="flex items-center justify-between bg-panel px-2 py-1.5">
+
+                            e.stopPropagation();
+
+
+
+                          } catch {
+
+
+
+                          }
+
+
+
+                          beginResizeDrag("n-resize");
+
+
+
+                          terminalResizeStateRef.current = { startY: e.clientY, startH: terminalHeight, dock: "bottom" };
+
+
+
+                        }}
+
+
+
+                      />
+
+
+
+                      <div className="flex h-full min-h-0 flex-col">
+
+
+
+                        <div className="flex items-center justify-between bg-panel px-2 py-1.5">
 
 
 
@@ -40808,15 +41846,27 @@ export default function AppShell() {
 
 
 
-                  </div>
+                      </div>
 
 
 
-                </div>
+                    </div>
+
+
+
+                  );
+
+
+
+                })()
 
 
 
               ) : null}
+
+
+
+              </div>
 
 
 
@@ -40853,6 +41903,30 @@ export default function AppShell() {
 
 
                   chatResizeStateRef.current = { startX: e.clientX, startW: chatDockWidth };
+
+
+
+                  try {
+
+
+
+                    e.preventDefault();
+
+
+
+                    e.stopPropagation();
+
+
+
+                  } catch {
+
+
+
+                  }
+
+
+
+                  beginResizeDrag("col-resize");
 
 
 
