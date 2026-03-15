@@ -2,7 +2,15 @@ import React, { Component, useCallback, useEffect, useLayoutEffect, useMemo, use
 
 
 
+
+
+
+
 import { createPortal } from "react-dom";
+
+
+
+
 
 
 
@@ -10,7 +18,15 @@ import Editor, { DiffEditor } from "@monaco-editor/react";
 
 
 
+
+
+
+
 import type { editor as MonacoEditorNS } from "monaco-editor";
+
+
+
+
 
 
 
@@ -18,7 +34,15 @@ import { listen } from "@tauri-apps/api/event";
 
 
 
+
+
+
+
 import { Icon as IconifyIcon } from "@iconify/react";
+
+
+
+
 
 
 
@@ -26,7 +50,15 @@ import siTypescript from "@iconify/icons-simple-icons/typescript";
 
 
 
+
+
+
+
 import siJavascript from "@iconify/icons-simple-icons/javascript";
+
+
+
+
 
 
 
@@ -34,7 +66,15 @@ import siReact from "@iconify/icons-simple-icons/react";
 
 
 
+
+
+
+
 import siHtml5 from "@iconify/icons-simple-icons/html5";
+
+
+
+
 
 
 
@@ -42,7 +82,15 @@ import siCss3 from "@iconify/icons-simple-icons/css3";
 
 
 
+
+
+
+
 import siJson from "@iconify/icons-simple-icons/json";
+
+
+
+
 
 
 
@@ -50,7 +98,15 @@ import siMarkdown from "@iconify/icons-simple-icons/markdown";
 
 
 
+
+
+
+
 import siRust from "@iconify/icons-simple-icons/rust";
+
+
+
+
 
 
 
@@ -58,7 +114,15 @@ import siDocker from "@iconify/icons-simple-icons/docker";
 
 
 
+
+
+
+
 import siGit from "@iconify/icons-simple-icons/git";
+
+
+
+
 
 
 
@@ -66,7 +130,15 @@ import siNpm from "@iconify/icons-simple-icons/npm";
 
 
 
+
+
+
+
 import siYarn from "@iconify/icons-simple-icons/yarn";
+
+
+
+
 
 
 
@@ -74,7 +146,15 @@ import siPnpm from "@iconify/icons-simple-icons/pnpm";
 
 
 
+
+
+
+
 import siVite from "@iconify/icons-simple-icons/vite";
+
+
+
+
 
 
 
@@ -82,7 +162,15 @@ import siTailwindcss from "@iconify/icons-simple-icons/tailwindcss";
 
 
 
+
+
+
+
 import siTauri from "@iconify/icons-simple-icons/tauri";
+
+
+
+
 
 
 
@@ -90,7 +178,15 @@ import siDotenv from "@iconify/icons-simple-icons/dotenv";
 
 
 
+
+
+
+
 import siYaml from "@iconify/icons-simple-icons/yaml";
+
+
+
+
 
 
 
@@ -98,7 +194,15 @@ import siToml from "@iconify/icons-simple-icons/toml";
 
 
 
+
+
+
+
 import siEslint from "@iconify/icons-simple-icons/eslint";
+
+
+
+
 
 
 
@@ -106,7 +210,15 @@ import siPrettier from "@iconify/icons-simple-icons/prettier";
 
 
 
+
+
+
+
 import siGnubash from "@iconify/icons-simple-icons/gnubash";
+
+
+
+
 
 
 
@@ -114,7 +226,15 @@ import siPython from "@iconify/icons-simple-icons/python";
 
 
 
+
+
+
+
 import siGo from "@iconify/icons-simple-icons/go";
+
+
+
+
 
 
 
@@ -122,7 +242,15 @@ import siJava from "@iconify/icons-simple-icons/openjdk";
 
 
 
+
+
+
+
 import siC from "@iconify/icons-simple-icons/c";
+
+
+
+
 
 
 
@@ -130,7 +258,15 @@ import siCplusplus from "@iconify/icons-simple-icons/cplusplus";
 
 
 
+
+
+
+
 import { Terminal as XTermTerminal } from "xterm";
+
+
+
+
 
 
 
@@ -138,7 +274,15 @@ import { FitAddon } from "xterm-addon-fit";
 
 
 
+
+
+
+
 import {
+
+
+
+
 
 
 
@@ -146,7 +290,15 @@ import {
 
 
 
+
+
+
+
   ArrowLeft,
+
+
+
+
 
 
 
@@ -154,7 +306,15 @@ import {
 
 
 
+
+
+
+
   ArrowUp,
+
+
+
+
 
 
 
@@ -162,7 +322,15 @@ import {
 
 
 
+
+
+
+
   ChevronDown,
+
+
+
+
 
 
 
@@ -170,7 +338,15 @@ import {
 
 
 
+
+
+
+
   ChevronRight,
+
+
+
+
 
 
 
@@ -178,7 +354,15 @@ import {
 
 
 
+
+
+
+
   Clipboard,
+
+
+
+
 
 
 
@@ -186,7 +370,15 @@ import {
 
 
 
+
+
+
+
   Folder,
+
+
+
+
 
 
 
@@ -194,7 +386,15 @@ import {
 
 
 
+
+
+
+
   GitBranch,
+
+
+
+
 
 
 
@@ -202,7 +402,15 @@ import {
 
 
 
+
+
+
+
   Maximize2,
+
+
+
+
 
 
 
@@ -210,7 +418,15 @@ import {
 
 
 
+
+
+
+
   Minus,
+
+
+
+
 
 
 
@@ -218,7 +434,15 @@ import {
 
 
 
+
+
+
+
   Plus,
+
+
+
+
 
 
 
@@ -226,7 +450,15 @@ import {
 
 
 
+
+
+
+
   Search,
+
+
+
+
 
 
 
@@ -234,7 +466,15 @@ import {
 
 
 
+
+
+
+
   Terminal,
+
+
+
+
 
 
 
@@ -242,7 +482,15 @@ import {
 
 
 
+
+
+
+
   ThumbsDown,
+
+
+
+
 
 
 
@@ -250,7 +498,15 @@ import {
 
 
 
+
+
+
+
   Wand2,
+
+
+
+
 
 
 
@@ -258,7 +514,15 @@ import {
 
 
 
+
+
+
+
   X,
+
+
+
+
 
 
 
@@ -266,7 +530,15 @@ import {
 
 
 
+
+
+
+
 import { getCurrentWindow } from "@tauri-apps/api/window";
+
+
+
+
 
 
 
@@ -274,7 +546,15 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 
 
+
+
+
+
 import { openUrl } from "@tauri-apps/plugin-opener";
+
+
+
+
 
 
 
@@ -282,7 +562,15 @@ import {
 
 
 
+
+
+
+
   providerKeyClear,
+
+
+
+
 
 
 
@@ -290,7 +578,15 @@ import {
 
 
 
+
+
+
+
   providerKeyStatus,
+
+
+
+
 
 
 
@@ -298,7 +594,15 @@ import {
 
 
 
+
+
+
+
   authWaitLogin,
+
+
+
+
 
 
 
@@ -306,7 +610,15 @@ import {
 
 
 
+
+
+
+
   authLogout,
+
+
+
+
 
 
 
@@ -314,7 +626,15 @@ import {
 
 
 
+
+
+
+
   authGetCredits,
+
+
+
+
 
 
 
@@ -322,7 +642,15 @@ import {
 
 
 
+
+
+
+
   debugGeminiEndToEnd,
+
+
+
+
 
 
 
@@ -330,7 +658,15 @@ import {
 
 
 
+
+
+
+
   settingsGet,
+
+
+
+
 
 
 
@@ -338,7 +674,15 @@ import {
 
 
 
+
+
+
+
   settingsClear,
+
+
+
+
 
 
 
@@ -346,7 +690,15 @@ import {
 
 
 
+
+
+
+
   historySetRaw,
+
+
+
+
 
 
 
@@ -354,7 +706,15 @@ import {
 
 
 
+
+
+
+
   providerKeysClearAll,
+
+
+
+
 
 
 
@@ -362,7 +722,15 @@ import {
 
 
 
+
+
+
+
   workspaceGet,
+
+
+
+
 
 
 
@@ -370,7 +738,15 @@ import {
 
 
 
+
+
+
+
   workspaceListFiles,
+
+
+
+
 
 
 
@@ -378,7 +754,15 @@ import {
 
 
 
+
+
+
+
   workspaceReadFileBase64,
+
+
+
+
 
 
 
@@ -386,7 +770,15 @@ import {
 
 
 
+
+
+
+
   workspaceWriteFileBase64,
+
+
+
+
 
 
 
@@ -394,7 +786,15 @@ import {
 
 
 
+
+
+
+
   workspaceDelete,
+
+
+
+
 
 
 
@@ -402,7 +802,15 @@ import {
 
 
 
+
+
+
+
   workspaceSearch,
+
+
+
+
 
 
 
@@ -410,7 +818,15 @@ import {
 
 
 
+
+
+
+
   workspacePickFolder,
+
+
+
+
 
 
 
@@ -418,7 +834,15 @@ import {
 
 
 
+
+
+
+
   workspaceAddRoot,
+
+
+
+
 
 
 
@@ -426,7 +850,15 @@ import {
 
 
 
+
+
+
+
   fsReadFileAbs,
+
+
+
+
 
 
 
@@ -434,7 +866,15 @@ import {
 
 
 
+
+
+
+
   clipboardWriteText,
+
+
+
+
 
 
 
@@ -442,7 +882,15 @@ import {
 
 
 
+
+
+
+
   wslClipboardWriteText,
+
+
+
+
 
 
 
@@ -450,7 +898,15 @@ import {
 
 
 
+
+
+
+
   terminalStart,
+
+
+
+
 
 
 
@@ -458,7 +914,15 @@ import {
 
 
 
+
+
+
+
   terminalResize,
+
+
+
+
 
 
 
@@ -466,7 +930,15 @@ import {
 
 
 
+
+
+
+
   providerListModels,
+
+
+
+
 
 
 
@@ -474,11 +946,27 @@ import {
 
 
 
+
+
+
+
 import type { AiChatMessage, AiEditOp } from "./lib/tauri";
 
 
 
+
+
+
+
 import type { AppSettings, AuthProfile, CreditsResponse, CursorBlinking, DirEntryInfo, EditorTab, KeyStatus, SavedWorkspace, Theme, WorkspaceInfo } from "./lib/types";
+
+
+
+
+
+
+
+
 
 
 
@@ -494,11 +982,27 @@ type ActivityId = "explorer" | "search" | "scm";
 
 
 
+
+
+
+
+
+
+
+
 const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "chat.toggle": "Ctrl+L",
+
+
+
+
 
 
 
@@ -510,7 +1014,19 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "view.navigateBack": "Alt+ArrowLeft",
+
+
+
+
 
 
 
@@ -522,11 +1038,27 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "file.newWindow": "Ctrl+Shift+N",
 
 
 
+
+
+
+
   "file.openFile": "Ctrl+O",
+
+
+
+
 
 
 
@@ -538,11 +1070,27 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "file.save": "Ctrl+S",
 
 
 
+
+
+
+
   "file.saveAs": "Ctrl+Shift+S",
+
+
+
+
 
 
 
@@ -554,11 +1102,27 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "file.close": "Ctrl+W",
 
 
 
+
+
+
+
   "file.closeAll": "Ctrl+K Ctrl+W",
+
+
+
+
 
 
 
@@ -570,7 +1134,19 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "edit.undo": "Ctrl+Z",
+
+
+
+
 
 
 
@@ -578,7 +1154,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "edit.cut": "Ctrl+X",
+
+
+
+
 
 
 
@@ -586,7 +1170,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "edit.paste": "Ctrl+V",
+
+
+
+
 
 
 
@@ -598,7 +1190,19 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "find.find": "Ctrl+F",
+
+
+
+
 
 
 
@@ -606,7 +1210,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "workbench.findInFiles": "Ctrl+Shift+F",
+
+
+
+
 
 
 
@@ -618,11 +1230,27 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "editor.toggleLineComment": "Ctrl+/",
 
 
 
+
+
+
+
   "editor.toggleBlockComment": "Shift+Alt+A",
+
+
+
+
 
 
 
@@ -634,7 +1262,19 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "editor.expandSelection": "Shift+Alt+ArrowRight",
+
+
+
+
 
 
 
@@ -642,11 +1282,23 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "editor.copyLineDown": "Shift+Alt+ArrowDown",
 
 
 
+
+
+
+
   "editor.moveLineUp": "Alt+ArrowUp",
+
+
+
+
 
 
 
@@ -658,7 +1310,19 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "editor.addCursorAbove": "Ctrl+Alt+ArrowUp",
+
+
+
+
 
 
 
@@ -666,7 +1330,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "editor.addCursorsToLineEnds": "Shift+Alt+I",
+
+
+
+
 
 
 
@@ -678,7 +1350,19 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "view.fullScreen": "F11",
+
+
+
+
 
 
 
@@ -686,7 +1370,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "editor.toggleWordWrap": "Alt+Z",
+
+
+
+
 
 
 
@@ -694,7 +1386,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "view.explorer": "Ctrl+Shift+E",
+
+
+
+
 
 
 
@@ -702,11 +1402,23 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "view.sourceControl": "Ctrl+Shift+G",
 
 
 
+
+
+
+
   "view.runDebug": "Ctrl+Shift+D",
+
+
+
+
 
 
 
@@ -718,7 +1430,19 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "panel.problems": "Ctrl+Shift+M",
+
+
+
+
 
 
 
@@ -726,7 +1450,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "panel.debugConsole": "Ctrl+Shift+Y",
+
+
+
+
 
 
 
@@ -734,11 +1466,23 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "terminal.new": "Ctrl+Shift+`",
 
 
 
+
+
+
+
   "terminal.split": "Ctrl+Shift+5",
+
+
+
+
 
 
 
@@ -750,7 +1494,19 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "debug.start": "F5",
+
+
+
+
 
 
 
@@ -758,11 +1514,23 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "debug.stop": "Shift+F5",
 
 
 
+
+
+
+
   "debug.restart": "Ctrl+Shift+F5",
+
+
+
+
 
 
 
@@ -774,7 +1542,19 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
+
+
+
   "view.zoomIn": "Ctrl+=",
+
+
+
+
 
 
 
@@ -782,7 +1562,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "view.zoomReset": "Ctrl+0",
+
+
+
+
 
 
 
@@ -790,7 +1578,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "view.splitEditorInGroup": "Ctrl+K Ctrl+\\",
+
+
+
+
 
 
 
@@ -798,7 +1594,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "file.quickOpen": "Ctrl+P",
+
+
+
+
 
 
 
@@ -806,7 +1610,15 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
   "view.settings": "Ctrl+,",
+
+
+
+
 
 
 
@@ -815,12 +1627,26 @@ const DEFAULT_KEYBINDINGS: Record<string, string> = {
 
 
 
+
+
+
+
+
 function menuPanelClass(_variant: "menubar" | "compact", extra?: string) {
+
+
 
   const base = "overflow-x-visible overflow-y-auto rounded-xl border border-border/60 bg-panel p-1";
 
+
+
   return [base, extra].filter(Boolean).join(" ");
+
 }
+
+
+
+
 
 
 
@@ -828,7 +1654,15 @@ function MenubarRootPortal(props: { anchor: DOMRect; children: React.ReactNode }
 
 
 
+
+
+
+
   const rootRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -836,92 +1670,185 @@ function MenubarRootPortal(props: { anchor: DOMRect; children: React.ReactNode }
 
 
 
+
+
+
+
   useEffect(() => {
+
     setPos({ x: props.anchor.left, y: props.anchor.bottom + 6 });
+
   }, [props.anchor.left, props.anchor.bottom]);
 
 
 
+
+
+
+
   useEffect(() => {
+
     const el = rootRef.current;
+
     if (!el) return;
+
+
 
     const pad = 8;
 
+
+
     const place = () => {
+
       const rect = el.getBoundingClientRect();
+
       const maxX = Math.max(pad, window.innerWidth - rect.width - pad);
+
       const maxY = Math.max(pad, window.innerHeight - rect.height - pad);
 
+
+
       const belowY = props.anchor.bottom + 6;
+
       const aboveY = props.anchor.top - rect.height - 6;
+
       const canOpenBelow = belowY + rect.height <= window.innerHeight - pad;
 
+
+
       const x = clamp(props.anchor.left, pad, maxX);
+
       const y = clamp(canOpenBelow ? belowY : aboveY, pad, maxY);
 
+
+
       setPos((prev) => (prev.x === x && prev.y === y ? prev : { x, y }));
+
     };
 
+
+
     const raf = window.requestAnimationFrame(place);
+
     window.addEventListener("resize", place);
+
     return () => {
+
       window.cancelAnimationFrame(raf);
+
       window.removeEventListener("resize", place);
+
     };
+
   }, [props.anchor.left, props.anchor.top, props.anchor.bottom]);
 
 
 
+
+
+
+
   return createPortal(
+
     <div
+
       ref={rootRef}
+
       style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 100000 }}
+
       data-menubar-portal
+
     >
+
       {props.children}
+
     </div>,
+
     document.body,
+
   );
+
 }
+
+
+
 
 
 function SavedWorkspacesDialog(props: {
 
+
+
   items: SavedWorkspace[];
+
+
 
   onClose: () => void;
 
+
+
   onPick: (name: string) => void;
+
+
 
   onRename: (name: string) => void;
 
+
+
   onDelete: (name: string) => void;
+
+
 
 }) {
 
+
+
   useEffect(() => {
+
+
 
     const onKeyDown = (e: KeyboardEvent) => {
 
+
+
       if (e.key === "Escape") {
+
+
 
         e.preventDefault();
 
+
+
         props.onClose();
 
+
+
       }
+
     };
+
+
 
     window.addEventListener("keydown", onKeyDown);
 
+
+
     return () => window.removeEventListener("keydown", onKeyDown);
+
+
 
   }, [props]);
 
+
+
   return (
 
+
+
     <div className="fixed inset-0 z-50 bg-black/50" onMouseDown={props.onClose}>
+
+
+
+
 
 
 
@@ -929,7 +1856,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
         className="mx-auto mt-16 flex w-[520px] max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border/80 bg-panel shadow-2xl shadow-black/35"
+
+
+
+
 
 
 
@@ -937,7 +1872,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
       >
+
+
+
+
 
 
 
@@ -945,7 +1888,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
           <div className="flex items-start justify-between gap-3">
+
+
+
+
 
 
 
@@ -953,7 +1904,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
               <div className="text-[15px] font-semibold text-text">Saved Workspaces</div>
+
+
+
+
 
 
 
@@ -961,7 +1920,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -969,7 +1936,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
               type="button"
+
+
+
+
 
 
 
@@ -977,7 +1952,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
               onClick={props.onClose}
+
+
+
+
 
 
 
@@ -985,7 +1968,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
             >
+
+
+
+
 
 
 
@@ -993,7 +1984,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
             </button>
+
+
+
+
 
 
 
@@ -1001,7 +2000,19 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -1013,7 +2024,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
           {props.items.length ? (
+
+
+
+
 
 
 
@@ -1021,7 +2040,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
               {props.items.map((w) => (
+
+
+
+
 
 
 
@@ -1029,7 +2056,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                   key={w.name}
+
+
+
+
 
 
 
@@ -1037,7 +2072,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                 >
+
+
+
+
 
 
 
@@ -1045,7 +2088,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -1053,7 +2104,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                     onClick={() => props.onPick(w.name)}
+
+
+
+
 
 
 
@@ -1061,7 +2120,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                     <div className="truncate text-[13px] font-medium text-text">{w.name}</div>
+
+
+
+
 
 
 
@@ -1069,7 +2136,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                       {(w.roots ?? []).slice(0, 2).map((r) => (
+
+
+
+
 
 
 
@@ -1077,7 +2152,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                           {r}
+
+
+
+
 
 
 
@@ -1085,7 +2168,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                       ))}
+
+
+
+
 
 
 
@@ -1093,7 +2184,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                         <div className="text-[10px] text-muted/80">+{(w.roots ?? []).length - 2} more</div>
+
+
+
+
 
 
 
@@ -1101,7 +2200,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -1109,7 +2216,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                   <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+
+
+
+
 
 
 
@@ -1117,11 +2232,23 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                       <Pencil className="h-4 w-4" />
 
 
 
+
+
+
+
                     </button>
+
+
+
+
 
 
 
@@ -1129,7 +2256,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                       <Trash2 className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -1137,7 +2272,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
                   </div>
+
+
+
+
 
 
 
@@ -1145,9 +2288,19 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
               ))}
 
+
+
             </div>
+
+
+
+
 
 
 
@@ -1155,7 +2308,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
             <div className="p-5 text-[13px] text-muted">No saved workspaces yet</div>
+
+
+
+
 
 
 
@@ -1163,7 +2324,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -1171,7 +2340,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
           <div className="text-[11px] text-muted">Esc to close</div>
+
+
+
+
 
 
 
@@ -1179,7 +2356,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
             <button type="button" className="ws-btn ws-btn-secondary h-9 px-5" onClick={props.onClose}>
+
+
+
+
 
 
 
@@ -1187,7 +2372,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
             </button>
+
+
+
+
 
 
 
@@ -1195,7 +2388,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -1203,7 +2404,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
     </div>
+
+
+
+
 
 
 
@@ -1211,7 +2420,15 @@ function SavedWorkspacesDialog(props: {
 
 
 
+
+
+
+
 }
+
+
+
+
 
 
 
@@ -1219,7 +2436,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
   id: ActivityId;
+
+
+
+
 
 
 
@@ -1227,7 +2452,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
   onClick: (id: ActivityId) => void;
+
+
+
+
 
 
 
@@ -1235,7 +2468,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
 }) {
+
+
+
+
 
 
 
@@ -1243,7 +2484,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -1251,7 +2500,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
       type="button"
+
+
+
+
 
 
 
@@ -1259,7 +2516,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
         active ? "bg-panel2 text-text" : "bg-panel text-muted hover:bg-panel2 hover:text-text"
+
+
+
+
 
 
 
@@ -1267,7 +2532,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
       onClick={() => onClick(id)}
+
+
+
+
 
 
 
@@ -1275,7 +2548,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
     >
+
+
+
+
 
 
 
@@ -1283,7 +2564,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
         aria-hidden
+
+
+
+
 
 
 
@@ -1291,7 +2580,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
           active ? "opacity-100" : "opacity-0"
+
+
+
+
 
 
 
@@ -1299,7 +2596,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
       />
+
+
+
+
 
 
 
@@ -1307,7 +2612,15 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
     </button>
+
+
+
+
 
 
 
@@ -1315,7 +2628,19 @@ function ActivityButtonInline(props: {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1327,7 +2652,15 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
   const s = String(raw || "")
+
+
+
+
 
 
 
@@ -1335,7 +2668,15 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
     .replace(/\s+/g, " ");
+
+
+
+
 
 
 
@@ -1347,7 +2688,19 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
+
+
+
+
   const normPart = (part: string) => {
+
+
+
+
 
 
 
@@ -1355,7 +2708,15 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
       .split("+")
+
+
+
+
 
 
 
@@ -1363,7 +2724,15 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
       .filter(Boolean);
+
+
+
+
 
 
 
@@ -1375,7 +2744,19 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
+
+
+
+
     const modOrder = ["Ctrl", "Shift", "Alt", "Win"];
+
+
+
+
 
 
 
@@ -1383,7 +2764,15 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
     let key = "";
+
+
+
+
 
 
 
@@ -1391,7 +2780,15 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
       const c = b.length === 1 ? b.toUpperCase() : b;
+
+
+
+
 
 
 
@@ -1399,7 +2796,15 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
       else if (!key) key = c;
+
+
+
+
 
 
 
@@ -1411,11 +2816,27 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
+
+
+
+
     const ordered = modOrder.filter((m) => mods.has(m));
 
 
 
+
+
+
+
     return [...ordered, key].filter(Boolean).join("+");
+
+
+
+
 
 
 
@@ -1427,7 +2848,19 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
+
+
+
+
   return s
+
+
+
+
 
 
 
@@ -1435,7 +2868,15 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
     .map((p) => normPart(p))
+
+
+
+
 
 
 
@@ -1443,7 +2884,15 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
     .join(" ");
+
+
+
+
 
 
 
@@ -1455,7 +2904,19 @@ function __normShortcut(raw: string): string {
 
 
 
+
+
+
+
+
+
+
+
 function TextPromptDialog(props: {
+
+
+
+
 
 
 
@@ -1463,7 +2924,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
   subtitle?: string;
+
+
+
+
 
 
 
@@ -1471,7 +2940,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
   value: string;
+
+
+
+
 
 
 
@@ -1479,7 +2956,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
   password?: boolean;
+
+
+
+
 
 
 
@@ -1487,7 +2972,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
   showCopy?: boolean;
+
+
+
+
 
 
 
@@ -1495,7 +2988,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
   onSubmit: (value: string) => void;
+
+
+
+
 
 
 
@@ -1503,7 +3004,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -1511,11 +3020,23 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
       if (e.key === "Escape") {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -1523,7 +3044,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -1531,7 +3060,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -1539,7 +3076,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
         const v = String(props.value ?? "");
+
+
+
+
 
 
 
@@ -1547,7 +3092,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -1555,7 +3108,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
     window.addEventListener("keydown", onKeyDown);
+
+
+
+
 
 
 
@@ -1563,7 +3124,19 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
   }, [props]);
+
+
+
+
+
+
+
+
 
 
 
@@ -1579,7 +3152,19 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -1587,7 +3172,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
       <div
+
+
+
+
 
 
 
@@ -1595,7 +3188,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
         onMouseDown={(e) => e.stopPropagation()}
+
+
+
+
 
 
 
@@ -1603,7 +3204,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
         <div className="px-5 py-4">
+
+
+
+
 
 
 
@@ -1611,7 +3220,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
             <div className="min-w-0">
+
+
+
+
 
 
 
@@ -1619,7 +3236,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               {props.subtitle ? <div className="mt-1 text-[12px] text-muted">{props.subtitle}</div> : null}
+
+
+
+
 
 
 
@@ -1627,7 +3252,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
             <button
+
+
+
+
 
 
 
@@ -1635,7 +3268,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               className="ws-titlebar-window-btn hover:bg-red-500/15 hover:text-red-300"
+
+
+
+
 
 
 
@@ -1643,7 +3284,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               aria-label="Close"
+
+
+
+
 
 
 
@@ -1651,7 +3300,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               <X className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -1659,11 +3316,27 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
           </div>
 
 
 
+
+
+
+
         </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -1675,7 +3348,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
           <div className="mt-2 flex items-stretch gap-2">
+
+
+
+
 
 
 
@@ -1683,7 +3364,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               className="h-10 w-full rounded-xl border border-border/70 bg-panel2 px-3 text-sm text-text placeholder:text-muted focus:outline-none"
+
+
+
+
 
 
 
@@ -1691,7 +3380,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               autoFocus
+
+
+
+
 
 
 
@@ -1699,7 +3396,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               readOnly={!!props.readOnly}
+
+
+
+
 
 
 
@@ -1707,7 +3412,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               onChange={(e) => props.setValue(e.currentTarget.value)}
+
+
+
+
 
 
 
@@ -1715,11 +3428,27 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
           </div>
 
 
 
+
+
+
+
         </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -1731,7 +3460,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
           <div className="text-[11px] text-muted">{props.readOnly ? "Esc to close" : "Enter to confirm • Esc to cancel"}</div>
+
+
+
+
 
 
 
@@ -1739,7 +3476,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
             {props.showCopy ? (
+
+
+
+
 
 
 
@@ -1747,7 +3492,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
                 type="button"
+
+
+
+
 
 
 
@@ -1755,7 +3508,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
                 onClick={() => {
+
+
+
+
 
 
 
@@ -1763,11 +3524,23 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
                 }}
 
 
 
+
+
+
+
               >
+
+
+
+
 
 
 
@@ -1775,11 +3548,23 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               </button>
 
 
 
+
+
+
+
             ) : null}
+
+
+
+
 
 
 
@@ -1787,7 +3572,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               type="button"
+
+
+
+
 
 
 
@@ -1795,7 +3588,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               onClick={props.onClose}
+
+
+
+
 
 
 
@@ -1803,7 +3604,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
               {props.readOnly ? "Close" : "Cancel"}
+
+
+
+
 
 
 
@@ -1811,7 +3620,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
             {canSubmit ? (
+
+
+
+
 
 
 
@@ -1819,7 +3636,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
                 type="button"
+
+
+
+
 
 
 
@@ -1827,7 +3652,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
                 onClick={() => props.onSubmit(String(props.value ?? ""))}
+
+
+
+
 
 
 
@@ -1835,7 +3668,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
                 OK
+
+
+
+
 
 
 
@@ -1843,7 +3684,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
             ) : null}
+
+
+
+
 
 
 
@@ -1851,7 +3700,15 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -1859,13 +3716,31 @@ function TextPromptDialog(props: {
 
 
 
+
+
+
+
     </div>
+
+
+
+
 
 
 
   );
 
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -1877,7 +3752,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
   title: string;
+
+
+
+
 
 
 
@@ -1885,7 +3768,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
   confirmLabel?: string;
+
+
+
+
 
 
 
@@ -1893,7 +3784,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
   onClose: () => void;
+
+
+
+
 
 
 
@@ -1901,7 +3800,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
 }) {
+
+
+
+
 
 
 
@@ -1909,7 +3816,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
     const onKeyDown = (e: KeyboardEvent) => {
+
+
+
+
 
 
 
@@ -1917,7 +3832,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -1925,7 +3848,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -1933,7 +3864,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -1941,7 +3880,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -1949,11 +3896,23 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
     window.addEventListener("keydown", onKeyDown);
 
 
 
+
+
+
+
     return () => window.removeEventListener("keydown", onKeyDown);
+
+
+
+
 
 
 
@@ -1965,7 +3924,19 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
   const confirmLabel = props.confirmLabel ?? "OK";
+
+
+
+
 
 
 
@@ -1973,7 +3944,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
     ? "ws-btn h-9 border border-red-500/60 bg-red-500/20 px-4 text-red-200 hover:bg-red-500/25"
+
+
+
+
 
 
 
@@ -1985,7 +3964,19 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -1993,7 +3984,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
       <div
+
+
+
+
 
 
 
@@ -2001,7 +4000,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
         onMouseDown={(e) => e.stopPropagation()}
+
+
+
+
 
 
 
@@ -2009,7 +4016,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
         <div className="px-5 py-4">
+
+
+
+
 
 
 
@@ -2017,7 +4032,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
             <div className="min-w-0">
+
+
+
+
 
 
 
@@ -2025,7 +4048,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -2033,7 +4064,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
               type="button"
+
+
+
+
 
 
 
@@ -2041,7 +4080,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
               onClick={props.onClose}
+
+
+
+
 
 
 
@@ -2049,7 +4096,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
             >
+
+
+
+
 
 
 
@@ -2057,7 +4112,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
             </button>
+
+
+
+
 
 
 
@@ -2065,7 +4128,19 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -2077,11 +4152,27 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
           <div className="text-sm text-muted whitespace-pre-wrap">{props.message}</div>
 
 
 
+
+
+
+
         </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -2093,7 +4184,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
           <div className="text-[11px] text-muted">Enter to confirm • Esc to cancel</div>
+
+
+
+
 
 
 
@@ -2101,7 +4200,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
             <button
+
+
+
+
 
 
 
@@ -2109,7 +4216,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
               className="ws-btn ws-btn-secondary h-9 px-4 hover:bg-red-500/15 hover:text-red-300"
+
+
+
+
 
 
 
@@ -2117,7 +4232,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
             >
+
+
+
+
 
 
 
@@ -2125,7 +4248,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
             </button>
+
+
+
+
 
 
 
@@ -2133,7 +4264,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
               {confirmLabel}
+
+
+
+
 
 
 
@@ -2141,7 +4280,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
           </div>
+
+
+
+
 
 
 
@@ -2149,7 +4296,15 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
       </div>
+
+
+
+
 
 
 
@@ -2157,11 +4312,27 @@ function ConfirmDialog(props: {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2173,7 +4344,15 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
   const rawKey = String((e as any).key || "");
+
+
+
+
 
 
 
@@ -2185,7 +4364,19 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
+
+
+
+
   const parts: string[] = [];
+
+
+
+
 
 
 
@@ -2193,11 +4384,23 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
   if (e.shiftKey) parts.push("Shift");
 
 
 
+
+
+
+
   if (e.altKey) parts.push("Alt");
+
+
+
+
 
 
 
@@ -2209,7 +4412,19 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
+
+
+
+
   const k = rawKey;
+
+
+
+
 
 
 
@@ -2217,7 +4432,15 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
   const key = (() => {
+
+
+
+
 
 
 
@@ -2225,7 +4448,15 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
     if (k === "Esc") return "Escape";
+
+
+
+
 
 
 
@@ -2233,7 +4464,15 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
     if (k === "Enter" || k === "Tab" || k === "Backspace" || k === "Delete" || k === "Escape") return k;
+
+
+
+
 
 
 
@@ -2241,11 +4480,23 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
     if (code === "Backslash") return "\\";
 
 
 
+
+
+
+
     return k.length === 1 ? k.toUpperCase() : k;
+
+
+
+
 
 
 
@@ -2257,7 +4508,19 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
+
+
+
+
   if (!key) return "";
+
+
+
+
 
 
 
@@ -2265,11 +4528,27 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
   return parts.join("+");
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -2285,7 +4564,19 @@ function __eventToShortcut(e: KeyboardEvent): string {
 
 
 
+
+
+
+
+
+
+
+
 type ChatLogEntry = {
+
+
+
+
 
 
 
@@ -2293,7 +4584,15 @@ type ChatLogEntry = {
 
 
 
+
+
+
+
   ts: number;
+
+
+
+
 
 
 
@@ -2301,7 +4600,15 @@ type ChatLogEntry = {
 
 
 
+
+
+
+
   kind: "info" | "error" | "action";
+
+
+
+
 
 
 
@@ -2309,7 +4616,15 @@ type ChatLogEntry = {
 
 
 
+
+
+
+
   status?: "pending" | "running" | "done" | "error";
+
+
+
+
 
 
 
@@ -2317,11 +4632,27 @@ type ChatLogEntry = {
 
 
 
+
+
+
+
   collapsed?: boolean;
 
 
 
+
+
+
+
 };
+
+
+
+
+
+
+
+
 
 
 
@@ -2333,7 +4664,15 @@ type ChatSession = {
 
 
 
+
+
+
+
   id: string;
+
+
+
+
 
 
 
@@ -2341,7 +4680,15 @@ type ChatSession = {
 
 
 
+
+
+
+
   createdAt: number;
+
+
+
+
 
 
 
@@ -2349,7 +4696,15 @@ type ChatSession = {
 
 
 
+
+
+
+
   messages: ChatUiMessage[];
+
+
+
+
 
 
 
@@ -2357,7 +4712,15 @@ type ChatSession = {
 
 
 
+
+
+
+
   draft: string;
+
+
+
+
 
 
 
@@ -2365,7 +4728,19 @@ type ChatSession = {
 
 
 
+
+
+
+
 };
+
+
+
+
+
+
+
+
 
 
 
@@ -2377,7 +4752,15 @@ type Command = {
 
 
 
+
+
+
+
   id: string;
+
+
+
+
 
 
 
@@ -2385,7 +4768,15 @@ type Command = {
 
 
 
+
+
+
+
   shortcut?: string;
+
+
+
+
 
 
 
@@ -2393,7 +4784,19 @@ type Command = {
 
 
 
+
+
+
+
 };
+
+
+
+
+
+
+
+
 
 
 
@@ -2405,7 +4808,15 @@ type AppNotification = {
 
 
 
+
+
+
+
   id: string;
+
+
+
+
 
 
 
@@ -2413,7 +4824,15 @@ type AppNotification = {
 
 
 
+
+
+
+
   message: string;
+
+
+
+
 
 
 
@@ -2421,7 +4840,19 @@ type AppNotification = {
 
 
 
+
+
+
+
 };
+
+
+
+
+
+
+
+
 
 
 
@@ -2433,7 +4864,15 @@ type AppNotification = {
 
 
 
+
+
+
+
   role: "user" | "assistant" | "meta";
+
+
+
+
 
 
 
@@ -2441,7 +4880,15 @@ type AppNotification = {
 
 
 
+
+
+
+
   id?: string;
+
+
+
+
 
 
 
@@ -2449,7 +4896,15 @@ type AppNotification = {
 
 
 
+
+
+
+
   kind?: "run_request" | "activity" | "event_stream";
+
+
+
+
 
 
 
@@ -2457,7 +4912,15 @@ type AppNotification = {
 
 
 
+
+
+
+
     cmd: string;
+
+
+
+
 
 
 
@@ -2465,7 +4928,15 @@ type AppNotification = {
 
 
 
+
+
+
+
     remaining: string[];
+
+
+
+
 
 
 
@@ -2473,7 +4944,15 @@ type AppNotification = {
 
 
 
+
+
+
+
     tail?: string[] | null;
+
+
+
+
 
 
 
@@ -2481,7 +4960,15 @@ type AppNotification = {
 
 
 
+
+
+
+
   };
+
+
+
+
 
 
 
@@ -2489,7 +4976,15 @@ type AppNotification = {
 
 
 
+
+
+
+
     title: string;
+
+
+
+
 
 
 
@@ -2497,7 +4992,15 @@ type AppNotification = {
 
 
 
+
+
+
+
     steps: string[];
+
+
+
+
 
 
 
@@ -2505,7 +5008,15 @@ type AppNotification = {
 
 
 
+
+
+
+
     collapsed?: boolean;
+
+
+
+
 
 
 
@@ -2513,7 +5024,15 @@ type AppNotification = {
 
 
 
+
+
+
+
   };
+
+
+
+
 
 
 
@@ -2521,7 +5040,15 @@ type AppNotification = {
 
 
 
+
+
+
+
     status: "running" | "done" | "error";
+
+
+
+
 
 
 
@@ -2529,11 +5056,27 @@ type AppNotification = {
 
 
 
+
+
+
+
   };
 
 
 
+
+
+
+
 };
+
+
+
+
+
+
+
+
 
 
 
@@ -2545,7 +5088,15 @@ type ChatEventBase = {
 
 
 
+
+
+
+
   id: string;
+
+
+
+
 
 
 
@@ -2553,7 +5104,19 @@ type ChatEventBase = {
 
 
 
+
+
+
+
 };
+
+
+
+
+
+
+
+
 
 
 
@@ -2565,11 +5128,23 @@ type ChatEvent =
 
 
 
+
+
+
+
   | (ChatEventBase & { type: "message"; content: string })
 
 
 
+
+
+
+
   | (ChatEventBase & { type: "state"; content: string; hidden?: boolean; ttlMs?: number })
+
+
+
+
 
 
 
@@ -2581,7 +5156,19 @@ type ChatEvent =
 
 
 
+
+
+
+
+
+
+
+
 type TerminalCapture = {
+
+
+
+
 
 
 
@@ -2589,7 +5176,15 @@ type TerminalCapture = {
 
 
 
+
+
+
+
   startedAt: number;
+
+
+
+
 
 
 
@@ -2597,7 +5192,15 @@ type TerminalCapture = {
 
 
 
+
+
+
+
   lastFlushAt: number;
+
+
+
+
 
 
 
@@ -2605,7 +5208,15 @@ type TerminalCapture = {
 
 
 
+
+
+
+
   emitted: number;
+
+
+
+
 
 
 
@@ -2613,7 +5224,15 @@ type TerminalCapture = {
 
 
 
+
+
+
+
   emit: (line: string) => void;
+
+
+
+
 
 
 
@@ -2625,7 +5244,19 @@ type TerminalCapture = {
 
 
 
+
+
+
+
+
+
+
+
 type AiEventInput =
+
+
+
+
 
 
 
@@ -2633,7 +5264,15 @@ type AiEventInput =
 
 
 
+
+
+
+
   | { type: "state"; content: string; hidden?: boolean; ttlMs?: number }
+
+
+
+
 
 
 
@@ -2645,7 +5284,19 @@ type AiEventInput =
 
 
 
+
+
+
+
+
+
+
+
 function ImageTabView(props: {
+
+
+
+
 
 
 
@@ -2653,7 +5304,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   onFit: () => void;
+
+
+
+
 
 
 
@@ -2661,7 +5320,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   onZoomOut: () => void;
+
+
+
+
 
 
 
@@ -2669,7 +5336,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   onOpenAsText: () => void;
+
+
+
+
 
 
 
@@ -2677,7 +5352,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   zoomLabel: string;
+
+
+
+
 
 
 
@@ -2685,7 +5368,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   onSetScale: (s: number) => void;
+
+
+
+
 
 
 
@@ -2693,7 +5384,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   naturalSize: { w: number; h: number } | null;
+
+
+
+
 
 
 
@@ -2701,7 +5400,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   onWheel: (e: React.WheelEvent) => void;
+
+
+
+
 
 
 
@@ -2709,7 +5416,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   onPointerMove: (e: React.PointerEvent) => void;
+
+
+
+
 
 
 
@@ -2717,7 +5432,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   onPointerCancel: (e: React.PointerEvent) => void;
+
+
+
+
 
 
 
@@ -2725,11 +5448,23 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
 }) {
 
 
 
+
+
+
+
   const url = props.tab.image?.url ?? "";
+
+
+
+
 
 
 
@@ -2741,11 +5476,27 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     setErr(null);
+
+
+
+
 
 
 
@@ -2757,7 +5508,19 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
+
+
+
+
   const stop = useCallback((e: any) => {
+
+
+
+
 
 
 
@@ -2765,7 +5528,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
     e.stopPropagation?.();
+
+
+
+
 
 
 
@@ -2773,7 +5544,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -2781,7 +5560,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
       <div className="relative h-full w-full">
+
+
+
+
 
 
 
@@ -2789,7 +5576,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
           ref={props.containerRef}
+
+
+
+
 
 
 
@@ -2797,7 +5592,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
           onWheel={props.onWheel}
+
+
+
+
 
 
 
@@ -2805,7 +5608,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
           onPointerMove={props.onPointerMove}
+
+
+
+
 
 
 
@@ -2813,7 +5624,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
           onPointerCancel={props.onPointerCancel}
+
+
+
+
 
 
 
@@ -2821,7 +5640,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
         >
+
+
+
+
 
 
 
@@ -2829,7 +5656,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
             <div className="h-full w-full select-none" style={{ transform: props.transform, transformOrigin: "0 0" }}>
+
+
+
+
 
 
 
@@ -2837,7 +5672,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 <div className="relative inline-block">
+
+
+
+
 
 
 
@@ -2845,7 +5688,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                     src={url}
+
+
+
+
 
 
 
@@ -2853,7 +5704,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                     draggable={false}
+
+
+
+
 
 
 
@@ -2861,7 +5720,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                     style={{ imageRendering: "auto" }}
+
+
+
+
 
 
 
@@ -2869,7 +5736,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                   />
+
+
+
+
 
 
 
@@ -2877,7 +5752,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
               ) : (
+
+
+
+
 
 
 
@@ -2885,7 +5768,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
               )}
+
+
+
+
 
 
 
@@ -2897,7 +5788,19 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
+
+
+
+
             {err || !url ? (
+
+
+
+
 
 
 
@@ -2905,7 +5808,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 <div className="pointer-events-auto w-full max-w-xl rounded-2xl border border-border bg-panel/90 p-5 shadow-2xl">
+
+
+
+
 
 
 
@@ -2913,7 +5824,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                     <div className="mt-0.5 rounded-xl bg-bg p-2">
+
+
+
+
 
 
 
@@ -2921,7 +5840,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -2929,7 +5856,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                       <div className="text-sm font-medium text-text">Can’t display this image</div>
+
+
+
+
 
 
 
@@ -2937,11 +5872,23 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                         {err ? err : "The file didn’t load any image data. It may be empty, missing, or not accessible."}
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -2949,11 +5896,23 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                         You can reload the file, or open it as text. Some formats (like HEIC/AVIF) may require additional codecs.
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -2961,7 +5920,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                         <button type="button" className="ws-btn" onClick={props.onRefresh}>
+
+
+
+
 
 
 
@@ -2969,7 +5936,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                         </button>
+
+
+
+
 
 
 
@@ -2977,7 +5952,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                           Open as Text
+
+
+
+
 
 
 
@@ -2985,7 +5968,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -2993,7 +5984,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                   </div>
+
+
+
+
 
 
 
@@ -3001,7 +6000,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
               </div>
+
+
+
+
 
 
 
@@ -3013,7 +6020,19 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
+
+
+
+
             <div className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center">
+
+
+
+
 
 
 
@@ -3021,7 +6040,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 className="pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-panel/80 px-2 py-1.5 shadow-xl"
+
+
+
+
 
 
 
@@ -3029,7 +6056,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 onPointerMove={stop}
+
+
+
+
 
 
 
@@ -3037,7 +6072,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 onPointerCancel={stop}
+
+
+
+
 
 
 
@@ -3045,7 +6088,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 onMouseDown={stop}
+
+
+
+
 
 
 
@@ -3053,7 +6104,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 <button type="button" className="ws-icon-btn" onClick={props.onFit} title="Fit">
+
+
+
+
 
 
 
@@ -3061,7 +6120,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 </button>
+
+
+
+
 
 
 
@@ -3069,11 +6136,23 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                   <Minus className="h-4 w-4" />
 
 
 
+
+
+
+
                 </button>
+
+
+
+
 
 
 
@@ -3081,7 +6160,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 <button type="button" className="ws-icon-btn" onClick={props.onZoomIn} title="Zoom in">
+
+
+
+
 
 
 
@@ -3089,7 +6176,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 </button>
+
+
+
+
 
 
 
@@ -3097,11 +6192,27 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                   <RotateCw className="h-4 w-4" />
 
 
 
+
+
+
+
                 </button>
+
+
+
+
+
+
+
+
 
 
 
@@ -3117,7 +6228,19 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
+
+
+
+
                 <button type="button" className="ws-btn" onClick={props.onOpenAsText}>
+
+
+
+
 
 
 
@@ -3125,7 +6248,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
                 </button>
+
+
+
+
 
 
 
@@ -3133,7 +6264,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -3141,7 +6280,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -3149,7 +6296,15 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
     </div>
+
+
+
+
 
 
 
@@ -3157,7 +6312,19 @@ function ImageTabView(props: {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -3169,7 +6336,15 @@ function MenuPortal(props: {
 
 
 
+
+
+
+
   anchor: DOMRect;
+
+
+
+
 
 
 
@@ -3177,13 +6352,27 @@ function MenuPortal(props: {
 
 
 
+
+
+
+
   approxHeight?: number;
+
+
+
+
 
 
 
   preferLeft?: boolean;
 
+
+
   forceRight?: boolean;
+
+
+
+
 
 
 
@@ -3191,44 +6380,93 @@ function MenuPortal(props: {
 
 
 
+
+
+
+
 }) {
 
+
+
   const rootRef = useRef<HTMLDivElement | null>(null);
+
   const [measured, setMeasured] = useState<{ w: number; h: number } | null>(null);
 
+
+
   useLayoutEffect(() => {
+
     const el = rootRef.current;
+
     if (!el) return;
 
+
+
     const measure = () => {
+
       const rect = el.getBoundingClientRect();
+
       const w = Math.max(1, Math.ceil(rect.width));
+
       const h = Math.max(1, Math.ceil(rect.height));
+
       setMeasured((prev) => (prev && prev.w === w && prev.h === h ? prev : { w, h }));
+
     };
+
+
 
     measure();
 
+
+
     const ro = new ResizeObserver(measure);
+
     ro.observe(el);
+
     window.addEventListener("resize", measure);
+
     return () => {
+
       ro.disconnect();
+
       window.removeEventListener("resize", measure);
+
     };
+
   }, [props.anchor.left, props.anchor.top, props.anchor.right, props.anchor.bottom, props.approxWidth, props.approxHeight]);
 
+
+
   const w = measured?.w ?? props.approxWidth;
+
   const h = measured?.h ?? props.approxHeight;
+
   const pos = computeSubmenuPos(props.anchor, w, { preferLeft: props.preferLeft, forceRight: props.forceRight, approxHeight: h });
 
+
+
   return createPortal(
+
     <div ref={rootRef} style={{ position: "fixed", left: pos.x, top: pos.y, zIndex: 100000 }}>
+
       {props.children}
+
     </div>,
+
     document.body,
+
   );
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -3240,8 +6478,17 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
 
 
 
+
+
+
+
   const pad = 8;
+
   const gap = 2;
+
+
+
+
 
 
 
@@ -3253,7 +6500,19 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
 
 
 
+
+
+
+
+
+
+
+
   const rightX = anchor.right + gap;
+
+
+
+
 
 
 
@@ -3261,7 +6520,15 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
 
 
 
+
+
+
+
   const canOpenRight = rightX + approxWidth <= window.innerWidth - pad;
+
+
+
+
 
 
 
@@ -3269,51 +6536,107 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
 
 
 
+
+
+
+
   const preferLeft = !!opts?.preferLeft;
+
   const forceRight = !!opts?.forceRight;
+
   const maxX = Math.max(pad, window.innerWidth - approxWidth - pad);
+
   const chooseOpenRight = () => {
+
     if (forceRight) {
+
       if (canOpenRight) return true;
+
       if (canOpenLeft) return false;
+
     }
+
     if (preferLeft) {
+
       if (canOpenLeft) return false;
+
       if (canOpenRight) return true;
+
     } else {
+
       if (canOpenRight) return true;
+
       if (canOpenLeft) return false;
+
     }
+
+
 
     const spaceRight = window.innerWidth - pad - rightX;
+
     const spaceLeft = anchor.left - pad;
+
     return spaceRight >= spaceLeft;
+
   };
 
+
+
   const openRight = chooseOpenRight();
+
   const desiredX = openRight ? rightX : leftX;
 
+
+
   const clampedX = clamp(desiredX, pad, maxX);
+
   const wouldOverlapParent = openRight ? clampedX < anchor.right - 4 : clampedX + approxWidth > anchor.left + 4;
 
+
+
   const oppositeCanFit = openRight ? canOpenLeft : canOpenRight;
+
   const neitherSideFits = !canOpenRight && !canOpenLeft;
+
+
 
   const dockedX = clamp(anchor.right - approxWidth - gap, pad, maxX);
 
+
+
   const finalX = neitherSideFits
+
     ? dockedX
+
     : wouldOverlapParent && oppositeCanFit
+
       ? clamp(openRight ? leftX : rightX, pad, maxX)
+
       : clampedX;
+
+
 
   const x = finalX;
 
 
 
+
+
+
+
   const desiredY = anchor.top - 4;
 
+
+
   const y = clamp(desiredY, pad, Math.max(pad, window.innerHeight - approxHeight - pad));
+
+
+
+
+
+
+
+
 
 
 
@@ -3325,7 +6648,19 @@ function computeSubmenuPos(anchor: DOMRect, approxWidth: number, opts?: { prefer
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -3337,7 +6672,15 @@ function computeContextMenuPos(anchor: { x: number; y: number }, size: { w: numb
 
 
 
+
+
+
+
   const pad = 8;
+
+
+
+
 
 
 
@@ -3345,7 +6688,15 @@ function computeContextMenuPos(anchor: { x: number; y: number }, size: { w: numb
 
 
 
+
+
+
+
   const maxY = Math.max(pad, window.innerHeight - size.h - pad);
+
+
+
+
 
 
 
@@ -3353,7 +6704,15 @@ function computeContextMenuPos(anchor: { x: number; y: number }, size: { w: numb
 
 
 
+
+
+
+
     x: clamp(anchor.x, pad, maxX),
+
+
+
+
 
 
 
@@ -3361,11 +6720,27 @@ function computeContextMenuPos(anchor: { x: number; y: number }, size: { w: numb
 
 
 
+
+
+
+
   };
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -3377,7 +6752,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
   const enabled = opts?.enabled !== false;
+
+
+
+
 
 
 
@@ -3385,7 +6768,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
   const maxChars = Math.max(200, Math.min(12000, Math.floor(opts?.maxChars ?? 6000)));
+
+
+
+
 
 
 
@@ -3393,7 +6784,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
   const [n, setN] = useState<number>(enabled ? 0 : safe.length);
+
+
+
+
 
 
 
@@ -3405,7 +6804,19 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -3413,7 +6824,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
       setN(safe.length);
+
+
+
+
 
 
 
@@ -3421,7 +6840,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
       return;
+
+
+
+
 
 
 
@@ -3433,7 +6860,19 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
+
+
+
+
     setN((prev) => {
+
+
+
+
 
 
 
@@ -3441,7 +6880,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
       if (safe.startsWith(prevText) && prev <= prevText.length) return prev;
+
+
+
+
 
 
 
@@ -3449,7 +6896,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -3461,7 +6916,19 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
+
+
+
+
     const stepMs = Math.max(12, Math.floor(1000 / cps));
+
+
+
+
 
 
 
@@ -3469,7 +6936,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
     const timer = window.setInterval(() => {
+
+
+
+
 
 
 
@@ -3477,7 +6952,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
       setN((prev) => {
+
+
+
+
 
 
 
@@ -3485,7 +6968,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
         return Math.min(safe.length, prev + 1);
+
+
+
+
 
 
 
@@ -3493,7 +6984,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
     }, stepMs);
+
+
+
+
 
 
 
@@ -3501,7 +7000,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
       alive = false;
+
+
+
+
 
 
 
@@ -3509,7 +7016,15 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -3521,11 +7036,27 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     prevTextRef.current = safe;
+
+
+
+
 
 
 
@@ -3537,11 +7068,31 @@ function useTypewriterText(text: string, opts?: { enabled?: boolean; cps?: numbe
 
 
 
+
+
+
+
+
+
+
+
   return safe.slice(0, n);
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -3553,7 +7104,15 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
 
 
 
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -3561,7 +7120,15 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
 
 
 
+
+
+
+
       type="button"
+
+
+
+
 
 
 
@@ -3569,7 +7136,15 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
 
 
 
+
+
+
+
       onClick={props.onClick}
+
+
+
+
 
 
 
@@ -3577,7 +7152,15 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
 
 
 
+
+
+
+
     >
+
+
+
+
 
 
 
@@ -3585,7 +7168,15 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
 
 
 
+
+
+
+
         const Icon = fileIconFor(props.file);
+
+
+
+
 
 
 
@@ -3593,7 +7184,15 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
 
 
 
+
+
+
+
       })()}
+
+
+
+
 
 
 
@@ -3601,7 +7200,15 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
 
 
 
+
+
+
+
       <span className="ml-1 text-emerald-300">+{props.added}</span>
+
+
+
+
 
 
 
@@ -3609,7 +7216,15 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
 
 
 
+
+
+
+
     </button>
+
+
+
+
 
 
 
@@ -3617,7 +7232,19 @@ function FileEditPill(props: { file: string; added: number; removed: number; onC
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -3629,7 +7256,15 @@ function EventStreamMessageBubble(props: { eventId: string; content: string; sho
 
 
 
+
+
+
+
   const typed = useTypewriterText(props.content || "", { enabled: true, cps: 90 });
+
+
+
+
 
 
 
@@ -3637,7 +7272,15 @@ function EventStreamMessageBubble(props: { eventId: string; content: string; sho
 
 
 
+
+
+
+
     <div key={props.eventId} className="ws-msg ws-msg-anim ws-msg-assistant whitespace-pre-wrap break-words">
+
+
+
+
 
 
 
@@ -3645,7 +7288,15 @@ function EventStreamMessageBubble(props: { eventId: string; content: string; sho
 
 
 
+
+
+
+
       {props.showCaret ? <span className="ws-caret" /> : null}
+
+
+
+
 
 
 
@@ -3653,11 +7304,27 @@ function EventStreamMessageBubble(props: { eventId: string; content: string; sho
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -3669,7 +7336,15 @@ function EventStreamStateLine(props: { eventId: string; content: string }) {
 
 
 
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -3677,7 +7352,15 @@ function EventStreamStateLine(props: { eventId: string; content: string }) {
 
 
 
+
+
+
+
       {props.content}
+
+
+
+
 
 
 
@@ -3685,7 +7368,15 @@ function EventStreamStateLine(props: { eventId: string; content: string }) {
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -3697,7 +7388,19 @@ function EventStreamStateLine(props: { eventId: string; content: string }) {
 
 
 
+
+
+
+
+
+
+
+
 function EventStreamCard(props: {
+
+
+
+
 
 
 
@@ -3705,7 +7408,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
   onOpenFileDiff?: (path: string) => void;
+
+
+
+
 
 
 
@@ -3713,7 +7424,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
   const visible = (props.es.events ?? []).filter((e) => {
+
+
+
+
 
 
 
@@ -3721,7 +7440,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
     if (e.type === "state" && String(e.content || "").trim().toLowerCase() === "analyzing…") return false;
+
+
+
+
 
 
 
@@ -3729,11 +7456,27 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
     return true;
 
 
 
+
+
+
+
   });
+
+
+
+
+
+
+
+
 
 
 
@@ -3749,7 +7492,19 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -3757,7 +7512,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
       {visible.map((e) => {
+
+
+
+
 
 
 
@@ -3765,7 +7528,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
           const isRunningLast = props.es.status === "running" && e.id === visible[visible.length - 1]?.id;
+
+
+
+
 
 
 
@@ -3773,7 +7544,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
             <EventStreamMessageBubble key={e.id} eventId={e.id} content={e.content || ""} showCaret={isRunningLast} />
+
+
+
+
 
 
 
@@ -3781,7 +7560,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -3789,7 +7576,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
           return <EventStreamStateLine key={e.id} eventId={e.id} content={e.content || ""} />;
+
+
+
+
 
 
 
@@ -3797,7 +7592,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
         return (
+
+
+
+
 
 
 
@@ -3805,7 +7608,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
             <FileEditPill file={e.file} added={e.added} removed={e.removed} onClick={() => props.onOpenFileDiff?.(e.file)} />
+
+
+
+
 
 
 
@@ -3813,7 +7624,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
         );
+
+
+
+
 
 
 
@@ -3825,7 +7644,19 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
+
+
+
+
       {props.es.status === "running" && !hasAnyMessage ? (
+
+
+
+
 
 
 
@@ -3833,19 +7664,39 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
           <span className="ws-presence-dots" aria-label="Thinking">
 
 
 
-            <span />
 
-
-
-            <span />
 
 
 
             <span />
+
+
+
+
+
+
+
+            <span />
+
+
+
+
+
+
+
+            <span />
+
+
+
+
 
 
 
@@ -3853,7 +7704,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -3861,7 +7720,15 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
     </div>
+
+
+
+
 
 
 
@@ -3869,7 +7736,19 @@ function EventStreamCard(props: {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -3881,7 +7760,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
   if (!Array.isArray(eventsRaw)) return [];
+
+
+
+
 
 
 
@@ -3889,7 +7776,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
   for (const e of eventsRaw) {
+
+
+
+
 
 
 
@@ -3897,7 +7792,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
     const obj = e as Record<string, unknown>;
+
+
+
+
 
 
 
@@ -3905,11 +7808,23 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
     if (type === "message") {
 
 
 
+
+
+
+
       const content = typeof obj.content === "string" ? obj.content.trim() : "";
+
+
+
+
 
 
 
@@ -3917,11 +7832,23 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
       continue;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -3929,7 +7856,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
       const content = typeof obj.content === "string" ? obj.content.trim() : "";
+
+
+
+
 
 
 
@@ -3937,7 +7872,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
       const hidden = typeof obj.hidden === "boolean" ? obj.hidden : undefined;
+
+
+
+
 
 
 
@@ -3945,7 +7888,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
       out.push({ type: "state", content, hidden, ttlMs });
+
+
+
+
 
 
 
@@ -3953,7 +7904,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -3961,7 +7920,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
       const file = typeof obj.file === "string" ? obj.file.trim() : "";
+
+
+
+
 
 
 
@@ -3969,7 +7936,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
       const added = typeof obj.added === "number" && Number.isFinite(obj.added) ? Math.max(0, Math.floor(obj.added)) : 0;
+
+
+
+
 
 
 
@@ -3977,7 +7952,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
       out.push({ type: "file_edit", file, added, removed });
+
+
+
+
 
 
 
@@ -3985,7 +7968,15 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -3993,11 +7984,27 @@ function normalizeAiEventInputs(eventsRaw: unknown): AiEventInput[] {
 
 
 
+
+
+
+
   return out.slice(0, 80);
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -4009,7 +8016,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
   const now = typeof baseTs === "number" ? baseTs : Date.now();
+
+
+
+
 
 
 
@@ -4017,7 +8032,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     const id = `ev-${now}-${i}-${Math.random().toString(16).slice(2)}`;
+
+
+
+
 
 
 
@@ -4025,7 +8048,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     if (x.type === "message") return { id, ts, type: "message", content: x.content };
+
+
+
+
 
 
 
@@ -4033,11 +8064,23 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     return { id, ts, type: "file_edit", file: x.file, added: x.added, removed: x.removed };
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -4049,11 +8092,31 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
+
+
+
+
  function migrateStoredChatMessage(raw: any): ChatUiMessage | null {
 
 
 
+
+
+
+
   if (!raw || typeof raw !== "object") return null;
+
+
+
+
+
+
+
+
 
 
 
@@ -4069,7 +8132,19 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
+
+
+
+
   const role: ChatUiMessage["role"] = raw.role === "user" || raw.role === "assistant" || raw.role === "meta" ? raw.role : "assistant";
+
+
+
+
 
 
 
@@ -4077,7 +8152,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     role,
+
+
+
+
 
 
 
@@ -4085,7 +8168,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     id: typeof raw.id === "string" ? raw.id : undefined,
+
+
+
+
 
 
 
@@ -4093,7 +8184,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     kind: raw.kind === "run_request" || raw.kind === "activity" || raw.kind === "event_stream" ? raw.kind : undefined,
+
+
+
+
 
 
 
@@ -4101,7 +8200,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     activity: raw.activity && typeof raw.activity === "object" ? raw.activity : undefined,
+
+
+
+
 
 
 
@@ -4109,7 +8216,19 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
   };
+
+
+
+
+
+
+
+
 
 
 
@@ -4121,7 +8240,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
   const isLegacyAgentRun = raw.kind === "agent_run" || Boolean(maybeAgentRun);
+
+
+
+
 
 
 
@@ -4129,7 +8256,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     const ar = (maybeAgentRun && typeof maybeAgentRun === "object" ? maybeAgentRun : {}) as any;
+
+
+
+
 
 
 
@@ -4137,7 +8272,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
       .filter((x: any) => typeof x === "string")
+
+
+
+
 
 
 
@@ -4145,7 +8288,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
       .filter(Boolean)
+
+
+
+
 
 
 
@@ -4157,7 +8308,19 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
+
+
+
+
     const status: NonNullable<NonNullable<ChatUiMessage["eventStream"]>["status"]> =
+
+
+
+
 
 
 
@@ -4165,7 +8328,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     const content = legacyText || base.content || "Ready.";
+
+
+
+
 
 
 
@@ -4173,7 +8344,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
       ...base,
+
+
+
+
 
 
 
@@ -4181,7 +8360,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
       eventStream: {
+
+
+
+
 
 
 
@@ -4189,7 +8376,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
         events: toChatEvents([{ type: "message", content }]),
+
+
+
+
 
 
 
@@ -4197,11 +8392,27 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     };
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -4213,11 +8424,23 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     const es = base.eventStream as any;
 
 
 
+
+
+
+
     const status: "running" | "done" | "error" = es.status === "running" || es.status === "error" ? es.status : "done";
+
+
+
+
 
 
 
@@ -4229,7 +8452,19 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
+
+
+
+
     const looksLikeChatEvents = rawEvents.every(
+
+
+
+
 
 
 
@@ -4237,7 +8472,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     );
+
+
+
+
 
 
 
@@ -4245,7 +8488,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
       ? (rawEvents as ChatEvent[])
+
+
+
+
 
 
 
@@ -4257,7 +8508,19 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
+
+
+
+
     return {
+
+
+
+
 
 
 
@@ -4265,7 +8528,15 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
       kind: "event_stream",
+
+
+
+
 
 
 
@@ -4273,11 +8544,27 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
     };
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -4289,7 +8576,19 @@ function toChatEvents(inputs: AiEventInput[], baseTs?: number): ChatEvent[] {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -4301,11 +8600,27 @@ function clamp(n: number, min: number, max: number): number {
 
 
 
+
+
+
+
   return Math.max(min, Math.min(max, n));
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -4317,7 +8632,15 @@ function formatRelTime(ts: number): string {
 
 
 
+
+
+
+
   const d = Math.max(0, Date.now() - ts);
+
+
+
+
 
 
 
@@ -4325,7 +8648,15 @@ function formatRelTime(ts: number): string {
 
 
 
+
+
+
+
   if (s < 60) return "now";
+
+
+
+
 
 
 
@@ -4333,7 +8664,15 @@ function formatRelTime(ts: number): string {
 
 
 
+
+
+
+
   if (m < 60) return `${m}m`;
+
+
+
+
 
 
 
@@ -4341,7 +8680,15 @@ function formatRelTime(ts: number): string {
 
 
 
+
+
+
+
   if (h < 24) return `${h}h`;
+
+
+
+
 
 
 
@@ -4349,7 +8696,15 @@ function formatRelTime(ts: number): string {
 
 
 
+
+
+
+
   if (days < 7) return `${days}d`;
+
+
+
+
 
 
 
@@ -4357,7 +8712,15 @@ function formatRelTime(ts: number): string {
 
 
 
+
+
+
+
   if (w < 4) return `${w}w`;
+
+
+
+
 
 
 
@@ -4365,7 +8728,15 @@ function formatRelTime(ts: number): string {
 
 
 
+
+
+
+
   if (mo < 12) return `${mo}mo`;
+
+
+
+
 
 
 
@@ -4373,11 +8744,27 @@ function formatRelTime(ts: number): string {
 
 
 
+
+
+
+
   return `${y}y`;
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -4389,7 +8776,15 @@ function deriveChatTitleFromPrompt(prompt: string): string {
 
 
 
+
+
+
+
   const line = prompt.split("\n")[0]?.trim() ?? "";
+
+
+
+
 
 
 
@@ -4397,7 +8792,15 @@ function deriveChatTitleFromPrompt(prompt: string): string {
 
 
 
+
+
+
+
   if (!cleaned) return "Chat";
+
+
+
+
 
 
 
@@ -4405,7 +8808,19 @@ function deriveChatTitleFromPrompt(prompt: string): string {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -4417,7 +8832,15 @@ type ChangeFile = {
 
 
 
+
+
+
+
   kind: "write" | "delete" | "rename";
+
+
+
+
 
 
 
@@ -4425,7 +8848,15 @@ type ChangeFile = {
 
 
 
+
+
+
+
   before: string | null;
+
+
+
+
 
 
 
@@ -4433,7 +8864,19 @@ type ChangeFile = {
 
 
 
+
+
+
+
 };
+
+
+
+
+
+
+
+
 
 
 
@@ -4445,7 +8888,15 @@ type ChangeSet = {
 
 
 
+
+
+
+
   id: string;
+
+
+
+
 
 
 
@@ -4453,7 +8904,15 @@ type ChangeSet = {
 
 
 
+
+
+
+
   files: ChangeFile[];
+
+
+
+
 
 
 
@@ -4461,7 +8920,15 @@ type ChangeSet = {
 
 
 
+
+
+
+
   applied: boolean;
+
+
+
+
 
 
 
@@ -4473,7 +8940,19 @@ type ChangeSet = {
 
 
 
+
+
+
+
+
+
+
+
 function isUserOrAssistantMessage(m: ChatUiMessage): m is ChatUiMessage & { role: "user" | "assistant" } {
+
+
+
+
 
 
 
@@ -4481,7 +8960,19 @@ function isUserOrAssistantMessage(m: ChatUiMessage): m is ChatUiMessage & { role
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -4493,7 +8984,15 @@ function looksLikeCodeDump(s: string): boolean {
 
 
 
+
+
+
+
   const t = s.trim();
+
+
+
+
 
 
 
@@ -4501,7 +9000,15 @@ function looksLikeCodeDump(s: string): boolean {
 
 
 
+
+
+
+
   // Heuristics: big blocks, common code markers.
+
+
+
+
 
 
 
@@ -4509,7 +9016,15 @@ function looksLikeCodeDump(s: string): boolean {
 
 
 
+
+
+
+
   if (t.includes("<!DOCTYPE html") || t.includes("<html") || t.includes("</div>") || t.includes("function ")) return true;
+
+
+
+
 
 
 
@@ -4517,7 +9032,15 @@ function looksLikeCodeDump(s: string): boolean {
 
 
 
+
+
+
+
   if (t.startsWith("{") && t.includes("\"edits\"")) return true;
+
+
+
+
 
 
 
@@ -4525,7 +9048,19 @@ function looksLikeCodeDump(s: string): boolean {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -4537,7 +9072,15 @@ function extractFileRefs(text: string): string[] {
 
 
 
+
+
+
+
   const out: string[] = [];
+
+
+
+
 
 
 
@@ -4545,7 +9088,15 @@ function extractFileRefs(text: string): string[] {
 
 
 
+
+
+
+
   const seen = new Set<string>();
+
+
+
+
 
 
 
@@ -4553,7 +9104,15 @@ function extractFileRefs(text: string): string[] {
 
 
 
+
+
+
+
   while ((m = re.exec(text))) {
+
+
+
+
 
 
 
@@ -4561,7 +9120,15 @@ function extractFileRefs(text: string): string[] {
 
 
 
+
+
+
+
     if (!raw) continue;
+
+
+
+
 
 
 
@@ -4569,7 +9136,15 @@ function extractFileRefs(text: string): string[] {
 
 
 
+
+
+
+
     const p = raw.replace(/^\.\//, "");
+
+
+
+
 
 
 
@@ -4577,7 +9152,15 @@ function extractFileRefs(text: string): string[] {
 
 
 
+
+
+
+
     if (p.length > 140) continue;
+
+
+
+
 
 
 
@@ -4585,7 +9168,15 @@ function extractFileRefs(text: string): string[] {
 
 
 
+
+
+
+
     seen.add(p);
+
+
+
+
 
 
 
@@ -4593,7 +9184,15 @@ function extractFileRefs(text: string): string[] {
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -4601,7 +9200,19 @@ function extractFileRefs(text: string): string[] {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -4613,7 +9224,19 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
   const root: { dirs: Map<string, any>; files: string[] } = { dirs: new Map(), files: [] };
+
+
+
+
+
+
+
+
 
 
 
@@ -4625,7 +9248,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
     const p = String(p0 || "").trim().replace(/^\.\//, "");
+
+
+
+
 
 
 
@@ -4633,7 +9264,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
     const segs = p.split("/").filter(Boolean);
+
+
+
+
 
 
 
@@ -4641,7 +9280,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
     let node = root;
+
+
+
+
 
 
 
@@ -4649,7 +9296,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
     for (let i = 0; i < depth - 1; i++) {
+
+
+
+
 
 
 
@@ -4657,7 +9312,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
       let next = node.dirs.get(name);
+
+
+
+
 
 
 
@@ -4665,7 +9328,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
         next = { dirs: new Map<string, any>(), files: [] as string[] };
+
+
+
+
 
 
 
@@ -4673,7 +9344,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -4681,7 +9360,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -4689,7 +9376,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
     if (segs.length > maxDepth) {
+
+
+
+
 
 
 
@@ -4697,7 +9392,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
       if (!next) {
+
+
+
+
 
 
 
@@ -4705,7 +9408,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
         node.dirs.set(leaf, next);
+
+
+
+
 
 
 
@@ -4713,7 +9424,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
     } else {
+
+
+
+
 
 
 
@@ -4721,7 +9440,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -4733,11 +9460,27 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
+
+
+
+
   const out: string[] = [];
 
 
 
+
+
+
+
   const render = (node: { dirs: Map<string, any>; files: string[] }, prefix: string, level: number) => {
+
+
+
+
 
 
 
@@ -4749,7 +9492,19 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
+
+
+
+
     const dirs = Array.from(node.dirs.keys()).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+
+
+
 
 
 
@@ -4761,7 +9516,19 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
+
+
+
+
     for (const d of dirs) {
+
+
+
+
 
 
 
@@ -4769,7 +9536,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
       out.push(`${prefix}${d}/`);
+
+
+
+
 
 
 
@@ -4777,7 +9552,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
       if (child && level + 1 < maxDepth) {
+
+
+
+
 
 
 
@@ -4785,11 +9568,27 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
       }
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -4801,7 +9600,15 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
       if (out.length >= maxLines) return;
+
+
+
+
 
 
 
@@ -4809,11 +9616,27 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   };
+
+
+
+
+
+
+
+
 
 
 
@@ -4825,11 +9648,23 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
   if (paths.length && out.length >= maxLines) out.push("… (truncated)");
 
 
 
+
+
+
+
   return out.join("\n");
+
+
+
+
 
 
 
@@ -4841,7 +9676,19 @@ function buildFileTreePreview(paths: string[], maxLines = 420, maxDepth = 7): st
 
 
 
+
+
+
+
+
+
+
+
 function pickDefaultContextFiles(paths: string[], activePath?: string | null): string[] {
+
+
+
+
 
 
 
@@ -4849,7 +9696,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
   const norm = (p: string) => String(p || "").trim().replace(/\\/g, "/").replace(/^\.\//, "");
+
+
+
+
 
 
 
@@ -4857,7 +9712,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     const k = norm(p);
+
+
+
+
 
 
 
@@ -4865,7 +9728,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     if (!paths.includes(k)) return;
+
+
+
+
 
 
 
@@ -4873,7 +9744,19 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
   };
+
+
+
+
+
+
+
+
 
 
 
@@ -4889,7 +9772,19 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
+
+
+
+
   const preferred = [
+
+
+
+
 
 
 
@@ -4897,7 +9792,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     "readme.md",
+
+
+
+
 
 
 
@@ -4905,7 +9808,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     "package-lock.json",
+
+
+
+
 
 
 
@@ -4913,7 +9824,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     "yarn.lock",
+
+
+
+
 
 
 
@@ -4921,7 +9840,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     "vite.config.ts",
+
+
+
+
 
 
 
@@ -4929,7 +9856,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     "next.config.js",
+
+
+
+
 
 
 
@@ -4937,7 +9872,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     "src/main.tsx",
+
+
+
+
 
 
 
@@ -4945,7 +9888,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     "src/App.tsx",
+
+
+
+
 
 
 
@@ -4953,7 +9904,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
     "src-tauri/Cargo.toml",
+
+
+
+
 
 
 
@@ -4961,7 +9920,15 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
   ];
+
+
+
+
 
 
 
@@ -4973,11 +9940,31 @@ function pickDefaultContextFiles(paths: string[], activePath?: string | null): s
 
 
 
+
+
+
+
+
+
+
+
   return Array.from(set).slice(0, 10);
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -4989,7 +9976,15 @@ function isLikelyDangerousCommand(cmd: string): boolean {
 
 
 
+
+
+
+
   const c = cmd.trim().toLowerCase();
+
+
+
+
 
 
 
@@ -4997,7 +9992,15 @@ function isLikelyDangerousCommand(cmd: string): boolean {
 
 
 
+
+
+
+
   if (/\brm\b/.test(c) && /\s-\w*r\w*f\b/.test(c)) return true;
+
+
+
+
 
 
 
@@ -5005,7 +10008,15 @@ function isLikelyDangerousCommand(cmd: string): boolean {
 
 
 
+
+
+
+
   if (/\bdd\b/.test(c) && /\bif=\b/.test(c)) return true;
+
+
+
+
 
 
 
@@ -5013,7 +10024,15 @@ function isLikelyDangerousCommand(cmd: string): boolean {
 
 
 
+
+
+
+
   if (c.includes(":(){") && c.includes("};:")) return true;
+
+
+
+
 
 
 
@@ -5021,7 +10040,19 @@ function isLikelyDangerousCommand(cmd: string): boolean {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -5033,7 +10064,15 @@ function splitLines(s: string): string[] {
 
 
 
+
+
+
+
   // Keep trailing empty line behavior stable.
+
+
+
+
 
 
 
@@ -5041,7 +10080,19 @@ function splitLines(s: string): string[] {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -5053,7 +10104,15 @@ function stripAnsiForLog(s: string): string {
 
 
 
+
+
+
+
   return s
+
+
+
+
 
 
 
@@ -5061,7 +10120,15 @@ function stripAnsiForLog(s: string): string {
 
 
 
+
+
+
+
     .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, "")
+
+
+
+
 
 
 
@@ -5069,7 +10136,19 @@ function stripAnsiForLog(s: string): string {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -5081,7 +10160,15 @@ type UnifiedDiffHunkLine = { kind: "ctx" | "add" | "del"; text: string };
 
 
 
+
+
+
+
 type UnifiedDiffHunk = {
+
+
+
+
 
 
 
@@ -5089,7 +10176,15 @@ type UnifiedDiffHunk = {
 
 
 
+
+
+
+
   oldCount: number;
+
+
+
+
 
 
 
@@ -5097,11 +10192,23 @@ type UnifiedDiffHunk = {
 
 
 
+
+
+
+
   newCount: number;
 
 
 
+
+
+
+
   lines: UnifiedDiffHunkLine[];
+
+
+
+
 
 
 
@@ -5113,7 +10220,19 @@ type UnifiedDiffHunk = {
 
 
 
+
+
+
+
+
+
+
+
 function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
+
+
+
+
 
 
 
@@ -5121,7 +10240,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
   const hunks: UnifiedDiffHunk[] = [];
+
+
+
+
 
 
 
@@ -5133,7 +10260,19 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
+
+
+
+
   const parseRange = (s: string): { start: number; count: number } => {
+
+
+
+
 
 
 
@@ -5141,11 +10280,23 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
     if (!m) return { start: 0, count: 0 };
 
 
 
+
+
+
+
     return { start: Number(m[1]), count: m[2] ? Number(m[2]) : 1 };
+
+
+
+
 
 
 
@@ -5157,7 +10308,19 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
+
+
+
+
   while (i < lines.length) {
+
+
+
+
 
 
 
@@ -5165,7 +10328,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
     const m = line.match(/^@@\s+-(\d+(?:,\d+)?)\s+\+(\d+(?:,\d+)?)\s+@@/);
+
+
+
+
 
 
 
@@ -5173,7 +10344,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       i++;
+
+
+
+
 
 
 
@@ -5181,7 +10360,19 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -5193,7 +10384,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
     const newR = parseRange(m[2]!);
+
+
+
+
 
 
 
@@ -5201,7 +10400,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       oldStart: oldR.start,
+
+
+
+
 
 
 
@@ -5209,7 +10416,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       newStart: newR.start,
+
+
+
+
 
 
 
@@ -5217,11 +10432,23 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       lines: [],
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -5233,7 +10460,19 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
+
+
+
+
     while (i < lines.length) {
+
+
+
+
 
 
 
@@ -5241,7 +10480,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       if (l.startsWith("@@ ")) break;
+
+
+
+
 
 
 
@@ -5249,7 +10496,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
         i++;
+
+
+
+
 
 
 
@@ -5257,7 +10512,19 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -5269,7 +10536,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       const text = l.slice(1);
+
+
+
+
 
 
 
@@ -5277,7 +10552,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       else if (prefix === "+") hunk.lines.push({ kind: "add", text });
+
+
+
+
 
 
 
@@ -5285,7 +10568,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       else if (l === "\\ No newline at end of file") {
+
+
+
+
 
 
 
@@ -5293,7 +10584,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       } else {
+
+
+
+
 
 
 
@@ -5301,7 +10600,15 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
         hunk.lines.push({ kind: "ctx", text: l });
+
+
+
+
 
 
 
@@ -5309,11 +10616,27 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
       i++;
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -5325,7 +10648,19 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -5337,7 +10672,19 @@ function parseUnifiedDiff(patchText: string): UnifiedDiffHunk[] {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -5349,7 +10696,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
   if (!seq.length) return Math.max(minIndex, Math.min(preferredIndex, hay.length));
+
+
+
+
 
 
 
@@ -5357,7 +10712,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
   if (minIndex > maxStart) return null;
+
+
+
+
 
 
 
@@ -5365,7 +10728,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
   let bestDist = Infinity;
+
+
+
+
 
 
 
@@ -5373,7 +10744,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
     let ok = true;
+
+
+
+
 
 
 
@@ -5381,7 +10760,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
       if (hay[i + j] !== seq[j]) {
+
+
+
+
 
 
 
@@ -5389,7 +10776,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
         break;
+
+
+
+
 
 
 
@@ -5397,7 +10792,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -5405,7 +10808,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
     const dist = Math.abs(i - preferredIndex);
+
+
+
+
 
 
 
@@ -5413,7 +10824,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
       bestDist = dist;
+
+
+
+
 
 
 
@@ -5421,7 +10840,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
       if (dist === 0) break;
+
+
+
+
 
 
 
@@ -5429,7 +10856,15 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -5437,7 +10872,19 @@ function findSequenceStart(hay: string[], seq: string[], minIndex: number, prefe
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -5449,7 +10896,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
   const hunks = parseUnifiedDiff(patchText);
+
+
+
+
 
 
 
@@ -5461,11 +10916,27 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
+
+
+
+
   const a = splitLines(before);
 
 
 
+
+
+
+
   const out: string[] = [];
+
+
+
+
 
 
 
@@ -5477,7 +10948,19 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
+
+
+
+
   for (const h of hunks) {
+
+
+
+
 
 
 
@@ -5489,11 +10972,27 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
+
+
+
+
     const oldSeq = h.lines
 
 
 
+
+
+
+
       .filter((x) => x.kind === "ctx" || x.kind === "del")
+
+
+
+
 
 
 
@@ -5505,7 +11004,19 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
+
+
+
+
     const foundIdx = findSequenceStart(a, oldSeq, ai, preferredIdx);
+
+
+
+
 
 
 
@@ -5513,11 +11024,27 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
       return { ok: false, error: `Failed to locate hunk context in file (starting near line ${preferredIdx + 1}).` };
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -5529,7 +11056,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
     out.push(...a.slice(ai, foundIdx));
+
+
+
+
 
 
 
@@ -5541,7 +11076,19 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
+
+
+
+
     for (const hl of h.lines) {
+
+
+
+
 
 
 
@@ -5549,7 +11096,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
         if (a[ai] !== hl.text) {
+
+
+
+
 
 
 
@@ -5557,7 +11112,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
             ok: false,
+
+
+
+
 
 
 
@@ -5565,11 +11128,23 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
           };
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -5577,7 +11152,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
         ai++;
+
+
+
+
 
 
 
@@ -5585,7 +11168,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
         if (a[ai] !== hl.text) {
+
+
+
+
 
 
 
@@ -5593,7 +11184,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
             ok: false,
+
+
+
+
 
 
 
@@ -5601,7 +11200,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
           };
+
+
+
+
 
 
 
@@ -5609,7 +11216,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
         ai++;
+
+
+
+
 
 
 
@@ -5617,7 +11232,15 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
         out.push(hl.text);
+
+
+
+
 
 
 
@@ -5625,11 +11248,27 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -5641,11 +11280,27 @@ function applyUnifiedDiffToText(before: string, patchText: string): { ok: true; 
 
 
 
+
+
+
+
   return { ok: true, text: out.join("\n") };
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -5657,7 +11312,15 @@ function normalizeGitPath(p: string): string {
 
 
 
+
+
+
+
   const t = p.trim();
+
+
+
+
 
 
 
@@ -5665,7 +11328,15 @@ function normalizeGitPath(p: string): string {
 
 
 
+
+
+
+
   if (t.startsWith("a/")) return t.slice(2);
+
+
+
+
 
 
 
@@ -5673,7 +11344,15 @@ function normalizeGitPath(p: string): string {
 
 
 
+
+
+
+
   return t;
+
+
+
+
 
 
 
@@ -5685,7 +11364,19 @@ function normalizeGitPath(p: string): string {
 
 
 
+
+
+
+
+
+
+
+
 function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
+
+
+
+
 
 
 
@@ -5693,7 +11384,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
   const blocks: string[][] = [];
+
+
+
+
 
 
 
@@ -5705,7 +11404,19 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
+
+
+
+
   for (const l of lines) {
+
+
+
+
 
 
 
@@ -5713,7 +11424,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
       if (cur.length) blocks.push(cur);
+
+
+
+
 
 
 
@@ -5721,7 +11440,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
       continue;
+
+
+
+
 
 
 
@@ -5729,7 +11456,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
     if (!cur.length) continue;
+
+
+
+
 
 
 
@@ -5737,11 +11472,27 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
   }
 
 
 
+
+
+
+
   if (cur.length) blocks.push(cur);
+
+
+
+
+
+
+
+
 
 
 
@@ -5757,7 +11508,19 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
+
+
+
+
   for (const b of blocks) {
+
+
+
+
 
 
 
@@ -5765,7 +11528,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
     let renameFrom: string | null = null;
+
+
+
+
 
 
 
@@ -5773,7 +11544,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
     let oldPath: string | null = null;
+
+
+
+
 
 
 
@@ -5785,7 +11564,19 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
+
+
+
+
     for (const l of b) {
+
+
+
+
 
 
 
@@ -5793,7 +11584,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
       if (l.startsWith("rename to ")) renameTo = normalizeGitPath(l.slice("rename to ".length));
+
+
+
+
 
 
 
@@ -5801,11 +11600,27 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
       if (l.startsWith("+++ ")) newPath = normalizeGitPath(l.slice(4));
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -5817,7 +11632,19 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
     const isNew = oldPath === "/dev/null" || b.some((x) => x.startsWith("new file mode"));
+
+
+
+
+
+
+
+
 
 
 
@@ -5829,7 +11656,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
       edits.push({ op: "rename", from: renameFrom, to: renameTo });
+
+
+
+
 
 
 
@@ -5837,7 +11672,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
       if (blockText.includes("@@ ")) {
+
+
+
+
 
 
 
@@ -5845,7 +11688,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -5853,7 +11704,19 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -5865,7 +11728,19 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
     if (!path) continue;
+
+
+
+
+
+
+
+
 
 
 
@@ -5877,7 +11752,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
       edits.push({ op: "delete", path });
+
+
+
+
 
 
 
@@ -5885,7 +11768,19 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -5897,7 +11792,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
     if (blockText.includes("@@ ")) {
+
+
+
+
 
 
 
@@ -5905,7 +11808,15 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
     } else if (isNew) {
+
+
+
+
 
 
 
@@ -5913,11 +11824,23 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
       edits.push({ op: "write", path, content: "" });
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -5929,7 +11852,19 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
+
+
+
+
   return edits;
+
+
+
+
 
 
 
@@ -5941,7 +11876,19 @@ function splitMultiFileGitDiffToEdits(diffText: string): AiEditOp[] {
 
 
 
+
+
+
+
+
+
+
+
 function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { edits: AiEditOp[]; didSanitize: boolean } {
+
+
+
+
 
 
 
@@ -5949,7 +11896,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
     let p = String(raw ?? "").trim();
+
+
+
+
 
 
 
@@ -5961,7 +11916,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
+
+
+
+
     p = p.replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -5973,7 +11940,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
+
+
+
+
     const root = (workspaceRoot ?? "").replace(/\\/g, "/").replace(/\/$/, "");
+
+
+
+
 
 
 
@@ -5981,7 +11960,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       p = p.slice(root.length);
+
+
+
+
 
 
 
@@ -5989,7 +11976,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -6001,7 +12000,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
     const looksAbsolute = p.startsWith("/") || /^[A-Za-z]:\//.test(p);
+
+
+
+
 
 
 
@@ -6009,7 +12016,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       p = basename(p);
+
+
+
+
 
 
 
@@ -6021,7 +12036,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
+
+
+
+
     if (p.startsWith("/")) p = p.slice(1);
+
+
+
+
 
 
 
@@ -6029,7 +12056,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
   };
+
+
+
+
+
+
+
+
 
 
 
@@ -6045,7 +12084,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
+
+
+
+
   const sanitizeOne = (e: AiEditOp): AiEditOp => {
+
+
+
+
 
 
 
@@ -6053,7 +12104,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
     if (op === "rename") {
+
+
+
+
 
 
 
@@ -6061,7 +12120,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       const toRaw = typeof e.to === "string" ? e.to : "";
+
+
+
+
 
 
 
@@ -6069,7 +12136,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       const to = typeof e.to === "string" ? sanitizePath(e.to, workspaceRoot) : e.to;
+
+
+
+
 
 
 
@@ -6077,7 +12152,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       if (toRaw && to && toRaw !== to) didSanitize = true;
+
+
+
+
 
 
 
@@ -6085,7 +12168,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -6097,7 +12192,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       const raw = e.path;
+
+
+
+
 
 
 
@@ -6105,7 +12208,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       if (raw !== path) didSanitize = true;
+
+
+
+
 
 
 
@@ -6113,7 +12224,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -6125,7 +12248,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
   };
+
+
+
+
+
+
+
+
 
 
 
@@ -6137,7 +12272,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
   for (const e of edits) {
+
+
+
+
 
 
 
@@ -6145,7 +12288,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
     if (op === "patch") {
+
+
+
+
 
 
 
@@ -6153,7 +12304,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       const hasGitDiff = patchText.includes("diff --git ") && patchText.includes("@@ ");
+
+
+
+
 
 
 
@@ -6161,7 +12320,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       if (missingPath && hasGitDiff) {
+
+
+
+
 
 
 
@@ -6169,11 +12336,23 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
         continue;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -6181,7 +12360,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
       if (hasGitDiff && patchText.includes("\ndiff --git ")) {
+
+
+
+
 
 
 
@@ -6189,7 +12376,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
         continue;
+
+
+
+
 
 
 
@@ -6197,7 +12392,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -6205,7 +12408,15 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -6213,7 +12424,19 @@ function normalizeAiEdits(edits: AiEditOp[], workspaceRoot?: string | null): { e
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -6229,7 +12452,19 @@ type LineOp = { type: "ctx" | "add" | "del"; line: string };
 
 
 
+
+
+
+
+
+
+
+
 // Minimal Myers diff for line arrays.
+
+
+
+
 
 
 
@@ -6237,7 +12472,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
   const a = splitLines(before);
+
+
+
+
 
 
 
@@ -6245,7 +12488,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
   const n = a.length;
+
+
+
+
 
 
 
@@ -6253,7 +12504,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
   const max = n + m;
+
+
+
+
 
 
 
@@ -6261,7 +12520,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
   v.set(1, 0);
+
+
+
+
 
 
 
@@ -6273,7 +12540,19 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
+
+
+
+
   for (let d = 0; d <= max; d++) {
+
+
+
+
 
 
 
@@ -6281,7 +12560,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
     for (let k = -d; k <= d; k += 2) {
+
+
+
+
 
 
 
@@ -6289,7 +12576,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
       if (k === -d || (k !== d && (v.get(k - 1) ?? 0) < (v.get(k + 1) ?? 0))) {
+
+
+
+
 
 
 
@@ -6297,7 +12592,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
       } else {
+
+
+
+
 
 
 
@@ -6305,7 +12608,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -6313,7 +12624,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
       while (x < n && y < m && a[x] === b[y]) {
+
+
+
+
 
 
 
@@ -6321,7 +12640,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
         y++;
+
+
+
+
 
 
 
@@ -6329,7 +12656,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
       v2.set(k, x);
+
+
+
+
 
 
 
@@ -6337,7 +12672,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
         trace.push(v2);
+
+
+
+
 
 
 
@@ -6345,7 +12688,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
         const ops: LineOp[] = [];
+
+
+
+
 
 
 
@@ -6353,7 +12704,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
         let y2 = m;
+
+
+
+
 
 
 
@@ -6361,7 +12720,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
           const vv = trace[d2]!;
+
+
+
+
 
 
 
@@ -6369,7 +12736,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
           let prevK: number;
+
+
+
+
 
 
 
@@ -6377,7 +12752,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
             prevK = k2 + 1;
+
+
+
+
 
 
 
@@ -6385,7 +12768,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
             prevK = k2 - 1;
+
+
+
+
 
 
 
@@ -6393,7 +12784,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
           const prevX = vv.get(prevK) ?? 0;
+
+
+
+
 
 
 
@@ -6405,7 +12804,19 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
+
+
+
+
           while (x2 > prevX && y2 > prevY) {
+
+
+
+
 
 
 
@@ -6413,7 +12824,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
             x2--;
+
+
+
+
 
 
 
@@ -6421,7 +12840,19 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
           }
+
+
+
+
+
+
+
+
 
 
 
@@ -6437,7 +12868,19 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
+
+
+
+
           if (x2 === prevX) {
+
+
+
+
 
 
 
@@ -6445,7 +12888,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
             ops.push({ type: "add", line: b[y2 - 1]! });
+
+
+
+
 
 
 
@@ -6453,7 +12904,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
           } else {
+
+
+
+
 
 
 
@@ -6461,7 +12920,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
             ops.push({ type: "del", line: a[x2 - 1]! });
+
+
+
+
 
 
 
@@ -6469,11 +12936,27 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
           }
 
 
 
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -6485,7 +12968,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
         return ops;
+
+
+
+
 
 
 
@@ -6493,7 +12984,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -6501,7 +13000,15 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
     v.clear();
+
+
+
+
 
 
 
@@ -6509,7 +13016,19 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -6521,7 +13040,19 @@ function diffLines(before: string, after: string): LineOp[] {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -6533,7 +13064,15 @@ function computeStats(files: ChangeFile[]): { files: number; added: number; remo
 
 
 
+
+
+
+
   let added = 0;
+
+
+
+
 
 
 
@@ -6541,7 +13080,15 @@ function computeStats(files: ChangeFile[]): { files: number; added: number; remo
 
 
 
+
+
+
+
   for (const f of files) {
+
+
+
+
 
 
 
@@ -6549,7 +13096,15 @@ function computeStats(files: ChangeFile[]): { files: number; added: number; remo
 
 
 
+
+
+
+
     const after = f.after ?? "";
+
+
+
+
 
 
 
@@ -6557,7 +13112,15 @@ function computeStats(files: ChangeFile[]): { files: number; added: number; remo
 
 
 
+
+
+
+
     for (const op of ops) {
+
+
+
+
 
 
 
@@ -6565,7 +13128,15 @@ function computeStats(files: ChangeFile[]): { files: number; added: number; remo
 
 
 
+
+
+
+
       if (op.type === "del") removed++;
+
+
+
+
 
 
 
@@ -6573,7 +13144,15 @@ function computeStats(files: ChangeFile[]): { files: number; added: number; remo
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -6581,7 +13160,19 @@ function computeStats(files: ChangeFile[]): { files: number; added: number; remo
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -6593,7 +13184,15 @@ function computeFileEditStats(f: ChangeFile): { added: number; removed: number }
 
 
 
+
+
+
+
   const before = f.before ?? "";
+
+
+
+
 
 
 
@@ -6601,7 +13200,15 @@ function computeFileEditStats(f: ChangeFile): { added: number; removed: number }
 
 
 
+
+
+
+
   const ops = diffLines(before, after);
+
+
+
+
 
 
 
@@ -6609,7 +13216,15 @@ function computeFileEditStats(f: ChangeFile): { added: number; removed: number }
 
 
 
+
+
+
+
   let removed = 0;
+
+
+
+
 
 
 
@@ -6617,7 +13232,15 @@ function computeFileEditStats(f: ChangeFile): { added: number; removed: number }
 
 
 
+
+
+
+
     if (op.type === "add") added++;
+
+
+
+
 
 
 
@@ -6625,7 +13248,15 @@ function computeFileEditStats(f: ChangeFile): { added: number; removed: number }
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -6633,7 +13264,19 @@ function computeFileEditStats(f: ChangeFile): { added: number; removed: number }
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -6645,7 +13288,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
   raw: string
+
+
+
+
 
 
 
@@ -6653,7 +13304,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
   const t = raw.trim();
+
+
+
+
 
 
 
@@ -6665,7 +13324,19 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
+
+
+
+
   const tryParse = (s: string) => {
+
+
+
+
 
 
 
@@ -6673,7 +13344,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       return JSON.parse(s) as unknown;
+
+
+
+
 
 
 
@@ -6681,7 +13360,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       return null;
+
+
+
+
 
 
 
@@ -6689,7 +13376,19 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
   };
+
+
+
+
+
+
+
+
 
 
 
@@ -6701,7 +13400,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
   const parsed = direct ?? (() => {
+
+
+
+
 
 
 
@@ -6709,7 +13416,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     let depth = 0;
+
+
+
+
 
 
 
@@ -6717,7 +13432,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     let inStr = false;
+
+
+
+
 
 
 
@@ -6725,7 +13448,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     for (let i = 0; i < t.length; i++) {
+
+
+
+
 
 
 
@@ -6733,7 +13464,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       if (inStr) {
+
+
+
+
 
 
 
@@ -6741,7 +13480,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
           escape = false;
+
+
+
+
 
 
 
@@ -6749,7 +13496,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -6757,7 +13512,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
           escape = true;
+
+
+
+
 
 
 
@@ -6765,7 +13528,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -6773,11 +13544,23 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         continue;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -6785,7 +13568,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         inStr = true;
+
+
+
+
 
 
 
@@ -6793,7 +13584,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -6801,7 +13600,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         if (depth === 0) start = i;
+
+
+
+
 
 
 
@@ -6809,11 +13616,23 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         continue;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -6821,7 +13640,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         depth--;
+
+
+
+
 
 
 
@@ -6829,7 +13656,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
           return tryParse(t.slice(start, i + 1));
+
+
+
+
 
 
 
@@ -6837,7 +13672,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -6845,7 +13688,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     return null;
+
+
+
+
 
 
 
@@ -6857,7 +13708,19 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
+
+
+
+
   const extractEditsArray = (text: string): AiEditOp[] | null => {
+
+
+
+
 
 
 
@@ -6865,7 +13728,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     if (idx < 0) return null;
+
+
+
+
 
 
 
@@ -6873,7 +13744,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     const arrStart = after.indexOf('[');
+
+
+
+
 
 
 
@@ -6885,7 +13764,19 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
+
+
+
+
     const s = after.slice(arrStart);
+
+
+
+
 
 
 
@@ -6893,7 +13784,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     let inStr = false;
+
+
+
+
 
 
 
@@ -6901,7 +13800,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     for (let i = 0; i < s.length; i++) {
+
+
+
+
 
 
 
@@ -6909,7 +13816,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       if (inStr) {
+
+
+
+
 
 
 
@@ -6917,7 +13832,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
           escape = false;
+
+
+
+
 
 
 
@@ -6925,7 +13848,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -6933,7 +13864,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
           escape = true;
+
+
+
+
 
 
 
@@ -6941,7 +13880,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -6949,11 +13896,23 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         continue;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -6961,7 +13920,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         inStr = true;
+
+
+
+
 
 
 
@@ -6969,7 +13936,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -6977,7 +13952,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         depth++;
+
+
+
+
 
 
 
@@ -6985,7 +13968,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -6993,7 +13984,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         depth--;
+
+
+
+
 
 
 
@@ -7001,7 +14000,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
           const arrText = s.slice(0, i + 1);
+
+
+
+
 
 
 
@@ -7009,7 +14016,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
           if (Array.isArray(parsedArr)) return parsedArr as AiEditOp[];
+
+
+
+
 
 
 
@@ -7017,7 +14032,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -7025,11 +14048,23 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
     return null;
+
+
+
+
 
 
 
@@ -7041,7 +14076,19 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
+
+
+
+
   if (parsed && typeof parsed === "object") {
+
+
+
+
 
 
 
@@ -7049,7 +14096,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       edits?: unknown;
+
+
+
+
 
 
 
@@ -7057,7 +14112,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       summary?: unknown;
+
+
+
+
 
 
 
@@ -7065,7 +14128,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       plan?: unknown;
+
+
+
+
 
 
 
@@ -7073,7 +14144,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       done?: unknown;
+
+
+
+
 
 
 
@@ -7081,7 +14160,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -7089,7 +14176,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       const edits = obj.edits as AiEditOp[];
+
+
+
+
 
 
 
@@ -7097,11 +14192,23 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
         (typeof obj.assistant_message === "string" ? obj.assistant_message : null) ??
 
 
 
+
+
+
+
         (typeof obj.summary === "string" ? obj.summary : null) ??
+
+
+
+
 
 
 
@@ -7113,7 +14220,19 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
+
+
+
+
       const baseTs = Date.now();
+
+
+
+
 
 
 
@@ -7121,11 +14240,23 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       const events = normalizedInputs.length
 
 
 
+
+
+
+
         ? toChatEvents(normalizedInputs, baseTs)
+
+
+
+
 
 
 
@@ -7137,7 +14268,19 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
+
+
+
+
       return { message: String(msg).trim(), edits, events };
+
+
+
+
 
 
 
@@ -7145,7 +14288,19 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -7157,7 +14312,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
   const fallbackEdits = extractEditsArray(t);
+
+
+
+
 
 
 
@@ -7165,7 +14328,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     return {
+
+
+
+
 
 
 
@@ -7173,7 +14344,15 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
       edits: fallbackEdits,
+
+
+
+
 
 
 
@@ -7181,11 +14360,27 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
     };
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -7197,7 +14392,19 @@ function tryParseEditsFromAssistantOutput(
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7209,11 +14416,27 @@ function MenuSep() {
 
 
 
+
+
+
+
   return <div className="mx-2 my-1 h-px bg-border/60" />;
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7225,23 +14448,51 @@ function MenuCheck(props: { checked?: boolean }) {
 
 
 
+
+
+
+
   if (!props.checked) return null;
 
+
+
   return (
+
     <svg aria-hidden viewBox="0 0 16 16" className="h-3.5 w-3.5 text-muted" fill="none">
+
       <path
+
         d="M3.2 8.4l2.7 2.7 6.9-6.9"
+
         stroke="currentColor"
+
         strokeWidth="2"
+
         strokeLinecap="round"
+
         strokeLinejoin="round"
+
       />
+
     </svg>
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7253,7 +14504,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
   label: string;
+
+
+
+
 
 
 
@@ -7261,7 +14520,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
   shortcut?: string;
+
+
+
+
 
 
 
@@ -7269,7 +14536,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
   keepOpen?: boolean;
+
+
+
+
 
 
 
@@ -7277,7 +14552,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
   onClickWithEvent?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+
+
+
+
 
 
 
@@ -7285,7 +14568,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
   onMouseLeave?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+
+
+
+
 
 
 
@@ -7293,7 +14584,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -7301,7 +14600,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
       type="button"
+
+
+
+
 
 
 
@@ -7309,7 +14616,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
       onClick={(e) => {
+
+
+
+
 
 
 
@@ -7317,7 +14632,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
         props.onClickWithEvent?.(e);
+
+
+
+
 
 
 
@@ -7325,7 +14648,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
           window.dispatchEvent(new Event("pompora:menubar-close"));
+
+
+
+
 
 
 
@@ -7333,7 +14664,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
       }}
+
+
+
+
 
 
 
@@ -7341,7 +14680,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
       onMouseLeave={props.onMouseLeave}
+
+
+
+
 
 
 
@@ -7349,7 +14696,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
       <span className="flex min-w-0 items-center gap-2">
+
+
+
+
 
 
 
@@ -7357,11 +14712,23 @@ function MenuItem(props: {
 
 
 
+
+
+
+
         <span className="truncate">{props.label}</span>
 
 
 
+
+
+
+
       </span>
+
+
+
+
 
 
 
@@ -7369,7 +14736,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
         {props.shortcut ? <span className="whitespace-nowrap">{props.shortcut}</span> : null}
+
+
+
+
 
 
 
@@ -7377,7 +14752,15 @@ function MenuItem(props: {
 
 
 
+
+
+
+
       </span>
+
+
+
+
 
 
 
@@ -7385,11 +14768,27 @@ function MenuItem(props: {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7401,7 +14800,15 @@ function basename(p: string) {
 
 
 
+
+
+
+
   const norm = p.replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -7409,11 +14816,27 @@ function basename(p: string) {
 
 
 
+
+
+
+
   return parts[parts.length - 1] ?? p;
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7425,7 +14848,15 @@ function dirname(p: string) {
 
 
 
+
+
+
+
   const norm = p.replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -7433,7 +14864,15 @@ function dirname(p: string) {
 
 
 
+
+
+
+
   if (idx <= 0) return "/";
+
+
+
+
 
 
 
@@ -7441,7 +14880,19 @@ function dirname(p: string) {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7453,7 +14904,15 @@ function dirname(p: string) {
 
 
 
+
+
+
+
    let norm = String(p || "").trim();
+
+
+
+
 
 
 
@@ -7461,7 +14920,15 @@ function dirname(p: string) {
 
 
 
+
+
+
+
    norm = norm.replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -7469,7 +14936,15 @@ function dirname(p: string) {
 
 
 
+
+
+
+
    norm = norm.replace(/^\/+/, "");
+
+
+
+
 
 
 
@@ -7477,7 +14952,15 @@ function dirname(p: string) {
 
 
 
+
+
+
+
    return norm;
+
+
+
+
 
 
 
@@ -7489,7 +14972,19 @@ function dirname(p: string) {
 
 
 
+
+
+
+
+
+
+
+
 function detectLanguage(path: string): string {
+
+
+
+
 
 
 
@@ -7497,7 +14992,15 @@ function detectLanguage(path: string): string {
 
 
 
+
+
+
+
   const ext = lower.includes(".") ? lower.split(".").pop() ?? "" : "";
+
+
+
+
 
 
 
@@ -7505,7 +15008,15 @@ function detectLanguage(path: string): string {
 
 
 
+
+
+
+
   if (ext === "tsx") return "typescript";
+
+
+
+
 
 
 
@@ -7513,7 +15024,15 @@ function detectLanguage(path: string): string {
 
 
 
+
+
+
+
   if (ext === "jsx") return "javascript";
+
+
+
+
 
 
 
@@ -7521,7 +15040,15 @@ function detectLanguage(path: string): string {
 
 
 
+
+
+
+
   if (ext === "css") return "css";
+
+
+
+
 
 
 
@@ -7529,7 +15056,15 @@ function detectLanguage(path: string): string {
 
 
 
+
+
+
+
   if (ext === "html") return "html";
+
+
+
+
 
 
 
@@ -7537,7 +15072,15 @@ function detectLanguage(path: string): string {
 
 
 
+
+
+
+
   if (ext === "mdx") return "markdown";
+
+
+
+
 
 
 
@@ -7545,7 +15088,15 @@ function detectLanguage(path: string): string {
 
 
 
+
+
+
+
   if (ext === "toml") return "toml";
+
+
+
+
 
 
 
@@ -7553,11 +15104,27 @@ function detectLanguage(path: string): string {
 
 
 
+
+
+
+
   return "plaintext";
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7569,7 +15136,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
   const lower = String(path || "")
+
+
+
+
 
 
 
@@ -7577,7 +15152,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
     .replace(/\\/g, "/")
+
+
+
+
 
 
 
@@ -7585,7 +15168,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
   const name = basename(lower);
+
+
+
+
 
 
 
@@ -7593,7 +15184,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -7601,7 +15200,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
     ext === "jpg" ||
+
+
+
+
 
 
 
@@ -7609,7 +15216,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
     ext === "gif" ||
+
+
+
+
 
 
 
@@ -7617,7 +15232,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
     ext === "bmp" ||
+
+
+
+
 
 
 
@@ -7625,7 +15248,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
     ext === "tiff" ||
+
+
+
+
 
 
 
@@ -7633,7 +15264,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
     ext === "svg" ||
+
+
+
+
 
 
 
@@ -7641,7 +15280,15 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
     ext === "heic" ||
+
+
+
+
 
 
 
@@ -7649,11 +15296,27 @@ function isImagePath(path: string): boolean {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7665,7 +15328,15 @@ function base64ToObjectUrl(mime: string, base64: string): string {
 
 
 
+
+
+
+
   const bin = atob(base64);
+
+
+
+
 
 
 
@@ -7673,7 +15344,15 @@ function base64ToObjectUrl(mime: string, base64: string): string {
 
 
 
+
+
+
+
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+
+
+
+
 
 
 
@@ -7681,11 +15360,27 @@ function base64ToObjectUrl(mime: string, base64: string): string {
 
 
 
+
+
+
+
   return URL.createObjectURL(blob);
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7697,7 +15392,15 @@ function revokeTabObjectUrl(tab: EditorTab | null | undefined) {
 
 
 
+
+
+
+
   if (!tab) return;
+
+
+
+
 
 
 
@@ -7705,7 +15408,15 @@ function revokeTabObjectUrl(tab: EditorTab | null | undefined) {
 
 
 
+
+
+
+
   const url = tab.image?.url;
+
+
+
+
 
 
 
@@ -7713,7 +15424,15 @@ function revokeTabObjectUrl(tab: EditorTab | null | undefined) {
 
 
 
+
+
+
+
   try {
+
+
+
+
 
 
 
@@ -7721,7 +15440,15 @@ function revokeTabObjectUrl(tab: EditorTab | null | undefined) {
 
 
 
+
+
+
+
   } catch {
+
+
+
+
 
 
 
@@ -7729,7 +15456,19 @@ function revokeTabObjectUrl(tab: EditorTab | null | undefined) {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7745,7 +15484,23 @@ type __FileIcon = (props: { className?: string }) => ReactElement;
 
 
 
+
+
+
+
+
+
+
+
 const __extIconCache = new Map<string, __FileIcon>();
+
+
+
+
+
+
+
+
 
 
 
@@ -7757,7 +15512,15 @@ function __stableHue(s: string): number {
 
 
 
+
+
+
+
   let h = 0;
+
+
+
+
 
 
 
@@ -7765,11 +15528,27 @@ function __stableHue(s: string): number {
 
 
 
+
+
+
+
   return h % 360;
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7781,7 +15560,15 @@ function __stableHash(s: string): number {
 
 
 
+
+
+
+
   let h = 2166136261;
+
+
+
+
 
 
 
@@ -7789,7 +15576,15 @@ function __stableHash(s: string): number {
 
 
 
+
+
+
+
     h ^= s.charCodeAt(i);
+
+
+
+
 
 
 
@@ -7797,7 +15592,15 @@ function __stableHash(s: string): number {
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -7805,7 +15608,19 @@ function __stableHash(s: string): number {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7817,7 +15632,15 @@ function __makeIconifyTile(opts: { icon: any; bg: string; fg: string }) {
 
 
 
+
+
+
+
   const bg = opts.bg;
+
+
+
+
 
 
 
@@ -7825,7 +15648,15 @@ function __makeIconifyTile(opts: { icon: any; bg: string; fg: string }) {
 
 
 
+
+
+
+
   const icon = opts.icon;
+
+
+
+
 
 
 
@@ -7833,7 +15664,15 @@ function __makeIconifyTile(opts: { icon: any; bg: string; fg: string }) {
 
 
 
+
+
+
+
     const className = props.className ?? "";
+
+
+
+
 
 
 
@@ -7841,7 +15680,15 @@ function __makeIconifyTile(opts: { icon: any; bg: string; fg: string }) {
 
 
 
+
+
+
+
       <span className={`${className} inline-flex items-center justify-center rounded-[6px]`} style={{ backgroundColor: bg }} aria-hidden>
+
+
+
+
 
 
 
@@ -7849,11 +15696,23 @@ function __makeIconifyTile(opts: { icon: any; bg: string; fg: string }) {
 
 
 
+
+
+
+
       </span>
 
 
 
+
+
+
+
     );
+
+
+
+
 
 
 
@@ -7863,7 +15722,21 @@ function __makeIconifyTile(opts: { icon: any; bg: string; fg: string }) {
 
 
 
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -7875,7 +15748,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
   const bg = opts.bg;
+
+
+
+
 
 
 
@@ -7883,7 +15764,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
   const v = __stableHash(opts.seed) % 4;
+
+
+
+
 
 
 
@@ -7891,7 +15780,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
     const className = props.className ?? "";
+
+
+
+
 
 
 
@@ -7899,7 +15796,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
       <svg viewBox="0 0 24 24" className={className} aria-hidden focusable={false} shapeRendering="geometricPrecision">
+
+
+
+
 
 
 
@@ -7907,7 +15812,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
         {v === 0 ? <path d="M4 18 18 4" stroke={fg} strokeOpacity="0.18" strokeWidth="2" strokeLinecap="round" /> : null}
+
+
+
+
 
 
 
@@ -7915,7 +15828,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
           <g fill={fg} fillOpacity="0.12">
+
+
+
+
 
 
 
@@ -7923,7 +15844,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
             <circle cx="17" cy="7" r="1.2" />
+
+
+
+
 
 
 
@@ -7931,7 +15860,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
             <circle cx="17" cy="17" r="1.2" />
+
+
+
+
 
 
 
@@ -7939,7 +15876,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
         ) : null}
+
+
+
+
 
 
 
@@ -7947,7 +15892,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
         {v === 3 ? <path d="M8 20 20 8" stroke={fg} strokeOpacity="0.16" strokeWidth="2" strokeLinecap="round" /> : null}
+
+
+
+
 
 
 
@@ -7955,7 +15908,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
           d="M8 6.7h7l2.3 2.3V17a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8.7a2 2 0 0 1 2-2z"
+
+
+
+
 
 
 
@@ -7963,7 +15924,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
           stroke={fg}
+
+
+
+
 
 
 
@@ -7971,7 +15940,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
           strokeLinejoin="round"
+
+
+
+
 
 
 
@@ -7979,7 +15956,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
         <path d="M15 6.7V9h2.3" fill="none" stroke={fg} strokeWidth="1.35" strokeLinejoin="round" />
+
+
+
+
 
 
 
@@ -7987,7 +15972,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
         <path d="M8.6 14.9h5.2" stroke={fg} strokeOpacity="0.55" strokeWidth="1.1" strokeLinecap="round" />
+
+
+
+
 
 
 
@@ -7995,7 +15988,15 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
     );
+
+
+
+
 
 
 
@@ -8003,7 +16004,19 @@ function __makePatternTile(opts: { bg: string; seed: string; fg?: string }) {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -8019,7 +16032,19 @@ const __ReactLogoIcon = __makeIconifyTile({ icon: siReact, bg: "#111827", fg: "#
 
 
 
+
+
+
+
+
+
+
+
 const __DocTileIcon = function DocTileIcon(props: { className?: string }) {
+
+
+
+
 
 
 
@@ -8027,7 +16052,15 @@ const __DocTileIcon = function DocTileIcon(props: { className?: string }) {
 
 
 
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -8035,7 +16068,15 @@ const __DocTileIcon = function DocTileIcon(props: { className?: string }) {
 
 
 
+
+
+
+
       <rect x="0" y="0" width="24" height="24" rx="6" fill="#374151" />
+
+
+
+
 
 
 
@@ -8043,7 +16084,15 @@ const __DocTileIcon = function DocTileIcon(props: { className?: string }) {
 
 
 
+
+
+
+
       <path d="M14.4 6.8V9.6h2.8" fill="none" stroke="#ffffff" strokeOpacity="0.92" strokeWidth="1.4" strokeLinejoin="round" />
+
+
+
+
 
 
 
@@ -8051,7 +16100,15 @@ const __DocTileIcon = function DocTileIcon(props: { className?: string }) {
 
 
 
+
+
+
+
       <path d="M8.4 14.9h5.8" stroke="#ffffff" strokeOpacity="0.55" strokeWidth="1.2" strokeLinecap="round" />
+
+
+
+
 
 
 
@@ -8059,11 +16116,27 @@ const __DocTileIcon = function DocTileIcon(props: { className?: string }) {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 };
+
+
+
+
+
+
+
+
 
 
 
@@ -8075,7 +16148,15 @@ const __SettingsTileIcon = function SettingsTileIcon(props: { className?: string
 
 
 
+
+
+
+
   const { className } = props;
+
+
+
+
 
 
 
@@ -8083,7 +16164,15 @@ const __SettingsTileIcon = function SettingsTileIcon(props: { className?: string
 
 
 
+
+
+
+
     <div className={className} aria-hidden>
+
+
+
+
 
 
 
@@ -8091,7 +16180,15 @@ const __SettingsTileIcon = function SettingsTileIcon(props: { className?: string
 
 
 
+
+
+
+
         <SettingsIcon className="h-[70%] w-[70%] text-white" />
+
+
+
+
 
 
 
@@ -8099,11 +16196,23 @@ const __SettingsTileIcon = function SettingsTileIcon(props: { className?: string
 
 
 
+
+
+
+
     </div>
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -8115,7 +16224,19 @@ const __SettingsTileIcon = function SettingsTileIcon(props: { className?: string
 
 
 
+
+
+
+
+
+
+
+
 const __TsLogoIcon = __makeIconifyTile({ icon: siTypescript, bg: "#3178C6", fg: "#ffffff" });
+
+
+
+
 
 
 
@@ -8123,7 +16244,15 @@ const __JsLogoIcon = __makeIconifyTile({ icon: siJavascript, bg: "#F7DF1E", fg: 
 
 
 
+
+
+
+
 const __HtmlLogoIcon = __makeIconifyTile({ icon: siHtml5, bg: "#E34F26", fg: "#ffffff" });
+
+
+
+
 
 
 
@@ -8131,7 +16260,15 @@ const __CssLogoIcon = __makeIconifyTile({ icon: siCss3, bg: "#1572B6", fg: "#fff
 
 
 
+
+
+
+
 const __JsonLogoIcon = __makeIconifyTile({ icon: siJson, bg: "#111827", fg: "#ffffff" });
+
+
+
+
 
 
 
@@ -8139,7 +16276,15 @@ const __MarkdownLogoIcon = __makeIconifyTile({ icon: siMarkdown, bg: "#111827", 
 
 
 
+
+
+
+
 const __GitLogoIcon = __makeIconifyTile({ icon: siGit, bg: "#F05032", fg: "#ffffff" });
+
+
+
+
 
 
 
@@ -8147,7 +16292,15 @@ const __NpmLogoIcon = __makeIconifyTile({ icon: siNpm, bg: "#CB3837", fg: "#ffff
 
 
 
+
+
+
+
 const __YarnLogoIcon = __makeIconifyTile({ icon: siYarn, bg: "#2C8EBB", fg: "#ffffff" });
+
+
+
+
 
 
 
@@ -8155,7 +16308,15 @@ const __PnpmLogoIcon = __makeIconifyTile({ icon: siPnpm, bg: "#111827", fg: "#F6
 
 
 
+
+
+
+
 const __ViteLogoIcon = __makeIconifyTile({ icon: siVite, bg: "#646CFF", fg: "#FFEA83" });
+
+
+
+
 
 
 
@@ -8163,11 +16324,23 @@ const __TailwindLogoIcon = __makeIconifyTile({ icon: siTailwindcss, bg: "#0EA5E9
 
 
 
+
+
+
+
 const __TauriLogoIcon = __makeIconifyTile({ icon: siTauri, bg: "#0B1220", fg: "#ffffff" });
 
 
 
+
+
+
+
 const __RustLogoIcon = __makeIconifyTile({ icon: siRust, bg: "#B7410E", fg: "#ffffff" });
+
+
+
+
 
 
 
@@ -8179,7 +16352,19 @@ const __DockerLogoIcon = __makeIconifyTile({ icon: siDocker, bg: "#2496ED", fg: 
 
 
 
+
+
+
+
+
+
+
+
 const __IconENV = __makeIconifyTile({ icon: siDotenv, bg: "#16A34A", fg: "#ffffff" });
+
+
+
+
 
 
 
@@ -8187,7 +16372,15 @@ const __IconYML = __makeIconifyTile({ icon: siYaml, bg: "#CA8A04", fg: "#ffffff"
 
 
 
+
+
+
+
 const __IconTOML = __makeIconifyTile({ icon: siToml, bg: "#0EA5E9", fg: "#0B1220" });
+
+
+
+
 
 
 
@@ -8195,7 +16388,15 @@ const __IconSH = __makeIconifyTile({ icon: siGnubash, bg: "#111827", fg: "#fffff
 
 
 
+
+
+
+
 const __IconSQL = __makePatternTile({ bg: "#7C3AED", seed: "sql" });
+
+
+
+
 
 
 
@@ -8203,7 +16404,15 @@ const __IconPY = __makeIconifyTile({ icon: siPython, bg: "#3776AB", fg: "#ffffff
 
 
 
+
+
+
+
 const __IconGO = __makeIconifyTile({ icon: siGo, bg: "#00ADD8", fg: "#0B1220" });
+
+
+
+
 
 
 
@@ -8211,7 +16420,15 @@ const __IconJAVA = __makeIconifyTile({ icon: siJava, bg: "#EA580C", fg: "#ffffff
 
 
 
+
+
+
+
 const __IconCPP = __makeIconifyTile({ icon: siCplusplus, bg: "#1D4ED8", fg: "#ffffff" });
+
+
+
+
 
 
 
@@ -8219,11 +16436,23 @@ const __IconC = __makeIconifyTile({ icon: siC, bg: "#2563EB", fg: "#ffffff" });
 
 
 
+
+
+
+
 const __IconESLint = __makeIconifyTile({ icon: siEslint, bg: "#4B32C3", fg: "#ffffff" });
 
 
 
+
+
+
+
 const __IconPrettier = __makeIconifyTile({ icon: siPrettier, bg: "#F7B93E", fg: "#111827" });
+
+
+
+
 
 
 
@@ -8235,7 +16464,19 @@ const __IconLock = __makePatternTile({ bg: "#6B7280", seed: "lock" });
 
 
 
+
+
+
+
+
+
+
+
 function __extOrNameBadge(key: string) {
+
+
+
+
 
 
 
@@ -8243,7 +16484,15 @@ function __extOrNameBadge(key: string) {
 
 
 
+
+
+
+
   if (!k) return __DocTileIcon;
+
+
+
+
 
 
 
@@ -8251,7 +16500,15 @@ function __extOrNameBadge(key: string) {
 
 
 
+
+
+
+
   if (cached) return cached;
+
+
+
+
 
 
 
@@ -8259,7 +16516,15 @@ function __extOrNameBadge(key: string) {
 
 
 
+
+
+
+
   const bg = `hsl(${hue}, 74%, 44%)`;
+
+
+
+
 
 
 
@@ -8267,11 +16532,23 @@ function __extOrNameBadge(key: string) {
 
 
 
+
+
+
+
   __extIconCache.set(k, Comp);
 
 
 
+
+
+
+
   return Comp;
+
+
+
+
 
 
 
@@ -8283,11 +16560,27 @@ function __extOrNameBadge(key: string) {
 
 
 
+
+
+
+
+
+
+
+
 function fileIconFor(path: string) {
 
 
 
+
+
+
+
   const lower = String(path || "").replace(/\\/g, "/").toLowerCase();
+
+
+
+
 
 
 
@@ -8299,7 +16592,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (lower.startsWith("pompora:settings")) return __SettingsTileIcon;
+
+
+
+
 
 
 
@@ -8307,7 +16612,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (lower.startsWith("untitled:")) return __DocTileIcon;
+
+
+
+
+
+
+
+
 
 
 
@@ -8323,7 +16640,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (name === "readme.md" || name === "license" || name === "license.md" || name === "copying") return __MarkdownLogoIcon;
+
+
+
+
 
 
 
@@ -8335,11 +16664,27 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (name === "package.json" || name === "package-lock.json" || name === "npm-shrinkwrap.json") return __NpmLogoIcon;
 
 
 
+
+
+
+
   if (name === "yarn.lock") return __YarnLogoIcon;
+
+
+
+
 
 
 
@@ -8351,7 +16696,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (name === "cargo.toml" || name === "cargo.lock") return __RustLogoIcon;
+
+
+
+
 
 
 
@@ -8363,7 +16720,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (name === "vite.config.ts" || name === "vite.config.js" || name === "vite.config.mjs" || name === "vite.config.cjs") return __ViteLogoIcon;
+
+
+
+
 
 
 
@@ -8371,7 +16740,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     name === "tailwind.config.js" ||
+
+
+
+
 
 
 
@@ -8379,7 +16756,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     name === "postcss.config.js" ||
+
+
+
+
 
 
 
@@ -8387,7 +16772,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     name === "postcss.config.mjs"
+
+
+
+
 
 
 
@@ -8395,7 +16788,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     return __TailwindLogoIcon;
+
+
+
+
 
 
 
@@ -8403,7 +16804,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (name === ".prettierrc" || name === ".prettierrc.json" || name === ".prettierrc.js" || name === "prettier.config.js") return __IconPrettier;
+
+
+
+
 
 
 
@@ -8411,7 +16820,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (name === ".gitignore" || name === ".gitattributes" || name === ".gitmodules") return __GitLogoIcon;
+
+
+
+
+
+
+
+
 
 
 
@@ -8427,7 +16848,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (ext === "tsx" || ext === "jsx") return __ReactLogoIcon;
+
+
+
+
 
 
 
@@ -8435,7 +16868,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (ext === "js" || ext === "mjs" || ext === "cjs") return __JsLogoIcon;
+
+
+
+
 
 
 
@@ -8443,7 +16884,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (ext === "css" || ext === "scss" || ext === "sass" || ext === "less") return __CssLogoIcon;
+
+
+
+
 
 
 
@@ -8451,7 +16900,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (ext === "md" || ext === "mdx" || ext === "markdown") return __MarkdownLogoIcon;
+
+
+
+
 
 
 
@@ -8459,7 +16916,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (ext === "yaml" || ext === "yml") return __IconYML;
+
+
+
+
 
 
 
@@ -8471,7 +16936,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (ext === "json" || ext === "jsonc" || ext === "json5") return __JsonLogoIcon;
+
+
+
+
 
 
 
@@ -8483,7 +16960,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (ext === "sh" || ext === "bash" || ext === "zsh" || ext === "fish") return __IconSH;
+
+
+
+
 
 
 
@@ -8491,7 +16980,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (ext === "py") return __IconPY;
+
+
+
+
 
 
 
@@ -8499,7 +16996,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (ext === "java") return __IconJAVA;
+
+
+
+
 
 
 
@@ -8507,7 +17012,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (ext === "cpp" || ext === "cc" || ext === "cxx" || ext === "hpp" || ext === "hh" || ext === "hxx" || ext === "h") return __IconCPP;
+
+
+
+
 
 
 
@@ -8519,7 +17032,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (
+
+
+
+
 
 
 
@@ -8527,7 +17052,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     ext === "jpg" ||
+
+
+
+
 
 
 
@@ -8535,7 +17068,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     ext === "gif" ||
+
+
+
+
 
 
 
@@ -8543,7 +17084,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     ext === "svg" ||
+
+
+
+
 
 
 
@@ -8551,7 +17100,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     ext === "bmp" ||
+
+
+
+
 
 
 
@@ -8559,7 +17116,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     ext === "heic" ||
+
+
+
+
 
 
 
@@ -8567,7 +17132,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   )
+
+
+
+
 
 
 
@@ -8579,7 +17152,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (ext === "zip" || ext === "tar" || ext === "gz" || ext === "bz2" || ext === "xz" || ext === "7z" || ext === "rar") return __extOrNameBadge(ext);
+
+
+
+
 
 
 
@@ -8587,7 +17172,15 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
   if (ext === "mp4" || ext === "mkv" || ext === "webm" || ext === "mov" || ext === "avi") return __extOrNameBadge(ext);
+
+
+
+
 
 
 
@@ -8599,7 +17192,19 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   if (!ext) {
+
+
+
+
 
 
 
@@ -8607,11 +17212,23 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
     if (name === "justfile") return __extOrNameBadge("just");
 
 
 
+
+
+
+
     return __extOrNameBadge(name.slice(0, 4));
+
+
+
+
 
 
 
@@ -8623,11 +17240,31 @@ function fileIconFor(path: string) {
 
 
 
+
+
+
+
+
+
+
+
   return __extOrNameBadge(ext);
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -8639,7 +17276,15 @@ function statusPillClass(status: "pending" | "running" | "done" | "error"): stri
 
 
 
+
+
+
+
   if (status === "done") return "bg-emerald-500/15 text-emerald-300 border-emerald-500/25";
+
+
+
+
 
 
 
@@ -8647,7 +17292,15 @@ function statusPillClass(status: "pending" | "running" | "done" | "error"): stri
 
 
 
+
+
+
+
   if (status === "running") return "bg-sky-500/15 text-sky-300 border-sky-500/25";
+
+
+
+
 
 
 
@@ -8655,7 +17308,19 @@ function statusPillClass(status: "pending" | "running" | "done" | "error"): stri
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -8667,7 +17332,15 @@ function __splitPathSegments(p: string): string[] {
 
 
 
+
+
+
+
   const norm = String(p || "")
+
+
+
+
 
 
 
@@ -8675,7 +17348,15 @@ function __splitPathSegments(p: string): string[] {
 
 
 
+
+
+
+
     .replace(/^\/+/, "")
+
+
+
+
 
 
 
@@ -8683,11 +17364,23 @@ function __splitPathSegments(p: string): string[] {
 
 
 
+
+
+
+
   if (!norm) return [];
 
 
 
+
+
+
+
   return norm.split("/").filter(Boolean);
+
+
+
+
 
 
 
@@ -8699,7 +17392,19 @@ function __splitPathSegments(p: string): string[] {
 
 
 
+
+
+
+
+
+
+
+
 function FooterBreadcrumb(props: {
+
+
+
+
 
 
 
@@ -8707,7 +17412,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
   relPath: string | null;
+
+
+
+
 
 
 
@@ -8715,7 +17428,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
   expanded: boolean;
+
+
+
+
 
 
 
@@ -8723,7 +17444,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
 }) {
+
+
+
+
 
 
 
@@ -8731,7 +17460,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
     const segs = [props.workspaceLabel, ...__splitPathSegments(props.relPath ?? "")];
+
+
+
+
 
 
 
@@ -8739,7 +17476,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
     const needsCollapse = !props.expanded && segs.length > 4 && full.length > 60;
+
+
+
+
 
 
 
@@ -8747,7 +17492,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
     const tailCount = Math.min(3, Math.max(1, segs.length - 1));
+
+
+
+
 
 
 
@@ -8755,7 +17508,19 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
   }, [props.expanded, props.relPath, props.workspaceLabel]);
+
+
+
+
+
+
+
+
 
 
 
@@ -8771,7 +17536,19 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -8779,7 +17556,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
       {segments.map((seg, idx) => {
+
+
+
+
 
 
 
@@ -8787,7 +17572,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
         const isDots = seg === "...";
+
+
+
+
 
 
 
@@ -8795,7 +17588,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
           <div key={`${seg}:${idx}`} className="flex min-w-0 items-center gap-1">
+
+
+
+
 
 
 
@@ -8803,7 +17604,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
             {isDots ? (
+
+
+
+
 
 
 
@@ -8811,7 +17620,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
                 ...
+
+
+
+
 
 
 
@@ -8819,7 +17636,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
             ) : (
+
+
+
+
 
 
 
@@ -8827,7 +17652,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
                 {isLast && Icon ? <Icon className="h-[18px] w-[18px] shrink-0" /> : null}
+
+
+
+
 
 
 
@@ -8835,7 +17668,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
               </div>
+
+
+
+
 
 
 
@@ -8843,7 +17684,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
           </div>
+
+
+
+
 
 
 
@@ -8851,7 +17700,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
       })}
+
+
+
+
 
 
 
@@ -8859,7 +17716,15 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -8871,7 +17736,19 @@ function FooterBreadcrumb(props: {
 
 
 
+
+
+
+
+
+
+
+
 export default function AppShell() {
+
+
+
+
 
 
 
@@ -8879,7 +17756,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const RUN_POLICY_KEY = "pompora.terminal_run_policy.v1";
+
+
+
+
 
 
 
@@ -8887,11 +17772,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
 
 
 
+
+
+
+
   const [paletteQuery, setPaletteQuery] = useState("");
+
+
+
+
 
 
 
@@ -8903,7 +17800,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [isQuickOpenOpen, setIsQuickOpenOpen] = useState(false);
+
+
+
+
 
 
 
@@ -8911,7 +17820,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [quickOpenIndex, setQuickOpenIndex] = useState(0);
+
+
+
+
 
 
 
@@ -8919,7 +17836,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [fileIndex, setFileIndex] = useState<string[]>([]);
+
+
+
+
 
 
 
@@ -8931,7 +17856,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [isGoToLineOpen, setIsGoToLineOpen] = useState(false);
+
+
+
+
 
 
 
@@ -8943,7 +17880,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [savePathDialog, setSavePathDialog] = useState<null | {
+
+
+
+
 
 
 
@@ -8951,7 +17900,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     subtitle?: string;
+
+
+
+
 
 
 
@@ -8959,7 +17916,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     placeholder?: string;
+
+
+
+
 
 
 
@@ -8967,7 +17932,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     extensions?: string[];
+
+
+
+
 
 
 
@@ -8975,7 +17948,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     enforceExtension?: boolean;
+
+
+
+
 
 
 
@@ -8983,7 +17964,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }>(null);
+
+
+
+
+
+
+
+
 
 
 
@@ -8999,7 +17992,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [textPromptDialog, setTextPromptDialog] = useState<null | {
+
+
+
+
 
 
 
@@ -9007,7 +18012,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     subtitle?: string;
+
+
+
+
 
 
 
@@ -9015,7 +18028,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     value: string;
+
+
+
+
 
 
 
@@ -9023,7 +18044,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     readOnly?: boolean;
+
+
+
+
 
 
 
@@ -9031,11 +18060,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     resolve: (value: string | null) => void;
 
 
 
+
+
+
+
   }>(null);
+
+
+
+
+
+
+
+
 
 
 
@@ -9047,7 +18092,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     title: string;
+
+
+
+
 
 
 
@@ -9055,7 +18108,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     confirmLabel?: string;
+
+
+
+
 
 
 
@@ -9063,7 +18124,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     resolve: (ok: boolean) => void;
+
+
+
+
 
 
 
@@ -9075,7 +18144,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const requestRelativePath = useCallback(
+
+
+
+
 
 
 
@@ -9083,7 +18164,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       title: string,
+
+
+
+
 
 
 
@@ -9091,7 +18180,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       options?: {
+
+
+
+
 
 
 
@@ -9099,7 +18196,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         inputLabel?: string;
+
+
+
+
 
 
 
@@ -9107,7 +18212,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         extensions?: string[];
+
+
+
+
 
 
 
@@ -9115,7 +18228,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         enforceExtension?: boolean;
+
+
+
+
 
 
 
@@ -9123,7 +18244,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     ) => {
+
+
+
+
 
 
 
@@ -9131,7 +18260,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setSavePathDialog({
+
+
+
+
 
 
 
@@ -9139,7 +18276,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           subtitle: options?.subtitle,
+
+
+
+
 
 
 
@@ -9147,7 +18292,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           placeholder: options?.placeholder,
+
+
+
+
 
 
 
@@ -9155,7 +18308,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           extensions: options?.extensions,
+
+
+
+
 
 
 
@@ -9163,7 +18324,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           enforceExtension: options?.enforceExtension,
+
+
+
+
 
 
 
@@ -9171,7 +18340,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -9179,7 +18356,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -9187,7 +18372,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -9199,7 +18396,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     <T,>(get: (ed: MonacoEditorNS.IStandaloneCodeEditor, monaco: typeof import("monaco-editor")) => T): T | null => {
+
+
+
+
 
 
 
@@ -9207,7 +18412,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const monaco = monacoRef.current;
+
+
+
+
 
 
 
@@ -9215,7 +18428,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -9223,7 +18444,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch {
+
+
+
+
 
 
 
@@ -9231,7 +18460,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -9239,11 +18476,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     []
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -9255,7 +18508,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const ed = editorRef.current as any;
+
+
+
+
 
 
 
@@ -9263,7 +18524,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -9271,7 +18540,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return true;
+
+
+
+
 
 
 
@@ -9279,7 +18556,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return false;
+
+
+
+
 
 
 
@@ -9287,7 +18572,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -9295,7 +18588,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsMinimapEnabled((v) => {
+
+
+
+
 
 
 
@@ -9303,11 +18604,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       updateEditorOptions({
+
         minimap: { enabled: next },
+
         scrollbar: { vertical: next ? "hidden" : "auto" },
+
         overviewRulerLanes: next ? 0 : 3,
+
       });
+
+
+
+
 
 
 
@@ -9315,11 +18628,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
 
 
 
+
+
+
+
   }, [updateEditorOptions]);
+
+
+
+
 
 
 
@@ -9327,7 +18652,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsBreadcrumbsEnabled((v) => !v);
+
+
+
+
 
 
 
@@ -9335,7 +18668,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const toggleStickyScroll = useCallback(() => {
+
+
+
+
 
 
 
@@ -9343,7 +18684,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const next = !v;
+
+
+
+
 
 
 
@@ -9351,7 +18700,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return next;
+
+
+
+
 
 
 
@@ -9359,7 +18716,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [updateEditorOptions]);
+
+
+
+
 
 
 
@@ -9367,11 +18732,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsRenderWhitespaceEnabled((v) => {
 
 
 
+
+
+
+
       const next = !v;
+
+
+
+
 
 
 
@@ -9379,7 +18756,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return next;
+
+
+
+
 
 
 
@@ -9387,7 +18772,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [updateEditorOptions]);
+
+
+
+
 
 
 
@@ -9395,7 +18788,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsRenderControlCharsEnabled((v) => {
+
+
+
+
 
 
 
@@ -9403,7 +18804,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       updateEditorOptions({ renderControlCharacters: next });
+
+
+
+
 
 
 
@@ -9411,11 +18820,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
 
 
 
+
+
+
+
   }, [updateEditorOptions]);
+
+
+
+
+
+
+
+
 
 
 
@@ -9427,7 +18852,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (title: string, message: string, options?: { confirmLabel?: string; danger?: boolean }) => {
+
+
+
+
 
 
 
@@ -9435,7 +18868,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setConfirmDialog({ title, message, confirmLabel: options?.confirmLabel, danger: options?.danger, resolve });
+
+
+
+
 
 
 
@@ -9443,7 +18884,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -9451,7 +18900,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -9463,7 +18924,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (
+
+
+
+
 
 
 
@@ -9471,7 +18940,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       initialValue: string,
+
+
+
+
 
 
 
@@ -9479,7 +18956,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         subtitle?: string;
+
+
+
+
 
 
 
@@ -9487,7 +18972,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         password?: boolean;
+
+
+
+
 
 
 
@@ -9495,7 +18988,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         showCopy?: boolean;
+
+
+
+
 
 
 
@@ -9503,7 +19004,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     ) => {
+
+
+
+
 
 
 
@@ -9511,7 +19020,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setTextPromptDialog({
+
+
+
+
 
 
 
@@ -9519,7 +19036,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           subtitle: options?.subtitle,
+
+
+
+
 
 
 
@@ -9527,7 +19052,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           value: initialValue,
+
+
+
+
 
 
 
@@ -9535,7 +19068,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           readOnly: options?.readOnly,
+
+
+
+
 
 
 
@@ -9543,7 +19084,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           resolve,
+
+
+
+
 
 
 
@@ -9551,7 +19100,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -9559,7 +19116,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     []
+
+
+
+
 
 
 
@@ -9571,7 +19136,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [runPolicy, setRunPolicy] = useState<"ask" | "always">(() => {
+
+
+
+
 
 
 
@@ -9579,7 +19156,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const raw = window.localStorage.getItem(RUN_POLICY_KEY);
+
+
+
+
 
 
 
@@ -9587,7 +19172,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -9595,11 +19188,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -9611,7 +19216,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -9619,7 +19236,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       window.localStorage.setItem(RUN_POLICY_KEY, runPolicy);
+
+
+
+
 
 
 
@@ -9627,7 +19252,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -9639,7 +19272,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -9647,7 +19292,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const onDown = (e: MouseEvent) => {
+
+
+
+
 
 
 
@@ -9655,7 +19308,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!t) return;
+
+
+
+
 
 
 
@@ -9663,7 +19324,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -9671,7 +19340,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => window.removeEventListener("mousedown", onDown);
+
+
+
+
 
 
 
@@ -9683,7 +19360,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [settings, setSettingsState] = useState<AppSettings>({
+
+
+
+
 
 
 
@@ -9691,7 +19380,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     offline_mode: false,
+
+
+
+
 
 
 
@@ -9699,7 +19396,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     active_model: null,
+
+
+
+
 
 
 
@@ -9707,7 +19412,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     editor_cursor_blinking: "expand",
+
+
+
+
 
 
 
@@ -9715,7 +19428,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     editor_cursor_color: null,
+
+
+
+
 
 
 
@@ -9723,7 +19444,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     workspace_root: null,
+
+
+
+
 
 
 
@@ -9731,7 +19460,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     saved_workspaces: [],
+
+
+
+
 
 
 
@@ -9739,7 +19476,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const settingsMutationSeqRef = useRef(0);
+
+
+
+
 
 
 
@@ -9747,11 +19492,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
 
 
+
+
+
+
   const [isTogglingOffline, setIsTogglingOffline] = useState(false);
+
+
+
+
+
+
+
+
 
 
 
@@ -9767,7 +19528,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const monacoRef = useRef<typeof import("monaco-editor") | null>(null);
+
+
+
+
+
+
+
+
 
 
 
@@ -9779,7 +19556,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isFileMenuRecentOpen, setIsFileMenuRecentOpen] = useState(false);
+
+
+
+
 
 
 
@@ -9787,7 +19572,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isSelectionMenuOpen, setIsSelectionMenuOpen] = useState(false);
+
+
+
+
 
 
 
@@ -9795,7 +19588,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isRunMenuOpen, setIsRunMenuOpen] = useState(false);
+
+
+
+
 
 
 
@@ -9803,7 +19604,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [fileMenuAnchor, setFileMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+
 
 
 
@@ -9811,7 +19620,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [selectionMenuAnchor, setSelectionMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+
 
 
 
@@ -9819,7 +19636,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [runMenuAnchor, setRunMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+
 
 
 
@@ -9827,7 +19652,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isCompactMenubarOpen, setIsCompactMenubarOpen] = useState(false);
+
+
+
+
 
 
 
@@ -9835,7 +19668,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [compactMenubarSub, setCompactMenubarSub] = useState<null | "file" | "edit" | "selection" | "view" | "run" | "terminal">(null);
+
+
+
+
 
 
 
@@ -9847,16 +19688,38 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [viewMenuSub, setViewMenuSub] = useState<null | "appearance" | "editorLayout">(null);
 
 
+
+
+
   const [viewAppearanceSub, setViewAppearanceSub] = useState<
+
     | null
+
     | "activityBarPosition"
+
     | "panelPosition"
+
     | "alignPanel"
+
     | "tabBar"
+
   >(null);
+
+
+
+
+
 
 
 
@@ -9865,7 +19728,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [viewAppearanceAnchor, setViewAppearanceAnchor] = useState<DOMRect | null>(null);
+
+
+
+
 
 
 
@@ -9873,7 +19744,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [viewAppearanceSubAnchor, setViewAppearanceSubAnchor] = useState<DOMRect | null>(null);
+
+
+
+
 
 
 
@@ -9881,7 +19760,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isBreadcrumbsEnabled, setIsBreadcrumbsEnabled] = useState(true);
+
+
+
+
 
 
 
@@ -9889,7 +19776,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isRenderWhitespaceEnabled, setIsRenderWhitespaceEnabled] = useState(false);
+
+
+
+
 
 
 
@@ -9897,11 +19792,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(() => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -9909,7 +19816,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -9917,11 +19832,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -9929,7 +19856,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -9937,7 +19872,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -9945,11 +19888,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -9957,7 +19912,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -9965,7 +19928,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -9973,11 +19944,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -9985,7 +19968,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -9993,7 +19984,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -10001,11 +20000,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -10013,7 +20024,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10021,7 +20040,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -10029,11 +20056,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -10041,7 +20080,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10049,11 +20096,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return v === "right" ? "right" : "left";
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -10061,11 +20120,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -10073,7 +20144,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10081,11 +20160,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return v === "top" || v === "bottom" || v === "hidden" ? v : "default";
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -10093,11 +20184,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -10105,7 +20208,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10113,11 +20224,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return v === "top" || v === "left" || v === "right" ? v : "bottom";
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -10125,11 +20248,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -10137,7 +20272,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10145,11 +20288,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return v === "justify" || v === "left" || v === "right" ? v : "center";
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -10157,11 +20312,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -10169,7 +20336,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10177,11 +20352,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return v === "single" || v === "hidden" ? v : "multiple";
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -10189,7 +20376,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10197,7 +20392,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const zenRestoreRef = useRef<{
+
+
+
+
 
 
 
@@ -10205,7 +20408,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     isChatDockOpen: boolean;
+
+
+
+
 
 
 
@@ -10213,7 +20424,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     isStatusBarVisible: boolean;
+
+
+
+
 
 
 
@@ -10221,7 +20440,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   } | null>(null);
+
+
+
+
 
 
 
@@ -10229,7 +20456,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10237,11 +20472,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10249,11 +20496,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10261,11 +20520,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10273,11 +20544,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10285,11 +20568,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10297,11 +20592,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10309,11 +20616,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10321,11 +20640,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10333,11 +20664,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10345,11 +20688,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10357,11 +20712,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10369,11 +20736,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10381,11 +20760,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10393,11 +20784,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10405,11 +20808,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10417,11 +20832,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -10429,11 +20856,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10441,7 +20880,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -10449,7 +20896,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       window.localStorage.setItem("pompora.view.tabBarMode", tabBarMode);
+
+
+
+
 
 
 
@@ -10457,7 +20912,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -10469,7 +20932,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const closeMenubarMenus = useCallback(() => 
+
+
+
+
 
 
 
@@ -10477,7 +20952,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsFileMenuOpen(false);
+
+
+
+
 
 
 
@@ -10485,7 +20968,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsEditMenuOpen(false);
+
+
+
+
 
 
 
@@ -10493,7 +20984,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsViewMenuOpen(false);
+
+
+
+
 
 
 
@@ -10501,7 +21000,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -10509,7 +21016,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setViewAppearanceSub(null);
+
+
+
+
 
 
 
@@ -10517,7 +21032,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setViewAppearanceAnchor(null);
+
+
+
+
 
 
 
@@ -10525,11 +21048,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setViewAppearanceSubAnchor(null);
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -10541,7 +21080,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const clearFileRecentCloseTimer = useCallback(() => {
+
+
+
+
 
 
 
@@ -10549,11 +21096,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       window.clearTimeout(fileRecentCloseTimerRef.current);
 
 
 
+
+
+
+
       fileRecentCloseTimerRef.current = null;
+
+
+
+
 
 
 
@@ -10561,7 +21120,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -10569,7 +21136,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     clearFileRecentCloseTimer();
+
+
+
+
 
 
 
@@ -10577,7 +21152,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setIsFileMenuRecentOpen(false);
+
+
+
+
 
 
 
@@ -10585,7 +21168,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }, 120);
+
+
+
+
 
 
 
@@ -10597,7 +21188,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const anyMenubarOpen =
+
+
+
+
 
 
 
@@ -10605,7 +21208,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     isEditMenuOpen ||
+
+
+
+
 
 
 
@@ -10613,11 +21224,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     isViewMenuOpen ||
 
 
 
+
+
+
+
     isRunMenuOpen ||
+
+
+
+
 
 
 
@@ -10629,7 +21252,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -10637,11 +21272,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.addEventListener("pompora:menubar-close", onClose);
 
 
 
+
+
+
+
     return () => window.removeEventListener("pompora:menubar-close", onClose);
+
+
+
+
 
 
 
@@ -10649,7 +21296,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const closeCompactMenubar = useCallback(() => {
+
+
+
+
 
 
 
@@ -10657,7 +21312,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setCompactMenubarAnchor(null);
+
+
+
+
 
 
 
@@ -10665,7 +21328,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setCompactMenubarSubAnchor(null);
+
+
+
+
 
 
 
@@ -10673,7 +21344,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -10681,7 +21360,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const onDocMouseDown = (e: MouseEvent) => {
+
+
+
+
 
 
 
@@ -10689,7 +21376,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!t) return;
+
+
+
+
 
 
 
@@ -10697,7 +21392,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       closeCompactMenubar();
+
+
+
+
 
 
 
@@ -10705,7 +21408,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.addEventListener("mousedown", onDocMouseDown);
+
+
+
+
 
 
 
@@ -10713,11 +21424,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [closeCompactMenubar, isCompactMenubarOpen]);
 
 
 
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -10725,11 +21448,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [closeCompactMenubar, isMenuBarVisible]);
 
 
 
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -10737,7 +21472,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.addEventListener("pompora:menubar-close", onClose);
+
+
+
+
 
 
 
@@ -10745,7 +21488,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [closeCompactMenubar]);
+
+
+
+
 
 
 
@@ -10753,7 +21504,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const compactPortalAttrs = (variant: MenubarVariant) => (variant === "compact" ? ({ "data-compact-menubar-portal": true } as const) : {});
+
+
+
+
 
 
 
@@ -10761,7 +21520,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     <div
+
+
+
+
 
 
 
@@ -10769,11 +21536,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       {...compactPortalAttrs(variant)}
 
 
 
+
+
+
+
     >
+
+
+
+
 
 
 
@@ -10781,7 +21560,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -10789,7 +21576,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Open Folder" shortcut="Ctrl+K Ctrl+O" onClick={() => void openFolder()} />
+
+
+
+
 
 
 
@@ -10797,7 +21592,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <MenuItem
+
+
+
+
 
 
 
@@ -10805,7 +21608,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+
 
 
 
@@ -10813,7 +21624,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onMouseEnter={(e) => {
+
+
+
+
 
 
 
@@ -10821,7 +21640,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setIsFileMenuRecentOpen(true);
+
+
+
+
 
 
 
@@ -10829,7 +21656,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }}
+
+
+
+
 
 
 
@@ -10837,11 +21672,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onClick={() => setIsFileMenuRecentOpen((v) => !v)}
 
 
 
+
+
+
+
         />
+
+
+
+
 
 
 
@@ -10849,11 +21696,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           <MenuPortal anchor={fileRecentAnchor} approxWidth={320}>
 
 
 
+
+
+
+
             <div
+
+
+
+
 
 
 
@@ -10861,7 +21720,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               onMouseEnter={() => {
+
+
+
+
 
 
 
@@ -10869,11 +21736,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 setIsFileMenuRecentOpen(true);
 
 
 
+
+
+
+
               }}
+
+
+
+
 
 
 
@@ -10881,11 +21760,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               {...compactPortalAttrs(variant)}
 
 
 
+
+
+
+
             >
+
+
+
+
 
 
 
@@ -10893,7 +21784,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               {(workspace.recent.length ? workspace.recent : settings.recent_workspaces).length ? (
+
+
+
+
 
 
 
@@ -10901,7 +21800,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <MenuItem key={p} label={p} onClick={() => void openRecent(p)} />
+
+
+
+
 
 
 
@@ -10909,7 +21816,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               ) : (
+
+
+
+
 
 
 
@@ -10917,11 +21832,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               )}
 
 
 
+
+
+
+
               <MenuSep />
+
+
+
+
 
 
 
@@ -10929,7 +21856,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               {recentFiles.length ? (
+
+
+
+
 
 
 
@@ -10937,7 +21872,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   const Icon = fileIconFor(p);
+
+
+
+
 
 
 
@@ -10945,7 +21888,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 })
+
+
+
+
 
 
 
@@ -10953,7 +21904,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 <div className="px-2 py-1 text-xs text-muted">No recent files</div>
+
+
+
+
 
 
 
@@ -10961,7 +21920,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -10969,7 +21936,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ) : null}
+
+
+
+
 
 
 
@@ -10977,7 +21952,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -10985,7 +21968,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Open Saved Workspace" onClick={() => void openSavedWorkspace()} />
+
+
+
+
 
 
 
@@ -10993,11 +21984,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Duplicate Workspace" onClick={() => void duplicateWorkspace()} />
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -11005,7 +22008,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Save As" shortcut="Ctrl+Shift+S" onClick={() => void saveAs()} />
+
+
+
+
 
 
 
@@ -11013,7 +22024,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -11021,7 +22040,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -11029,7 +22056,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Close Editor" shortcut="Ctrl+W" onClick={() => (activeTab ? closeTab(activeTab.path) : undefined)} />
+
+
+
+
 
 
 
@@ -11037,7 +22072,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Close Folder" onClick={() => void closeFolder()} />
+
+
+
+
 
 
 
@@ -11045,7 +22088,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -11053,11 +22104,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     </div>
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -11065,7 +22128,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     <div
+
+
+
+
 
 
 
@@ -11073,11 +22144,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       {...compactPortalAttrs(variant)}
 
 
 
+
+
+
+
     >
+
+
+
+
 
 
 
@@ -11085,11 +22168,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Redo" shortcut="Ctrl+Y" onClick={() => runEditCommand("redo")} />
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -11097,7 +22192,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Copy" shortcut="Ctrl+C" onClick={() => runEditCommand("copy")} />
+
+
+
+
 
 
 
@@ -11105,11 +22208,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => runEditCommand("selectAll")} />
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -11117,7 +22232,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const ed = editorRef.current;
+
+
+
+
 
 
 
@@ -11125,7 +22248,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }} />
+
+
+
+
 
 
 
@@ -11133,7 +22264,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const ed = editorRef.current;
+
+
+
+
 
 
 
@@ -11141,11 +22280,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }} />
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -11153,11 +22304,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem label="Replace in Files" shortcut="Ctrl+Shift+H" onClick={() => void replaceInFiles()} />
 
 
 
+
+
+
+
       <MenuSep />
+
+
+
+
 
 
 
@@ -11165,7 +22328,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const ok = runEditorAction("editor.action.commentLine");
+
+
+
+
 
 
 
@@ -11173,7 +22344,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }} />
+
+
+
+
 
 
 
@@ -11181,7 +22360,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const ok = runEditorAction("editor.action.blockComment");
+
+
+
+
 
 
 
@@ -11189,7 +22376,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }} />
+
+
+
+
 
 
 
@@ -11197,7 +22392,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const ed = editorRef.current;
+
+
+
+
 
 
 
@@ -11205,7 +22408,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           notify({ kind: "info", title: "Emmet", message: "No editor is focused." });
+
+
+
+
 
 
 
@@ -11213,7 +22424,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -11221,7 +22440,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!ok) notify({ kind: "info", title: "Emmet", message: "Emmet is not available in this editor." });
+
+
+
+
 
 
 
@@ -11229,11 +22456,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     </div>
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -11241,260 +22480,521 @@ export default function AppShell() {
 
 
 
+
+
+
+
     <div
+
       className={menuPanelClass(variant, "w-max min-w-80 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+
       {...compactPortalAttrs(variant)}
+
     >
+
       <MenuItem label="Select All" shortcut="Ctrl+A" onClick={() => runEditCommand("selectAll")} />
 
+
+
       <MenuItem
+
         label="Expand Selection"
+
         shortcut="Shift+Alt+RightArrow"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Expand Selection", message: "No editor is focused." });
+
             return;
+
           }
 
+
+
           const ok =
+
             runEditorAction("editor.action.smartSelect.expand") ||
+
             runEditorAction("editor.action.smartSelect.expand") ||
+
             runEditorAction("editor.action.smartSelect.grow");
+
           if (!ok) notify({ kind: "info", title: "Expand Selection", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Shrink Selection"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Shrink Selection", message: "No editor is focused." });
+
             return;
+
           }
 
+
+
           const ok =
+
             runEditorAction("editor.action.smartSelect.shrink") ||
+
             runEditorAction("editor.action.smartSelect.shrink") ||
+
             runEditorAction("editor.action.smartSelect.shrink");
+
           if (!ok) notify({ kind: "info", title: "Shrink Selection", message: "This action is not available in this editor." });
+
         }}
+
       />
+
+
 
       <MenuSep />
 
+
+
       <MenuItem
+
         label="Copy Line Up"
+
         shortcut="Shift+Alt+UpArrow"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Copy Line Up", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.copyLinesUpAction");
+
           if (!ok) notify({ kind: "info", title: "Copy Line Up", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Copy Line Down"
+
         shortcut="Shift+Alt+DownArrow"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Copy Line Down", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.copyLinesDownAction");
+
           if (!ok) notify({ kind: "info", title: "Copy Line Down", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Move Line Up"
+
         shortcut="Alt+UpArrow"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Move Line Up", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.moveLinesUpAction");
+
           if (!ok) notify({ kind: "info", title: "Move Line Up", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Move Line Down"
+
         shortcut="Alt+DownArrow"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Move Line Down", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.moveLinesDownAction");
+
           if (!ok) notify({ kind: "info", title: "Move Line Down", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Duplicate Selection"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Duplicate Selection", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.duplicateSelection");
+
           if (!ok) notify({ kind: "info", title: "Duplicate Selection", message: "This action is not available in this editor." });
+
         }}
+
       />
+
+
 
       <MenuSep />
 
+
+
       <MenuItem
+
         label="Add Cursor Above"
+
         shortcut="Ctrl+Alt+UpArrow"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Add Cursor Above", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.insertCursorAbove");
+
           if (!ok) notify({ kind: "info", title: "Add Cursor Above", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Add Cursor Below"
+
         shortcut="Ctrl+Alt+DownArrow"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Add Cursor Below", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.insertCursorBelow");
+
           if (!ok) notify({ kind: "info", title: "Add Cursor Below", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Add Cursors to Line End"
+
         shortcut="Shift+Alt+I"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Add Cursors to Line End", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.insertCursorAtEndOfEachLineSelected");
+
           if (!ok) notify({ kind: "info", title: "Add Cursors to Line End", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Add Next Occurrence"
+
         shortcut="Ctrl+D"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Add Next Occurrence", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.addSelectionToNextFindMatch");
+
           if (!ok) notify({ kind: "info", title: "Add Next Occurrence", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Add Previous Occurrence"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Add Previous Occurrence", message: "No editor is focused." });
+
             return;
+
           }
+
           const ok = runEditorAction("editor.action.addSelectionToPreviousFindMatch");
+
           if (!ok) notify({ kind: "info", title: "Add Previous Occurrence", message: "This action is not available in this editor." });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Select All Occurrences"
+
         shortcut="Ctrl+Shift+L"
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Select All Occurrences", message: "No editor is focused." });
+
             return;
+
           }
+
+
 
           const ok =
+
             runEditorAction("editor.action.selectHighlights") ||
+
             runEditorAction("editor.action.changeAll") ||
+
             runEditorAction("editor.action.addSelectionToNextFindMatch");
+
           if (!ok) notify({ kind: "info", title: "Select All Occurrences", message: "This action is not available in this editor." });
+
         }}
+
       />
+
+
 
       <MenuSep />
 
+
+
       <MenuItem
+
         label="Switch to Ctrl+Click for Multi-Cursor"
+
         right={(
+
           <MenuCheck
+
             checked={
+
               getEditorOption((ed, monaco) => (ed as any).getOption?.((monaco as any).editor?.EditorOption?.multiCursorModifier) === "ctrlCmd") ===
+
               true
+
             }
+
           />
+
         )}
+
         keepOpen
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Multi-cursor", message: "No editor is focused." });
+
             return;
+
           }
+
+
 
           const ok = updateEditorOptions({ multiCursorModifier: "ctrlCmd" });
+
           if (!ok) notify({ kind: "info", title: "Multi-cursor", message: "Unable to update editor settings." });
+
         }}
+
       />
+
+
 
       <MenuItem
+
         label="Column Selection Mode"
+
         right={(
+
           <MenuCheck
+
             checked={
+
               getEditorOption((ed, monaco) =>
+
                 Boolean((ed as any).getOption?.((monaco as any).editor?.EditorOption?.columnSelection))
+
               ) === true
+
             }
+
           />
+
         )}
+
         keepOpen
+
         onClick={() => {
+
           const ed = editorRef.current;
+
           if (!ed) {
+
             notify({ kind: "info", title: "Column Selection Mode", message: "No editor is focused." });
+
             return;
+
           }
 
+
+
           const ok = runEditorAction("editor.action.toggleColumnSelection");
+
           if (!ok) notify({ kind: "info", title: "Column Selection Mode", message: "This action is not available in this editor." });
+
         }}
+
       />
+
     </div>
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -11502,342 +23002,684 @@ export default function AppShell() {
 
 
 
+
+
+
+
     <div className={menuPanelClass(variant, "w-max min-w-80 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")} {...compactPortalAttrs(variant)}>
-      <MenuItem
-        label="Command Palette…"
-        shortcut={kbRaw("view.commandPalette") || "Ctrl+Shift+P"}
-        onClick={() => {
-          setIsPaletteOpen(true);
-          if (variant === "menubar") closeMenubarMenus();
-        }}
-      />
 
       <MenuItem
-        label="Open View…"
+
+        label="Command Palette…"
+
+        shortcut={kbRaw("view.commandPalette") || "Ctrl+Shift+P"}
+
         onClick={() => {
-          void openQuickOpen();
+
+          setIsPaletteOpen(true);
+
           if (variant === "menubar") closeMenubarMenus();
+
         }}
+
       />
+
+
+
+      <MenuItem
+
+        label="Open View…"
+
+        onClick={() => {
+
+          void openQuickOpen();
+
+          if (variant === "menubar") closeMenubarMenus();
+
+        }}
+
+      />
+
+
 
       <MenuSep />
 
+
+
       <div className="relative">
+
         <MenuItem
+
           label="Appearance"
+
           right={<ChevronRight className="h-3.5 w-3.5" />}
+
           keepOpen
+
           onMouseEnter={(e) => {
+
             setViewMenuSub("appearance");
+
             setViewAppearanceAnchor(e.currentTarget.getBoundingClientRect());
+
           }}
+
           onClick={() => setViewMenuSub((v) => (v === "appearance" ? null : "appearance"))}
+
         />
+
+
 
         {viewMenuSub === "appearance" && viewAppearanceAnchor ? (
+
           <MenuPortal anchor={viewAppearanceAnchor} approxWidth={360}>
+
             <div
+
               className={menuPanelClass(variant, "w-max min-w-80 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+
               onMouseEnter={() => setViewMenuSub("appearance")}
+
               onMouseLeave={() => {
+
                 setViewMenuSub(null);
+
                 setViewAppearanceSub(null);
+
                 setViewAppearanceSubAnchor(null);
+
               }}
+
               {...compactPortalAttrs(variant)}
+
               {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+
             >
+
               <MenuItem label="Full Screen" shortcut="F11" onClick={() => toggleFullscreenApp()} />
+
               <MenuItem label="Zen Mode" shortcut="Ctrl+K Z" right={<MenuCheck checked={isZenMode} />} onClick={() => toggleZenMode()} />
+
               <MenuItem label="Centered Layout" right={<MenuCheck checked={isCenteredLayout} />} onClick={() => toggleCenteredLayout()} />
+
               <MenuSep />
+
               <MenuItem label="Menu Bar" right={<MenuCheck checked={isMenuBarVisible} />} onClick={() => toggleMenuBarVisible()} />
+
               <MenuItem label="Primary Side Bar" shortcut={kbRaw("view.primarySidebar") || "Ctrl+B"} right={<MenuCheck checked={isPrimarySidebarOpen} />} onClick={() => togglePrimarySidebar()} />
+
               <MenuItem label="Secondary Side Bar" right={<MenuCheck checked={isChatDockOpen} />} onClick={() => toggleSecondarySideBar()} />
+
               <MenuItem label="Status Bar" right={<MenuCheck checked={isStatusBarVisible} />} onClick={() => toggleStatusBarVisible()} />
+
               <MenuItem label="Panel" right={<MenuCheck checked={isTerminalOpen} />} onClick={() => togglePanelVisible()} />
+
               <MenuSep />
+
               <MenuItem label="Move Primary Side Bar Right" right={<MenuCheck checked={primarySidebarSide === "right"} />} onClick={() => movePrimarySideBarRight()} />
 
+
+
               <div className="relative">
+
                 <MenuItem
+
                   label="Activity Bar Position"
+
                   right={<ChevronRight className="h-3.5 w-3.5" />}
+
                   keepOpen
+
                   onMouseEnter={(e) => {
+
                     setViewAppearanceSub("activityBarPosition");
+
                     setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+
                   }}
+
                   onClick={() => setViewAppearanceSub((v) => (v === "activityBarPosition" ? null : "activityBarPosition"))}
+
                 />
+
+
 
                 {viewAppearanceSub === "activityBarPosition" && viewAppearanceSubAnchor ? (
+
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
+
                     <div
+
                       className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+
                       {...compactPortalAttrs(variant)}
+
                       {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+
                     >
+
                       <MenuItem label="Default" right={<MenuCheck checked={activityBarPosition === "default"} />} onClick={() => setActivityBarPosition("default")} />
+
                       <MenuItem label="Top" right={<MenuCheck checked={activityBarPosition === "top"} />} onClick={() => setActivityBarPosition("top")} />
+
                       <MenuItem label="Bottom" right={<MenuCheck checked={activityBarPosition === "bottom"} />} onClick={() => setActivityBarPosition("bottom")} />
+
                       <MenuItem label="Hidden" right={<MenuCheck checked={activityBarPosition === "hidden"} />} onClick={() => setActivityBarPosition("hidden")} />
+
                     </div>
+
                   </MenuPortal>
+
                 ) : null}
+
               </div>
 
+
+
               <div className="relative">
+
                 <MenuItem
+
                   label="Panel Position"
+
                   right={<ChevronRight className="h-3.5 w-3.5" />}
+
                   keepOpen
+
                   onMouseEnter={(e) => {
+
                     setViewAppearanceSub("panelPosition");
+
                     setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+
                   }}
+
                   onClick={() => setViewAppearanceSub((v) => (v === "panelPosition" ? null : "panelPosition"))}
+
                 />
+
+
 
                 {viewAppearanceSub === "panelPosition" && viewAppearanceSubAnchor ? (
+
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
+
                     <div
+
                       className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+
                       onMouseEnter={() => {
+
                         setViewMenuSub("appearance");
+
                         setViewAppearanceSub("panelPosition");
+
                       }}
+
                       {...compactPortalAttrs(variant)}
+
                       {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+
                     >
+
                       <MenuItem
+
                         label="Top"
+
                         right={<MenuCheck checked={panelPosition === "top"} />}
+
                         onClick={() => {
+
                           setPanelPosition("top");
+
                           setIsTerminalOpen(true);
+
                         }}
+
                       />
+
                       <MenuItem
+
                         label="Left"
+
                         right={<MenuCheck checked={panelPosition === "left"} />}
+
                         onClick={() => {
+
                           setPanelPosition("left");
+
                           setIsTerminalOpen(true);
+
                         }}
+
                       />
+
                       <MenuItem
+
                         label="Right"
+
                         right={<MenuCheck checked={panelPosition === "right"} />}
+
                         onClick={() => {
+
                           setPanelPosition("right");
+
                           setIsTerminalOpen(true);
+
                         }}
+
                       />
+
                       <MenuItem
+
                         label="Bottom"
+
                         right={<MenuCheck checked={panelPosition === "bottom"} />}
+
                         onClick={() => {
+
                           setPanelPosition("bottom");
+
                           setIsTerminalOpen(true);
+
                         }}
+
                       />
+
                     </div>
+
                   </MenuPortal>
+
                 ) : null}
+
               </div>
+
+
 
               <div className="relative">
+
                 <MenuItem
+
                   label="Tab Bar"
+
                   right={<ChevronRight className="h-3.5 w-3.5" />}
+
                   keepOpen
+
                   onMouseEnter={(e) => {
+
                     setViewAppearanceSub("tabBar");
+
                     setViewAppearanceSubAnchor(e.currentTarget.getBoundingClientRect());
+
                   }}
+
                   onClick={() => setViewAppearanceSub((v) => (v === "tabBar" ? null : "tabBar"))}
+
                 />
 
+
+
                 {viewAppearanceSub === "tabBar" && viewAppearanceSubAnchor ? (
+
                   <MenuPortal anchor={viewAppearanceSubAnchor} approxWidth={240}>
+
                     <div
+
                       className={menuPanelClass(variant, "w-max min-w-56 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+
                       onMouseEnter={() => {
+
                         setViewMenuSub("appearance");
+
                         setViewAppearanceSub("tabBar");
+
                       }}
+
                       {...compactPortalAttrs(variant)}
+
                       {...(variant === "menubar" ? ({ "data-menubar-portal": true } as const) : {})}
+
                     >
+
                       <MenuItem label="Multiple Tabs" right={<MenuCheck checked={tabBarMode === "multiple"} />} onClick={() => setTabBarMode("multiple")} />
+
                       <MenuItem label="Single Tabs" right={<MenuCheck checked={tabBarMode === "single"} />} onClick={() => setTabBarMode("single")} />
+
                       <MenuItem label="Hidden" right={<MenuCheck checked={tabBarMode === "hidden"} />} onClick={() => setTabBarMode("hidden")} />
+
                     </div>
+
                   </MenuPortal>
+
                 ) : null}
+
               </div>
 
+
+
               <MenuSep />
+
               <MenuItem label="Minimap" right={<MenuCheck checked={isMinimapEnabled} />} onClick={() => toggleMinimap()} />
+
               <MenuItem label="Breadcrumbs" right={<MenuCheck checked={isBreadcrumbsEnabled} />} onClick={() => toggleBreadcrumbs()} />
+
               <MenuItem label="Sticky Scroll" right={<MenuCheck checked={isStickyScrollEnabled} />} onClick={() => toggleStickyScroll()} />
+
               <MenuItem label="Render Whitespace" right={<MenuCheck checked={isRenderWhitespaceEnabled} />} onClick={() => toggleRenderWhitespace()} />
-              <MenuItem label="Render Control Characters" right={<MenuCheck checked={isRenderControlCharsEnabled} />} onClick={() => toggleRenderControlChars()} />
+
+
             </div>
+
           </MenuPortal>
+
         ) : null}
+
       </div>
 
+
+
       <MenuSep />
+
       <MenuItem label="Zoom In" shortcut={kbRaw("view.zoomIn") || "Ctrl+="} onClick={() => zoomIn()} />
+
       <MenuItem label="Zoom Out" shortcut={kbRaw("view.zoomOut") || "Ctrl+-"} onClick={() => zoomOut()} />
+
       <MenuItem label="Reset Zoom" shortcut={kbRaw("view.zoomReset") || "Ctrl+0"} onClick={() => zoomReset()} />
 
+
+
       <MenuSep />
+
       <div className="relative">
+
         <MenuItem
+
           label="Editor Layout"
+
           right={<ChevronRight className="h-3.5 w-3.5" />}
+
           keepOpen
+
           onMouseEnter={(e) => {
+
             setViewMenuSub("editorLayout");
+
             setViewEditorLayoutAnchor(e.currentTarget.getBoundingClientRect());
+
           }}
+
           onClick={() => setViewMenuSub((v) => (v === "editorLayout" ? null : "editorLayout"))}
+
         />
 
+
+
         {viewMenuSub === "editorLayout" && viewEditorLayoutAnchor ? (
+
           <MenuPortal anchor={viewEditorLayoutAnchor} approxWidth={320}>
+
             <div
+
               className={menuPanelClass(variant, "w-max min-w-64 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+
               onMouseEnter={() => setViewMenuSub("editorLayout")}
+
               onMouseLeave={() => setViewMenuSub(null)}
+
               {...compactPortalAttrs(variant)}
+
             >
+
               <MenuItem label="Split Up" shortcut={kbRaw("view.splitEditorInGroup") || "Ctrl+K Ctrl+\\"} onClick={() => notify({ kind: "info", title: "Split Up", message: "Coming next." })} />
+
               <MenuItem label="Split Down" shortcut={kbRaw("view.splitEditor") || "Ctrl+\\"} onClick={() => notify({ kind: "info", title: "Split Down", message: "Coming next." })} />
+
               <MenuItem label="Split Left" onClick={() => notify({ kind: "info", title: "Split Left", message: "Coming next." })} />
+
               <MenuItem label="Split Right" onClick={() => notify({ kind: "info", title: "Split Right", message: "Coming next." })} />
+
               <MenuSep />
+
               <MenuItem label="Split in Group" shortcut="Ctrl+Shift+\\" onClick={() => notify({ kind: "info", title: "Split in Group", message: "Coming next." })} />
+
               <MenuSep />
+
               <MenuItem label="Single" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+
               <MenuItem label="Two Columns" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+
               <MenuItem label="Three Columns" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+
               <MenuItem label="Two Rows" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+
               <MenuItem label="Three Rows" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+
               <MenuItem label="Grid 2x2" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+
               <MenuItem label="Two Rows Right" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+
               <MenuItem label="Two Columns Bottom" onClick={() => notify({ kind: "info", title: "Layout", message: "Coming next." })} />
+
               <MenuSep />
+
               <MenuItem label="Flip Layout" shortcut="Shift+Alt+0" onClick={() => notify({ kind: "info", title: "Flip Layout", message: "Coming next." })} />
+
             </div>
+
           </MenuPortal>
+
         ) : null}
+
       </div>
 
+
+
       <MenuSep />
+
       <MenuItem label="Explorer" shortcut={kbRaw("view.explorer") || "Ctrl+Shift+E"} onClick={() => setActivity("explorer")} />
+
       <MenuItem label="Search" shortcut={kbRaw("view.search") || "Ctrl+Shift+F"} onClick={() => setActivity("search")} />
+
       <MenuItem label="Source Control" shortcut={kbRaw("view.sourceControl") || "Ctrl+Shift+G"} onClick={() => setActivity("scm")} />
+
       <MenuItem label="Run" shortcut={kbRaw("view.runDebug") || "Ctrl+Shift+D"} onClick={() => notify({ kind: "info", title: "Run", message: "Coming next." })} />
+
       <MenuItem label="Extensions" shortcut={kbRaw("view.extensions") || "Ctrl+Shift+X"} onClick={() => notify({ kind: "info", title: "Extensions", message: "Coming next." })} />
 
-      <MenuSep />
-      <MenuItem label="Problems" shortcut="Ctrl+Shift+M" onClick={() => notify({ kind: "info", title: "Problems", message: "Coming next." })} />
-      <MenuItem label="Output" shortcut="Ctrl+Shift+U" onClick={() => notify({ kind: "info", title: "Output", message: "Coming next." })} />
-      <MenuItem label="Debug Console" shortcut="Ctrl+Shift+Y" onClick={() => notify({ kind: "info", title: "Debug Console", message: "Coming next." })} />
-      <MenuItem label="Terminal" shortcut="Ctrl+`" onClick={() => toggleTerminal()} />
+
 
       <MenuSep />
+
+      <MenuItem label="Problems" shortcut="Ctrl+Shift+M" onClick={() => notify({ kind: "info", title: "Problems", message: "Coming next." })} />
+
+      <MenuItem label="Output" shortcut="Ctrl+Shift+U" onClick={() => notify({ kind: "info", title: "Output", message: "Coming next." })} />
+
+      <MenuItem label="Debug Console" shortcut="Ctrl+Shift+Y" onClick={() => notify({ kind: "info", title: "Debug Console", message: "Coming next." })} />
+
+      <MenuItem label="Terminal" shortcut="Ctrl+`" onClick={() => toggleTerminal()} />
+
+
+
+      <MenuSep />
+
       <MenuItem label="Word Wrap" shortcut="Alt+Z" onClick={() => notify({ kind: "info", title: "Word Wrap", message: "Coming next." })} />
+
     </div>
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
   const renderRunMenuPanel = (variant: MenubarVariant) => (
 
+
+
     <div
+
       className={menuPanelClass(variant, "w-72 overflow-hidden")}
+
       {...compactPortalAttrs(variant)}
+
     >
+
       <MenuItem label="Start Debugging" shortcut="F5" onClick={() => notify({ kind: "info", title: "Start Debugging", message: "Coming next." })} />
+
       <MenuItem label="Run Without Debugging" shortcut="Ctrl+F5" onClick={() => notify({ kind: "info", title: "Run Without Debugging", message: "Coming next." })} />
+
       <MenuItem label="Stop Debugging" shortcut="Shift+F5" onClick={() => notify({ kind: "info", title: "Stop Debugging", message: "Coming next." })} />
+
       <MenuItem label="Restart Debugging" shortcut="Ctrl+Shift+F5" onClick={() => notify({ kind: "info", title: "Restart Debugging", message: "Coming next." })} />
+
     </div>
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
   const renderTerminalMenuPanel = (variant: MenubarVariant) => (
 
+
+
     <div
+
       className={menuPanelClass(variant, "w-80 overflow-hidden")}
+
       {...compactPortalAttrs(variant)}
+
     >
+
       <MenuItem
+
         label="New Terminal"
+
         shortcut="Ctrl+Shift+`"
+
         onClick={() => {
+
           void closeTerminal().finally(() => {
+
             toggleTerminal();
+
           });
+
         }}
+
       />
 
+
+
       <MenuItem
+
         label="Split Terminal"
+
         shortcut="Ctrl+Shift+5"
+
         onClick={() => notify({ kind: "info", title: "Split Terminal", message: "Coming next." })}
+
       />
 
+
+
       <MenuItem
+
         label="New Terminal Window"
+
         shortcut="Ctrl+Shift+Alt+`"
+
         onClick={() => notify({ kind: "info", title: "New Terminal Window", message: "Coming next." })}
+
       />
+
+
 
       <MenuSep />
+
+
 
       <MenuItem label="Run Task…" onClick={() => notify({ kind: "info", title: "Run Task", message: "Coming next." })} />
 
+
+
       <MenuItem
+
         label="Run Build Task…"
+
         shortcut="Ctrl+Shift+B"
+
         onClick={() => notify({ kind: "info", title: "Run Build Task", message: "Coming next." })}
+
       />
+
+
 
       <MenuItem label="Run Active File" onClick={() => notify({ kind: "info", title: "Run Active File", message: "Coming next." })} />
 
+
+
       <MenuItem label="Run Selected Text" onClick={() => notify({ kind: "info", title: "Run Selected Text", message: "Coming next." })} />
 
+
+
       <MenuSep />
+
+
 
       <MenuItem label="Show Running Tasks…" onClick={() => notify({ kind: "info", title: "Show Running Tasks", message: "Coming next." })} />
 
+
+
       <MenuItem label="Restart Running Tasks…" onClick={() => notify({ kind: "info", title: "Restart Running Tasks", message: "Coming next." })} />
+
+
 
       <MenuItem label="Terminate Task…" onClick={() => notify({ kind: "info", title: "Terminate Task", message: "Coming next." })} />
 
+
+
       <MenuSep />
+
+
 
       <MenuItem label="Configure Tasks…" onClick={() => notify({ kind: "info", title: "Configure Tasks", message: "Coming next." })} />
 
+
+
       <MenuItem label="Configure Default Build Task…" onClick={() => notify({ kind: "info", title: "Configure Default Build Task", message: "Coming next." })} />
+
     </div>
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -11845,11 +23687,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     <div className={menuPanelClass("compact", "w-max min-w-56 overflow-hidden")} data-compact-menubar-portal>
 
 
 
+
+
+
+
       <MenuItem
+
+
+
+
 
 
 
@@ -11857,7 +23711,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+
 
 
 
@@ -11865,7 +23727,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         onMouseEnter={(e) => {
+
+
+
+
 
 
 
@@ -11873,11 +23743,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -11885,7 +23767,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSub("file");
+
+
+
+
 
 
 
@@ -11893,7 +23783,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -11901,7 +23799,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem
+
+
+
+
 
 
 
@@ -11909,7 +23815,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+
 
 
 
@@ -11917,7 +23831,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         onMouseEnter={(e) => {
+
+
+
+
 
 
 
@@ -11925,11 +23847,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -11937,7 +23871,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSub("edit");
+
+
+
+
 
 
 
@@ -11945,7 +23887,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -11953,7 +23903,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem
+
+
+
+
 
 
 
@@ -11961,7 +23919,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+
 
 
 
@@ -11969,7 +23935,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         onMouseEnter={(e) => {
+
+
+
+
 
 
 
@@ -11977,11 +23951,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -11989,7 +23975,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSub("selection");
+
+
+
+
 
 
 
@@ -11997,7 +23991,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -12005,7 +24007,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem
+
+
+
+
 
 
 
@@ -12013,7 +24023,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+
 
 
 
@@ -12021,7 +24039,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         onMouseEnter={(e) => {
+
+
+
+
 
 
 
@@ -12029,11 +24055,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -12041,7 +24079,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSub("view");
+
+
+
+
 
 
 
@@ -12049,7 +24095,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -12057,7 +24111,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <MenuItem
+
+
+
+
 
 
 
@@ -12065,7 +24127,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+
 
 
 
@@ -12073,7 +24143,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         onMouseEnter={(e) => {
+
+
+
+
 
 
 
@@ -12081,11 +24159,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSubAnchor(e.currentTarget.getBoundingClientRect());
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -12093,7 +24183,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSub("run");
+
+
+
+
 
 
 
@@ -12101,11 +24199,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }}
 
 
 
+
+
+
+
       />
+
+
+
+
 
 
 
@@ -12113,7 +24223,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         label="Terminal"
+
+
+
+
 
 
 
@@ -12121,7 +24239,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         keepOpen
+
+
+
+
 
 
 
@@ -12129,7 +24255,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSub("terminal");
+
+
+
+
 
 
 
@@ -12137,7 +24271,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -12145,7 +24287,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setCompactMenubarSub("terminal");
+
+
+
+
 
 
 
@@ -12153,7 +24303,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }}
+
+
+
+
 
 
 
@@ -12161,11 +24319,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     </div>
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -12173,11 +24343,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     renderFileMenuPanel("compact")
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -12185,11 +24367,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     renderEditMenuPanel("compact")
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -12197,11 +24391,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     renderSelectionMenuPanel("compact")
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -12209,11 +24415,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     renderViewMenuPanel("compact")
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -12221,11 +24439,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     renderRunMenuPanel("compact")
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -12233,11 +24463,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     renderTerminalMenuPanel("compact")
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -12249,7 +24495,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     // Ensure timers don't keep running after a hard close.
+
+
+
+
 
 
 
@@ -12257,7 +24511,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       clearFileRecentCloseTimer();
+
+
+
+
 
 
 
@@ -12265,7 +24527,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -12273,7 +24543,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [recentFiles, setRecentFiles] = useState<string[]>([]);
+
+
+
+
 
 
 
@@ -12281,7 +24559,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+
+
+
+
 
 
 
@@ -12289,11 +24575,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [inlineRenamePath, setInlineRenamePath] = useState<string | null>(null);
 
 
 
+
+
+
+
   const [inlineRenameValue, setInlineRenameValue] = useState<string>("");
+
+
+
+
+
+
+
+
 
 
 
@@ -12309,7 +24611,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [tabs, setTabs] = useState<EditorTab[]>([]);
+
+
+
+
 
 
 
@@ -12317,7 +24631,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -12325,11 +24647,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (activeTabPath && tabs.some((t) => t.path === activeTabPath)) return;
 
 
 
+
+
+
+
     setActiveTabPath(tabs[tabs.length - 1]!.path);
+
+
+
+
 
 
 
@@ -12341,7 +24675,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const tabsScrollRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -12349,7 +24695,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [tabsIndicator, setTabsIndicator] = useState<{ visible: boolean; leftPx: number; widthPx: number }>({
+
+
+
+
 
 
 
@@ -12357,11 +24711,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     leftPx: 0,
 
 
 
+
+
+
+
     widthPx: 0,
+
+
+
+
 
 
 
@@ -12373,7 +24739,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const tabNavRef = useRef<{ history: string[]; index: number; suppress: boolean }>({ history: [], index: -1, suppress: false });
+
+
+
+
 
 
 
@@ -12385,11 +24763,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const updateTabsIndicator = useCallback(() => {
 
 
 
+
+
+
+
     const el = tabsScrollRef.current;
+
+
+
+
 
 
 
@@ -12401,7 +24795,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const cw = el.clientWidth;
+
+
+
+
 
 
 
@@ -12409,7 +24815,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!cw || sw <= cw) {
+
+
+
+
 
 
 
@@ -12417,7 +24831,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
+
+
+
+
 
 
 
@@ -12429,7 +24851,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const maxLeft = sw - cw;
+
+
+
+
 
 
 
@@ -12441,7 +24875,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const minW = 22;
+
+
+
+
 
 
 
@@ -12449,11 +24895,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const w = Math.max(minW, Math.min(maxW, Math.round((cw * cw) / sw)));
 
 
 
+
+
+
+
     const left = Math.round(t * Math.max(0, cw - w));
+
+
+
+
+
+
+
+
 
 
 
@@ -12469,7 +24931,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (tabsIndicatorHideTimerRef.current) window.clearTimeout(tabsIndicatorHideTimerRef.current);
+
+
+
+
 
 
 
@@ -12477,7 +24951,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setTabsIndicator((prev) => ({ ...prev, visible: false }));
+
+
+
+
 
 
 
@@ -12485,7 +24967,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }, 650);
+
+
+
+
 
 
 
@@ -12497,7 +24987,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -12505,11 +25007,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.addEventListener("resize", onResize);
 
 
 
+
+
+
+
     return () => window.removeEventListener("resize", onResize);
+
+
+
+
 
 
 
@@ -12521,7 +25035,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [searchQuery, setSearchQuery] = useState("");
+
+
+
+
 
 
 
@@ -12529,7 +25055,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isSearching, setIsSearching] = useState(false);
+
+
+
+
 
 
 
@@ -12537,7 +25071,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const searchResultsScrollRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -12545,7 +25087,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const searchRequestGenRef = useRef(0);
+
+
+
+
 
 
 
@@ -12553,7 +25103,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [searchVisibleCount, setSearchVisibleCount] = useState(searchPageSize);
+
+
+
+
 
 
 
@@ -12561,7 +25119,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return searchResults.slice(0, Math.max(0, Math.min(searchVisibleCount, searchResults.length)));
+
+
+
+
 
 
 
@@ -12569,7 +25135,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const loadMoreSearchResults = useCallback(() => {
+
+
+
+
 
 
 
@@ -12577,7 +25151,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [searchResults.length]);
+
+
+
+
 
 
 
@@ -12585,7 +25167,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const rootEl = searchResultsScrollRef.current;
+
+
+
+
 
 
 
@@ -12593,7 +25183,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!rootEl || !sentinel) return;
+
+
+
+
 
 
 
@@ -12601,7 +25199,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (visibleSearchResults.length >= searchResults.length) return;
+
+
+
+
 
 
 
@@ -12609,7 +25215,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       (entries) => {
+
+
+
+
 
 
 
@@ -12617,7 +25231,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!entry?.isIntersecting) return;
+
+
+
+
 
 
 
@@ -12625,7 +25247,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       },
+
+
+
+
 
 
 
@@ -12633,7 +25263,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         root: rootEl,
+
+
+
+
 
 
 
@@ -12641,7 +25279,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         threshold: 0,
+
+
+
+
 
 
 
@@ -12649,7 +25295,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     );
+
+
+
+
 
 
 
@@ -12657,11 +25311,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => observer.disconnect();
 
 
 
+
+
+
+
   }, [isSearching, loadMoreSearchResults, searchResults.length, visibleSearchResults.length]);
+
+
+
+
 
 
 
@@ -12673,7 +25339,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [keyStatus, setKeyStatus] = useState<KeyStatus | null>(null);
+
+
+
+
 
 
 
@@ -12681,7 +25359,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [encryptionPasswordDraft, setEncryptionPasswordDraft] = useState("");
+
+
+
+
 
 
 
@@ -12689,7 +25375,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [providerKeyStatuses, setProviderKeyStatuses] = useState<Record<string, KeyStatus | null>>({});
+
+
+
+
 
 
 
@@ -12697,11 +25391,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [showKeySaved, setShowKeySaved] = useState(false);
 
 
 
+
+
+
+
   const [showKeyCleared, setShowKeyCleared] = useState(false);
+
+
+
+
 
 
 
@@ -12713,7 +25419,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [authProfile, setAuthProfile] = useState<AuthProfile | null>(null);
+
+
+
+
 
 
 
@@ -12721,7 +25439,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isAuthBusy, setIsAuthBusy] = useState(false);
+
+
+
+
 
 
 
@@ -12733,7 +25459,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const initialChatIdRef = useRef<string>(`${Date.now()}-${Math.random().toString(16).slice(2)}`);
+
+
+
+
 
 
 
@@ -12741,7 +25479,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [chatHistoryQuery, setChatHistoryQuery] = useState("");
+
+
+
+
 
 
 
@@ -12749,7 +25495,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const now = Date.now();
+
+
+
+
 
 
 
@@ -12757,7 +25511,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       {
+
+
+
+
 
 
 
@@ -12765,7 +25527,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         title: "Chat 1",
+
+
+
+
 
 
 
@@ -12773,11 +25543,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         updatedAt: now,
 
 
 
+
+
+
+
         messages: [],
+
+
+
+
 
 
 
@@ -12786,7 +25568,16 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
         draft: "",
+
+
+
+
 
 
 
@@ -12794,7 +25585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       },
+
+
+
+
 
 
 
@@ -12802,7 +25601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -12814,7 +25621,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [chatBusy, setChatBusy] = useState(false);
+
+
+
+
 
 
 
@@ -12822,7 +25641,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isChatDockOpen, setIsChatDockOpen] = useState(false);
+
+
+
+
 
 
 
@@ -12830,7 +25657,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [explorerWidth, setExplorerWidth] = useState(300);
+
+
+
+
 
 
 
@@ -12838,7 +25673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const lastExplorerWidthRef = useRef(300);
+
+
+
+
 
 
 
@@ -12846,7 +25689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [terminalHeight, setTerminalHeight] = useState(240);
+
+
+
+
 
 
 
@@ -12854,7 +25705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [panelTabsMenuAnchor, setPanelTabsMenuAnchor] = useState<DOMRect | null>(null);
+
+
+
+
 
 
 
@@ -12862,7 +25721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const panelTabsMenuRootRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -12870,7 +25737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsPanelTabsMenuOpen(false);
+
+
+
+
 
 
 
@@ -12878,11 +25753,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
 
 
 
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -12890,7 +25777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const onDown = (ev: MouseEvent) => {
+
+
+
+
 
 
 
@@ -12898,7 +25793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!root) return;
+
+
+
+
 
 
 
@@ -12906,7 +25809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (t && root.contains(t)) return;
+
+
+
+
 
 
 
@@ -12914,7 +25825,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -12922,11 +25841,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (ev.key === "Escape") closePanelTabsMenu();
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -12934,7 +25865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.addEventListener("keydown", onKey, true);
+
+
+
+
 
 
 
@@ -12942,7 +25881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       window.removeEventListener("mousedown", onDown, true);
+
+
+
+
 
 
 
@@ -12950,7 +25897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -12958,7 +25913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -12966,7 +25929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!ed) return;
+
+
+
+
 
 
 
@@ -12974,7 +25945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -12982,7 +25961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const p = ed.getPosition();
+
+
+
+
 
 
 
@@ -12990,7 +25977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch {
+
+
+
+
 
 
 
@@ -12998,7 +25993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -13006,7 +26009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [isTerminalOpen, panelPosition, terminalWidth, terminalHeight]);
+
+
+
+
 
 
 
@@ -13014,7 +26025,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsZenMode((v) => {
+
+
+
+
 
 
 
@@ -13022,7 +26041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (next) {
+
+
+
+
 
 
 
@@ -13030,7 +26057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           isPrimarySidebarOpen,
+
+
+
+
 
 
 
@@ -13038,7 +26073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           isTerminalOpen,
+
+
+
+
 
 
 
@@ -13046,7 +26089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           activityBarPosition,
+
+
+
+
 
 
 
@@ -13054,7 +26105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setIsPrimarySidebarOpen(false);
+
+
+
+
 
 
 
@@ -13062,7 +26121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setIsTerminalOpen(false);
+
+
+
+
 
 
 
@@ -13070,7 +26137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setActivityBarPosition("hidden");
+
+
+
+
 
 
 
@@ -13078,7 +26153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const r = zenRestoreRef.current;
+
+
+
+
 
 
 
@@ -13086,7 +26169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setIsPrimarySidebarOpen(r.isPrimarySidebarOpen);
+
+
+
+
 
 
 
@@ -13094,7 +26185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setIsTerminalOpen(r.isTerminalOpen);
+
+
+
+
 
 
 
@@ -13102,7 +26201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setActivityBarPosition(r.activityBarPosition);
+
+
+
+
 
 
 
@@ -13110,7 +26217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setIsStatusBarVisible(true);
+
+
+
+
 
 
 
@@ -13118,7 +26233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -13126,7 +26249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -13134,7 +26265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -13142,7 +26281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const toggleCenteredLayout = useCallback(() => {
+
+
+
+
 
 
 
@@ -13150,7 +26297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -13158,11 +26313,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsMenuBarVisible((v) => !v);
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -13170,11 +26337,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsStatusBarVisible((v) => !v);
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -13182,11 +26361,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsTerminalOpen((v) => !v);
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -13194,11 +26385,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsChatDockOpen((v) => !v);
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -13206,7 +26409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setPrimarySidebarSide((v) => (v === "right" ? "left" : "right"));
+
+
+
+
 
 
 
@@ -13214,7 +26425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [panelTab, setPanelTab] = useState<"problems" | "output" | "debug" | "terminal" | "ports">("terminal");
+
+
+
+
 
 
 
@@ -13222,7 +26441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [isModelPickerOpen, setIsModelPickerOpen] = useState(false);
+
+
+
+
 
 
 
@@ -13230,11 +26457,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [providerModels, setProviderModels] = useState<Record<string, Array<{ id: string; name?: string | null }>>>({});
 
 
 
+
+
+
+
   const [loadingModels, setLoadingModels] = useState<Record<string, boolean>>({});
+
+
+
+
 
 
 
@@ -13246,7 +26485,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const formatErr = useCallback((e: unknown): string => {
+
+
+
+
 
 
 
@@ -13254,11 +26505,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return e.message || String(e);
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -13266,7 +26529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (e === null) return "<null>";
+
+
+
+
 
 
 
@@ -13274,7 +26545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -13282,7 +26561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return s && s !== "{}" ? s : String(e);
+
+
+
+
 
 
 
@@ -13290,7 +26577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return String(e);
+
+
+
+
 
 
 
@@ -13298,7 +26593,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -13310,7 +26617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const msg = raw.trim();
+
+
+
+
 
 
 
@@ -13322,11 +26637,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (/Incorrect API key provided/i.test(msg) || /invalid[_\s-]*api[_\s-]*key/i.test(msg)) {
 
 
 
+
+
+
+
       return "Invalid API key";
+
+
+
+
 
 
 
@@ -13338,7 +26669,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const m = msg.match(/status\s+(\d+)/i);
+
+
+
+
 
 
 
@@ -13346,11 +26689,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (status === 401 || status === 403) return "Authorization failed";
 
 
 
+
+
+
+
     if (status === 429) return "Rate limited";
+
+
+
+
 
 
 
@@ -13362,11 +26717,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (/Unauthorized/i.test(msg)) return "Unauthorized";
 
 
 
+
+
+
+
     if (/rate limit/i.test(msg)) return "Rate limited";
+
+
+
+
 
 
 
@@ -13378,11 +26749,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const firstLine = msg.split(/\r?\n/)[0]?.trim() ?? msg;
 
 
 
+
+
+
+
     return firstLine.length > 140 ? `${firstLine.slice(0, 137)}...` : firstLine;
+
+
+
+
 
 
 
@@ -13394,7 +26781,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -13402,7 +26801,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setChatHistoryQuery(chatHistoryQueryDraft.trim());
+
+
+
+
 
 
 
@@ -13410,7 +26817,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => window.clearTimeout(t);
+
+
+
+
 
 
 
@@ -13422,7 +26837,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const chatHistorySessions = useMemo(() => {
+
+
+
+
 
 
 
@@ -13430,7 +26857,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const rawTokens = q.split(/\s+/).map((t) => t.trim()).filter(Boolean);
+
+
+
+
 
 
 
@@ -13442,7 +26877,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const all = chatSessions
+
+
+
+
 
 
 
@@ -13450,7 +26897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       .sort((a, b) => b.updatedAt - a.updatedAt)
+
+
+
+
 
 
 
@@ -13458,7 +26913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       .map((s) => {
+
+
+
+
 
 
 
@@ -13470,7 +26933,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         const userText = s.messages
+
+
+
+
 
 
 
@@ -13478,7 +26953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           .map((m) => m.content)
+
+
+
+
 
 
 
@@ -13486,7 +26969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const titleHay = s.title.toLowerCase();
+
+
+
+
 
 
 
@@ -13498,11 +26989,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         const titleMatch = tokens.every((tok) => titleHay.includes(tok));
 
 
 
+
+
+
+
         const userMatch = tokens.every((tok) => userHay.includes(tok));
+
+
+
+
 
 
 
@@ -13514,7 +27021,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         let score = 0;
+
+
+
+
 
 
 
@@ -13522,7 +27041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const w = tok.length >= 4 ? 2 : 1;
+
+
+
+
 
 
 
@@ -13530,7 +27057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           else score += w;
+
+
+
+
 
 
 
@@ -13538,7 +27073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (titleMatch) score += 100;
+
+
+
+
 
 
 
@@ -13546,11 +27089,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       })
 
 
 
+
+
+
+
       .filter((x): x is { s: ChatSession; score: number; titleMatch: boolean } => x !== null);
+
+
+
+
+
+
+
+
 
 
 
@@ -13566,7 +27125,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     return scored
+
+
+
+
 
 
 
@@ -13574,11 +27145,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       .slice(0, 120)
 
 
 
+
+
+
+
       .map((x) => x.s);
+
+
+
+
 
 
 
@@ -13590,7 +27173,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -13598,11 +27193,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (chatSessions.some((s) => s.id === activeChatId)) return;
 
 
 
+
+
+
+
     setActiveChatId(chatSessions[0]!.id);
+
+
+
+
 
 
 
@@ -13614,7 +27221,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const devConsoleError = useCallback(
+
+
+
+
 
 
 
@@ -13622,7 +27241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!import.meta.env?.DEV) return;
+
+
+
+
 
 
 
@@ -13630,11 +27257,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
 
 
 
+
+
+
+
     []
+
+
+
+
 
 
 
@@ -13646,11 +27285,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const didLoadChatHistoryRef = useRef(false);
 
 
 
+
+
+
+
   const isWritingChatHistoryRef = useRef(false);
+
+
+
+
 
 
 
@@ -13662,11 +27317,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     if (didLoadChatHistoryRef.current) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -13682,7 +27357,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     (async () => {
+
+
+
+
 
 
 
@@ -13690,7 +27377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       let raw: string | null = null;
+
+
+
+
 
 
 
@@ -13698,7 +27393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         raw = await historyGetRaw();
+
+
+
+
 
 
 
@@ -13706,7 +27409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         raw = null;
+
+
+
+
 
 
 
@@ -13718,7 +27429,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const tryParseSessions = (rawStr: string | null): ChatSession[] | null => {
+
+
+
+
 
 
 
@@ -13726,7 +27449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -13734,7 +27465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!Array.isArray(parsed)) return null;
+
+
+
+
 
 
 
@@ -13742,7 +27481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const restored = parsed
+
+
+
+
 
 
 
@@ -13750,7 +27497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             .map((x: any) => ({
+
+
+
+
 
 
 
@@ -13758,7 +27513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               title: typeof x.title === "string" ? x.title : "Chat",
+
+
+
+
 
 
 
@@ -13766,7 +27529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               updatedAt: typeof x.updatedAt === "number" ? x.updatedAt : now,
+
+
+
+
 
 
 
@@ -13774,7 +27545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 ? (x.messages.map((m: any) => migrateStoredChatMessage(m)).filter(Boolean) as ChatUiMessage[])
+
+
+
+
 
 
 
@@ -13782,7 +27561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               logs: Array.isArray(x.logs) ? (x.logs as ChatLogEntry[]) : ([] as ChatLogEntry[]),
+
+
+
+
 
 
 
@@ -13790,7 +27577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               changeSet: (x.changeSet as ChangeSet | null) ?? null,
+
+
+
+
 
 
 
@@ -13798,7 +27593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             .slice(0, 200);
+
+
+
+
 
 
 
@@ -13806,7 +27609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch {
+
+
+
+
 
 
 
@@ -13814,11 +27625,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
       };
+
+
+
+
+
+
+
+
 
 
 
@@ -13834,7 +27661,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       // 2) One-time migration: if file history is empty, try old localStorage key.
+
+
+
+
 
 
 
@@ -13842,7 +27681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -13850,7 +27697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           loaded = tryParseSessions(legacy);
+
+
+
+
 
 
 
@@ -13858,11 +27713,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             // persist migrated data to file
 
 
 
+
+
+
+
             try {
+
+
+
+
 
 
 
@@ -13870,11 +27737,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               await historySetRaw(JSON.stringify(loaded));
 
 
 
+
+
+
+
             } catch {
+
+
+
+
 
 
 
@@ -13882,11 +27761,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               isWritingChatHistoryRef.current = false;
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -13894,7 +27785,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               window.localStorage.removeItem(CHAT_STORAGE_KEY);
+
+
+
+
 
 
 
@@ -13902,7 +27801,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -13910,7 +27817,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch {
+
+
+
+
 
 
 
@@ -13918,7 +27833,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -13930,7 +27857,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (loaded) {
+
+
+
+
 
 
 
@@ -13938,7 +27873,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (loaded.some((s) => s.id === activeChatId)) {
+
+
+
+
 
 
 
@@ -13946,7 +27889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } else {
+
+
+
+
 
 
 
@@ -13954,7 +27905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -13962,7 +27921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const now = Date.now();
+
+
+
+
 
 
 
@@ -13970,7 +27937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setChatSessions([{ id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
+
+
+
+
 
 
 
@@ -13978,7 +27953,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -13990,7 +27977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       didLoadChatHistoryRef.current = true;
+
+
+
+
 
 
 
@@ -14002,7 +27997,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     return () => {
+
+
+
+
 
 
 
@@ -14010,11 +28017,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
 
 
 
+
+
+
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
+
+
+
+
 
 
 
@@ -14026,7 +28045,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -14034,7 +28065,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (isWritingChatHistoryRef.current) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -14046,7 +28089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       (async () => {
+
+
+
+
 
 
 
@@ -14054,7 +28105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           isWritingChatHistoryRef.current = true;
+
+
+
+
 
 
 
@@ -14062,7 +28121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch (e) {
+
+
+
+
 
 
 
@@ -14070,7 +28137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } finally {
+
+
+
+
 
 
 
@@ -14078,7 +28153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -14086,7 +28169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }, 250);
+
+
+
+
 
 
 
@@ -14094,7 +28185,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [chatSessions, devConsoleError]);
+
+
+
+
+
+
+
+
 
 
 
@@ -14106,7 +28209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!didLoadChatHistoryRef.current) return;
+
+
+
+
 
 
 
@@ -14114,7 +28225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -14122,7 +28241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await historySetRaw(JSON.stringify(chatSessions));
+
+
+
+
 
 
 
@@ -14130,7 +28257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       devConsoleError("Failed to flush chat history", e);
+
+
+
+
 
 
 
@@ -14138,11 +28273,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       isWritingChatHistoryRef.current = false;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -14154,7 +28301,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -14162,7 +28321,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (document.visibilityState === "hidden") {
+
+
+
+
 
 
 
@@ -14170,11 +28337,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -14182,7 +28361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.addEventListener("beforeunload", onVis);
+
+
+
+
 
 
 
@@ -14190,7 +28377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       window.removeEventListener("visibilitychange", onVis);
+
+
+
+
 
 
 
@@ -14198,11 +28393,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
 
 
 
+
+
+
+
   }, [flushChatHistoryNow]);
+
+
+
+
+
+
+
+
 
 
 
@@ -14218,7 +28429,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const activeChat = useMemo<ChatSession>(() => {
+
+
+
+
 
 
 
@@ -14226,7 +28449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return found ?? chatSessions[0]!;
+
+
+
+
 
 
 
@@ -14238,7 +28469,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const chatMessagesRef = useRef<ChatUiMessage[]>([]);
+
+
+
+
 
 
 
@@ -14246,7 +28489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const chatComposerRef = useRef<HTMLTextAreaElement | null>(null);
+
+
+
+
 
 
 
@@ -14254,7 +28505,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const chatResizeStateRef = useRef<{ startX: number; startW: number } | null>(null);
+
+
+
+
 
 
 
@@ -14262,7 +28521,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const terminalResizeStateRef = useRef<{ startY: number; startH: number; dock: "top" | "bottom" } | null>(null);
+
+
+
+
 
 
 
@@ -14270,7 +28537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const dragUserSelectRestoreRef = useRef<string | null>(null);
+
+
+
+
 
 
 
@@ -14278,7 +28553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const dragPreventHandlerRef = useRef<((e: Event) => void) | null>(null);
+
+
+
+
 
 
 
@@ -14286,7 +28569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -14294,7 +28585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (dragCursorRestoreRef.current === null) dragCursorRestoreRef.current = document.body.style.cursor || "";
+
+
+
+
 
 
 
@@ -14302,7 +28601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       document.body.style.cursor = cursor;
+
+
+
+
 
 
 
@@ -14310,7 +28617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         dragPreventHandlerRef.current = (ev: Event) => {
+
+
+
+
 
 
 
@@ -14318,7 +28633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             ev.preventDefault();
+
+
+
+
 
 
 
@@ -14326,7 +28649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -14334,7 +28665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         document.addEventListener("selectstart", dragPreventHandlerRef.current, true);
+
+
+
+
 
 
 
@@ -14342,7 +28681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -14350,11 +28697,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -14362,7 +28721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -14370,7 +28737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (dragCursorRestoreRef.current !== null) document.body.style.cursor = dragCursorRestoreRef.current;
+
+
+
+
 
 
 
@@ -14378,7 +28753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -14386,7 +28769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     dragCursorRestoreRef.current = null;
+
+
+
+
 
 
 
@@ -14394,7 +28785,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -14402,7 +28801,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         document.removeEventListener("dragstart", dragPreventHandlerRef.current, true);
+
+
+
+
 
 
 
@@ -14410,7 +28817,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -14418,7 +28833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -14426,7 +28849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const chatHistoryMenuRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -14434,7 +28865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const sendChatRef = useRef<(() => Promise<void>) | null>(null);
+
+
+
+
 
 
 
@@ -14442,7 +28881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const metaQueueRef = useRef<string[]>([]);
+
+
+
+
 
 
 
@@ -14450,11 +28897,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const lastQueuedMetaRef = useRef<string>("");
 
 
 
+
+
+
+
   const logStreamIdRef = useRef<Record<string, string>>({});
+
+
+
+
+
+
+
+
 
 
 
@@ -14470,7 +28933,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const termIdRef = useRef<string | null>(null);
+
+
+
+
 
 
 
@@ -14478,7 +28953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const fitAddonRef = useRef<FitAddon | null>(null);
+
+
+
+
 
 
 
@@ -14486,7 +28969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const termAttachedHostRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -14494,11 +28985,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const termCaptureRef = useRef<TerminalCapture | null>(null);
 
 
 
+
+
+
+
   const termInitPromiseRef = useRef<Promise<void> | null>(null);
+
+
+
+
 
 
 
@@ -14510,7 +29013,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const mainGridTemplateColumns = useMemo(() => {
+
+
+
+
 
 
 
@@ -14518,7 +29033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const explorerCol = isPrimarySidebarOpen ? `minmax(220px, ${explorerWidth}px)` : "0px";
+
+
+
+
 
 
 
@@ -14526,7 +29049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const cols: string[] = [activityCol];
+
+
+
+
 
 
 
@@ -14534,7 +29065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     else cols.push(editorCol, explorerCol);
+
+
+
+
 
 
 
@@ -14542,7 +29081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return cols.join(" ");
+
+
+
+
 
 
 
@@ -14550,11 +29097,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const applyUiZoom = useCallback((z: number) => {
 
 
 
+
+
+
+
     const root = document.getElementById("root");
+
+
+
+
 
 
 
@@ -14562,7 +29121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const clamped = Math.max(0.5, Math.min(2, Math.round(z * 100) / 100));
+
+
+
+
 
 
 
@@ -14570,7 +29137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -14578,7 +29153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const root = document.getElementById("root");
+
+
+
+
 
 
 
@@ -14586,7 +29169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const v = getComputedStyle(root).getPropertyValue("--pompora-ui-zoom").trim();
+
+
+
+
 
 
 
@@ -14594,7 +29185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return Number.isFinite(n) && n > 0 ? n : 1;
+
+
+
+
 
 
 
@@ -14602,7 +29201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const zoomIn = useCallback(() => {
+
+
+
+
 
 
 
@@ -14610,7 +29217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [applyUiZoom, getUiZoom]);
+
+
+
+
 
 
 
@@ -14618,7 +29233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     applyUiZoom(getUiZoom() - 0.1);
+
+
+
+
 
 
 
@@ -14626,11 +29249,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const zoomReset = useCallback(() => {
 
 
 
+
+
+
+
     applyUiZoom(1);
+
+
+
+
 
 
 
@@ -14642,7 +29277,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -14654,7 +29301,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const onDown = (e: MouseEvent) => {
+
+
+
+
 
 
 
@@ -14662,7 +29321,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!t) return;
+
+
+
+
 
 
 
@@ -14670,11 +29337,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setIsChatHistoryOpen(false);
 
 
 
+
+
+
+
     };
+
+
+
+
+
+
+
+
 
 
 
@@ -14686,7 +29369,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => window.removeEventListener("mousedown", onDown);
+
+
+
+
 
 
 
@@ -14698,7 +29389,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const nextChatTitle = useMemo(() => {
+
+
+
+
 
 
 
@@ -14706,7 +29409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       .map((s) => {
+
+
+
+
 
 
 
@@ -14714,7 +29425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return m ? Number(m[1]) : null;
+
+
+
+
 
 
 
@@ -14722,7 +29441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       .filter((n): n is number => typeof n === "number" && Number.isFinite(n));
+
+
+
+
 
 
 
@@ -14730,7 +29457,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return `Chat ${max + 1}`;
+
+
+
+
 
 
 
@@ -14742,7 +29477,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const deleteChatSession = useCallback(
+
+
+
+
 
 
 
@@ -14750,7 +29497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       let nextActive: string | null = null;
+
+
+
+
 
 
 
@@ -14758,7 +29513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const remaining = prev.filter((s) => s.id !== id);
+
+
+
+
 
 
 
@@ -14766,7 +29529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const next = remaining
+
+
+
+
 
 
 
@@ -14774,7 +29545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             .sort((a, b) => b.updatedAt - a.updatedAt)[0]?.id;
+
+
+
+
 
 
 
@@ -14782,7 +29561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             nextActive = next;
+
+
+
+
 
 
 
@@ -14790,7 +29577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const now = Date.now();
+
+
+
+
 
 
 
@@ -14798,7 +29593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             nextActive = newId;
+
+
+
+
 
 
 
@@ -14806,7 +29609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -14814,7 +29625,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return remaining.length ? remaining : prev;
+
+
+
+
 
 
 
@@ -14826,7 +29645,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       if (nextActive) setActiveChatId(nextActive);
+
+
+
+
 
 
 
@@ -14834,7 +29665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       window.setTimeout(() => chatComposerRef.current?.focus(), 0);
+
+
+
+
 
 
 
@@ -14842,11 +29681,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [activeChatId]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -14858,7 +29713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (id: string) => {
+
+
+
+
 
 
 
@@ -14866,7 +29729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const current = chatSessions.find((s) => s.id === id);
+
+
+
+
 
 
 
@@ -14874,7 +29745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const title = String(next ?? "").trim();
+
+
+
+
 
 
 
@@ -14882,7 +29761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setChatSessions((prev) => prev.map((s) => (s.id === id ? { ...s, title, updatedAt: Date.now() } : s)));
+
+
+
+
 
 
 
@@ -14890,7 +29777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -14898,7 +29793,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -14910,7 +29817,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (title: string) => {
+
+
+
+
 
 
 
@@ -14918,7 +29833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((s) => (s.id === activeChatId ? { ...s, title, updatedAt: Date.now() } : s))
+
+
+
+
 
 
 
@@ -14926,7 +29849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -14934,7 +29865,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -14946,7 +29889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (draft: string) => {
+
+
+
+
 
 
 
@@ -14954,7 +29905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -14962,7 +29921,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -14974,7 +29945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (messages: ChatUiMessage[] | ((prev: ChatUiMessage[]) => ChatUiMessage[])) => {
+
+
+
+
 
 
 
@@ -14982,7 +29961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((s) => {
+
+
+
+
 
 
 
@@ -14990,7 +29977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const nextMsgs = typeof messages === "function" ? messages(s.messages) : messages;
+
+
+
+
 
 
 
@@ -14998,7 +29993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         })
+
+
+
+
 
 
 
@@ -15006,7 +30009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -15014,7 +30025,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15026,7 +30049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (logs: ChatLogEntry[] | ((prev: ChatLogEntry[]) => ChatLogEntry[])) => {
+
+
+
+
 
 
 
@@ -15034,7 +30065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((s) => {
+
+
+
+
 
 
 
@@ -15042,7 +30081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const nextLogs = typeof logs === "function" ? logs(s.logs) : logs;
+
+
+
+
 
 
 
@@ -15050,7 +30097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         })
+
+
+
+
 
 
 
@@ -15058,7 +30113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -15066,7 +30129,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15078,7 +30153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (input: Omit<ChatLogEntry, "id" | "ts"> & { id?: string; ts?: number }) => {
+
+
+
+
 
 
 
@@ -15086,7 +30169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const id = input.id ?? `log-${now}-${Math.random().toString(16).slice(2)}`;
+
+
+
+
 
 
 
@@ -15094,7 +30185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const entry: ChatLogEntry = {
+
+
+
+
 
 
 
@@ -15102,7 +30201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ts: input.ts ?? now,
+
+
+
+
 
 
 
@@ -15110,7 +30217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         kind: input.kind,
+
+
+
+
 
 
 
@@ -15118,7 +30233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         status: input.status,
+
+
+
+
 
 
 
@@ -15126,7 +30249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         collapsed: input.collapsed ?? true,
+
+
+
+
 
 
 
@@ -15134,7 +30265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setActiveChatLogs((prev) => [...prev, entry].slice(-400));
+
+
+
+
 
 
 
@@ -15142,7 +30281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -15150,7 +30297,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15162,7 +30321,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (id: string, status: NonNullable<ChatLogEntry["status"]>) => {
+
+
+
+
 
 
 
@@ -15170,7 +30337,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -15178,7 +30353,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15190,7 +30377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (id: string, line: string) => {
+
+
+
+
 
 
 
@@ -15198,7 +30393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!t) return;
+
+
+
+
 
 
 
@@ -15206,7 +30409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((l) =>
+
+
+
+
 
 
 
@@ -15214,7 +30425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             ? {
+
+
+
+
 
 
 
@@ -15222,7 +30441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 details: ([...(l.details ?? []), t].slice(-240) as string[]),
+
+
+
+
 
 
 
@@ -15230,7 +30457,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             : l
+
+
+
+
 
 
 
@@ -15238,7 +30473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       );
+
+
+
+
 
 
 
@@ -15246,11 +30489,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [setActiveChatLogs]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15262,7 +30521,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (activityId: string, step: string, opts?: { detail?: boolean }) => {
+
+
+
+
 
 
 
@@ -15270,7 +30537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!t) return;
+
+
+
+
 
 
 
@@ -15278,7 +30553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((m) => {
+
+
+
+
 
 
 
@@ -15286,7 +30569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const steps = opts?.detail ? m.activity.steps : [...m.activity.steps, t].slice(-80);
+
+
+
+
 
 
 
@@ -15294,7 +30585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return { ...m, activity: { ...m.activity, steps, details } };
+
+
+
+
 
 
 
@@ -15302,7 +30601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       );
+
+
+
+
 
 
 
@@ -15310,11 +30617,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [setActiveChatMessages]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15326,7 +30649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (activityId: string) => {
+
+
+
+
 
 
 
@@ -15334,7 +30665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((m) => {
+
+
+
+
 
 
 
@@ -15342,7 +30681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return { ...m, activity: { ...m.activity, collapsed: !m.activity.collapsed } };
+
+
+
+
 
 
 
@@ -15350,7 +30697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       );
+
+
+
+
 
 
 
@@ -15358,11 +30713,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [setActiveChatMessages]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15374,7 +30745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (activityId: string, status: "pending" | "running" | "done" | "error") => {
+
+
+
+
 
 
 
@@ -15382,7 +30761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((m) =>
+
+
+
+
 
 
 
@@ -15390,7 +30777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         )
+
+
+
+
 
 
 
@@ -15398,7 +30793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -15406,7 +30809,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15418,7 +30833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (activityId: string, progress: { done: number; total: number; current?: string }) => {
+
+
+
+
 
 
 
@@ -15426,7 +30849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((m) =>
+
+
+
+
 
 
 
@@ -15434,7 +30865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             ? { ...m, activity: { ...m.activity, progress } }
+
+
+
+
 
 
 
@@ -15442,7 +30881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         )
+
+
+
+
 
 
 
@@ -15450,7 +30897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -15458,7 +30913,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15470,11 +30937,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (raw: string) => {
 
 
 
+
+
+
+
       const line = raw.trim();
+
+
+
+
 
 
 
@@ -15486,11 +30965,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       // Avoid obvious duplicates (prompt echoes, repeated spinner lines, etc.)
 
 
 
+
+
+
+
       if (lastQueuedMetaRef.current === line) return;
+
+
+
+
 
 
 
@@ -15502,7 +30997,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       metaQueueRef.current.push(line);
+
+
+
+
 
 
 
@@ -15514,7 +31021,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const groupId = activeEventStreamIdRef.current ?? "session";
+
+
+
+
 
 
 
@@ -15526,7 +31045,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       if (!streamMap[groupId]) {
+
+
+
+
 
 
 
@@ -15534,7 +31065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -15546,7 +31085,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       metaFlushTimerRef.current = window.setInterval(() => {
+
+
+
+
 
 
 
@@ -15554,7 +31105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!next) {
+
+
+
+
 
 
 
@@ -15562,7 +31121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           metaFlushTimerRef.current = null;
+
+
+
+
 
 
 
@@ -15570,7 +31137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setLogStatus(streamId, "done");
+
+
+
+
 
 
 
@@ -15578,7 +31153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -15586,7 +31169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -15594,7 +31185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }, 80);
+
+
+
+
 
 
 
@@ -15602,11 +31201,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [addLog, appendLogDetail, setLogStatus]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15618,7 +31233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (messageId: string) => {
+
+
+
+
 
 
 
@@ -15626,7 +31249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!current?.run) return;
+
+
+
+
 
 
 
@@ -15634,7 +31265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const tail = Array.isArray(current.run.tail) ? current.run.tail.join("\n") : "";
+
+
+
+
 
 
 
@@ -15646,7 +31285,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const prompt =
+
+
+
+
 
 
 
@@ -15654,11 +31305,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         (err ? `Error summary:\n${err}\n\n` : "") +
 
 
 
+
+
+
+
         (tail ? `Terminal output (tail):\n${tail}\n\n` : "") +
+
+
+
+
 
 
 
@@ -15670,7 +31333,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       setActiveChatDraft(prompt);
+
+
+
+
 
 
 
@@ -15678,7 +31353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         void sendChatRef.current?.();
+
+
+
+
 
 
 
@@ -15686,7 +31369,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -15694,7 +31385,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -15706,7 +31409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (changeSet: ChangeSet | null) => {
+
+
+
+
 
 
 
@@ -15714,11 +31425,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
 
 
 
+
+
+
+
     [activeChatId]
+
+
+
+
 
 
 
@@ -15730,7 +31453,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -15738,7 +31473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (chatResizeStateRef.current) {
+
+
+
+
 
 
 
@@ -15746,7 +31489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const max = Math.max(280, Math.min(620, Math.floor(window.innerWidth * 0.6)));
+
+
+
+
 
 
 
@@ -15754,11 +31505,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setChatDockWidth(next);
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -15766,7 +31529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const { startX, startW } = explorerResizeStateRef.current;
+
+
+
+
 
 
 
@@ -15774,7 +31545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const next = clamp(startW + (e.clientX - startX), 220, max);
+
+
+
+
 
 
 
@@ -15782,7 +31561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -15790,7 +31577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const { startY, startH, dock } = terminalResizeStateRef.current;
+
+
+
+
 
 
 
@@ -15798,7 +31593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const delta = dock === "bottom" ? startY - e.clientY : e.clientY - startY;
+
+
+
+
 
 
 
@@ -15806,11 +31609,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setTerminalHeight(next);
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -15818,7 +31633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const { startX, startW, dock } = terminalResizeXStateRef.current;
+
+
+
+
 
 
 
@@ -15826,7 +31649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const delta = dock === "left" ? e.clientX - startX : startX - e.clientX;
+
+
+
+
 
 
 
@@ -15834,7 +31665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setTerminalWidth(next);
+
+
+
+
 
 
 
@@ -15842,7 +31681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -15850,7 +31697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       chatResizeStateRef.current = null;
+
+
+
+
 
 
 
@@ -15858,7 +31713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       terminalResizeStateRef.current = null;
+
+
+
+
 
 
 
@@ -15866,11 +31729,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       endResizeDrag();
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -15878,7 +31753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.addEventListener("mouseup", onUp);
+
+
+
+
 
 
 
@@ -15886,7 +31769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       window.removeEventListener("mousemove", onMove);
+
+
+
+
 
 
 
@@ -15894,11 +31785,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       endResizeDrag();
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -15910,7 +31813,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const ensureTerminal = useCallback(async () => {
+
+
+
+
 
 
 
@@ -15918,7 +31833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (termRef.current && termIdRef.current) {
+
+
+
+
 
 
 
@@ -15926,7 +31849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -15934,11 +31865,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -15946,7 +31889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           termRef.current.open(hostNow);
+
+
+
+
 
 
 
@@ -15954,7 +31905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           fitAddonRef.current?.fit();
+
+
+
+
 
 
 
@@ -15962,7 +31921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -15970,11 +31937,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -15986,7 +31965,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const p = (async () => {
+
+
+
+
 
 
 
@@ -15994,7 +31985,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!host) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -16010,7 +32013,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const t = new XTermTerminal({
+
+
+
+
 
 
 
@@ -16018,7 +32033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         fontFamily:
+
+
+
+
 
 
 
@@ -16026,7 +32049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         letterSpacing: 0.4,
+
+
+
+
 
 
 
@@ -16034,7 +32065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         cursorStyle: "bar",
+
+
+
+
 
 
 
@@ -16042,7 +32081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         lineHeight: 1.22,
+
+
+
+
 
 
 
@@ -16050,7 +32097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         convertEol: true,
+
+
+
+
 
 
 
@@ -16058,7 +32113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           background: "rgb(12, 12, 12)",
+
+
+
+
 
 
 
@@ -16066,7 +32129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           cursor: "rgb(244, 244, 245)",
+
+
+
+
 
 
 
@@ -16074,7 +32145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         },
+
+
+
+
 
 
 
@@ -16082,7 +32161,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const fit = new FitAddon();
+
+
+
+
 
 
 
@@ -16090,11 +32177,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       t.open(host);
 
 
 
+
+
+
+
       termAttachedHostRef.current = host;
+
+
+
+
 
 
 
@@ -16106,7 +32205,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       termRef.current = t;
+
+
+
+
 
 
 
@@ -16118,7 +32229,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       if (termUnlistenRef.current) {
+
+
+
+
 
 
 
@@ -16126,7 +32249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           termUnlistenRef.current();
+
+
+
+
 
 
 
@@ -16134,11 +32265,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
         termUnlistenRef.current = null;
+
+
+
+
 
 
 
@@ -16150,7 +32293,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const { cols, rows } = t;
+
+
+
+
 
 
 
@@ -16158,11 +32313,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const id = await terminalStart({ cols, rows, cwd });
 
 
 
+
+
+
+
       termIdRef.current = id;
+
+
+
+
 
 
 
@@ -16174,7 +32341,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       t.onData((data: string) => {
+
+
+
+
 
 
 
@@ -16182,7 +32361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!tid) return;
+
+
+
+
 
 
 
@@ -16190,7 +32377,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
+
+
+
+
 
 
 
@@ -16202,7 +32401,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const tid = termIdRef.current;
+
+
+
+
 
 
 
@@ -16210,7 +32417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (ev.payload.id !== tid) return;
+
+
+
+
 
 
 
@@ -16222,11 +32437,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         const cap = termCaptureRef.current;
 
 
 
+
+
+
+
         if (!cap) return;
+
+
+
+
 
 
 
@@ -16238,11 +32469,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         const now = Date.now();
 
 
 
+
+
+
+
         cap.lastDataAt = now;
+
+
+
+
 
 
 
@@ -16254,11 +32501,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         // Flush at most every 220ms to avoid chat spam.
 
 
 
+
+
+
+
         if (now - cap.lastFlushAt < 220) return;
+
+
+
+
 
 
 
@@ -16270,7 +32533,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         const parts = cap.buffer.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
+
+
+
+
 
 
 
@@ -16282,7 +32557,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         for (const raw of parts) {
+
+
+
+
 
 
 
@@ -16290,7 +32577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const line = stripAnsiForLog(raw).trimEnd();
+
+
+
+
 
 
 
@@ -16298,7 +32593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           cap.emitted += 1;
+
+
+
+
 
 
 
@@ -16306,7 +32609,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -16318,7 +32633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -16330,7 +32653,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     termInitPromiseRef.current = p
+
+
+
+
 
 
 
@@ -16338,7 +32673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -16346,7 +32689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch {
+
+
+
+
 
 
 
@@ -16354,7 +32705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         termRef.current = null;
+
+
+
+
 
 
 
@@ -16362,7 +32721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         termIdRef.current = null;
+
+
+
+
 
 
 
@@ -16370,7 +32737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (host) host.innerHTML = "";
+
+
+
+
 
 
 
@@ -16378,7 +32753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       })
+
+
+
+
 
 
 
@@ -16386,7 +32769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         termInitPromiseRef.current = null;
+
+
+
+
 
 
 
@@ -16398,7 +32789,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     return termInitPromiseRef.current;
+
+
+
+
 
 
 
@@ -16410,7 +32813,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const resizeTerminal = useCallback(() => {
+
+
+
+
 
 
 
@@ -16418,7 +32833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const id = termIdRef.current;
+
+
+
+
 
 
 
@@ -16426,7 +32849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!t || !id || !fit) return;
+
+
+
+
 
 
 
@@ -16434,7 +32865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     void terminalResize({ id, cols: t.cols, rows: t.rows });
+
+
+
+
 
 
 
@@ -16446,7 +32885,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -16454,7 +32905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (panelTab !== "terminal") return;
+
+
+
+
 
 
 
@@ -16462,7 +32921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.setTimeout(() => {
+
+
+
+
 
 
 
@@ -16470,7 +32937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }, 0);
+
+
+
+
 
 
 
@@ -16478,7 +32953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!host) return;
+
+
+
+
 
 
 
@@ -16486,11 +32969,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     ro.observe(host);
 
 
 
+
+
+
+
     return () => ro.disconnect();
+
+
+
+
 
 
 
@@ -16502,7 +32997,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const closeTerminal = useCallback(async () => {
+
+
+
+
 
 
 
@@ -16510,11 +33017,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const id = termIdRef.current;
 
 
 
+
+
+
+
     termIdRef.current = null;
+
+
+
+
+
+
+
+
 
 
 
@@ -16530,7 +33053,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     termInitPromiseRef.current = null;
+
+
+
+
+
+
+
+
 
 
 
@@ -16546,7 +33085,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (termUnlistenRef.current) {
+
+
+
+
 
 
 
@@ -16554,7 +33105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         termUnlistenRef.current();
+
+
+
+
 
 
 
@@ -16562,7 +33121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -16570,6 +33137,10 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
@@ -16578,7 +33149,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -16586,11 +33169,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -16598,7 +33193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       termRef.current?.dispose();
+
+
+
+
 
 
 
@@ -16606,11 +33209,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
     termRef.current = null;
+
+
+
+
 
 
 
@@ -16622,11 +33237,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const host = termHostRef.current;
 
 
 
+
+
+
+
     if (host) host.innerHTML = "";
+
+
+
+
 
 
 
@@ -16638,7 +33269,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const toggleTerminal = useCallback(() => {
+
+
+
+
 
 
 
@@ -16646,11 +33289,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       void closeTerminal();
 
 
 
+
+
+
+
       return;
+
+
+
+
 
 
 
@@ -16662,7 +33317,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     setPanelTab("terminal");
+
+
+
+
 
 
 
@@ -16670,7 +33337,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.setTimeout(() => {
+
+
+
+
 
 
 
@@ -16678,7 +33353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         resizeTerminal();
+
+
+
+
 
 
 
@@ -16686,11 +33369,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
 
 
 
+
+
+
+
     }, 0);
+
+
+
+
 
 
 
@@ -16702,7 +33397,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const runTerminalCommand = useCallback(
+
+
+
+
 
 
 
@@ -16710,7 +33417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const c = cmd.trim();
+
+
+
+
 
 
 
@@ -16722,7 +33437,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       if (isLikelyDangerousCommand(c)) {
+
+
+
+
 
 
 
@@ -16730,7 +33457,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           "Run command",
+
+
+
+
 
 
 
@@ -16738,7 +33473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           { danger: true, confirmLabel: "Run" }
+
+
+
+
 
 
 
@@ -16746,11 +33489,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!ok) return;
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -16762,7 +33521,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setIsTerminalOpen(true);
+
+
+
+
+
+
+
+
 
 
 
@@ -16774,7 +33545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (termIdRef.current && termCwdRef.current && desiredCwd && termCwdRef.current !== desiredCwd) {
+
+
+
+
 
 
 
@@ -16782,7 +33561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setPanelTab("terminal");
+
+
+
+
 
 
 
@@ -16790,7 +33577,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -16802,7 +33601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       for (let i = 0; i < 30; i++) {
+
+
+
+
 
 
 
@@ -16810,7 +33617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         await new Promise<void>((r) => window.setTimeout(r, 50));
+
+
+
+
 
 
 
@@ -16822,7 +33637,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       await ensureTerminal();
+
+
+
+
 
 
 
@@ -16834,7 +33661,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       window.setTimeout(() => {
+
+
+
+
 
 
 
@@ -16842,7 +33681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           termRef.current?.focus();
+
+
+
+
 
 
 
@@ -16850,7 +33697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -16862,11 +33717,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const tid = termIdRef.current;
 
 
 
+
+
+
+
       if (!tid) throw new Error("Terminal not available");
+
+
+
+
+
+
+
+
 
 
 
@@ -16882,7 +33757,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       termCaptureRef.current = {
+
+
+
+
 
 
 
@@ -16890,7 +33777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         startedAt: Date.now(),
+
+
+
+
 
 
 
@@ -16898,7 +33793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         lastFlushAt: 0,
+
+
+
+
 
 
 
@@ -16906,7 +33809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         emitted: 0,
+
+
+
+
 
 
 
@@ -16914,11 +33825,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         emit: (line) => onStep?.(`terminal ${line}`),
 
 
 
+
+
+
+
       };
+
+
+
+
+
+
+
+
 
 
 
@@ -16934,7 +33861,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       // Wait for terminal to go idle before returning so Explorer refresh happens after file changes land.
+
+
+
+
 
 
 
@@ -16942,7 +33881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const maxWaitMs = 15000;
+
+
+
+
 
 
 
@@ -16950,7 +33897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const minRunMs = 350;
+
+
+
+
 
 
 
@@ -16958,7 +33913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const timer = window.setInterval(() => {
+
+
+
+
 
 
 
@@ -16966,7 +33929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (now - startedAt > maxWaitMs) {
+
+
+
+
 
 
 
@@ -16974,7 +33945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             termCaptureRef.current = null;
+
+
+
+
 
 
 
@@ -16982,11 +33961,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             return;
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -16994,7 +33985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!cap || cap.id !== tid) {
+
+
+
+
 
 
 
@@ -17002,7 +34001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               window.clearInterval(timer);
+
+
+
+
 
 
 
@@ -17010,7 +34017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               resolve();
+
+
+
+
 
 
 
@@ -17018,11 +34033,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             return;
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -17030,7 +34057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (now - cap.lastDataAt >= idleMs) {
+
+
+
+
 
 
 
@@ -17038,7 +34073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             termCaptureRef.current = null;
+
+
+
+
 
 
 
@@ -17046,7 +34089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -17054,7 +34105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -17062,11 +34121,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [closeTerminal, ensureTerminal, resizeTerminal, settings.workspace_root, workspace.root]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -17078,7 +34153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setFileIndexRoot(null);
+
+
+
+
 
 
 
@@ -17086,7 +34169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     await refreshDirRef.current?.(undefined);
+
+
+
+
 
 
 
@@ -17094,7 +34185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     for (const d of dirs) await refreshDirRef.current?.(d);
+
+
+
+
 
 
 
@@ -17106,7 +34205,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const pushRunRequest = useCallback(
+
+
+
+
 
 
 
@@ -17114,7 +34225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+
+
+
 
 
 
@@ -17122,7 +34241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ...prev,
+
+
+
+
 
 
 
@@ -17130,7 +34257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           id,
+
+
+
+
 
 
 
@@ -17138,7 +34273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           content: "",
+
+
+
+
 
 
 
@@ -17146,7 +34289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           run: { cmd, status: "pending", remaining, error: null, tail: null, autoFixRequested: false },
+
+
+
+
 
 
 
@@ -17154,7 +34305,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       ]);
+
+
+
+
 
 
 
@@ -17162,7 +34321,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [setActiveChatMessages]
+
+
+
+
 
 
 
@@ -17174,11 +34341,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const runFromRunCard = useCallback(
 
 
 
+
+
+
+
     async (messageId: string, mode: "once" | "always") => {
+
+
+
+
 
 
 
@@ -17190,7 +34373,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const current = (chatMessagesRef.current ?? []).find((m) => m.id === messageId);
+
+
+
+
 
 
 
@@ -17202,7 +34397,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const cmd = current.run.cmd;
+
+
+
+
 
 
 
@@ -17214,7 +34421,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       setActiveChatMessages((prev) =>
+
+
+
+
 
 
 
@@ -17222,7 +34441,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       );
+
+
+
+
+
+
+
+
 
 
 
@@ -17238,7 +34469,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const activityId = `act-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+
+
+
 
 
 
@@ -17246,7 +34489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ...prev,
+
+
+
+
 
 
 
@@ -17254,7 +34505,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           id: activityId,
+
+
+
+
 
 
 
@@ -17262,7 +34521,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           content: "",
+
+
+
+
 
 
 
@@ -17270,11 +34537,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           activity: { title: `Running: ${cmd}`, status: "running", steps: [] },
 
 
 
+
+
+
+
         },
+
+
+
+
 
 
 
@@ -17286,7 +34565,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const pushStep = (msg: string) => {
+
+
+
+
 
 
 
@@ -17294,7 +34585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!t) return;
+
+
+
+
 
 
 
@@ -17302,7 +34601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const clean = stripAnsiForLog(t.slice("terminal ".length));
+
+
+
+
 
 
 
@@ -17310,7 +34617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           // Basic filtering of spinners / noisy progress glyphs.
+
+
+
+
 
 
 
@@ -17318,7 +34633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           appendActivityStep(activityId, clean, { detail: true });
+
+
+
+
 
 
 
@@ -17326,7 +34649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (tail.length > 80) tail.splice(0, tail.length - 80);
+
+
+
+
 
 
 
@@ -17334,7 +34665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -17346,11 +34685,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       try {
 
 
 
+
+
+
+
         await runTerminalCommand(cmd, pushStep);
+
+
+
+
 
 
 
@@ -17362,7 +34717,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         const joined = tail.join("\n");
+
+
+
+
 
 
 
@@ -17370,7 +34737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           /\bnpm\s+err!/i.test(joined) ||
+
+
+
+
 
 
 
@@ -17378,7 +34753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           /\bcommand failed\b/i.test(joined) ||
+
+
+
+
 
 
 
@@ -17390,7 +34773,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         setActiveChatMessages((prev) =>
+
+
+
+
 
 
 
@@ -17398,7 +34793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         );
+
+
+
+
 
 
 
@@ -17410,7 +34813,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         if (looksFailed) {
+
+
+
+
 
 
 
@@ -17418,7 +34833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setActiveChatMessages((prev) =>
+
+
+
+
 
 
 
@@ -17426,7 +34849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               m.id === messageId
+
+
+
+
 
 
 
@@ -17434,7 +34865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     ...m,
+
+
+
+
 
 
 
@@ -17442,7 +34881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       ? {
+
+
+
+
 
 
 
@@ -17450,7 +34897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           error: err || "Command appears to have failed.",
+
+
+
+
 
 
 
@@ -17458,7 +34913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         }
+
+
+
+
 
 
 
@@ -17466,7 +34929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   }
+
+
+
+
 
 
 
@@ -17474,11 +34945,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
             )
 
 
 
+
+
+
+
           );
+
+
+
+
+
+
+
+
 
 
 
@@ -17494,7 +34981,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
           const currentAfter = (chatMessagesRef.current ?? []).find((m) => m.id === messageId);
+
+
+
+
 
 
 
@@ -17502,7 +35001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!already) {
+
+
+
+
 
 
 
@@ -17510,7 +35017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               prev.map((m) =>
+
+
+
+
 
 
 
@@ -17518,7 +35033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   ? {
+
+
+
+
 
 
 
@@ -17526,7 +35049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       run: m.run ? { ...m.run, autoFixRequested: true } : m.run,
+
+
+
+
 
 
 
@@ -17534,7 +35065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   : m
+
+
+
+
 
 
 
@@ -17542,7 +35081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             );
+
+
+
+
 
 
 
@@ -17550,7 +35097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               void askAiToFixRunError(messageId);
+
+
+
+
 
 
 
@@ -17558,7 +35113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -17566,7 +35129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setActiveChatMessages((prev) =>
+
+
+
+
 
 
 
@@ -17574,11 +35145,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
           );
 
 
 
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -17590,7 +35177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const rest = remaining.slice(1);
+
+
+
+
 
 
 
@@ -17598,11 +35193,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (runPolicy === "always") {
 
 
 
+
+
+
+
             pushRunRequest(next, rest);
+
+
+
+
 
 
 
@@ -17610,7 +35217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               const last = (chatMessagesRef.current ?? [])
+
+
+
+
 
 
 
@@ -17618,7 +35233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 .reverse()
+
+
+
+
 
 
 
@@ -17626,7 +35249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               if (last?.id) void runFromRunCard(last.id, "once");
+
+
+
+
 
 
 
@@ -17634,7 +35265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           } else {
+
+
+
+
 
 
 
@@ -17642,7 +35281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -17650,7 +35297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (e) {
+
+
+
+
 
 
 
@@ -17658,7 +35313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setActivityStatus(activityId, "error");
+
+
+
+
 
 
 
@@ -17666,7 +35329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, status: "canceled" } : m.run } : m))
+
+
+
+
 
 
 
@@ -17674,7 +35345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -17682,11 +35361,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [addLog, appendActivityStep, askAiToFixRunError, pushRunRequest, refreshWorkspaceAfterRun, runPolicy, runTerminalCommand, setActiveChatMessages, setActivityStatus]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -17698,7 +35393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (messageId: string) => {
+
+
+
+
 
 
 
@@ -17706,7 +35409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((m) => (m.id === messageId ? { ...m, run: m.run ? { ...m.run, status: "canceled", remaining: [] } : m.run } : m))
+
+
+
+
 
 
 
@@ -17714,11 +35425,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
 
 
 
+
+
+
+
     [setActiveChatMessages]
+
+
+
+
 
 
 
@@ -17730,7 +35453,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const applyAiEditsNow = useCallback(
+
+
+
+
 
 
 
@@ -17738,7 +35473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       edits: AiEditOp[],
+
+
+
+
 
 
 
@@ -17746,7 +35489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       opts?: { pace?: boolean; previewFile?: (path: string) => Promise<void> }
+
+
+
+
 
 
 
@@ -17754,11 +35505,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!edits.length) return;
 
 
 
+
+
+
+
       if (!workspace.root) throw new Error("No workspace is open");
+
+
+
+
+
+
+
+
 
 
 
@@ -17774,7 +35541,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const wait = async (ms: number) => {
+
+
+
+
 
 
 
@@ -17782,11 +35561,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         await new Promise<void>((r) => window.setTimeout(r, ms));
 
 
 
+
+
+
+
       };
+
+
+
+
+
+
+
+
 
 
 
@@ -17798,7 +35593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const segs = text.match(/\S+\s*/g);
+
+
+
+
 
 
 
@@ -17806,7 +35609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const step = text.length > 20000 ? 18 : 10;
+
+
+
+
 
 
 
@@ -17814,11 +35625,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return clamp(ticks * 28, 240, 2400);
 
 
 
+
+
+
+
       };
+
+
+
+
+
+
+
+
 
 
 
@@ -17830,7 +35657,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const op = (e.op || "").toLowerCase();
+
+
+
+
 
 
 
@@ -17838,7 +35673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -17846,7 +35689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const dirtyConflicts = overwrites
+
+
+
+
 
 
 
@@ -17854,7 +35705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           .filter((p) => tabs.some((t) => t.path === p && t.isDirty));
+
+
+
+
 
 
 
@@ -17862,7 +35721,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -17874,11 +35745,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const queuedRunSet = new Set<string>();
 
 
 
+
+
+
+
       for (const e of edits) {
+
+
+
+
 
 
 
@@ -17890,11 +35773,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         if (op === "write") {
 
 
 
+
+
+
+
           const p = e.path?.trim();
+
+
+
+
 
 
 
@@ -17902,7 +35801,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onStep?.(`editing ${p}`);
+
+
+
+
 
 
 
@@ -17910,7 +35817,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (opts?.pace) await wait(revealMsForText(String(e.content ?? "")));
+
+
+
+
 
 
 
@@ -17918,7 +35833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           try {
+
+
+
+
 
 
 
@@ -17926,7 +35849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           } catch {
+
+
+
+
 
 
 
@@ -17934,7 +35865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -17942,7 +35881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const nextLen = (e.content ?? "").length;
+
+
+
+
 
 
 
@@ -17950,7 +35897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               void nextLen;
+
+
+
+
 
 
 
@@ -17958,7 +35913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -17966,7 +35929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const parent = p.includes("/") ? p.split("/").slice(0, -1).join("/") : "";
+
+
+
+
 
 
 
@@ -17974,7 +35945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setFileIndexRoot(null);
+
+
+
+
 
 
 
@@ -17982,7 +35961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setTabs((prev) => prev.map((t) => (t.path === p ? { ...t, content: e.content ?? "", isDirty: false } : t)));
+
+
+
+
 
 
 
@@ -17990,7 +35977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (opts?.pace) await wait(120);
+
+
+
+
 
 
 
@@ -17998,7 +35993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const p = e.path?.trim();
+
+
+
+
 
 
 
@@ -18006,7 +36009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const patchText = String(e.content ?? "");
+
+
+
+
 
 
 
@@ -18014,7 +36025,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           try {
+
+
+
+
 
 
 
@@ -18022,7 +36041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             beforeResolved = typeof r === "string" ? r : (r as { content?: string }).content ?? "";
+
+
+
+
 
 
 
@@ -18030,11 +36057,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
             beforeResolved = "";
 
 
 
+
+
+
+
           }
+
+
+
+
+
+
+
+
 
 
 
@@ -18046,7 +36089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!res.ok) throw new Error(`Failed to apply patch to ${p}: ${res.error}`);
+
+
+
+
 
 
 
@@ -18054,7 +36105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (opts?.previewFile) await opts.previewFile(p);
+
+
+
+
 
 
 
@@ -18062,7 +36121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           await workspaceWriteFile(p, res.text);
+
+
+
+
 
 
 
@@ -18070,7 +36137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           refreshTargets.add(parent);
+
+
+
+
 
 
 
@@ -18078,7 +36153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setFileIndex([]);
+
+
+
+
 
 
 
@@ -18086,7 +36169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onStep?.(`patch ${p}`);
+
+
+
+
 
 
 
@@ -18094,7 +36185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } else if (op === "delete") {
+
+
+
+
 
 
 
@@ -18102,7 +36201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!p) throw new Error("AI edit op 'delete' missing path");
+
+
+
+
 
 
 
@@ -18110,7 +36217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const parent = p.includes("/") ? p.split("/").slice(0, -1).join("/") : "";
+
+
+
+
 
 
 
@@ -18118,11 +36233,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setFileIndexRoot(null);
 
 
 
+
+
+
+
           setFileIndex([]);
+
+
+
+
 
 
 
@@ -18130,7 +36257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (activeTabPath === p) setActiveTabPath(null);
+
+
+
+
 
 
 
@@ -18138,7 +36273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (opts?.pace) await wait(160);
+
+
+
+
 
 
 
@@ -18146,7 +36289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const from = e.from?.trim();
+
+
+
+
 
 
 
@@ -18154,7 +36305,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!from || !to) throw new Error("AI edit op 'rename' missing from/to");
+
+
+
+
 
 
 
@@ -18162,7 +36321,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const fromParent = from.includes("/") ? from.split("/").slice(0, -1).join("/") : "";
+
+
+
+
 
 
 
@@ -18170,7 +36337,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           refreshTargets.add(fromParent);
+
+
+
+
 
 
 
@@ -18178,7 +36353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setFileIndexRoot(null);
+
+
+
+
 
 
 
@@ -18186,7 +36369,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setTabs((prev) => prev.map((t) => (t.path === from ? { ...t, path: to, name: basename(to), language: detectLanguage(to) } : t)));
+
+
+
+
 
 
 
@@ -18194,7 +36385,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onStep?.(`rename ${from} → ${to}`);
+
+
+
+
 
 
 
@@ -18202,7 +36401,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } else if (op === "run") {
+
+
+
+
 
 
 
@@ -18210,7 +36417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!cmd) throw new Error("AI edit op 'run' missing command in content");
+
+
+
+
 
 
 
@@ -18218,7 +36433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             queuedRunSet.add(cmd);
+
+
+
+
 
 
 
@@ -18226,7 +36449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             onStep?.(`run ${cmd}`);
+
+
+
+
 
 
 
@@ -18234,7 +36465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } else {
+
+
+
+
 
 
 
@@ -18242,11 +36481,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -18258,7 +36513,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       for (const dir of refreshTargets) await refreshDirRef.current?.(dir || undefined);
+
+
+
+
+
+
+
+
 
 
 
@@ -18270,7 +36537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (runPolicy === "always") {
+
+
+
+
 
 
 
@@ -18278,7 +36553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           pushRunRequest(queuedRuns[0]!, queuedRuns.slice(1));
+
+
+
+
 
 
 
@@ -18286,7 +36569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const last = (chatMessagesRef.current ?? []).slice().reverse().find((m) => m.kind === "run_request" && m.run?.cmd === queuedRuns[0]);
+
+
+
+
 
 
 
@@ -18294,7 +36585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }, 0);
+
+
+
+
 
 
 
@@ -18302,7 +36601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           pushRunRequest(queuedRuns[0]!, queuedRuns.slice(1));
+
+
+
+
 
 
 
@@ -18310,7 +36617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -18318,11 +36633,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [activeTabPath, pushRunRequest, runFromRunCard, runPolicy, tabs, workspace.root]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -18334,11 +36665,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (edits: AiEditOp[]): Promise<ChangeSet> => {
 
 
 
+
+
+
+
       const files: ChangeFile[] = [];
+
+
+
+
 
 
 
@@ -18350,7 +36693,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const readBefore = async (p: string): Promise<string | null> => {
+
+
+
+
 
 
 
@@ -18358,7 +36713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (open) return open.content;
+
+
+
+
 
 
 
@@ -18366,7 +36729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const r = await workspaceReadFile(p);
+
+
+
+
 
 
 
@@ -18374,7 +36745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch {
+
+
+
+
 
 
 
@@ -18382,11 +36761,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
       };
+
+
+
+
+
+
+
+
 
 
 
@@ -18398,7 +36793,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const op = (e.op || "").toLowerCase();
+
+
+
+
+
+
+
+
 
 
 
@@ -18410,11 +36817,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
           continue;
 
 
 
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -18426,11 +36849,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const p = e.path?.trim();
 
 
 
+
+
+
+
           if (!p) continue;
+
+
+
+
 
 
 
@@ -18438,11 +36873,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           seen.add(`w:${p}`);
 
 
 
+
+
+
+
           const before = await readBefore(p);
+
+
+
+
 
 
 
@@ -18450,7 +36897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           files.push({ kind: "write", path: p, before, after });
+
+
+
+
 
 
 
@@ -18458,11 +36913,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const p = e.path?.trim();
 
 
 
+
+
+
+
           if (!p) continue;
+
+
+
+
 
 
 
@@ -18470,7 +36937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           seen.add(`p:${p}`);
+
+
+
+
 
 
 
@@ -18478,7 +36953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const patchText = String(e.content ?? "");
+
+
+
+
 
 
 
@@ -18486,7 +36969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!res.ok) throw new Error(`Failed to build changeset patch for ${p}: ${res.error}`);
+
+
+
+
 
 
 
@@ -18494,7 +36985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } else if (op === "delete") {
+
+
+
+
 
 
 
@@ -18502,7 +37001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!p) continue;
+
+
+
+
 
 
 
@@ -18510,7 +37017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           seen.add(`d:${p}`);
+
+
+
+
 
 
 
@@ -18518,7 +37033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           files.push({ kind: "delete", path: p, before, after: null });
+
+
+
+
 
 
 
@@ -18526,7 +37049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const from = e.from?.trim();
+
+
+
+
 
 
 
@@ -18534,7 +37065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!from || !to) continue;
+
+
+
+
 
 
 
@@ -18542,7 +37081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           seen.add(`r:${from}->${to}`);
+
+
+
+
 
 
 
@@ -18550,7 +37097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const after = before;
+
+
+
+
 
 
 
@@ -18558,7 +37113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -18570,7 +37133,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const stats = computeStats(files);
+
+
+
+
 
 
 
@@ -18578,7 +37153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+
+
+
+
 
 
 
@@ -18586,7 +37169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         files,
+
+
+
+
 
 
 
@@ -18594,7 +37185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         applied: false,
+
+
+
+
 
 
 
@@ -18602,7 +37201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -18610,7 +37217,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -18622,7 +37241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (cs: ChangeSet): Promise<boolean> => {
+
+
+
+
 
 
 
@@ -18630,11 +37257,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const deletes = cs.files.filter((f) => f.kind === "delete");
 
 
 
+
+
+
+
       const renames = cs.files.filter((f) => f.kind === "rename");
+
+
+
+
 
 
 
@@ -18646,7 +37285,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const reasons: string[] = [];
+
+
+
+
 
 
 
@@ -18654,11 +37305,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (newFiles.length) reasons.push(`Creates new files: ${newFiles.length}`);
 
 
 
+
+
+
+
       if (deletes.length) reasons.push(`Deletes files: ${deletes.length}`);
+
+
+
+
 
 
 
@@ -18670,7 +37333,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       if (!reasons.length) return true;
+
+
+
+
 
 
 
@@ -18678,7 +37353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "Apply change set",
+
+
+
+
 
 
 
@@ -18686,7 +37369,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { danger: true, confirmLabel: "Apply" }
+
+
+
+
 
 
 
@@ -18694,7 +37385,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -18702,7 +37401,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -18714,7 +37425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (n: Omit<AppNotification, "id">) => {
+
+
+
+
 
 
 
@@ -18722,7 +37441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const line = `${n.title}: ${n.message}`.trim();
+
+
+
+
 
 
 
@@ -18730,7 +37457,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       enqueueMetaLine(line);
+
+
+
+
 
 
 
@@ -18738,7 +37473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [enqueueMetaLine]
+
+
+
+
 
 
 
@@ -18750,11 +37493,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     notifyRef.current = notify;
+
+
+
+
 
 
 
@@ -18766,7 +37525,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const friendlyAiError = useCallback((raw: string): { title: string; message: string } => {
+
+
+
+
 
 
 
@@ -18778,7 +37549,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (/\bout_of_credits\b/i.test(msg)) {
+
+
+
+
 
 
 
@@ -18786,7 +37569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         title: "Pompora: out of credits",
+
+
+
+
 
 
 
@@ -18794,11 +37585,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       };
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -18810,7 +37617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return {
+
+
+
+
 
 
 
@@ -18818,7 +37633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         message: "Your current plan does not include fast mode. Upgrade your plan or use slow mode.",
+
+
+
+
 
 
 
@@ -18826,7 +37649,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -18838,7 +37673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return {
+
+
+
+
 
 
 
@@ -18846,7 +37689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         message: "OpenRouter rate limited the upstream request (shared free capacity). Wait a bit or switch to a different model/provider.",
+
+
+
+
 
 
 
@@ -18854,7 +37705,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -18866,7 +37729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return {
+
+
+
+
 
 
 
@@ -18874,7 +37745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         message:
+
+
+
+
 
 
 
@@ -18882,11 +37761,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       };
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -18898,7 +37793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const mentionsDeepSeek = /deepseek/i.test(msg);
+
+
+
+
 
 
 
@@ -18906,7 +37809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         title: mentionsDeepSeek ? "DeepSeek: Payment required" : "AI: Payment required",
+
+
+
+
 
 
 
@@ -18914,7 +37825,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           ? "Your DeepSeek API key has insufficient balance. Add credits / enable billing in DeepSeek or switch to another provider."
+
+
+
+
 
 
 
@@ -18922,11 +37841,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       };
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -18938,7 +37873,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const status = m ? Number(m[1]) : null;
+
+
+
+
 
 
 
@@ -18946,7 +37889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return {
+
+
+
+
 
 
 
@@ -18954,7 +37905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         message: "Your API key is invalid or missing permissions. Re-check the key for the selected provider.",
+
+
+
+
 
 
 
@@ -18962,7 +37921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -18970,11 +37937,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return { title: "AI: Rate limited", message: "You are being rate limited. Wait a bit and try again." };
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -18986,7 +37969,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -18998,7 +37993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     x: number;
+
+
+
+
 
 
 
@@ -19006,11 +38009,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     path: string;
 
 
 
+
+
+
+
     isDir: boolean;
+
+
+
+
 
 
 
@@ -19022,7 +38037,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const editorRef = useRef<MonacoEditorNS.IStandaloneCodeEditor | null>(null);
+
+
+
+
 
 
 
@@ -19030,7 +38057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const editorKeydownDisposeRef = useRef<{ dispose: () => void } | null>(null);
+
+
+
+
 
 
 
@@ -19038,7 +38073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const activeTab = useMemo(
+
+
+
+
 
 
 
@@ -19046,7 +38089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [activeTabPath, tabs]
+
+
+
+
 
 
 
@@ -19058,7 +38109,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -19066,7 +38129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       editorKeydownDisposeRef.current?.dispose();
+
+
+
+
 
 
 
@@ -19074,7 +38145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -19086,7 +38165,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const imageContainerRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -19094,7 +38185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const [imageScale, setImageScale] = useState(1);
+
+
+
+
 
 
 
@@ -19102,7 +38201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const imageDragRef = useRef<{ pointerId: number | null; startX: number; startY: number; baseX: number; baseY: number }>({
+
+
+
+
 
 
 
@@ -19110,7 +38217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     startX: 0,
+
+
+
+
 
 
 
@@ -19118,7 +38233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     baseX: 0,
+
+
+
+
 
 
 
@@ -19126,7 +38249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   });
+
+
+
+
 
 
 
@@ -19138,7 +38269,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -19146,7 +38289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setImageNaturalSize(null);
+
+
+
+
 
 
 
@@ -19154,7 +38305,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setImageOffset({ x: 0, y: 0 });
+
+
+
+
 
 
 
@@ -19166,7 +38325,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -19174,7 +38345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const url = activeTab.image?.url;
+
+
+
+
 
 
 
@@ -19182,7 +38361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     let alive = true;
+
+
+
+
 
 
 
@@ -19190,7 +38377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     img.onload = () => {
+
+
+
+
 
 
 
@@ -19198,7 +38393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const w = img.naturalWidth || img.width || 0;
+
+
+
+
 
 
 
@@ -19206,7 +38409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!w || !h) return;
+
+
+
+
 
 
 
@@ -19214,7 +38425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -19222,7 +38441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => {
+
+
+
+
 
 
 
@@ -19230,11 +38457,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
 
 
 
+
+
+
+
   }, [activeTab?.kind, activeTab?.image?.url]);
+
+
+
+
+
+
+
+
 
 
 
@@ -19250,7 +38493,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const setScaleAroundPoint = useCallback(
+
+
+
+
 
 
 
@@ -19258,7 +38513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const nextScale = clampScale(nextScaleRaw);
+
+
+
+
 
 
 
@@ -19266,7 +38529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!prevScale || !Number.isFinite(prevScale)) return;
+
+
+
+
 
 
 
@@ -19274,7 +38545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const wy = (cy - imageOffset.y) / prevScale;
+
+
+
+
 
 
 
@@ -19282,7 +38561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const nextY = cy - wy * nextScale;
+
+
+
+
 
 
 
@@ -19290,7 +38577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setImageOffset({ x: nextX, y: nextY });
+
+
+
+
 
 
 
@@ -19298,11 +38593,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [clampScale, imageOffset.x, imageOffset.y, imageScale]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -19314,7 +38625,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (activeTab?.kind !== "image") return;
+
+
+
+
 
 
 
@@ -19322,7 +38641,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!el) return;
+
+
+
+
 
 
 
@@ -19330,7 +38657,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const rect = el.getBoundingClientRect();
+
+
+
+
 
 
 
@@ -19338,7 +38673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const ch = Math.max(1, rect.height);
+
+
+
+
 
 
 
@@ -19346,7 +38689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const sx = (cw - pad) / imageNaturalSize.w;
+
+
+
+
 
 
 
@@ -19354,7 +38705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const s = clampScale(Math.min(sx, sy));
+
+
+
+
 
 
 
@@ -19362,7 +38721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const y = (ch - imageNaturalSize.h * s) / 2;
+
+
+
+
 
 
 
@@ -19370,7 +38737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setImageOffset({ x, y });
+
+
+
+
 
 
 
@@ -19382,7 +38757,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -19390,7 +38777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!imageNaturalSize) return;
+
+
+
+
 
 
 
@@ -19398,7 +38793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (lastImageAutoFitKeyRef.current === key) return;
+
+
+
+
 
 
 
@@ -19406,7 +38809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     fitImageToView();
+
+
+
+
 
 
 
@@ -19418,7 +38829,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const zoomImage = useCallback(
+
+
+
+
 
 
 
@@ -19426,7 +38849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (activeTab?.kind !== "image") return;
+
+
+
+
 
 
 
@@ -19434,7 +38865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!el) return;
+
+
+
+
 
 
 
@@ -19442,7 +38881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const cx = rect.width / 2;
+
+
+
+
 
 
 
@@ -19450,7 +38897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setScaleAroundPoint(imageScale * mult, cx, cy);
+
+
+
+
 
 
 
@@ -19458,11 +38913,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [activeTab?.kind, imageScale, setScaleAroundPoint]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -19474,7 +38945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setImageScale(1);
+
+
+
+
 
 
 
@@ -19482,7 +38961,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -19494,7 +38985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (e: React.WheelEvent) => {
+
+
+
+
 
 
 
@@ -19502,7 +39001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const el = imageContainerRef.current;
+
+
+
+
 
 
 
@@ -19510,7 +39017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       e.preventDefault();
+
+
+
+
 
 
 
@@ -19518,7 +39033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const cx = e.clientX - rect.left;
+
+
+
+
 
 
 
@@ -19526,7 +39049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const factor = Math.exp(-e.deltaY * 0.0015);
+
+
+
+
 
 
 
@@ -19534,7 +39065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -19542,7 +39081,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -19554,7 +39105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (e: React.PointerEvent) => {
+
+
+
+
 
 
 
@@ -19562,7 +39121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (e.button !== 0) return;
+
+
+
+
 
 
 
@@ -19570,7 +39137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!el) return;
+
+
+
+
 
 
 
@@ -19578,7 +39153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         el.setPointerCapture(e.pointerId);
+
+
+
+
 
 
 
@@ -19586,7 +39169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -19594,7 +39185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       imageDragRef.current.startX = e.clientX;
+
+
+
+
 
 
 
@@ -19602,7 +39201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       imageDragRef.current.baseX = imageOffset.x;
+
+
+
+
 
 
 
@@ -19610,7 +39217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -19618,7 +39233,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -19630,7 +39257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (e: React.PointerEvent) => {
+
+
+
+
 
 
 
@@ -19638,7 +39273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (imageDragRef.current.pointerId !== e.pointerId) return;
+
+
+
+
 
 
 
@@ -19646,7 +39289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const dy = e.clientY - imageDragRef.current.startY;
+
+
+
+
 
 
 
@@ -19654,7 +39305,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -19662,7 +39321,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -19674,7 +39345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (e: React.PointerEvent) => {
+
+
+
+
 
 
 
@@ -19682,7 +39361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       imageDragRef.current.pointerId = null;
+
+
+
+
 
 
 
@@ -19690,7 +39377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     []
+
+
+
+
 
 
 
@@ -19702,7 +39397,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const activeTabChangeFile = useMemo(() => {
+
+
+
+
 
 
 
@@ -19710,7 +39417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const cs = activeChat.changeSet;
+
+
+
+
 
 
 
@@ -19718,11 +39433,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const f = cs.files.find((x) => x.kind === "write" && x.path === activeTab.path);
 
 
 
+
+
+
+
     return f ?? null;
+
+
+
+
 
 
 
@@ -19734,11 +39461,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [typedEditorText, setTypedEditorText] = useState<string | null>(null);
 
 
 
+
+
+
+
   const editorTypingTimerRef = useRef<number | null>(null);
+
+
+
+
 
 
 
@@ -19750,7 +39493,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -19758,7 +39513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (editorTypingTimerRef.current) window.clearInterval(editorTypingTimerRef.current);
+
+
+
+
 
 
 
@@ -19766,7 +39529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -19778,7 +39549,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -19786,7 +39569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const p = activeTab?.path ?? "";
+
+
+
+
 
 
 
@@ -19798,7 +39589,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (!csId || !p || full === null) {
+
+
+
+
 
 
 
@@ -19806,7 +39609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       lastEditorTypingKeyRef.current = "";
+
+
+
+
 
 
 
@@ -19814,7 +39625,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       editorTypingTimerRef.current = null;
+
+
+
+
 
 
 
@@ -19822,7 +39641,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -19834,7 +39665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (lastEditorTypingKeyRef.current === key) return;
+
+
+
+
 
 
 
@@ -19846,7 +39685,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (full.length < 140) {
+
+
+
+
 
 
 
@@ -19854,7 +39705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (editorTypingTimerRef.current) window.clearInterval(editorTypingTimerRef.current);
+
+
+
+
 
 
 
@@ -19862,7 +39721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
+
+
+
+
 
 
 
@@ -19874,11 +39741,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (editorTypingTimerRef.current) window.clearInterval(editorTypingTimerRef.current);
 
 
 
+
+
+
+
     editorTypingTimerRef.current = null;
+
+
+
+
+
+
+
+
 
 
 
@@ -19894,11 +39781,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const segments = full.match(/\S+\s*/g) ?? [full];
 
 
 
+
+
+
+
     const step = full.length > 20000 ? 18 : 10;
+
+
+
+
 
 
 
@@ -19910,7 +39813,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     editorTypingTimerRef.current = window.setInterval(() => {
+
+
+
+
 
 
 
@@ -19918,7 +39833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setTypedEditorText(segments.slice(0, i).join(""));
+
+
+
+
 
 
 
@@ -19926,7 +39849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (editorTypingTimerRef.current) window.clearInterval(editorTypingTimerRef.current);
+
+
+
+
 
 
 
@@ -19934,11 +39865,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
 
 
 
+
+
+
+
     }, 28);
+
+
+
+
 
 
 
@@ -19950,7 +39893,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -19958,7 +39913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const raw = window.localStorage.getItem("pompora.recentFiles");
+
+
+
+
 
 
 
@@ -19966,7 +39929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const parsed = JSON.parse(raw);
+
+
+
+
 
 
 
@@ -19974,7 +39945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setRecentFiles(parsed.filter((x) => typeof x === "string").slice(0, 20));
+
+
+
+
 
 
 
@@ -19982,7 +39961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -19990,11 +39977,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -20006,7 +40009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const norm = absPath.replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -20014,7 +40025,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const next = [norm, ...prev.filter((p) => p !== norm)].slice(0, 20);
+
+
+
+
 
 
 
@@ -20022,7 +40041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         window.localStorage.setItem("pompora.recentFiles", JSON.stringify(next));
+
+
+
+
 
 
 
@@ -20030,7 +40057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         // ignore
+
+
+
+
 
 
 
@@ -20038,7 +40073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return next;
+
+
+
+
 
 
 
@@ -20046,7 +40089,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -20058,7 +40113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -20066,7 +40129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       // In dev, this will load the devUrl; in production it loads the bundled index.
+
+
+
+
 
 
 
@@ -20074,7 +40145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       new WebviewWindow(label, { title: "Pompora", width: 1280, height: 800, url });
+
+
+
+
 
 
 
@@ -20082,7 +40161,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       devConsoleError("New window failed", e);
+
+
+
+
 
 
 
@@ -20090,7 +40177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -20102,7 +40197,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -20110,11 +40217,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (settings.theme === "light") root.setAttribute("data-theme", "light");
 
 
 
+
+
+
+
     else root.removeAttribute("data-theme");
+
+
+
+
 
 
 
@@ -20126,7 +40245,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -20134,7 +40265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     Promise.all([settingsGet(), workspaceGet()])
+
+
+
+
 
 
 
@@ -20142,7 +40281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (cancelled) return;
+
+
+
+
 
 
 
@@ -20150,7 +40297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setSettingsState((prev) => ({
+
+
+
+
 
 
 
@@ -20158,7 +40313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           ...s,
+
+
+
+
 
 
 
@@ -20166,7 +40329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           editor_cursor_blinking: (s as AppSettings).editor_cursor_blinking ?? prev.editor_cursor_blinking ?? "expand",
+
+
+
+
 
 
 
@@ -20174,7 +40345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           editor_cursor_color: (s as AppSettings).editor_cursor_color ?? prev.editor_cursor_color ?? null,
+
+
+
+
 
 
 
@@ -20182,7 +40361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           workspace_root: s.workspace_root ?? null,
+
+
+
+
 
 
 
@@ -20190,7 +40377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           active_provider: migratedProvider ?? null,
+
+
+
+
 
 
 
@@ -20198,11 +40393,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setWorkspaceState(w);
 
 
 
+
+
+
+
       })
+
+
+
+
 
 
 
@@ -20210,7 +40417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (cancelled) return;
+
+
+
+
 
 
 
@@ -20218,7 +40433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       .finally(() => {
+
+
+
+
 
 
 
@@ -20226,7 +40449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setIsSettingsLoaded(true);
+
+
+
+
 
 
 
@@ -20238,7 +40469,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     return () => {
+
+
+
+
 
 
 
@@ -20246,7 +40489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -20258,7 +40509,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -20266,7 +40529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSecretsError(null);
+
+
+
+
 
 
 
@@ -20278,7 +40549,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (!isSettingsLoaded) return;
+
+
+
+
 
 
 
@@ -20290,7 +40573,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     providerKeyStatus(settings.active_provider)
+
+
+
+
 
 
 
@@ -20298,7 +40593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (cancelled) return;
+
+
+
+
 
 
 
@@ -20306,7 +40609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       })
+
+
+
+
 
 
 
@@ -20314,11 +40625,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (cancelled) return;
 
 
 
+
+
+
+
         setSecretsError(String(e));
+
+
+
+
 
 
 
@@ -20330,7 +40653,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     return () => {
+
+
+
+
 
 
 
@@ -20338,7 +40673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -20350,7 +40693,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -20358,7 +40713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     authGetProfile()
+
+
+
+
 
 
 
@@ -20366,7 +40729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (cancelled) return;
+
+
+
+
 
 
 
@@ -20374,7 +40745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       })
+
+
+
+
 
 
 
@@ -20382,7 +40761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         devConsoleError("authGetProfile failed", e);
+
+
+
+
 
 
 
@@ -20390,7 +40777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => {
+
+
+
+
 
 
 
@@ -20398,7 +40793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -20410,7 +40813,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -20418,7 +40833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setAuthCredits(null);
+
+
+
+
 
 
 
@@ -20426,7 +40849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -20434,7 +40865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     authGetCredits()
+
+
+
+
 
 
 
@@ -20442,7 +40881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (cancelled) return;
+
+
+
+
 
 
 
@@ -20450,7 +40897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       })
+
+
+
+
 
 
 
@@ -20458,7 +40913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         devConsoleError("authGetCredits failed", e);
+
+
+
+
 
 
 
@@ -20466,7 +40929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => {
+
+
+
+
 
 
 
@@ -20474,7 +40945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -20486,7 +40965,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -20494,7 +40985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const onDown = (e: MouseEvent) => {
+
+
+
+
 
 
 
@@ -20502,7 +41001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!t) return;
+
+
+
+
 
 
 
@@ -20510,7 +41017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -20518,7 +41033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => window.removeEventListener("mousedown", onDown);
+
+
+
+
 
 
 
@@ -20530,7 +41053,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const avatarLetter = useMemo(() => {
+
+
+
+
 
 
 
@@ -20538,7 +41073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const last = (authProfile?.last_name ?? "").trim();
+
+
+
+
 
 
 
@@ -20546,7 +41089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (first) return first[0]!.toUpperCase();
+
+
+
+
 
 
 
@@ -20554,11 +41105,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (email) return email[0]!.toUpperCase();
 
 
 
+
+
+
+
     return "U";
+
+
+
+
 
 
 
@@ -20570,7 +41133,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [avatarImgError, setAvatarImgError] = useState(false);
+
+
+
+
 
 
 
@@ -20582,7 +41157,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -20590,7 +41177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setAvatarDataUrl(null);
+
+
+
+
 
 
 
@@ -20602,7 +41197,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -20610,7 +41217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!url) return;
+
+
+
+
 
 
 
@@ -20618,7 +41233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     authAvatarDataUrl(url)
+
+
+
+
 
 
 
@@ -20626,7 +41249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (cancelled) return;
+
+
+
+
 
 
 
@@ -20634,7 +41265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (next) setAvatarDataUrl(next);
+
+
+
+
 
 
 
@@ -20642,7 +41281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       .catch((e: unknown) => {
+
+
+
+
 
 
 
@@ -20650,7 +41297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         devConsoleError("authAvatarDataUrl failed", e);
+
+
+
+
 
 
 
@@ -20658,7 +41313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => {
+
+
+
+
 
 
 
@@ -20666,7 +41329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -20678,11 +41349,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const safeOpenUrl = useCallback(async (url: string) => {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -20690,7 +41377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const result = await Promise.race([
+
+
+
+
 
 
 
@@ -20698,7 +41393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           .then(() => "ok" as const)
+
+
+
+
 
 
 
@@ -20706,7 +41409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         new Promise<"timeout">((resolve) => window.setTimeout(() => resolve("timeout"), 1500)),
+
+
+
+
 
 
 
@@ -20714,7 +41425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (result === "ok") return true;
+
+
+
+
 
 
 
@@ -20722,7 +41441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -20730,7 +41457,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       window.open(url, "_blank", "noopener,noreferrer");
+
+
+
+
 
 
 
@@ -20738,7 +41473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -20746,7 +41489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return false;
+
+
+
+
 
 
 
@@ -20758,7 +41509,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const logoutDesktop = useCallback(async () => {
+
+
+
+
 
 
 
@@ -20766,7 +41529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsAuthBusy(true);
+
+
+
+
 
 
 
@@ -20774,7 +41545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await authLogout();
+
+
+
+
 
 
 
@@ -20782,7 +41561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setAuthCredits(null);
+
+
+
+
 
 
 
@@ -20790,7 +41577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -20798,7 +41593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setKeyStatus(await providerKeyStatus("pompora"));
+
+
+
+
 
 
 
@@ -20806,7 +41609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch {
+
+
+
+
 
 
 
@@ -20814,7 +41625,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -20822,7 +41641,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } finally {
+
+
+
+
 
 
 
@@ -20830,7 +41657,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -20842,7 +41677,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const beginDesktopAuthWithMode = useCallback(
+
+
+
+
 
 
 
@@ -20850,7 +41697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (isAuthBusy) return;
+
+
+
+
 
 
 
@@ -20858,7 +41713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -20866,7 +41729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         let target = url;
+
+
+
+
 
 
 
@@ -20874,7 +41745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const u = new URL(url);
+
+
+
+
 
 
 
@@ -20882,7 +41761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const st = u.searchParams.get("state") ?? state;
+
+
+
+
 
 
 
@@ -20890,7 +41777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           target = `https://pompora.dev/${mode}?next=${encodeURIComponent(next)}`;
+
+
+
+
 
 
 
@@ -20898,7 +41793,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -20910,7 +41817,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const ok = await safeOpenUrl(target);
+
+
+
+
 
 
 
@@ -20918,7 +41833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           notify({ kind: "error", title: "Could not open browser", message: "Copy the URL and open it manually." });
+
+
+
+
 
 
 
@@ -20926,7 +41849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setIsAuthBusy(false);
+
+
+
+
 
 
 
@@ -20934,7 +41865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             .then(async (profile) => {
+
+
+
+
 
 
 
@@ -20942,7 +41881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               try {
+
+
+
+
 
 
 
@@ -20950,7 +41897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 setAuthCredits(credits);
+
+
+
+
 
 
 
@@ -20958,11 +41913,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 devConsoleError("authGetCredits failed (after login)", e);
 
 
 
+
+
+
+
               }
+
+
+
+
 
 
 
@@ -20970,7 +41937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 if (settings.active_provider === "pompora") {
+
+
+
+
 
 
 
@@ -20978,7 +41953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 }
+
+
+
+
 
 
 
@@ -20986,7 +41969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               }
+
+
+
+
 
 
 
@@ -20994,7 +41985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             })
+
+
+
+
 
 
 
@@ -21002,7 +42001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               notify({ kind: "error", title: "Sign in failed", message: String(e) });
+
+
+
+
 
 
 
@@ -21010,7 +42017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return;
+
+
+
+
 
 
 
@@ -21018,7 +42033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setIsAuthBusy(false);
+
+
+
+
 
 
 
@@ -21026,7 +42049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           .then(async (profile) => {
+
+
+
+
 
 
 
@@ -21034,7 +42065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             try {
+
+
+
+
 
 
 
@@ -21042,7 +42081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               setAuthCredits(credits);
+
+
+
+
 
 
 
@@ -21050,11 +42097,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               devConsoleError("authGetCredits failed (after login)", e);
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -21062,7 +42121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               if (settings.active_provider === "pompora") {
+
+
+
+
 
 
 
@@ -21070,7 +42137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               }
+
+
+
+
 
 
 
@@ -21078,7 +42153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -21086,7 +42169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           })
+
+
+
+
 
 
 
@@ -21094,7 +42185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             notify({ kind: "error", title: "Sign in failed", message: String(e) });
+
+
+
+
 
 
 
@@ -21102,7 +42201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (e) {
+
+
+
+
 
 
 
@@ -21110,7 +42217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } finally {
+
+
+
+
 
 
 
@@ -21118,7 +42233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -21126,11 +42249,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [authGetCredits, authWaitLogin, isAuthBusy, notify, safeOpenUrl, settings.active_provider]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -21142,7 +42281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -21150,7 +42297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const providerId = settings.active_provider;
+
+
+
+
 
 
 
@@ -21158,7 +42313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .then(async (v) => {
+
+
+
+
 
 
 
@@ -21166,7 +42329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           // Load models if key is now configured
+
+
+
+
 
 
 
@@ -21174,7 +42345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             // Refresh key statuses first - use hardcoded list to avoid dependency issue
+
+
+
+
 
 
 
@@ -21182,7 +42361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const out: Record<string, KeyStatus | null> = {};
+
+
+
+
 
 
 
@@ -21190,11 +42377,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               targets.map(async (id) => {
 
 
 
+
+
+
+
                 try {
+
+
+
+
 
 
 
@@ -21202,7 +42401,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 } catch {
+
+
+
+
 
 
 
@@ -21210,7 +42417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 }
+
+
+
+
 
 
 
@@ -21218,7 +42433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             );
+
+
+
+
 
 
 
@@ -21226,7 +42449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             
+
+
+
+
 
 
 
@@ -21234,7 +42465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const providerId = settings.active_provider;
+
+
+
+
 
 
 
@@ -21242,7 +42481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               if (!loadingModels[providerId]) {
+
+
+
+
 
 
 
@@ -21250,7 +42497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 try {
+
+
+
+
 
 
 
@@ -21258,7 +42513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     provider: providerId,
+
+
+
+
 
 
 
@@ -21266,7 +42529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   });
+
+
+
+
 
 
 
@@ -21274,7 +42545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 } catch (e) {
+
+
+
+
 
 
 
@@ -21282,7 +42561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 } finally {
+
+
+
+
 
 
 
@@ -21290,7 +42577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     const next = { ...prev };
+
+
+
+
 
 
 
@@ -21298,7 +42593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     return next;
+
+
+
+
 
 
 
@@ -21306,7 +42609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 }
+
+
+
+
 
 
 
@@ -21314,7 +42625,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -21322,7 +42641,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         })
+
+
+
+
 
 
 
@@ -21330,7 +42657,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setSecretsError(String(e));
+
+
+
+
 
 
 
@@ -21338,7 +42673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -21350,7 +42693,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const providerChoices = useMemo(
+
+
+
+
 
 
 
@@ -21358,7 +42713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       [
+
+
+
+
 
 
 
@@ -21366,7 +42729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { id: "openai", label: "OpenAI", api: true, category: "cloud" },
+
+
+
+
 
 
 
@@ -21374,7 +42745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { id: "gemini", label: "Google Gemini", api: true, category: "cloud" },
+
+
+
+
 
 
 
@@ -21382,7 +42761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { id: "groq", label: "Groq", api: true, category: "cloud" },
+
+
+
+
 
 
 
@@ -21390,7 +42777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { id: "together", label: "Together AI", api: true, category: "cloud" },
+
+
+
+
 
 
 
@@ -21398,7 +42793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { id: "openrouter", label: "OpenRouter", api: true, category: "cloud" },
+
+
+
+
 
 
 
@@ -21406,7 +42809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { id: "cohere", label: "Cohere", api: true, category: "cloud" },
+
+
+
+
 
 
 
@@ -21414,7 +42825,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { id: "lmstudio", label: "LM Studio", api: false, category: "local" },
+
+
+
+
 
 
 
@@ -21422,11 +42841,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       ] as const,
 
 
 
+
+
+
+
     []
+
+
+
+
 
 
 
@@ -21438,7 +42869,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const providerLabel = useMemo(() => {
+
+
+
+
 
 
 
@@ -21446,7 +42889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!p) return "Not configured";
+
+
+
+
 
 
 
@@ -21454,7 +42905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const t = String(settings.pompora_thinking ?? uiPomporaThinking ?? "slow").toLowerCase();
+
+
+
+
 
 
 
@@ -21462,11 +42921,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return `Pompora ${label}`;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -21474,7 +42945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const baseLabel = found?.label ?? p;
+
+
+
+
 
 
 
@@ -21482,7 +42961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const model = providerModels[p]?.find((m) => m.id === settings.active_model);
+
+
+
+
 
 
 
@@ -21490,7 +42977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return `${baseLabel} • ${modelName}`;
+
+
+
+
 
 
 
@@ -21498,7 +42993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return baseLabel;
+
+
+
+
 
 
 
@@ -21510,7 +43013,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const activeProviderMissingKey = useMemo(() => {
+
+
+
+
 
 
 
@@ -21518,7 +43033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!p) return false;
+
+
+
+
 
 
 
@@ -21526,7 +43049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!choice?.api) return false;
+
+
+
+
 
 
 
@@ -21534,7 +43065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return st?.is_configured !== true;
+
+
+
+
 
 
 
@@ -21546,7 +43085,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const providerNeedsKey = useMemo(() => {
+
+
+
+
 
 
 
@@ -21554,7 +43105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!p) return true;
+
+
+
+
 
 
 
@@ -21562,11 +43121,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     // Local providers that don't need API keys
 
 
 
+
+
+
+
     return !["ollama", "lmstudio"].includes(p);
+
+
+
+
 
 
 
@@ -21578,7 +43149,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const aiBlockedReason = useMemo(() => {
+
+
+
+
 
 
 
@@ -21586,7 +43169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const p = settings.active_provider;
+
+
+
+
 
 
 
@@ -21598,7 +43189,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (p === "pompora") {
+
+
+
+
 
 
 
@@ -21606,7 +43209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (keyStatus?.is_configured !== true) return "Finish signing in to Pompora";
+
+
+
+
 
 
 
@@ -21614,7 +43225,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -21626,7 +43249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return "Add an API key in Settings (Ctrl+,)";
+
+
+
+
 
 
 
@@ -21638,7 +43269,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     return null;
+
+
+
+
 
 
 
@@ -21650,7 +43293,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const pomporaPlan = useMemo(() => {
+
+
+
+
 
 
 
@@ -21658,7 +43313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const p = String(raw || "starter").toLowerCase().trim();
+
+
+
+
 
 
 
@@ -21666,7 +43329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (p === "free") return "starter";
+
+
+
+
 
 
 
@@ -21674,7 +43345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return "starter";
+
+
+
+
 
 
 
@@ -21686,7 +43365,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const pomporaAllowedModes = useMemo(() => {
+
+
+
+
 
 
 
@@ -21694,7 +43385,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (pomporaPlan === "plus") return ["slow", "fast"] as const;
+
+
+
+
 
 
 
@@ -21702,7 +43401,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [pomporaPlan]);
+
+
+
+
+
+
+
+
 
 
 
@@ -21718,11 +43429,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const refreshProviderKeyStatuses = useCallback(async () => {
 
 
 
+
+
+
+
     const targets = [...providerChoices.filter((p) => p.api).map((p) => p.id), "pompora"];
+
+
+
+
 
 
 
@@ -21734,7 +43461,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const out: Record<string, KeyStatus | null> = {};
+
+
+
+
 
 
 
@@ -21742,7 +43481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       targets.map(async (id) => {
+
+
+
+
 
 
 
@@ -21750,7 +43497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           out[id] = await providerKeyStatus(id);
+
+
+
+
 
 
 
@@ -21758,7 +43513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           out[id] = null;
+
+
+
+
 
 
 
@@ -21766,7 +43529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       })
+
+
+
+
 
 
 
@@ -21774,7 +43545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setProviderKeyStatuses(out);
+
+
+
+
 
 
 
@@ -21786,7 +43565,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const clearChatHistoryNow = useCallback(async () => {
+
+
+
+
 
 
 
@@ -21794,7 +43585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!ok) return;
+
+
+
+
 
 
 
@@ -21802,7 +43601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await historyClear();
+
+
+
+
 
 
 
@@ -21810,7 +43617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -21818,7 +43633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const id = `${now}-${Math.random().toString(16).slice(2)}`;
+
+
+
+
 
 
 
@@ -21826,7 +43649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setActiveChatId(id);
+
+
+
+
 
 
 
@@ -21834,7 +43665,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [notify, requestConfirm]);
+
+
+
+
+
+
+
+
 
 
 
@@ -21846,7 +43689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const ok = await requestConfirm("Delete API keys", "Delete all stored API keys? This cannot be undone.", { danger: true, confirmLabel: "Delete" });
+
+
+
+
 
 
 
@@ -21854,7 +43705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -21862,7 +43721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await refreshProviderKeyStatuses();
+
+
+
+
 
 
 
@@ -21870,7 +43737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -21878,7 +43753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch {
+
+
+
+
 
 
 
@@ -21886,7 +43769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -21894,7 +43785,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -21902,11 +43801,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       notify({ kind: "error", title: "Privacy", message: "Failed to delete API keys" });
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -21918,7 +43829,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const clearAuthNow = useCallback(async () => {
+
+
+
+
 
 
 
@@ -21926,7 +43849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       "Log out",
+
+
+
+
 
 
 
@@ -21934,7 +43865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       { danger: true, confirmLabel: "Log out" }
+
+
+
+
 
 
 
@@ -21942,7 +43881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!ok) return;
+
+
+
+
 
 
 
@@ -21950,7 +43897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await authClear();
+
+
+
+
 
 
 
@@ -21958,7 +43913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -21966,7 +43929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setAuthCredits(null);
+
+
+
+
 
 
 
@@ -21974,7 +43945,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [notify, requestConfirm]);
+
+
+
+
+
+
+
+
 
 
 
@@ -21986,7 +43969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const ok = await requestConfirm("Reset settings", "Reset settings to defaults? This cannot be undone.", { danger: true, confirmLabel: "Reset" });
+
+
+
+
 
 
 
@@ -21994,7 +43985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -22002,11 +44001,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -22014,7 +44025,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const s = await settingsGet();
+
+
+
+
 
 
 
@@ -22022,7 +44041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         theme: s.theme === "light" ? "light" : "dark",
+
+
+
+
 
 
 
@@ -22030,7 +44057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         active_provider: s.active_provider ?? null,
+
+
+
+
 
 
 
@@ -22038,7 +44073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         pompora_thinking: (s as any).pompora_thinking ?? null,
+
+
+
+
 
 
 
@@ -22046,7 +44089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         editor_line_highlight_color: (s as any).editor_line_highlight_color ?? null,
+
+
+
+
 
 
 
@@ -22054,7 +44105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         keybindings: (s as any).keybindings ?? DEFAULT_KEYBINDINGS,
+
+
+
+
 
 
 
@@ -22062,7 +44121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         recent_workspaces: (s as any).recent_workspaces ?? [],
+
+
+
+
 
 
 
@@ -22070,7 +44137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -22078,11 +44153,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     notify({ kind: "info", title: "Privacy", message: "Settings reset" });
 
 
 
+
+
+
+
   }, [notify, requestConfirm]);
+
+
+
+
+
+
+
+
 
 
 
@@ -22094,7 +44185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const ok = await requestConfirm(
+
+
+
+
 
 
 
@@ -22102,7 +44201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       "Wipe ALL local Pompora data (settings, history, keys, auth)? This cannot be undone.",
+
+
+
+
 
 
 
@@ -22110,7 +44217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     );
+
+
+
+
 
 
 
@@ -22118,7 +44233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -22126,11 +44249,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -22142,7 +44281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setAuthCredits(null);
+
+
+
+
 
 
 
@@ -22150,7 +44297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setEncryptionPasswordDraft("");
+
+
+
+
 
 
 
@@ -22158,7 +44313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setProviderKeyStatuses({});
+
+
+
+
 
 
 
@@ -22170,7 +44333,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const now = Date.now();
+
+
+
+
 
 
 
@@ -22178,7 +44353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setChatSessions([{ id, title: "Chat", createdAt: now, updatedAt: now, messages: [], logs: [], draft: "", changeSet: null }]);
+
+
+
+
 
 
 
@@ -22190,7 +44373,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     setSettingsState({
+
+
+
+
 
 
 
@@ -22198,7 +44393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       offline_mode: false,
+
+
+
+
 
 
 
@@ -22206,7 +44409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       active_model: null,
+
+
+
+
 
 
 
@@ -22214,7 +44425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       editor_cursor_blinking: "expand",
+
+
+
+
 
 
 
@@ -22222,7 +44441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       editor_cursor_color: null,
+
+
+
+
 
 
 
@@ -22230,11 +44457,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       workspace_root: null,
 
 
 
+
+
+
+
       recent_workspaces: [],
+
+
+
+
 
 
 
@@ -22246,7 +44485,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     notify({ kind: "info", title: "Privacy", message: "All local data wiped" });
+
+
+
+
 
 
 
@@ -22258,7 +44509,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const loadProviderModels = useCallback(async (providerId: string) => {
+
+
+
+
 
 
 
@@ -22266,7 +44529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (loadingModels[providerId]) {
+
+
+
+
 
 
 
@@ -22274,7 +44545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -22282,7 +44561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setLoadingModels((prev) => ({ ...prev, [providerId]: true }));
+
+
+
+
 
 
 
@@ -22290,7 +44577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const models = await providerListModels({
+
+
+
+
 
 
 
@@ -22298,11 +44593,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         encryptionPassword: encryptionPasswordDraft || undefined,
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -22310,7 +44617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -22318,7 +44633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       console.warn(`Failed to load models for ${providerId}:`, e);
+
+
+
+
 
 
 
@@ -22326,7 +44649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       notify({
+
+
+
+
 
 
 
@@ -22334,7 +44665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         title: "Models",
+
+
+
+
 
 
 
@@ -22342,7 +44681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -22350,7 +44697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       // Clear models if loading failed (might be invalid key)
+
+
+
+
 
 
 
@@ -22358,7 +44713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const next = { ...prev };
+
+
+
+
 
 
 
@@ -22366,7 +44729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return next;
+
+
+
+
 
 
 
@@ -22374,7 +44745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } finally {
+
+
+
+
 
 
 
@@ -22382,7 +44761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const next = { ...prev };
+
+
+
+
 
 
 
@@ -22390,7 +44777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return next;
+
+
+
+
 
 
 
@@ -22398,7 +44793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -22414,7 +44817,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
   const chatContextUsage = useMemo(() => {
+
+
+
+
 
 
 
@@ -22422,7 +44841,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -22438,7 +44869,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const openSettingsTab = useCallback(() => {
+
+
+
+
 
 
 
@@ -22446,7 +44889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (prev.some((t) => t.path === SETTINGS_TAB_PATH)) return prev;
+
+
+
+
 
 
 
@@ -22454,11 +44905,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
 
 
 
+
+
+
+
     setActiveTabPath(SETTINGS_TAB_PATH);
+
+
+
+
 
 
 
@@ -22470,7 +44933,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const [wsTooltip, setWsTooltip] = useState<{
+
+
+
+
 
 
 
@@ -22478,7 +44953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     x: number;
+
+
+
+
 
 
 
@@ -22486,11 +44969,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     align: "tl" | "tr";
 
 
 
+
+
+
+
     placement: "above" | "below";
+
+
+
+
 
 
 
@@ -22502,7 +44997,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const showTooltipForEl = useCallback((el: HTMLElement | null, text: string, align: "tl" | "tr" = "tr") => {
+
+
+
+
 
 
 
@@ -22510,7 +45017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const r = el.getBoundingClientRect();
+
+
+
+
 
 
 
@@ -22518,7 +45033,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const safeAlign: "tl" | "tr" = align === "tr" && r.right < 280 ? "tl" : align;
+
+
+
+
+
+
+
+
 
 
 
@@ -22534,7 +45061,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     // Anchor near the hovered element but keep the tooltip fully in-viewport.
+
+
+
+
 
 
 
@@ -22542,7 +45081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const anchorY = placement === "above" ? r.top : r.bottom;
+
+
+
+
 
 
 
@@ -22550,7 +45097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const y = Math.min(window.innerHeight - pad, Math.max(pad, anchorY));
+
+
+
+
 
 
 
@@ -22558,7 +45113,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -22574,7 +45141,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -22582,7 +45161,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const onDown = (e: MouseEvent) => {
+
+
+
+
 
 
 
@@ -22590,7 +45177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!t) return;
+
+
+
+
 
 
 
@@ -22598,7 +45193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (t.closest("[data-model-picker-root]")) return;
+
+
+
+
 
 
 
@@ -22606,7 +45209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -22614,7 +45225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => window.removeEventListener("mousedown", onDown);
+
+
+
+
 
 
 
@@ -22626,7 +45245,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   // Effect to clear error when changing providers
+
+
+
+
 
 
 
@@ -22634,7 +45265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSecretsError(null);
+
+
+
+
 
 
 
@@ -22646,7 +45285,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const workspaceLabel = useMemo(() => {
+
+
+
+
 
 
 
@@ -22654,11 +45305,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!root) return "No folder";
 
 
 
+
+
+
+
     return basename(root);
+
+
+
+
 
 
 
@@ -22670,7 +45333,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const footerRelPath = useMemo(() => {
+
+
+
+
 
 
 
@@ -22678,7 +45353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const p = activeTab?.path ?? null;
+
+
+
+
 
 
 
@@ -22686,11 +45369,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (p.startsWith("pompora:") || p.startsWith("untitled:")) return activeTab?.name ?? p;
 
 
 
+
+
+
+
     return p;
+
+
+
+
 
 
 
@@ -22702,7 +45397,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const footerFileIconPath = useMemo(() => {
+
+
+
+
 
 
 
@@ -22710,7 +45417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const p = activeTab?.path ?? null;
+
+
+
+
 
 
 
@@ -22718,7 +45433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return p;
+
+
+
+
 
 
 
@@ -22730,11 +45453,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     setFooterPathExpanded(false);
+
+
+
+
 
 
 
@@ -22746,11 +45485,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const canUseAi = useMemo(() => {
 
 
 
+
+
+
+
     return aiBlockedReason === null;
+
+
+
+
 
 
 
@@ -22762,7 +45517,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const refreshDir = useCallback(async (relDir?: string) => {
+
+
+
+
 
 
 
@@ -22770,7 +45537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const entries = await workspaceListDir(relDir);
+
+
+
+
 
 
 
@@ -22778,7 +45553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const deduped = entries.filter((e) => {
+
+
+
+
 
 
 
@@ -22786,7 +45569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!p) return false;
+
+
+
+
 
 
 
@@ -22794,7 +45585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       seen.add(p);
+
+
+
+
 
 
 
@@ -22802,11 +45601,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
 
 
 
+
+
+
+
     setExplorer((prev) => ({ ...prev, [key]: deduped }));
+
+
+
+
 
 
 
@@ -22818,11 +45629,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     refreshDirRef.current = refreshDir;
+
+
+
+
 
 
 
@@ -22834,7 +45661,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const getEntry = useCallback(
+
+
+
+
 
 
 
@@ -22842,7 +45681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const parent = path.includes("/") ? path.split("/").slice(0, -1).join("/") : "";
+
+
+
+
 
 
 
@@ -22850,7 +45697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!list) return null;
+
+
+
+
 
 
 
@@ -22858,7 +45713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -22866,7 +45729,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -22878,7 +45753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (selected: string | null): string => {
+
+
+
+
 
 
 
@@ -22886,7 +45769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const info = getEntry(selected);
+
+
+
+
 
 
 
@@ -22894,7 +45785,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return selected.includes("/") ? selected.split("/").slice(0, -1).join("/") : "";
+
+
+
+
 
 
 
@@ -22902,11 +45801,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [getEntry]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -22918,7 +45833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setExplorer({});
+
+
+
+
 
 
 
@@ -22926,7 +45849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSelectedPath(null);
+
+
+
+
 
 
 
@@ -22934,7 +45865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     await refreshDir(undefined);
+
+
+
+
 
 
 
@@ -22946,7 +45885,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const getSavedWorkspaces = useCallback((): SavedWorkspace[] => {
+
+
+
+
 
 
 
@@ -22954,7 +45905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const deduped: SavedWorkspace[] = [];
+
+
+
+
 
 
 
@@ -22962,7 +45921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     for (const w of items) {
+
+
+
+
 
 
 
@@ -22970,7 +45937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!key || seen.has(key)) continue;
+
+
+
+
 
 
 
@@ -22978,7 +45953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       deduped.push({ name: String(w.name ?? "").trim(), roots: Array.isArray(w.roots) ? w.roots : [], updated_at: w.updated_at });
+
+
+
+
 
 
 
@@ -22986,7 +45969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return deduped;
+
+
+
+
 
 
 
@@ -22998,7 +45989,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const persistSavedWorkspaces = useCallback(
+
+
+
+
 
 
 
@@ -23006,7 +46009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const next: AppSettings = { ...settings, saved_workspaces: items };
+
+
+
+
 
 
 
@@ -23014,7 +46025,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -23022,7 +46041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (e) {
+
+
+
+
 
 
 
@@ -23030,7 +46057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         notify({ kind: "error", title: "Workspace", message: "Failed to save workspaces" });
+
+
+
+
 
 
 
@@ -23038,7 +46073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -23046,11 +46089,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [devConsoleError, notify, settings]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -23062,7 +46121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (rootsRaw: string[]) => {
+
+
+
+
 
 
 
@@ -23070,7 +46137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .map((x) => String(x || "").trim())
+
+
+
+
 
 
 
@@ -23078,7 +46153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .map((x) => x.replace(/\\/g, "/"));
+
+
+
+
 
 
 
@@ -23086,7 +46169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         notify({ kind: "error", title: "Workspace", message: "Saved workspace contains no folders." });
+
+
+
+
 
 
 
@@ -23094,7 +46185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -23102,7 +46201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       let w = w0;
+
+
+
+
 
 
 
@@ -23110,7 +46217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         w = await workspaceAddRoot(r);
+
+
+
+
 
 
 
@@ -23118,7 +46233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setWorkspaceState(w);
+
+
+
+
 
 
 
@@ -23126,7 +46249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ...s,
+
+
+
+
 
 
 
@@ -23134,7 +46265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         workspace_roots: w.roots,
+
+
+
+
 
 
 
@@ -23142,7 +46281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }));
+
+
+
+
 
 
 
@@ -23150,7 +46297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.forEach(revokeTabObjectUrl);
+
+
+
+
 
 
 
@@ -23158,7 +46313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -23166,7 +46329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await refreshRoot();
+
+
+
+
 
 
 
@@ -23174,7 +46345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -23182,7 +46361,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -23194,7 +46385,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (name: string) => {
+
+
+
+
 
 
 
@@ -23202,7 +46401,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!picked) {
+
+
+
+
 
 
 
@@ -23210,11 +46417,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -23222,7 +46441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         await openSavedWorkspaceByRoots(picked.roots ?? []);
+
+
+
+
 
 
 
@@ -23230,7 +46457,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (e) {
+
+
+
+
 
 
 
@@ -23238,7 +46473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         notify({ kind: "error", title: "Workspace", message: `Failed to open workspace: ${String(e)}` });
+
+
+
+
 
 
 
@@ -23246,7 +46489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -23254,7 +46505,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -23266,7 +46529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!workspace.root) {
+
+
+
+
 
 
 
@@ -23274,11 +46545,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -23286,7 +46569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!folder) return;
+
+
+
+
 
 
 
@@ -23294,7 +46585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -23302,7 +46601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -23310,7 +46617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       notify({ kind: "error", title: "Workspace", message: `Failed to add folder: ${String(e)}` });
+
+
+
+
 
 
 
@@ -23318,7 +46633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -23326,7 +46649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSettingsState((s) => ({
+
+
+
+
 
 
 
@@ -23334,7 +46665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       workspace_root: w.root,
+
+
+
+
 
 
 
@@ -23342,7 +46681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       recent_workspaces: w.recent,
+
+
+
+
 
 
 
@@ -23350,7 +46697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     await refreshRoot();
+
+
+
+
 
 
 
@@ -23362,7 +46717,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const openAbsFileInEditor = useCallback(
+
+
+
+
 
 
 
@@ -23370,7 +46737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const file = String(absPath || "").replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -23378,7 +46753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (isImagePath(file)) {
+
+
+
+
 
 
 
@@ -23386,7 +46769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const url = base64ToObjectUrl(fb.mime, fb.base64);
+
+
+
+
 
 
 
@@ -23394,7 +46785,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           path: file,
+
+
+
+
 
 
 
@@ -23402,7 +46801,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           language: detectLanguage(file),
+
+
+
+
 
 
 
@@ -23410,7 +46817,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           isDirty: false,
+
+
+
+
 
 
 
@@ -23418,7 +46833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           image: { mime: fb.mime, url },
+
+
+
+
 
 
 
@@ -23426,7 +46849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setTabs((prev) => {
+
+
+
+
 
 
 
@@ -23434,7 +46865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const existing = prev.find((t) => String(t.path || "").replace(/\\/g, "/").toLowerCase() === key);
+
+
+
+
 
 
 
@@ -23442,7 +46881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             if (existing.kind === "image") {
+
+
+
+
 
 
 
@@ -23450,7 +46897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 URL.revokeObjectURL(url);
+
+
+
+
 
 
 
@@ -23458,7 +46913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               }
+
+
+
+
 
 
 
@@ -23466,7 +46929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               return prev;
+
+
+
+
 
 
 
@@ -23474,7 +46945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setActiveTabPath(file);
+
+
+
+
 
 
 
@@ -23482,7 +46961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -23490,7 +46977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return [...prev, tab];
+
+
+
+
 
 
 
@@ -23498,7 +46993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         rememberRecentFile(file);
+
+
+
+
 
 
 
@@ -23506,7 +47009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -23514,7 +47025,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const tab: EditorTab = {
+
+
+
+
 
 
 
@@ -23522,7 +47041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         name: basename(file),
+
+
+
+
 
 
 
@@ -23530,7 +47057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         content,
+
+
+
+
 
 
 
@@ -23538,7 +47073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         kind: "text",
+
+
+
+
 
 
 
@@ -23546,7 +47089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setTabs((prev) => {
+
+
+
+
 
 
 
@@ -23554,7 +47105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const existing = prev.find((t) => String(t.path || "").replace(/\\/g, "/").toLowerCase() === key);
+
+
+
+
 
 
 
@@ -23562,7 +47121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setActiveTabPath(existing.path);
+
+
+
+
 
 
 
@@ -23570,7 +47137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -23578,7 +47153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return [...prev, tab];
+
+
+
+
 
 
 
@@ -23586,7 +47169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       rememberRecentFile(file);
+
+
+
+
 
 
 
@@ -23594,11 +47185,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [rememberRecentFile]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -23610,7 +47217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const norm = String(p || "").replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -23618,7 +47233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const rest = norm.slice("__wsroot__/".length);
+
+
+
+
 
 
 
@@ -23626,7 +47249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const idx = Number(idxRaw);
+
+
+
+
 
 
 
@@ -23634,7 +47265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return { idx, tail: tailParts.join("/") };
+
+
+
+
 
 
 
@@ -23642,7 +47281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const resolveAbsPathFromExplorerPath = useCallback(
+
+
+
+
 
 
 
@@ -23650,7 +47297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const norm = String(p || "").replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -23658,7 +47313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const v = parseVirtualRootPath(norm);
+
+
+
+
 
 
 
@@ -23666,7 +47329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const roots = workspace.roots?.length ? workspace.roots : settings.workspace_roots;
+
+
+
+
 
 
 
@@ -23674,7 +47345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!base) return null;
+
+
+
+
 
 
 
@@ -23682,7 +47361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const rel = v.tail.replace(/^\//, "");
+
+
+
+
 
 
 
@@ -23690,7 +47377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -23698,7 +47393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!base) return null;
+
+
+
+
 
 
 
@@ -23706,7 +47409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const rel = norm.replace(/^\//, "");
+
+
+
+
 
 
 
@@ -23714,7 +47425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -23722,7 +47441,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -23734,7 +47465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (absFolder: string) => {
+
+
+
+
 
 
 
@@ -23742,7 +47481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setWorkspaceState(w);
+
+
+
+
 
 
 
@@ -23750,7 +47497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ...s,
+
+
+
+
 
 
 
@@ -23758,7 +47513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         workspace_roots: w.roots,
+
+
+
+
 
 
 
@@ -23766,7 +47529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }));
+
+
+
+
 
 
 
@@ -23774,11 +47545,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
 
 
 
+
+
+
+
     [refreshRoot, workspaceRemoveRoot]
+
+
+
+
 
 
 
@@ -23790,11 +47573,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     void refreshRoot();
+
+
+
+
 
 
 
@@ -23806,7 +47605,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -23814,11 +47625,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setFileIndexRoot(null);
 
 
 
+
+
+
+
     setFileIndex([]);
+
+
+
+
 
 
 
@@ -23830,7 +47653,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -23838,7 +47673,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [activeChat.messages]);
+
+
+
+
+
+
+
+
 
 
 
@@ -23850,7 +47697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const msgs = (activeChat.messages ?? []).filter((m) => m.role !== "meta");
+
+
+
+
 
 
 
@@ -23858,7 +47713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!last) return "";
+
+
+
+
 
 
 
@@ -23866,7 +47729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const lastEv = last.eventStream.events?.[last.eventStream.events.length - 1];
+
+
+
+
 
 
 
@@ -23874,11 +47745,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
     return `${last.id ?? ""}:${(last.content ?? "").length}`;
+
+
+
+
 
 
 
@@ -23890,7 +47773,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const chatStickToBottomRef = useRef(true);
+
+
+
+
 
 
 
@@ -23898,11 +47793,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const dist = el.scrollHeight - (el.scrollTop + el.clientHeight);
 
 
 
+
+
+
+
     chatStickToBottomRef.current = dist < 48;
+
+
+
+
 
 
 
@@ -23914,7 +47821,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -23922,7 +47841,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!el) return;
+
+
+
+
 
 
 
@@ -23930,7 +47857,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.requestAnimationFrame(() => {
+
+
+
+
 
 
 
@@ -23938,7 +47873,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!el2) return;
+
+
+
+
 
 
 
@@ -23946,7 +47889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -23958,7 +47909,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -23966,7 +47929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (chatStreamTimerRef.current) window.clearInterval(chatStreamTimerRef.current);
+
+
+
+
 
 
 
@@ -23974,7 +47945,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -23986,7 +47969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     (index: number, rating: "up" | "down") => {
+
+
+
+
 
 
 
@@ -23994,7 +47985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const next = prev.slice();
+
+
+
+
 
 
 
@@ -24002,7 +48001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!m || m.role !== "assistant") return prev;
+
+
+
+
 
 
 
@@ -24010,7 +48017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         next[index] = { ...m, rating: nextRating };
+
+
+
+
 
 
 
@@ -24018,7 +48033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -24026,11 +48049,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [setActiveChatMessages]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -24042,7 +48081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!isChatDockOpen) return;
+
+
+
+
 
 
 
@@ -24050,7 +48097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => window.clearTimeout(t);
+
+
+
+
 
 
 
@@ -24062,7 +48117,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const openFolder = useCallback(async () => {
+
+
+
+
 
 
 
@@ -24070,7 +48137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const folder = await workspacePickFolder();
+
+
+
+
 
 
 
@@ -24078,7 +48153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         notify({ kind: "info", title: "Open folder", message: "No folder was selected." });
+
+
+
+
 
 
 
@@ -24086,7 +48169,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -24098,7 +48193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setWorkspaceState(w);
+
+
+
+
 
 
 
@@ -24106,7 +48209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ...s,
+
+
+
+
 
 
 
@@ -24114,7 +48225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         recent_workspaces: w.recent,
+
+
+
+
 
 
 
@@ -24122,7 +48241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setTabs((prev) => {
+
+
+
+
 
 
 
@@ -24130,7 +48257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return [];
+
+
+
+
 
 
 
@@ -24138,7 +48273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setActiveTabPath(null);
+
+
+
+
 
 
 
@@ -24146,7 +48289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -24154,11 +48305,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       notify({ kind: "error", title: "Open folder", message: `Failed to open folder: ${String(e)}` });
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -24170,7 +48333,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const openRecent = useCallback(
+
+
+
+
 
 
 
@@ -24178,7 +48353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const w = await workspaceSet(root);
+
+
+
+
 
 
 
@@ -24186,7 +48369,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSettingsState((s) => ({
+
+
+
+
 
 
 
@@ -24194,7 +48385,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         workspace_root: w.root,
+
+
+
+
 
 
 
@@ -24202,7 +48401,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }));
+
+
+
+
 
 
 
@@ -24210,7 +48417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.forEach(revokeTabObjectUrl);
+
+
+
+
 
 
 
@@ -24218,7 +48433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -24226,7 +48449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await refreshRoot();
+
+
+
+
 
 
 
@@ -24234,11 +48465,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [refreshRoot]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -24250,7 +48497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (relPath: string) => {
+
+
+
+
 
 
 
@@ -24258,7 +48513,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!norm) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -24270,7 +48537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -24278,7 +48553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const url = base64ToObjectUrl(fb.mime, fb.base64);
+
+
+
+
 
 
 
@@ -24286,7 +48569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             path: norm,
+
+
+
+
 
 
 
@@ -24294,7 +48585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             language: detectLanguage(norm),
+
+
+
+
 
 
 
@@ -24302,7 +48601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             isDirty: false,
+
+
+
+
 
 
 
@@ -24310,7 +48617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             image: { mime: fb.mime, url },
+
+
+
+
 
 
 
@@ -24322,7 +48637,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
           setTabs((prev) => {
+
+
+
+
 
 
 
@@ -24330,7 +48657,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const existing = prev.find((t) => String(t.path || "").replace(/\\/g, "/").toLowerCase() === key);
+
+
+
+
 
 
 
@@ -24338,7 +48673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               if (existing.kind === "image") {
+
+
+
+
 
 
 
@@ -24346,7 +48689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 try {
+
+
+
+
 
 
 
@@ -24354,7 +48705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 } catch {
+
+
+
+
 
 
 
@@ -24362,11 +48721,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 setActiveTabPath(existing.path);
 
 
 
+
+
+
+
                 return prev;
+
+
+
+
 
 
 
@@ -24378,7 +48749,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
               // If the file was previously opened as text, replace it with the image tab.
+
+
+
+
 
 
 
@@ -24386,7 +48769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               return prev.map((t) => (t.path === existing.path ? tab : t));
+
+
+
+
 
 
 
@@ -24394,11 +48785,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setActiveTabPath(norm);
 
 
 
+
+
+
+
             return [...prev, tab];
+
+
+
+
 
 
 
@@ -24410,7 +48813,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
           if (workspace.root) {
+
+
+
+
 
 
 
@@ -24418,7 +48833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             rememberRecentFile(abs);
+
+
+
+
 
 
 
@@ -24426,7 +48849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch (e) {
+
+
+
+
 
 
 
@@ -24434,7 +48865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -24442,7 +48881,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -24454,7 +48905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -24462,7 +48921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch {
+
+
+
+
 
 
 
@@ -24470,7 +48937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -24478,7 +48953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         path: norm,
+
+
+
+
 
 
 
@@ -24486,7 +48969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         language: detectLanguage(norm),
+
+
+
+
 
 
 
@@ -24494,11 +48985,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         isDirty: false,
 
 
 
+
+
+
+
         kind: "text",
+
+
+
+
 
 
 
@@ -24510,7 +49013,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       setTabs((prev) => {
+
+
+
+
 
 
 
@@ -24518,7 +49033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const existing = prev.find((t) => String(t.path || "").replace(/\\/g, "/").toLowerCase() === key);
+
+
+
+
 
 
 
@@ -24526,7 +49049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setActiveTabPath(existing.path);
+
+
+
+
 
 
 
@@ -24534,7 +49065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -24542,11 +49081,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return [...prev, tab];
 
 
 
+
+
+
+
       });
+
+
+
+
+
+
+
+
 
 
 
@@ -24558,7 +49113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const abs = `${workspace.root.replace(/\\/g, "/").replace(/\/$/, "")}/${norm}`;
+
+
+
+
 
 
 
@@ -24566,7 +49129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -24574,11 +49145,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [rememberRecentFile, workspace.root]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -24590,11 +49177,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (relPath: string) => {
 
 
 
+
+
+
+
       const norm = normalizeRelPath(relPath);
+
+
+
+
 
 
 
@@ -24606,7 +49205,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       let content = "";
+
+
+
+
 
 
 
@@ -24614,7 +49225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         content = await workspaceReadFile(norm);
+
+
+
+
 
 
 
@@ -24622,7 +49241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         content = "";
+
+
+
+
 
 
 
@@ -24634,7 +49261,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       setTabs((prev) => {
+
+
+
+
 
 
 
@@ -24642,7 +49281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (existing?.kind === "image" && existing.image?.url?.startsWith("blob:")) {
+
+
+
+
 
 
 
@@ -24650,7 +49297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             URL.revokeObjectURL(existing.image.url);
+
+
+
+
 
 
 
@@ -24658,7 +49313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -24666,7 +49329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const without = prev.filter((t) => t.path !== norm);
+
+
+
+
 
 
 
@@ -24674,7 +49345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           path: norm,
+
+
+
+
 
 
 
@@ -24682,7 +49361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           language: detectLanguage(norm),
+
+
+
+
 
 
 
@@ -24690,7 +49377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           isDirty: false,
+
+
+
+
 
 
 
@@ -24698,7 +49393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         };
+
+
+
+
 
 
 
@@ -24706,7 +49409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -24714,11 +49425,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
 
 
 
+
+
+
+
     []
+
+
+
+
 
 
 
@@ -24730,7 +49453,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const refreshImageTab = useCallback(async (relPath: string) => {
+
+
+
+
 
 
 
@@ -24738,7 +49473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!norm) return;
+
+
+
+
 
 
 
@@ -24746,7 +49489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const fb = await workspaceReadFileBase64(norm);
+
+
+
+
 
 
 
@@ -24754,7 +49505,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setTabs((prev) =>
+
+
+
+
 
 
 
@@ -24762,7 +49521,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (t.path !== norm) return t;
+
+
+
+
 
 
 
@@ -24770,7 +49537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             try {
+
+
+
+
 
 
 
@@ -24778,7 +49553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             } catch {
+
+
+
+
 
 
 
@@ -24786,7 +49569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -24794,7 +49585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         })
+
+
+
+
 
 
 
@@ -24802,7 +49601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -24810,7 +49617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -24822,7 +49637,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const changeWriteFiles = useMemo(() => {
+
+
+
+
 
 
 
@@ -24830,7 +49657,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!cs) return [] as ChangeFile[];
+
+
+
+
 
 
 
@@ -24838,7 +49673,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [activeChat.changeSet]);
+
+
+
+
+
+
+
+
 
 
 
@@ -24854,7 +49701,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const updateEventStream = useCallback(
+
+
+
+
 
 
 
@@ -24862,7 +49721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       id: string,
+
+
+
+
 
 
 
@@ -24870,7 +49737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     ) => {
+
+
+
+
 
 
 
@@ -24878,7 +49753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.map((m) => {
+
+
+
+
 
 
 
@@ -24886,7 +49769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return { ...m, eventStream: up(m.eventStream) };
+
+
+
+
 
 
 
@@ -24894,7 +49785,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       );
+
+
+
+
 
 
 
@@ -24902,7 +49801,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [setActiveChatMessages]
+
+
+
+
 
 
 
@@ -24914,7 +49821,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const appendEventStream = useCallback(
+
+
+
+
 
 
 
@@ -24922,7 +49841,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const now = Date.now();
+
+
+
+
 
 
 
@@ -24930,7 +49857,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const ttlTargets = next.filter((e) => e.type === "state" && typeof e.ttlMs === "number" && !e.hidden) as Array<
+
+
+
+
 
 
 
@@ -24938,7 +49873,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       >;
+
+
+
+
+
+
+
+
 
 
 
@@ -24954,7 +49901,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       for (const e of ttlTargets) {
+
+
+
+
 
 
 
@@ -24962,7 +49921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         window.setTimeout(() => {
+
+
+
+
 
 
 
@@ -24970,7 +49937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             ...es,
+
+
+
+
 
 
 
@@ -24978,7 +49953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }));
+
+
+
+
 
 
 
@@ -24986,7 +49969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -24994,11 +49985,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [updateEventStream]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -25010,7 +50017,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   const lastChangeSetIdRef = useRef<string | null>(null);
+
+
+
+
+
+
+
+
 
 
 
@@ -25022,7 +50041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const id = activeChat.changeSet?.id ?? null;
+
+
+
+
 
 
 
@@ -25030,7 +50057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       lastChangeSetIdRef.current = id;
+
+
+
+
 
 
 
@@ -25038,7 +50073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -25050,7 +50093,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -25058,7 +50113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSelectedChangePath(null);
+
+
+
+
 
 
 
@@ -25066,7 +50129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -25074,7 +50145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const exists = selectedChangePath && changeWriteFiles.some((f) => f.path === selectedChangePath);
+
+
+
+
 
 
 
@@ -25082,7 +50161,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const first = changeWriteFiles[0]!.path;
+
+
+
+
 
 
 
@@ -25090,7 +50177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     void openFile(first);
+
+
+
+
 
 
 
@@ -25102,7 +50197,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const acceptAllChanges = useCallback(() => {
+
+
+
+
 
 
 
@@ -25110,7 +50217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!cs) return;
+
+
+
+
 
 
 
@@ -25118,7 +50233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setActiveChatChangeSet(null);
+
+
+
+
 
 
 
@@ -25126,7 +50249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       addLog({ kind: "action", title: "Accepted all changes", status: "done" });
+
+
+
+
 
 
 
@@ -25134,7 +50265,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -25146,7 +50289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!workspace.root) {
+
+
+
+
 
 
 
@@ -25154,7 +50305,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return;
+
+
+
+
 
 
 
@@ -25162,7 +50321,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const ok = await confirmApplyChangeSet(cs);
+
+
+
+
 
 
 
@@ -25174,7 +50341,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const runCmds = new Set<string>();
+
+
+
+
 
 
 
@@ -25182,7 +50361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const op = String(e.op || "").toLowerCase();
+
+
+
+
 
 
 
@@ -25190,7 +50377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const cmd = String(e.content ?? "").trim();
+
+
+
+
 
 
 
@@ -25198,11 +50393,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
 
 
 
+
+
+
+
       const nonRun = cs.edits.filter((e) => String(e.op || "").toLowerCase() !== "run").length;
+
+
+
+
 
 
 
@@ -25214,7 +50421,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const activityId = `act-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+
+
+
 
 
 
@@ -25222,7 +50441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ...prev,
+
+
+
+
 
 
 
@@ -25230,7 +50457,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           id: activityId,
+
+
+
+
 
 
 
@@ -25238,7 +50473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           content: "",
+
+
+
+
 
 
 
@@ -25246,11 +50489,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           activity: { title: "Applying changes", status: "running", steps: [], progress: { done: 0, total, current: "Starting…" } },
 
 
 
+
+
+
+
         },
+
+
+
+
 
 
 
@@ -25262,7 +50517,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       setChatApplying(true);
+
+
+
+
 
 
 
@@ -25270,7 +50537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -25278,7 +50553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           appendActivityStep(activityId, msg);
+
+
+
+
 
 
 
@@ -25286,7 +50569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!t) return;
+
+
+
+
 
 
 
@@ -25294,7 +50585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             done = Math.min(total, done + 1);
+
+
+
+
 
 
 
@@ -25302,11 +50601,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
 
 
 
+
+
+
+
         };
+
+
+
+
+
+
+
+
 
 
 
@@ -25318,7 +50633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           pace: true,
+
+
+
+
 
 
 
@@ -25326,7 +50649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setSelectedChangePath(p);
+
+
+
+
 
 
 
@@ -25334,7 +50665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           },
+
+
+
+
 
 
 
@@ -25342,7 +50681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         done = total;
+
+
+
+
 
 
 
@@ -25350,7 +50697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setActivityStatus(activityId, "done");
+
+
+
+
 
 
 
@@ -25358,7 +50713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (e) {
+
+
+
+
 
 
 
@@ -25366,7 +50729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setActivityProgress(activityId, { done: Math.min(done, total), total, current: "Failed" });
+
+
+
+
 
 
 
@@ -25374,7 +50745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } finally {
+
+
+
+
 
 
 
@@ -25382,11 +50761,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
 
 
 
+
+
+
+
     })();
+
+
+
+
 
 
 
@@ -25398,7 +50789,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const rejectAllChanges = useCallback(async () => {
+
+
+
+
 
 
 
@@ -25406,7 +50809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!chatChangeSet) return;
+
+
+
+
 
 
 
@@ -25414,7 +50825,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setActiveChatChangeSet(null);
+
+
+
+
 
 
 
@@ -25422,7 +50841,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       addLog({ kind: "action", title: "Discarded proposed changes", status: "done" });
+
+
+
+
 
 
 
@@ -25430,7 +50857,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -25442,7 +50881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       notifyRef.current?.({ kind: "error", title: "No workspace", message: "Open a folder first." });
+
+
+
+
 
 
 
@@ -25450,7 +50897,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -25462,7 +50921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -25470,7 +50937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const reverse: AiEditOp[] = [];
+
+
+
+
 
 
 
@@ -25478,7 +50953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const f = chatChangeSet.files[i]!;
+
+
+
+
 
 
 
@@ -25486,7 +50969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (f.before === null) {
+
+
+
+
 
 
 
@@ -25494,7 +50985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           } else {
+
+
+
+
 
 
 
@@ -25502,7 +51001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -25510,7 +51017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (f.before !== null) reverse.push({ op: "write", path: f.path, content: f.before });
+
+
+
+
 
 
 
@@ -25518,7 +51033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const parts = f.path.split(" → ");
+
+
+
+
 
 
 
@@ -25526,7 +51049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             reverse.push({ op: "rename", from: parts[1]!, to: parts[0]! });
+
+
+
+
 
 
 
@@ -25534,11 +51065,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -25550,7 +51097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setActiveChatChangeSet(null);
+
+
+
+
 
 
 
@@ -25558,7 +51113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       addLog({ kind: "action", title: "Reverted all changes", status: "done" });
+
+
+
+
 
 
 
@@ -25566,7 +51129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       notifyRef.current?.({ kind: "error", title: "Revert failed", message: String(e) });
+
+
+
+
 
 
 
@@ -25574,11 +51145,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setChatApplying(false);
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -25590,7 +51173,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const acceptFileChange = useCallback(
+
+
+
+
 
 
 
@@ -25598,7 +51193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const cs = activeChat.changeSet;
+
+
+
+
 
 
 
@@ -25606,7 +51209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!cs.applied) {
+
+
+
+
 
 
 
@@ -25614,7 +51225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!workspace.root) {
+
+
+
+
 
 
 
@@ -25622,7 +51241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             return;
+
+
+
+
 
 
 
@@ -25630,7 +51257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const fileEdits = cs.edits.filter((e) => {
+
+
+
+
 
 
 
@@ -25638,11 +51273,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             if (op === "write" || op === "patch" || op === "delete") return String(e.path || "").trim() === path;
 
 
 
+
+
+
+
             return false;
+
+
+
+
 
 
 
@@ -25654,7 +51301,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
           if (!fileEdits.length) {
+
+
+
+
 
 
 
@@ -25662,7 +51321,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const next = { ...cs, files: nextFiles, stats: computeStats(nextFiles) };
+
+
+
+
 
 
 
@@ -25670,11 +51337,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
             return;
 
 
 
+
+
+
+
           }
+
+
+
+
+
+
+
+
 
 
 
@@ -25686,7 +51369,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           try {
+
+
+
+
 
 
 
@@ -25694,7 +51385,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           } finally {
+
+
+
+
 
 
 
@@ -25702,7 +51401,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
+
+
+
+
 
 
 
@@ -25714,7 +51425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           addLog({ kind: "action", title: `Applied ${path}`, status: "done" });
+
+
+
+
 
 
 
@@ -25722,11 +51441,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -25734,7 +51465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!nextFiles.length) {
+
+
+
+
 
 
 
@@ -25742,7 +51481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setSelectedChangePath(null);
+
+
+
+
 
 
 
@@ -25750,7 +51497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -25758,7 +51513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setActiveChatChangeSet(next);
+
+
+
+
 
 
 
@@ -25766,7 +51529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const first = nextFiles.find((f) => f.kind === "write") as ChangeFile | undefined;
+
+
+
+
 
 
 
@@ -25774,7 +51545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setSelectedChangePath(first.path);
+
+
+
+
 
 
 
@@ -25782,7 +51561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -25790,7 +51577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -25798,7 +51593,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -25810,7 +51617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (path: string) => {
+
+
+
+
 
 
 
@@ -25818,7 +51633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!cs) return;
+
+
+
+
 
 
 
@@ -25826,7 +51649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!f || f.kind !== "write") return;
+
+
+
+
 
 
 
@@ -25834,7 +51665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const nextFiles = cs.files.filter((x) => !(x.kind === "write" && x.path === path));
+
+
+
+
 
 
 
@@ -25842,7 +51681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setActiveChatChangeSet(null);
+
+
+
+
 
 
 
@@ -25850,11 +51697,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return;
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -25862,7 +51721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setActiveChatChangeSet(next);
+
+
+
+
 
 
 
@@ -25870,7 +51737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const first = nextFiles.find((x) => x.kind === "write") as ChangeFile | undefined;
+
+
+
+
 
 
 
@@ -25878,7 +51753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setSelectedChangePath(first.path);
+
+
+
+
 
 
 
@@ -25886,7 +51769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -25894,11 +51785,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -25906,7 +51809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         notifyRef.current?.({ kind: "error", title: "No workspace", message: "Open a folder first." });
+
+
+
+
 
 
 
@@ -25914,7 +51825,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -25926,7 +51849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -25934,7 +51865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           await workspaceDelete(path);
+
+
+
+
 
 
 
@@ -25942,7 +51881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (activeTabPath === path) setActiveTabPath(null);
+
+
+
+
 
 
 
@@ -25950,7 +51897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           await workspaceWriteFile(path, f.before);
+
+
+
+
 
 
 
@@ -25958,7 +51913,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -25970,7 +51937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!nextFiles.length) {
+
+
+
+
 
 
 
@@ -25978,7 +51953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setSelectedChangePath(null);
+
+
+
+
 
 
 
@@ -25986,7 +51969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -25994,7 +51985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setActiveChatChangeSet(next);
+
+
+
+
 
 
 
@@ -26002,7 +52001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const first = nextFiles.find((x) => x.kind === "write") as ChangeFile | undefined;
+
+
+
+
 
 
 
@@ -26010,7 +52017,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setSelectedChangePath(first.path);
+
+
+
+
 
 
 
@@ -26018,7 +52033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -26026,7 +52049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (e) {
+
+
+
+
 
 
 
@@ -26034,7 +52065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } finally {
+
+
+
+
 
 
 
@@ -26042,7 +52081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -26050,11 +52097,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [activeChat.changeSet, activeTabPath, openFile, selectedChangePath, setActiveChatChangeSet, workspace.root]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -26066,11 +52129,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!workspace.root) return;
 
 
 
+
+
+
+
     if (isFileIndexLoading) return;
+
+
+
+
 
 
 
@@ -26082,7 +52157,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     setIsFileIndexLoading(true);
+
+
+
+
 
 
 
@@ -26090,7 +52177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const files = await workspaceListFiles(20000);
+
+
+
+
 
 
 
@@ -26098,7 +52193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const deduped = files
+
+
+
+
 
 
 
@@ -26106,7 +52209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .filter((p) => {
+
+
+
+
 
 
 
@@ -26114,7 +52225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!k) return false;
+
+
+
+
 
 
 
@@ -26122,7 +52241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           seen.add(k);
+
+
+
+
 
 
 
@@ -26130,7 +52257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -26138,7 +52273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setFileIndexRoot(workspace.root);
+
+
+
+
 
 
 
@@ -26146,11 +52289,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setIsFileIndexLoading(false);
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -26162,7 +52317,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const openQuickOpen = useCallback(async () => {
+
+
+
+
 
 
 
@@ -26170,7 +52337,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await openFolder();
+
+
+
+
 
 
 
@@ -26178,7 +52353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -26186,7 +52369,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setQuickOpenQuery("");
+
+
+
+
 
 
 
@@ -26194,7 +52385,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     void ensureFileIndex();
+
+
+
+
 
 
 
@@ -26206,7 +52405,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const openStandaloneFile = useCallback(async () => {
+
+
+
+
 
 
 
@@ -26214,7 +52425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const file = await workspacePickFile();
+
+
+
+
 
 
 
@@ -26222,7 +52441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         notify({ kind: "info", title: "Open file", message: "No file was selected." });
+
+
+
+
 
 
 
@@ -26230,7 +52457,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -26242,7 +52481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -26250,11 +52497,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       notify({ kind: "error", title: "Open file", message: `Failed to open file: ${String(e)}` });
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -26266,11 +52525,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const openSavedWorkspace = useCallback(async () => {
 
 
 
+
+
+
+
     setIsSavedWorkspacesOpen(true);
+
+
+
+
 
 
 
@@ -26282,7 +52557,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const runEditCommand = useCallback(
+
+
+
+
 
 
 
@@ -26290,15 +52577,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const ed = editorRef.current;
+
+
+
+
 
 
 
       // Prefer our custom clipboard implementation when Monaco is present.
 
+
+
       // (Monaco's built-in clipboard actions can be broken in some Tauri environments.)
 
+
+
       if (ed) {
+
+
+
+
 
 
 
@@ -26306,11 +52609,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (kind === "selectAll") {
 
 
 
+
+
+
+
             try {
+
+
+
+
 
 
 
@@ -26318,7 +52633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               if (act) {
+
+
+
+
 
 
 
@@ -26326,7 +52649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 return;
+
+
+
+
 
 
 
@@ -26334,11 +52665,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             } catch {
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -26346,7 +52689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               document.execCommand("selectAll");
+
+
+
+
 
 
 
@@ -26354,7 +52705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -26362,7 +52721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -26370,7 +52737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const model = ed.getModel?.();
+
+
+
+
 
 
 
@@ -26378,7 +52753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             if (!model || selections.length === 0) return;
+
+
+
+
 
 
 
@@ -26386,7 +52769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             if (nonEmpty.length === 0) return;
+
+
+
+
 
 
 
@@ -26394,7 +52785,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const parts = nonEmpty.map((sel) => model.getValueInRange(sel) as string);
+
+
+
+
 
 
 
@@ -26402,11 +52801,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             void (async () => {
 
 
 
+
+
+
+
               try {
+
+
+
+
 
 
 
@@ -26414,7 +52825,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 return;
+
+
+
+
 
 
 
@@ -26422,11 +52841,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               }
 
 
 
+
+
+
+
               try {
+
+
+
+
 
 
 
@@ -26434,7 +52865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 return;
+
+
+
+
 
 
 
@@ -26442,11 +52881,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               }
 
 
 
+
+
+
+
               try {
+
+
+
+
 
 
 
@@ -26454,7 +52905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   await navigator.clipboard.writeText(text);
+
+
+
+
 
 
 
@@ -26462,7 +52921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 }
+
+
+
+
 
 
 
@@ -26470,11 +52937,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               }
 
 
 
+
+
+
+
               try {
+
+
+
+
 
 
 
@@ -26482,7 +52961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 textarea.value = text;
+
+
+
+
 
 
 
@@ -26490,7 +52977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 textarea.style.left = "-9999px";
+
+
+
+
 
 
 
@@ -26498,7 +52993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 textarea.select();
+
+
+
+
 
 
 
@@ -26506,7 +53009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 document.body.removeChild(textarea);
+
+
+
+
 
 
 
@@ -26514,11 +53025,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               }
 
 
 
+
+
+
+
             })();
+
+
+
+
 
 
 
@@ -26526,7 +53049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               try {
+
+
+
+
 
 
 
@@ -26534,11 +53065,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 ed.executeEdits?.(
 
 
 
+
+
+
+
                   "clipboard",
+
+
+
+
 
 
 
@@ -26546,7 +53089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 );
+
+
+
+
 
 
 
@@ -26554,7 +53105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               } catch {
+
+
+
+
 
 
 
@@ -26562,7 +53121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -26570,7 +53137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -26578,7 +53153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             void (async () => {
+
+
+
+
 
 
 
@@ -26586,7 +53169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               try {
+
+
+
+
 
 
 
@@ -26594,7 +53185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               } catch {
+
+
+
+
 
 
 
@@ -26602,11 +53201,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               if (typeof text !== "string") {
 
 
 
+
+
+
+
                 try {
+
+
+
+
 
 
 
@@ -26614,7 +53225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 } catch {
+
+
+
+
 
 
 
@@ -26622,7 +53241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               }
+
+
+
+
 
 
 
@@ -26630,7 +53257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 try {
+
+
+
+
 
 
 
@@ -26638,7 +53273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 } catch {
+
+
+
+
 
 
 
@@ -26646,7 +53289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               }
+
+
+
+
 
 
 
@@ -26654,7 +53305,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               const sels = (ed.getSelections?.() as any[] | null | undefined) ?? [];
+
+
+
+
 
 
 
@@ -26662,11 +53321,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               try {
 
 
 
+
+
+
+
                 ed.pushUndoStop?.();
+
+
+
+
 
 
 
@@ -26674,7 +53345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   "clipboard",
+
+
+
+
 
 
 
@@ -26682,7 +53361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 );
+
+
+
+
 
 
 
@@ -26690,7 +53377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               } catch {
+
+
+
+
 
 
 
@@ -26698,7 +53393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             })();
+
+
+
+
 
 
 
@@ -26706,7 +53409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -26714,11 +53425,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -26726,7 +53449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const actionMap: Record<typeof kind, string[]> = {
+
+
+
+
 
 
 
@@ -26734,7 +53465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           redo: ["redo", "editor.action.redo"],
+
+
+
+
 
 
 
@@ -26742,7 +53481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           copy: ["editor.action.clipboardCopyAction"],
+
+
+
+
 
 
 
@@ -26750,7 +53497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           selectAll: ["editor.action.selectAll"],
+
+
+
+
 
 
 
@@ -26758,7 +53513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         for (const id of actionMap[kind]) {
+
+
+
+
 
 
 
@@ -26766,7 +53529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const act = ed.getAction(id);
+
+
+
+
 
 
 
@@ -26774,7 +53545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               void act.run();
+
+
+
+
 
 
 
@@ -26782,7 +53561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             }
+
+
+
+
 
 
 
@@ -26790,7 +53577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -26798,7 +53593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -26806,7 +53609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         undo: "undo",
+
+
+
+
 
 
 
@@ -26814,7 +53625,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         cut: "cut",
+
+
+
+
 
 
 
@@ -26822,7 +53641,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         paste: "paste",
+
+
+
+
 
 
 
@@ -26830,7 +53657,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       };
+
+
+
+
 
 
 
@@ -26838,7 +53673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         document.execCommand(cmdMap[kind]);
+
+
+
+
 
 
 
@@ -26846,7 +53689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -26854,11 +53705,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     []
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -26870,7 +53737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!workspace.root) {
+
+
+
+
 
 
 
@@ -26878,11 +53753,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -26890,7 +53777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const find = window.prompt("Replace in Files: Find");
+
+
+
+
 
 
 
@@ -26898,7 +53793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const repl = window.prompt("Replace in Files: Replace with", "");
+
+
+
+
 
 
 
@@ -26906,7 +53809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const ok = await requestConfirm("Replace in Files", `Replace all occurrences of '${find}' across workspace files?`, {
+
+
+
+
 
 
 
@@ -26914,7 +53825,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       danger: true,
+
+
+
+
 
 
 
@@ -26922,7 +53841,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!ok) return;
+
+
+
+
 
 
 
@@ -26930,7 +53857,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     let changedOccurrences = 0;
+
+
+
+
 
 
 
@@ -26938,7 +53873,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     for (const p of files) {
+
+
+
+
 
 
 
@@ -26946,7 +53889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const content = await workspaceReadFile(p);
+
+
+
+
 
 
 
@@ -26954,7 +53905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const next = content.split(find).join(repl);
+
+
+
+
 
 
 
@@ -26962,7 +53921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const count = content.split(find).length - 1;
+
+
+
+
 
 
 
@@ -26970,7 +53937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         changedFiles += 1;
+
+
+
+
 
 
 
@@ -26978,7 +53953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch {
+
+
+
+
 
 
 
@@ -26986,7 +53969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -26994,11 +53985,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     notify({ kind: "info", title: "Replace in Files", message: `Replaced ${changedOccurrences} occurrence${changedOccurrences === 1 ? "" : "s"} in ${changedFiles} file${changedFiles === 1 ? "" : "s"}.` });
 
 
 
+
+
+
+
     await refreshRoot();
+
+
+
+
 
 
 
@@ -27010,7 +54013,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -27018,11 +54033,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!activeTab) return;
 
 
 
+
+
+
+
     if (!activeTab.isDirty) return;
+
+
+
+
 
 
 
@@ -27034,7 +54061,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const t = window.setTimeout(() => {
+
+
+
+
 
 
 
@@ -27042,7 +54081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -27050,7 +54097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setTabs((prev) => prev.map((x) => (x.path === activeTab.path ? { ...x, isDirty: false } : x)));
+
+
+
+
 
 
 
@@ -27058,7 +54113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           devConsoleError("Auto save failed", e);
+
+
+
+
 
 
 
@@ -27066,7 +54129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       })();
+
+
+
+
 
 
 
@@ -27078,7 +54149,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     return () => window.clearTimeout(t);
+
+
+
+
 
 
 
@@ -27090,7 +54173,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const goToLine = useCallback(
+
+
+
+
 
 
 
@@ -27098,7 +54193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!activeTab) return;
+
+
+
+
 
 
 
@@ -27106,7 +54209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (ed) {
+
+
+
+
 
 
 
@@ -27114,7 +54225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const line = model ? Math.max(1, Math.min(lineNumber, model.getLineCount())) : Math.max(1, lineNumber);
+
+
+
+
 
 
 
@@ -27122,7 +54241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ed.setPosition({ lineNumber: line, column: 1 });
+
+
+
+
 
 
 
@@ -27130,7 +54257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return;
+
+
+
+
 
 
 
@@ -27138,7 +54273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setPendingReveal({ path: activeTab.path, line: Math.max(1, lineNumber), text: "" });
+
+
+
+
 
 
 
@@ -27146,7 +54289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [activeTab]
+
+
+
+
 
 
 
@@ -27158,7 +54309,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const openGoToLine = useCallback(() => {
+
+
+
+
 
 
 
@@ -27166,11 +54329,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsGoToLineOpen(true);
 
 
 
+
+
+
+
     setGoToLineValue("");
+
+
+
+
 
 
 
@@ -27182,7 +54357,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -27190,7 +54377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!activeTab) return;
+
+
+
+
 
 
 
@@ -27198,7 +54393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const ed = editorRef.current;
+
+
+
+
 
 
 
@@ -27210,7 +54413,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const model = ed.getModel();
+
+
+
+
 
 
 
@@ -27218,7 +54433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const line = Math.max(1, Math.min(pendingReveal.line, model.getLineCount()));
+
+
+
+
 
 
 
@@ -27226,7 +54449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     ed.setPosition({ lineNumber: line, column: 1 });
+
+
+
+
 
 
 
@@ -27234,7 +54465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setPendingReveal(null);
+
+
+
+
 
 
 
@@ -27246,7 +54485,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const commitInlineRename = useCallback(
+
+
+
+
 
 
 
@@ -27254,7 +54505,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const fromRel = inlineRenamePath;
+
+
+
+
 
 
 
@@ -27266,7 +54525,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const raw = inlineRenameValue.trim();
+
+
+
+
 
 
 
@@ -27274,7 +54545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setInlineRenamePath(null);
+
+
+
+
 
 
 
@@ -27282,11 +54561,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return;
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -27298,7 +54593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const parent = fromRel.includes("/") ? fromRel.split("/").slice(0, -1).join("/") : "";
+
+
+
+
 
 
 
@@ -27310,7 +54613,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       setInlineRenamePath(null);
+
+
+
+
 
 
 
@@ -27322,7 +54637,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       if (toRel === fromRel) {
+
+
+
+
 
 
 
@@ -27330,11 +54657,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return;
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -27350,7 +54693,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       setTabs((prev) =>
+
+
+
+
 
 
 
@@ -27358,7 +54713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (t.path === fromRel) {
+
+
+
+
 
 
 
@@ -27366,7 +54729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -27374,7 +54745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (t.path.startsWith(prefix)) {
+
+
+
+
 
 
 
@@ -27382,7 +54761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const nextPath = `${toRel}/${rest}`;
+
+
+
+
 
 
 
@@ -27390,7 +54777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -27398,7 +54793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         })
+
+
+
+
 
 
 
@@ -27410,7 +54813,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       setActiveTabPath((prev) => {
+
+
+
+
 
 
 
@@ -27418,7 +54833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (prev === fromRel) return toRel;
+
+
+
+
 
 
 
@@ -27426,7 +54849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (prev.startsWith(prefix)) {
+
+
+
+
 
 
 
@@ -27434,7 +54865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return `${toRel}/${rest}`;
+
+
+
+
 
 
 
@@ -27442,7 +54881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return prev;
+
+
+
+
 
 
 
@@ -27454,7 +54901,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       setSelectedPath(toRel);
+
+
+
+
 
 
 
@@ -27462,7 +54921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (opts?.openAfter) await openFile(toRel);
+
+
+
+
 
 
 
@@ -27470,7 +54937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [inlineRenamePath, inlineRenameValue, openFile, refreshRoot]
+
+
+
+
 
 
 
@@ -27482,11 +54957,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const cancelInlineRename = useCallback(async () => {
 
 
 
+
+
+
+
     const fromRel = inlineRenamePath;
+
+
+
+
 
 
 
@@ -27498,7 +54989,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     setInlineRenamePath(null);
+
+
+
+
 
 
 
@@ -27510,7 +55013,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -27518,7 +55033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -27526,11 +55049,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSelectedPath(null);
 
 
 
+
+
+
+
     await refreshRoot();
+
+
+
+
 
 
 
@@ -27542,7 +55077,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const createNewFolder = useCallback(async () => {
+
+
+
+
 
 
 
@@ -27550,7 +55097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await openFolder();
+
+
+
+
 
 
 
@@ -27558,7 +55113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -27566,7 +55129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const name = await requestTextPrompt("New Folder", "", {
+
+
+
+
 
 
 
@@ -27574,7 +55145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       placeholder: "Folder name",
+
+
+
+
 
 
 
@@ -27582,7 +55161,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!name) return;
+
+
+
+
 
 
 
@@ -27590,7 +55177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!relName) return;
+
+
+
+
 
 
 
@@ -27598,7 +55193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     await workspaceCreateDir(rel);
+
+
+
+
 
 
 
@@ -27606,7 +55209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSelectedPath(rel);
+
+
+
+
 
 
 
@@ -27618,7 +55229,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const renameSelected = useCallback(async () => {
+
+
+
+
 
 
 
@@ -27626,7 +55249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const currentName = basename(selectedPath);
+
+
+
+
 
 
 
@@ -27634,7 +55265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const nextName = String(nextNameRaw ?? "").trim();
+
+
+
+
 
 
 
@@ -27642,7 +55281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const parent = selectedPath.includes("/") ? selectedPath.split("/").slice(0, -1).join("/") : "";
+
+
+
+
 
 
 
@@ -27650,7 +55297,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const fromRel = selectedPath;
+
+
+
+
+
+
+
+
 
 
 
@@ -27666,7 +55325,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     setTabs((prev) =>
+
+
+
+
 
 
 
@@ -27674,7 +55345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (t.path === fromRel) {
+
+
+
+
 
 
 
@@ -27682,7 +55361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -27690,7 +55377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (t.path.startsWith(prefix)) {
+
+
+
+
 
 
 
@@ -27698,7 +55393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const nextPath = `${toRel}/${rest}`;
+
+
+
+
 
 
 
@@ -27706,7 +55409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -27714,7 +55425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       })
+
+
+
+
 
 
 
@@ -27726,7 +55445,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     setActiveTabPath((prev) => {
+
+
+
+
 
 
 
@@ -27734,7 +55465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (prev === fromRel) return toRel;
+
+
+
+
 
 
 
@@ -27742,7 +55481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (prev.startsWith(prefix)) {
+
+
+
+
 
 
 
@@ -27750,7 +55497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return `${toRel}/${rest}`;
+
+
+
+
 
 
 
@@ -27758,11 +55513,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return prev;
 
 
 
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -27774,7 +55545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     await refreshRoot();
+
+
+
+
 
 
 
@@ -27786,7 +55565,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const closeAllTabs = useCallback(async () => {
+
+
+
+
 
 
 
@@ -27794,7 +55585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (dirty.length) {
+
+
+
+
 
 
 
@@ -27802,7 +55601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!ok) return;
+
+
+
+
 
 
 
@@ -27810,7 +55617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setTabs((prev) => {
+
+
+
+
 
 
 
@@ -27818,7 +55633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return [];
+
+
+
+
 
 
 
@@ -27826,7 +55649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setActiveTabPath(null);
+
+
+
+
 
 
 
@@ -27838,7 +55669,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const deleteSelected = useCallback(async () => {
+
+
+
+
 
 
 
@@ -27846,7 +55689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const ok = await requestConfirm("Delete", `Delete '${basename(selectedPath)}'?`, { danger: true, confirmLabel: "Delete" });
+
+
+
+
 
 
 
@@ -27854,7 +55705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const target = selectedPath;
+
+
+
+
 
 
 
@@ -27866,11 +55725,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     setTabs((prev) => {
 
 
 
+
+
+
+
       const prefix = target.endsWith("/") ? target : `${target}/`;
+
+
+
+
 
 
 
@@ -27878,7 +55753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (t.path === target) return false;
+
+
+
+
 
 
 
@@ -27886,7 +55769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -27894,7 +55785,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const removed = t.path === target || t.path.startsWith(prefix);
+
+
+
+
 
 
 
@@ -27902,7 +55801,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -27910,7 +55817,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -27918,7 +55833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!prev) return prev;
+
+
+
+
 
 
 
@@ -27926,7 +55849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const prefix = target.endsWith("/") ? target : `${target}/`;
+
+
+
+
 
 
 
@@ -27934,11 +55865,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return prev;
 
 
 
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -27950,7 +55897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     await refreshRoot();
+
+
+
+
 
 
 
@@ -27962,7 +55917,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -27970,7 +55937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const myGen = ++searchRequestGenRef.current;
+
+
+
+
 
 
 
@@ -27978,7 +55953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!q) {
+
+
+
+
 
 
 
@@ -27986,7 +55969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSearchVisibleCount(0);
+
+
+
+
 
 
 
@@ -27994,7 +55985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -28002,7 +56001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSearchResults([]);
+
+
+
+
 
 
 
@@ -28010,11 +56017,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -28026,7 +56049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const t = window.setTimeout(() => {
+
+
+
+
 
 
 
@@ -28034,7 +56065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .then((res) => {
+
+
+
+
 
 
 
@@ -28042,7 +56081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (searchRequestGenRef.current !== myGen) return;
+
+
+
+
 
 
 
@@ -28050,11 +56097,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setSearchVisibleCount(Math.min(searchPageSize, res.length));
 
 
 
+
+
+
+
         })
+
+
+
+
 
 
 
@@ -28062,11 +56121,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (cancelled) return;
 
 
 
+
+
+
+
           if (searchRequestGenRef.current !== myGen) return;
+
+
+
+
 
 
 
@@ -28074,7 +56145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setSearchVisibleCount(0);
+
+
+
+
 
 
 
@@ -28082,7 +56161,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .finally(() => {
+
+
+
+
 
 
 
@@ -28090,7 +56177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (searchRequestGenRef.current !== myGen) return;
+
+
+
+
 
 
 
@@ -28098,7 +56193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         });
+
+
+
+
 
 
 
@@ -28110,7 +56213,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     return () => {
+
+
+
+
 
 
 
@@ -28118,11 +56233,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       window.clearTimeout(t);
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -28134,7 +56261,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const closeTab = useCallback(
+
+
+
+
 
 
 
@@ -28142,7 +56281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const tab = tabs.find((t) => t.path === path);
+
+
+
+
 
 
 
@@ -28150,7 +56297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (tab.isDirty) {
+
+
+
+
 
 
 
@@ -28158,11 +56313,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!ok) return;
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -28174,7 +56345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setTabs((prev) => {
+
+
+
+
 
 
 
@@ -28182,7 +56361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const prevTab = prev.find((t) => t.path === path);
+
+
+
+
 
 
 
@@ -28190,7 +56377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           try {
+
+
+
+
 
 
 
@@ -28198,7 +56393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           } catch {
+
+
+
+
 
 
 
@@ -28206,7 +56409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -28214,7 +56425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           nextActive = remaining.length ? remaining[remaining.length - 1]!.path : null;
+
+
+
+
 
 
 
@@ -28222,7 +56441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return remaining;
+
+
+
+
 
 
 
@@ -28230,7 +56457,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setActiveTabPath(nextActive);
+
+
+
+
 
 
 
@@ -28238,11 +56473,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [activeTabPath, requestConfirm, tabs]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -28254,7 +56505,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!activeTab) return;
+
+
+
+
 
 
 
@@ -28262,7 +56521,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!activeTab.isDirty) return;
+
+
+
+
 
 
 
@@ -28270,7 +56537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!dataUrl) {
+
+
+
+
 
 
 
@@ -28278,11 +56553,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -28290,7 +56577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, isDirty: false } : t)));
+
+
+
+
 
 
 
@@ -28298,11 +56593,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -28310,7 +56617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!workspace.root) {
+
+
+
+
 
 
 
@@ -28318,7 +56633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!workspace.root) return;
+
+
+
+
 
 
 
@@ -28326,7 +56649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const name = await requestRelativePath("Save As", activeTab.name, {
+
+
+
+
 
 
 
@@ -28334,7 +56665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         placeholder: "folder/file",
+
+
+
+
 
 
 
@@ -28342,7 +56681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -28350,7 +56697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const rel = name.trim().replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -28358,7 +56713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await workspaceWriteFile(rel, activeTab.content);
+
+
+
+
 
 
 
@@ -28366,7 +56729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setActiveTabPath(rel);
+
+
+
+
 
 
 
@@ -28374,7 +56745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -28382,7 +56761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, isDirty: false } : t)));
+
+
+
+
 
 
 
@@ -28390,7 +56777,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [activeTab, openFolder, refreshDir, requestRelativePath, workspace.root]);
+
+
+
+
+
+
+
+
 
 
 
@@ -28402,7 +56801,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const dirty = tabs.filter((t) => t.isDirty);
+
+
+
+
 
 
 
@@ -28410,7 +56817,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (t.kind === "image") {
+
+
+
+
 
 
 
@@ -28418,7 +56833,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!dataUrl) continue;
+
+
+
+
 
 
 
@@ -28426,7 +56849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setTabs((prev) => prev.map((x) => (x.path === t.path ? { ...x, isDirty: false } : x)));
+
+
+
+
 
 
 
@@ -28434,7 +56865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -28442,7 +56881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setActiveTabPath(t.path);
+
+
+
+
 
 
 
@@ -28450,7 +56897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           subtitle: "Save relative to the workspace root",
+
+
+
+
 
 
 
@@ -28458,7 +56913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           extensions: ["txt", "md", "json", "ts", "tsx", "js", "jsx", "css", "html"],
+
+
+
+
 
 
 
@@ -28466,7 +56929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!name) continue;
+
+
+
+
 
 
 
@@ -28474,7 +56945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!rel) continue;
+
+
+
+
 
 
 
@@ -28482,7 +56961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setTabs((prev) =>
+
+
+
+
 
 
 
@@ -28490,7 +56977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         );
+
+
+
+
 
 
 
@@ -28498,7 +56993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         continue;
+
+
+
+
 
 
 
@@ -28506,7 +57009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await workspaceWriteFile(t.path, t.content);
+
+
+
+
 
 
 
@@ -28514,7 +57025,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -28526,7 +57045,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const saveAs = useCallback(async () => {
+
+
+
+
 
 
 
@@ -28534,7 +57065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (activeTab.kind === "image") {
+
+
+
+
 
 
 
@@ -28542,7 +57081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         await openFolder();
+
+
+
+
 
 
 
@@ -28550,7 +57097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -28558,7 +57113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!dataUrl) {
+
+
+
+
 
 
 
@@ -28566,7 +57129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return;
+
+
+
+
 
 
 
@@ -28574,7 +57145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const name = await requestRelativePath("Export image", activeTab.name, {
+
+
+
+
 
 
 
@@ -28582,7 +57161,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         placeholder: "folder/image",
+
+
+
+
 
 
 
@@ -28590,7 +57177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         defaultExtension: "png",
+
+
+
+
 
 
 
@@ -28598,7 +57193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -28606,7 +57209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const rel = name.trim().replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -28614,7 +57225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await workspaceWriteFileBase64(rel, dataUrl);
+
+
+
+
 
 
 
@@ -28622,11 +57241,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -28634,7 +57265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await openFolder();
+
+
+
+
 
 
 
@@ -28642,7 +57281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -28650,7 +57297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       subtitle: "Save relative to the workspace root",
+
+
+
+
 
 
 
@@ -28658,11 +57313,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       extensions: ["txt", "md", "json", "ts", "tsx", "js", "jsx", "css", "html"],
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -28670,7 +57337,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const rel = name.trim().replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -28678,7 +57353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     await workspaceWriteFile(rel, activeTab.content);
+
+
+
+
 
 
 
@@ -28686,7 +57369,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const without = prev.filter((t) => t.path !== activeTab.path);
+
+
+
+
 
 
 
@@ -28694,7 +57385,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         path: rel,
+
+
+
+
 
 
 
@@ -28702,7 +57401,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         language: detectLanguage(rel),
+
+
+
+
 
 
 
@@ -28710,7 +57417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         isDirty: false,
+
+
+
+
 
 
 
@@ -28718,7 +57433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return [...without, next];
+
+
+
+
 
 
 
@@ -28726,11 +57449,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setActiveTabPath(rel);
 
 
 
+
+
+
+
     await refreshDir(rel.includes("/") ? rel.split("/").slice(0, -1).join("/") : undefined);
+
+
+
+
 
 
 
@@ -28742,7 +57477,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const revertFile = useCallback(async () => {
+
+
+
+
 
 
 
@@ -28750,7 +57497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (activeTab.path.startsWith("untitled:")) {
+
+
+
+
 
 
 
@@ -28758,7 +57513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!ok) return;
+
+
+
+
 
 
 
@@ -28766,11 +57529,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -28782,7 +57561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await refreshImageTab(activeTab.path);
+
+
+
+
 
 
 
@@ -28790,7 +57577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -28798,7 +57593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setTabs((prev) => prev.map((t) => (t.path === activeTab.path ? { ...t, content, isDirty: false } : t)));
+
+
+
+
 
 
 
@@ -28810,7 +57613,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const saveWorkspaceAs = useCallback(async () => {
+
+
+
+
 
 
 
@@ -28818,7 +57633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       notify({ kind: "info", title: "Workspace", message: "No folder is open. Open a folder first." });
+
+
+
+
 
 
 
@@ -28826,7 +57649,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -28838,7 +57673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const name = await requestTextPrompt("Save workspace", initial, { subtitle: "Name this workspace" });
+
+
+
+
 
 
 
@@ -28846,7 +57689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const trimmed = String(name).trim();
+
+
+
+
 
 
 
@@ -28854,7 +57705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const existing = getSavedWorkspaces();
+
+
+
+
 
 
 
@@ -28862,7 +57721,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (exists) {
+
+
+
+
 
 
 
@@ -28870,7 +57737,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!ok) return;
+
+
+
+
 
 
 
@@ -28878,7 +57753,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const now = Date.now();
+
+
+
+
 
 
 
@@ -28886,7 +57769,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const next = [{ name: trimmed, roots, updated_at: now }, ...existing.filter((x) => x.name.trim().toLowerCase() !== trimmed.toLowerCase())];
+
+
+
+
 
 
 
@@ -28894,7 +57785,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     notify({ kind: "info", title: "Workspace", message: `Saved "${trimmed}".` });
+
+
+
+
 
 
 
@@ -28906,11 +57805,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const duplicateWorkspace = useCallback(async () => {
 
 
 
+
+
+
+
     await saveWorkspaceAs();
+
+
+
+
 
 
 
@@ -28922,7 +57837,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const openRecentFile = useCallback(
+
+
+
+
 
 
 
@@ -28930,7 +57857,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const file = absPath.replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -28938,7 +57873,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const w = await workspaceSet(root);
+
+
+
+
 
 
 
@@ -28946,7 +57889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSettingsState((s) => ({
+
+
+
+
 
 
 
@@ -28954,7 +57905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         workspace_root: w.root,
+
+
+
+
 
 
 
@@ -28962,7 +57921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }));
+
+
+
+
 
 
 
@@ -28970,7 +57937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         prev.forEach(revokeTabObjectUrl);
+
+
+
+
 
 
 
@@ -28978,7 +57953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -28986,7 +57969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await refreshRoot();
+
+
+
+
 
 
 
@@ -28994,7 +57985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       rememberRecentFile(file);
+
+
+
+
 
 
 
@@ -29002,11 +58001,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [openFile, refreshRoot, rememberRecentFile]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -29018,7 +58033,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const ok = await requestConfirm("Close folder", "Are you sure you want to close the current folder?", { confirmLabel: "Close" });
+
+
+
+
 
 
 
@@ -29026,7 +58049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const w = await workspaceSet(null);
+
+
+
+
 
 
 
@@ -29034,7 +58065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSettingsState((s) => ({
+
+
+
+
 
 
 
@@ -29042,7 +58081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       workspace_root: w.root,
+
+
+
+
 
 
 
@@ -29050,7 +58097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }));
+
+
+
+
 
 
 
@@ -29058,7 +58113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       prev.forEach(revokeTabObjectUrl);
+
+
+
+
 
 
 
@@ -29066,7 +58129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -29074,7 +58145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setExplorer({});
+
+
+
+
 
 
 
@@ -29082,11 +58161,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSelectedPath(null);
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -29098,7 +58193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -29106,7 +58209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         window.close();
+
+
+
+
 
 
 
@@ -29114,7 +58225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -29122,11 +58241,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -29138,7 +58273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -29146,7 +58289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -29154,11 +58305,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -29170,7 +58337,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -29178,7 +58353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -29186,11 +58369,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -29202,7 +58401,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -29210,7 +58417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .isFullscreen()
+
+
+
+
 
 
 
@@ -29218,7 +58433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .catch(() => {
+
+
+
+
 
 
 
@@ -29226,7 +58449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -29234,7 +58465,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -29246,7 +58489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (e.button !== 0) return;
+
+
+
+
 
 
 
@@ -29254,7 +58505,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!t) return;
+
+
+
+
 
 
 
@@ -29262,7 +58521,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -29270,7 +58537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -29278,7 +58553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -29290,7 +58573,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const isMac = useMemo(() => /Mac|iPhone|iPad|iPod/.test(navigator.userAgent), []);
+
+
+
+
 
 
 
@@ -29302,7 +58597,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -29310,7 +58617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -29318,7 +58633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       // On Windows, the native window shadow/frame can appear as a thick outline.
+
+
+
+
 
 
 
@@ -29326,7 +58649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       void w.setShadow(!isWindows).catch(() => {
+
+
+
+
 
 
 
@@ -29334,11 +58665,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -29350,7 +58693,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const toggleTheme = useCallback(() => {
+
+
+
+
 
 
 
@@ -29358,7 +58713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const next: AppSettings = { ...s, theme: s.theme === "dark" ? "light" : "dark" };
+
+
+
+
 
 
 
@@ -29366,11 +58729,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return next;
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -29382,7 +58757,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const setCursorBlinking = useCallback(
+
+
+
+
 
 
 
@@ -29390,7 +58777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const next: AppSettings = { ...settings, editor_cursor_blinking: v };
+
+
+
+
 
 
 
@@ -29398,7 +58793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -29406,7 +58809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (e) {
+
+
+
+
 
 
 
@@ -29414,7 +58825,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         notify({ kind: "error", title: "Settings", message: `Failed to save cursor blinking: ${formatErr(e)}` });
+
+
+
+
 
 
 
@@ -29422,7 +58841,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -29430,7 +58857,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -29442,7 +58881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (hex: string | null) => {
+
+
+
+
 
 
 
@@ -29450,7 +58897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSettingsState(next);
+
+
+
+
 
 
 
@@ -29458,7 +58913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         await settingsSet(next);
+
+
+
+
 
 
 
@@ -29466,7 +58929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         devConsoleError("Failed to save line highlight color", e);
+
+
+
+
 
 
 
@@ -29474,7 +58945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -29482,11 +58961,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [devConsoleError, formatErr, notify, settings]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -29498,7 +58993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (hex: string | null) => {
+
+
+
+
 
 
 
@@ -29506,7 +59009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSettingsState(next);
+
+
+
+
 
 
 
@@ -29514,7 +59025,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         await settingsSet(next);
+
+
+
+
 
 
 
@@ -29522,7 +59041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         devConsoleError("Failed to save cursor color", e);
+
+
+
+
 
 
 
@@ -29530,7 +59057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -29538,11 +59073,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [devConsoleError, formatErr, notify, settings]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -29554,7 +59105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (nextKeybindings: Record<string, string>) => {
+
+
+
+
 
 
 
@@ -29562,7 +59121,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const prev = settings;
+
+
+
+
 
 
 
@@ -29570,7 +59137,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const next: AppSettings = { ...settings, keybindings: merged };
+
+
+
+
 
 
 
@@ -29578,7 +59153,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -29586,7 +59169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (e) {
+
+
+
+
 
 
 
@@ -29594,7 +59185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         notify({ kind: "error", title: "Settings", message: `Failed to save shortcuts: ${formatErr(e)}` });
+
+
+
+
 
 
 
@@ -29602,7 +59201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setSettingsState(prev);
+
+
+
+
 
 
 
@@ -29610,7 +59217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -29618,11 +59233,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [devConsoleError, formatErr, notify, settings]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -29634,7 +59265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (p: string | null) => {
+
+
+
+
 
 
 
@@ -29642,11 +59281,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setKeyStatus(null);
 
 
 
+
+
+
+
       setShowKeySaved(false);
+
+
+
+
 
 
 
@@ -29658,7 +59309,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const next = {
+
+
+
+
 
 
 
@@ -29666,7 +59329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         active_provider: p,
+
+
+
+
 
 
 
@@ -29674,11 +59345,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         active_model: p && p === settings.active_provider ? settings.active_model : null,
 
 
 
+
+
+
+
       };
+
+
+
+
 
 
 
@@ -29690,7 +59373,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -29698,7 +59393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (p) {
+
+
+
+
 
 
 
@@ -29706,7 +59409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setKeyStatus(keyStatus);
+
+
+
+
 
 
 
@@ -29714,7 +59425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const provider = providerChoices.find((x) => x.id === p);
+
+
+
+
 
 
 
@@ -29722,7 +59441,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             await loadProviderModels(p);
+
+
+
+
 
 
 
@@ -29730,7 +59457,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -29738,7 +59473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         devConsoleError("Failed to save provider selection", e);
+
+
+
+
 
 
 
@@ -29746,7 +59489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (settingsMutationSeqRef.current === seq) {
+
+
+
+
 
 
 
@@ -29754,7 +59505,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setSettingsState(settings);
+
+
+
+
 
 
 
@@ -29762,7 +59521,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -29770,11 +59537,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [devConsoleError, settings, providerChoices, loadProviderModels]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -29786,7 +59569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (isSavingSettings) return;
+
+
+
+
 
 
 
@@ -29794,7 +59585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -29802,7 +59601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -29810,7 +59617,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       notify({ kind: "error", title: "Settings", message: "Failed to save settings" });
+
+
+
+
 
 
 
@@ -29818,11 +59633,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setIsSavingSettings(false);
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -29834,7 +59661,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const toggleOfflineMode = useCallback(async () => {
+
+
+
+
 
 
 
@@ -29842,7 +59681,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsTogglingOffline(true);
+
+
+
+
 
 
 
@@ -29850,7 +59697,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSettingsState(next);
+
+
+
+
 
 
 
@@ -29858,7 +59713,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await settingsSet(next);
+
+
+
+
 
 
 
@@ -29866,7 +59729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       devConsoleError("Failed to toggle offline mode", e);
+
+
+
+
 
 
 
@@ -29874,7 +59745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSettingsState(settings);
+
+
+
+
 
 
 
@@ -29882,11 +59761,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setIsTogglingOffline(false);
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -29898,7 +59789,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const setPomporaThinking = useCallback(
+
+
+
+
 
 
 
@@ -29906,7 +59809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const seq = (settingsMutationSeqRef.current += 1);
+
+
+
+
 
 
 
@@ -29914,7 +59825,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSettingsState(next);
+
+
+
+
 
 
 
@@ -29922,7 +59841,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         await settingsSet(next);
+
+
+
+
 
 
 
@@ -29930,7 +59857,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         devConsoleError("Failed to save pompora thinking", e);
+
+
+
+
 
 
 
@@ -29938,7 +59873,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (settingsMutationSeqRef.current === seq) {
+
+
+
+
 
 
 
@@ -29946,7 +59889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -29954,7 +59905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -29962,7 +59921,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -29974,7 +59945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     async (mode: "slow" | "fast" | "reasoning") => {
+
+
+
+
 
 
 
@@ -29982,7 +59961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const prev = settings;
+
+
+
+
 
 
 
@@ -29990,7 +59977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const next: AppSettings = { ...settings, active_provider: "pompora", pompora_thinking: mode };
+
+
+
+
 
 
 
@@ -29998,7 +59993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -30006,7 +60009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -30014,11 +60025,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -30026,7 +60049,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         devConsoleError("Failed to select pompora mode", e);
+
+
+
+
 
 
 
@@ -30034,7 +60065,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (settingsMutationSeqRef.current === seq) {
+
+
+
+
 
 
 
@@ -30042,7 +60081,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setUiPomporaThinking(
+
+
+
+
 
 
 
@@ -30050,7 +60097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           );
+
+
+
+
 
 
 
@@ -30058,7 +60113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -30066,7 +60129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [devConsoleError, formatErr, notify, settings]
+
+
+
+
 
 
 
@@ -30078,7 +60149,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const handleStoreKey = useCallback(async () => {
+
+
+
+
 
 
 
@@ -30086,7 +60169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (settings.active_provider === "pompora") return;
+
+
+
+
 
 
 
@@ -30094,7 +60185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsKeyOperationInProgress(true);
+
+
+
+
 
 
 
@@ -30102,7 +60201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -30110,7 +60217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         provider: settings.active_provider,
+
+
+
+
 
 
 
@@ -30118,7 +60233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         encryptionPassword: encryptionPasswordDraft ? encryptionPasswordDraft.trim() : undefined,
+
+
+
+
 
 
 
@@ -30126,7 +60249,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setShowKeySaved(true);
+
+
+
+
 
 
 
@@ -30134,7 +60265,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const newKeyStatus = await providerKeyStatus(settings.active_provider);
+
+
+
+
 
 
 
@@ -30142,7 +60281,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       // Load models after saving API key
+
+
+
+
 
 
 
@@ -30150,7 +60297,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         await refreshProviderKeyStatuses();
+
+
+
+
 
 
 
@@ -30158,7 +60313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -30166,7 +60329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       devConsoleError(e);
+
+
+
+
 
 
 
@@ -30174,7 +60345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } finally {
+
+
+
+
 
 
 
@@ -30182,7 +60361,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -30194,7 +60381,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const clearProviderKey = useCallback(async () => {
+
+
+
+
 
 
 
@@ -30202,7 +60401,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (settings.active_provider === "pompora") return;
+
+
+
+
 
 
 
@@ -30210,7 +60417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSecretsError(null);
+
+
+
+
 
 
 
@@ -30218,7 +60433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await providerKeyClear(settings.active_provider);
+
+
+
+
 
 
 
@@ -30226,7 +60449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setTimeout(() => setShowKeyCleared(false), 2000);
+
+
+
+
 
 
 
@@ -30234,7 +60465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -30242,7 +60481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setSecretsError(String(e));
+
+
+
+
 
 
 
@@ -30250,11 +60497,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setIsKeyOperationInProgress(false);
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -30266,7 +60525,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const handleDebugGemini = useCallback(async () => {
+
+
+
+
 
 
 
@@ -30274,7 +60545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsKeyOperationInProgress(true);
+
+
+
+
 
 
 
@@ -30282,7 +60561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setDebugResult("Running debug test...");
+
+
+
+
 
 
 
@@ -30290,7 +60577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const out = await debugGeminiEndToEnd(apiKeyDraft.trim());
+
+
+
+
 
 
 
@@ -30298,7 +60593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch (e) {
+
+
+
+
 
 
 
@@ -30306,7 +60609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } finally {
+
+
+
+
 
 
 
@@ -30314,7 +60625,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -30326,7 +60645,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const sendChat = useCallback(async () => {
+
+
+
+
 
 
 
@@ -30334,7 +60665,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!text) return;
+
+
+
+
 
 
 
@@ -30342,7 +60681,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (settings.offline_mode) return;
+
+
+
+
+
+
+
+
 
 
 
@@ -30358,7 +60709,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (aiBlockedReason) {
+
+
+
+
 
 
 
@@ -30366,7 +60729,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!settings.active_provider) {
+
+
+
+
 
 
 
@@ -30374,7 +60745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } else {
+
+
+
+
 
 
 
@@ -30382,7 +60761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -30390,7 +60777,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -30402,11 +60801,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setActiveChatTitle(deriveChatTitleFromPrompt(text));
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -30422,7 +60837,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     let encryptionPassword: string | undefined;
+
+
+
+
 
 
 
@@ -30430,7 +60857,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const pw = await requestTextPrompt("Encryption password", "", {
+
+
+
+
 
 
 
@@ -30438,7 +60873,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         placeholder: "Password",
+
+
+
+
 
 
 
@@ -30446,7 +60889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
+
+
+
+
 
 
 
@@ -30454,7 +60905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setChatBusy(false);
+
+
+
+
 
 
 
@@ -30462,11 +60921,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
 
 
 
+
+
+
+
       encryptionPassword = pw;
+
+
+
+
 
 
 
@@ -30478,7 +60949,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -30486,7 +60969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const base = [...previous, { role: "user" as const, content: text }];
+
+
+
+
 
 
 
@@ -30498,7 +60989,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const hasCachedIndex = Boolean(workspace.root && fileIndexRoot === workspace.root && fileIndex.length);
+
+
+
+
 
 
 
@@ -30506,7 +61009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (workspace.root && !hasCachedIndex) {
+
+
+
+
 
 
 
@@ -30514,7 +61025,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -30530,7 +61053,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const explicitRefs = workspace.root ? extractFileRefs(text) : [];
+
+
+
+
 
 
 
@@ -30538,7 +61073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         workspace.root && activeChat.changeSet
+
+
+
+
 
 
 
@@ -30546,7 +61089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               .filter((f) => f.kind === "write" && typeof f.path === "string")
+
+
+
+
 
 
 
@@ -30554,7 +61105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               .slice(0, 4)
+
+
+
+
 
 
 
@@ -30562,7 +61121,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const autoRefs = workspace.root && activeTab?.path ? [activeTab.path] : [];
+
+
+
+
+
+
+
+
 
 
 
@@ -30578,7 +61149,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const referencedFiles =
+
+
+
+
 
 
 
@@ -30586,7 +61169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           ? Array.from(new Set([...explicitRefs, ...autoRefs, ...recentChangeFiles, ...defaultRefs])).slice(0, 12)
+
+
+
+
 
 
 
@@ -30594,7 +61185,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       agentRunId = `es-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+
+
+
 
 
 
@@ -30606,7 +61205,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const eventStreamMessage: ChatUiMessage = {
+
+
+
+
 
 
 
@@ -30614,7 +61225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         role: "assistant",
+
+
+
+
 
 
 
@@ -30622,7 +61241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         kind: "event_stream",
+
+
+
+
 
 
 
@@ -30630,7 +61257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           status: "running",
+
+
+
+
 
 
 
@@ -30638,11 +61273,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         },
 
 
 
+
+
+
+
       };
+
+
+
+
+
+
+
+
 
 
 
@@ -30658,7 +61309,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const fileContexts: Array<{ path: string; content: string; truncated: boolean }> = [];
+
+
+
+
 
 
 
@@ -30666,7 +61329,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         appendEventStream(agentRunId, [{ type: "state", content: `Checking ${p}…`, ttlMs: 900 }]);
+
+
+
+
 
 
 
@@ -30674,7 +61345,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const max = 8000;
+
+
+
+
 
 
 
@@ -30682,11 +61361,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             activeChat.changeSet?.files.find(
 
 
 
+
+
+
+
               (f) => f.kind === "write" && f.path === p && typeof f.after === "string"
+
+
+
+
 
 
 
@@ -30698,7 +61389,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
           const content = pending ? String(pending.after || "") : await workspaceReadFile(p);
+
+
+
+
 
 
 
@@ -30706,7 +61409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           fileContexts.push({ path: p, content: truncated ? content.slice(0, max) : content, truncated });
+
+
+
+
 
 
 
@@ -30714,7 +61425,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           appendEventStream(agentRunId, [{ type: "state", content: `Couldn’t read ${p}.`, ttlMs: 1200 }]);
+
+
+
+
 
 
 
@@ -30722,7 +61441,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -30734,7 +61465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .slice(-24)
+
+
+
+
 
 
 
@@ -30742,7 +61481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const base = `${l.title}`.trim();
+
+
+
+
 
 
 
@@ -30750,7 +61497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return detail ? `${base} · ${detail}` : base;
+
+
+
+
 
 
 
@@ -30758,7 +61513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .filter(Boolean)
+
+
+
+
 
 
 
@@ -30770,7 +61533,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const conversationForModel = base
+
+
+
+
 
 
 
@@ -30778,7 +61553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .filter((m) => String(m.content || "").trim().length > 0)
+
+
+
+
 
 
 
@@ -30790,7 +61573,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const systemPrompt =
+
+
+
+
 
 
 
@@ -30798,7 +61593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "IMPORTANT: Respond ONLY with a single valid JSON object (no markdown, no code fences).\n" +
+
+
+
+
 
 
 
@@ -30806,11 +61609,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "Never put code in assistant_message; code must only appear inside edits[].content.\n" +
 
 
 
+
+
+
+
         "If you have no edits, return {\"assistant_message\": <answer>, \"edits\": []}.\n" +
+
+
+
+
 
 
 
@@ -30822,7 +61637,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const aiMessages: AiChatMessage[] = [
+
+
+
+
 
 
 
@@ -30830,7 +61657,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ...(workspace.root
+
+
+
+
 
 
 
@@ -30838,7 +61673,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               {
+
+
+
+
 
 
 
@@ -30846,7 +61689,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 content:
+
+
+
+
 
 
 
@@ -30854,7 +61705,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   `- root: ${basename(workspace.root)}\n` +
+
+
+
+
 
 
 
@@ -30862,11 +61721,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   (workspaceTree ? "\nFolder tree (truncated):\n" + workspaceTree : ""),
 
 
 
+
+
+
+
               },
+
+
+
+
 
 
 
@@ -30874,7 +61745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 ? ([
+
+
+
+
 
 
 
@@ -30882,7 +61761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       role: "system" as const,
+
+
+
+
 
 
 
@@ -30890,7 +61777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         "File list (relative; truncated):\n" +
+
+
+
+
 
 
 
@@ -30898,7 +61793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           .slice(0, 220)
+
+
+
+
 
 
 
@@ -30906,7 +61809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           .join("\n") +
+
+
+
+
 
 
 
@@ -30914,7 +61825,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     },
+
+
+
+
 
 
 
@@ -30922,7 +61841,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 : ([] as AiChatMessage[])),
+
+
+
+
 
 
 
@@ -30930,7 +61857,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           : ([] as AiChatMessage[])),
+
+
+
+
 
 
 
@@ -30938,7 +61873,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           ? ([
+
+
+
+
 
 
 
@@ -30946,7 +61889,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 role: "system" as const,
+
+
+
+
 
 
 
@@ -30954,7 +61905,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   "Workspace file context (use this exact content for patches; if truncated, request a read of the full file):\n\n" +
+
+
+
+
 
 
 
@@ -30962,7 +61921,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     .map((f) => `FILE: ${f.path}${f.truncated ? " (TRUNCATED)" : ""}\n---\n${f.content}\n---`)
+
+
+
+
 
 
 
@@ -30970,7 +61937,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               },
+
+
+
+
 
 
 
@@ -30978,7 +61953,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           : ([] as AiChatMessage[])),
+
+
+
+
 
 
 
@@ -30986,7 +61969,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           ? ([
+
+
+
+
 
 
 
@@ -30994,7 +61985,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 role: "system" as const,
+
+
+
+
 
 
 
@@ -31002,7 +62001,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               },
+
+
+
+
 
 
 
@@ -31010,11 +62017,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           : ([] as AiChatMessage[])),
 
 
 
+
+
+
+
         ...conversationForModel.map((m) => ({ role: m.role, content: m.content })),
+
+
+
+
 
 
 
@@ -31026,7 +62045,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const requestOnce = async () => {
+
+
+
+
 
 
 
@@ -31034,11 +62065,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const thinking = thinkingRaw ? String(thinkingRaw).toLowerCase() : null;
 
 
 
+
+
+
+
         return await aiChat({ messages: aiMessages, encryptionPassword, thinking });
+
+
+
+
 
 
 
@@ -31050,7 +62093,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       let res: Awaited<ReturnType<typeof requestOnce>>;
+
+
+
+
 
 
 
@@ -31058,7 +62113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         res = await requestOnce();
+
+
+
+
 
 
 
@@ -31066,7 +62129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const raw = String(e);
+
+
+
+
 
 
 
@@ -31074,7 +62145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           addLog({ kind: "info", title: "AI returned an empty response", status: "running", details: ["Retrying once…"] });
+
+
+
+
 
 
 
@@ -31082,7 +62161,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } else {
+
+
+
+
 
 
 
@@ -31090,11 +62177,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -31102,7 +62201,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const rawOutPre = String((res as { output?: unknown }).output ?? "");
+
+
+
+
 
 
 
@@ -31110,7 +62217,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!hasDirectEdits && rawOutPre.trim().length === 0) {
+
+
+
+
 
 
 
@@ -31118,7 +62233,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -31130,11 +62253,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const edits = Array.isArray(resEdits) && resEdits.length ? resEdits : parsedFromText?.edits ?? null;
 
 
 
+
+
+
+
       const rawOut = String(res.output ?? "");
+
+
+
+
 
 
 
@@ -31146,7 +62285,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const safeMsg = assistantMsg.length
+
+
+
+
 
 
 
@@ -31154,11 +62305,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           ? "I’m ready—tell me what you want to change and I’ll guide you step by step."
 
 
 
+
+
+
+
           : assistantMsg
+
+
+
+
 
 
 
@@ -31170,7 +62333,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const eventsFromModel = parsedFromText?.events ?? null;
+
+
+
+
 
 
 
@@ -31178,7 +62353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ? eventsFromModel
+
+
+
+
 
 
 
@@ -31190,7 +62373,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       updateEventStream(agentRunId, (es) => ({
+
+
+
+
 
 
 
@@ -31198,7 +62393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         events: ([...(es.events ?? []), ...parsedEvents] as ChatEvent[]).slice(-240),
+
+
+
+
 
 
 
@@ -31210,11 +62413,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       if (edits && edits.length) {
 
 
 
+
+
+
+
         setChatApplying(true);
+
+
+
+
+
+
+
+
 
 
 
@@ -31230,7 +62453,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -31238,7 +62473,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const normalized = norm.edits;
+
+
+
+
 
 
 
@@ -31246,7 +62489,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setIsChatDockOpen(true);
+
+
+
+
 
 
 
@@ -31258,7 +62509,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
           const touchedFiles = changeSet.files
+
+
+
+
 
 
 
@@ -31266,7 +62529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             .slice(0, 16)
+
+
+
+
 
 
 
@@ -31274,7 +62545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               const stats = computeFileEditStats(f);
+
+
+
+
 
 
 
@@ -31282,7 +62561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             });
+
+
+
+
 
 
 
@@ -31290,7 +62577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             appendEventStream(
+
+
+
+
 
 
 
@@ -31298,7 +62593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               touchedFiles.map((f) => ({ type: "file_edit", file: f.path, added: f.added, removed: f.removed }))
+
+
+
+
 
 
 
@@ -31306,7 +62609,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
+
+
+
+
 
 
 
@@ -31318,7 +62633,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (first?.kind === "write") {
+
+
+
+
 
 
 
@@ -31326,7 +62649,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             await openFile(first.path);
+
+
+
+
 
 
 
@@ -31334,11 +62665,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } finally {
 
 
 
+
+
+
+
           setChatApplying(false);
+
+
+
+
 
 
 
@@ -31350,7 +62693,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         updateEventStream(agentRunId, (es) => ({ ...es, status: "done" }));
+
+
+
+
 
 
 
@@ -31358,11 +62713,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         updateEventStream(agentRunId, (es) => ({ ...es, status: "done" }));
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -31374,7 +62745,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (settings.active_provider === "pompora") {
+
+
+
+
 
 
 
@@ -31382,7 +62761,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           const credits = await authGetCredits();
+
+
+
+
 
 
 
@@ -31390,7 +62777,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch {
+
+
+
+
 
 
 
@@ -31398,7 +62793,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -31406,7 +62809,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const f = friendlyAiError(String(e));
+
+
+
+
 
 
 
@@ -31418,7 +62829,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       if (agentRunId) {
+
+
+
+
 
 
 
@@ -31426,7 +62849,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         updateEventStream(agentRunId, (es) => ({ ...es, status: "error" }));
+
+
+
+
 
 
 
@@ -31434,7 +62865,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } finally {
+
+
+
+
 
 
 
@@ -31442,7 +62881,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -31450,7 +62897,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     activeChat.draft,
+
+
+
+
 
 
 
@@ -31458,7 +62913,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     activeChat.title,
+
+
+
+
 
 
 
@@ -31466,7 +62929,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     aiBlockedReason,
+
+
+
+
 
 
 
@@ -31474,7 +62945,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     applyAiEditsNow,
+
+
+
+
 
 
 
@@ -31482,7 +62961,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     ensureFileIndex,
+
+
+
+
 
 
 
@@ -31490,7 +62977,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     fileIndexRoot,
+
+
+
+
 
 
 
@@ -31498,7 +62993,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     keyStatus?.storage,
+
+
+
+
 
 
 
@@ -31506,7 +63009,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     openSettingsTab,
+
+
+
+
 
 
 
@@ -31514,7 +63025,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     providerNeedsKey,
+
+
+
+
 
 
 
@@ -31522,7 +63041,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setActiveChatChangeSet,
+
+
+
+
 
 
 
@@ -31530,7 +63057,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setActiveChatMessages,
+
+
+
+
 
 
 
@@ -31538,7 +63073,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setSelectedChangePath,
+
+
+
+
 
 
 
@@ -31546,7 +63089,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     settings.active_provider,
+
+
+
+
 
 
 
@@ -31554,7 +63105,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     uiPomporaThinking,
+
+
+
+
 
 
 
@@ -31562,11 +63121,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     appendEventStream,
 
 
 
+
+
+
+
     updateEventStream,
+
+
+
+
 
 
 
@@ -31578,7 +63149,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const settingsProviderChoices = useMemo(
+
+
+
+
 
 
 
@@ -31586,7 +63169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [providerChoices]
+
+
+
+
 
 
 
@@ -31598,11 +63189,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     sendChatRef.current = sendChat;
+
+
+
+
 
 
 
@@ -31614,7 +63221,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const kbRaw = useCallback(
+
+
+
+
 
 
 
@@ -31622,7 +63241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (id === "view.commandPalette") return String(DEFAULT_KEYBINDINGS[id] ?? "Ctrl+Shift+P");
+
+
+
+
 
 
 
@@ -31630,7 +63257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -31638,7 +63273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
 
 
 
@@ -31650,7 +63293,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const chatToggleNormRef = useRef<string>("");
+
+
+
+
 
 
 
@@ -31658,7 +63313,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     chatToggleNormRef.current = kbNorm("chat.toggle");
+
+
+
+
 
 
 
@@ -31670,7 +63333,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const runEditorAction = useCallback(
+
+
+
+
 
 
 
@@ -31678,7 +63353,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const ed = editorRef.current;
+
+
+
+
 
 
 
@@ -31686,7 +63369,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       try {
+
+
+
+
 
 
 
@@ -31694,7 +63385,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!act) return false;
+
+
+
+
 
 
 
@@ -31702,7 +63401,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
+
+
+
+
 
 
 
@@ -31710,7 +63417,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return false;
+
+
+
+
 
 
 
@@ -31718,7 +63433,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -31726,7 +63449,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -31742,7 +63477,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const clipboardCopyFromEditor = useCallback(async (ed: any) => {
+
+
+
+
 
 
 
@@ -31750,7 +63497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const model = ed?.getModel?.();
+
+
+
+
 
 
 
@@ -31758,7 +63513,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     console.log("[clipboardCopyFromEditor] model:", !!model, "selections:", selections?.length);
+
+
+
+
 
 
 
@@ -31766,7 +63529,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -31774,7 +63545,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .map((sel) => {
+
+
+
+
 
 
 
@@ -31782,7 +63561,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             if (sel?.isEmpty?.()) return "";
+
+
+
+
 
 
 
@@ -31790,7 +63577,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           } catch {
+
+
+
+
 
 
 
@@ -31798,7 +63593,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -31806,7 +63609,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         .filter((x) => x !== "");
+
+
+
+
 
 
 
@@ -31814,7 +63625,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const text = parts.join(eol);
+
+
+
+
 
 
 
@@ -31822,9 +63641,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       // Try Tauri clipboard first, then WSL clipboard, then web API, then execCommand
 
+
+
       try {
+
+
+
+
 
 
 
@@ -31832,7 +63661,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         console.log("[clipboardCopyFromEditor] Tauri clipboard done");
+
+
+
+
 
 
 
@@ -31840,7 +63677,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         console.log("[clipboardCopyFromEditor] Tauri clipboard failed, trying WSL clipboard:", tauriErr);
+
+
+
+
 
 
 
@@ -31848,7 +63693,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           await wslClipboardWriteText(text);
+
+
+
+
 
 
 
@@ -31856,7 +63709,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch (wslErr) {
+
+
+
+
 
 
 
@@ -31864,7 +63725,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (navigator.clipboard && navigator.clipboard.writeText) {
+
+
+
+
 
 
 
@@ -31872,7 +63741,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               await navigator.clipboard.writeText(text);
+
+
+
+
 
 
 
@@ -31880,7 +63757,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             } catch (webErr) {
+
+
+
+
 
 
 
@@ -31888,7 +63773,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               const textarea = document.createElement("textarea");
+
+
+
+
 
 
 
@@ -31896,7 +63789,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               textarea.style.position = "fixed";
+
+
+
+
 
 
 
@@ -31904,7 +63805,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               document.body.appendChild(textarea);
+
+
+
+
 
 
 
@@ -31912,7 +63821,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               document.execCommand("copy");
+
+
+
+
 
 
 
@@ -31920,7 +63837,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               console.log("[clipboardCopyFromEditor] execCommand copy done");
+
+
+
+
 
 
 
@@ -31928,7 +63853,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           } else {
+
+
+
+
 
 
 
@@ -31936,7 +63869,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             textarea.value = text;
+
+
+
+
 
 
 
@@ -31944,7 +63885,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             textarea.style.left = "-9999px";
+
+
+
+
 
 
 
@@ -31952,7 +63901,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             textarea.select();
+
+
+
+
 
 
 
@@ -31960,7 +63917,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             document.body.removeChild(textarea);
+
+
+
+
 
 
 
@@ -31968,7 +63933,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -31976,7 +63949,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -31984,7 +63965,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       console.error("[clipboardCopyFromEditor] error:", e);
+
+
+
+
 
 
 
@@ -31992,7 +63981,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -32004,7 +64005,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const model = ed?.getModel?.();
+
+
+
+
 
 
 
@@ -32012,7 +64021,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!model || !selections || selections.length === 0) return;
+
+
+
+
 
 
 
@@ -32020,11 +64037,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (nonEmpty.length === 0) return;
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -32032,7 +64061,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const eol = typeof model?.getEOL === "function" ? (model.getEOL() as string) : "\n";
+
+
+
+
 
 
 
@@ -32040,9 +64077,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       // Try Tauri clipboard first, then WSL clipboard, then web API, then execCommand
 
+
+
       try {
+
+
+
+
 
 
 
@@ -32050,7 +64097,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (tauriErr) {
+
+
+
+
 
 
 
@@ -32058,7 +64113,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -32066,7 +64129,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         } catch (wslErr) {
+
+
+
+
 
 
 
@@ -32074,7 +64145,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (navigator.clipboard && navigator.clipboard.writeText) {
+
+
+
+
 
 
 
@@ -32082,7 +64161,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               await navigator.clipboard.writeText(text);
+
+
+
+
 
 
 
@@ -32090,7 +64177,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               console.log("[clipboardCutFromEditor] Web clipboard failed, trying execCommand:", webErr);
+
+
+
+
 
 
 
@@ -32098,7 +64193,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               textarea.value = text;
+
+
+
+
 
 
 
@@ -32106,7 +64209,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               textarea.style.left = "-9999px";
+
+
+
+
 
 
 
@@ -32114,7 +64225,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               textarea.select();
+
+
+
+
 
 
 
@@ -32122,7 +64241,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               document.body.removeChild(textarea);
+
+
+
+
 
 
 
@@ -32130,7 +64257,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           } else {
+
+
+
+
 
 
 
@@ -32138,7 +64273,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             textarea.value = text;
+
+
+
+
 
 
 
@@ -32146,7 +64289,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             textarea.style.left = "-9999px";
+
+
+
+
 
 
 
@@ -32154,7 +64305,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             textarea.select();
+
+
+
+
 
 
 
@@ -32162,7 +64321,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             document.body.removeChild(textarea);
+
+
+
+
 
 
 
@@ -32170,7 +64337,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -32178,11 +64353,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -32190,7 +64377,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       ed.pushUndoStop?.();
+
+
+
+
 
 
 
@@ -32198,7 +64393,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       ed.executeEdits?.("clipboard", edits);
+
+
+
+
 
 
 
@@ -32206,7 +64409,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
+
+
+
+
 
 
 
@@ -32214,7 +64425,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -32226,7 +64449,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     console.log("[clipboardPasteIntoEditor] called, ed:", !!ed);
+
+
+
+
 
 
 
@@ -32234,7 +64465,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const cached = clipboardReadCacheRef.current;
+
+
+
+
 
 
 
@@ -32242,7 +64481,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const cachedText = cached.text;
+
+
+
+
 
 
 
@@ -32250,7 +64497,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         try {
+
+
+
+
 
 
 
@@ -32258,11 +64513,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!sels || sels.length === 0) return;
 
 
 
+
+
+
+
           ed.pushUndoStop?.();
+
+
+
+
 
 
 
@@ -32270,7 +64537,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             "clipboard",
+
+
+
+
 
 
 
@@ -32278,7 +64553,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           );
+
+
+
+
 
 
 
@@ -32286,7 +64569,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return;
+
+
+
+
 
 
 
@@ -32294,7 +64585,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -32302,7 +64601,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -32310,9 +64617,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     // Try Tauri clipboard first, then WSL clipboard, then web API
 
+
+
     try {
+
+
+
+
 
 
 
@@ -32320,7 +64637,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       console.log("[clipboardPasteIntoEditor] Tauri read text:", text?.length, "chars");
+
+
+
+
 
 
 
@@ -32328,7 +64653,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       console.log("[clipboardPasteIntoEditor] Tauri clipboard failed, trying WSL clipboard:", tauriErr);
+
+
+
+
 
 
 
@@ -32336,7 +64669,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         text = await wslClipboardReadText();
+
+
+
+
 
 
 
@@ -32344,7 +64685,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (wslErr) {
+
+
+
+
 
 
 
@@ -32352,7 +64701,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (navigator.clipboard && navigator.clipboard.readText) {
+
+
+
+
 
 
 
@@ -32360,7 +64717,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             text = await navigator.clipboard.readText();
+
+
+
+
 
 
 
@@ -32368,7 +64733,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           } catch (webErr) {
+
+
+
+
 
 
 
@@ -32376,7 +64749,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -32384,11 +64765,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -32396,7 +64789,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       console.log("[clipboardPasteIntoEditor] No text from any clipboard API");
+
+
+
+
 
 
 
@@ -32404,11 +64805,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -32416,11 +64829,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -32428,7 +64853,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const sels = ed.getSelections?.() as any[] | null | undefined;
+
+
+
+
 
 
 
@@ -32436,7 +64869,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       ed.pushUndoStop?.();
+
+
+
+
 
 
 
@@ -32444,7 +64885,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "clipboard",
+
+
+
+
 
 
 
@@ -32452,7 +64901,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       );
+
+
+
+
 
 
 
@@ -32460,7 +64917,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       console.log("[clipboardPasteIntoEditor] executeEdits done");
+
+
+
+
 
 
 
@@ -32468,7 +64933,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       console.log("[clipboardPasteIntoEditor] executeEdits failed:", e);
+
+
+
+
 
 
 
@@ -32476,7 +64949,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -32488,7 +64973,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const model = ed?.getModel?.();
+
+
+
+
 
 
 
@@ -32496,7 +64989,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -32504,7 +65005,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (full) {
+
+
+
+
 
 
 
@@ -32512,7 +65021,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ed.revealRangeInCenterIfOutsideViewport?.(full);
+
+
+
+
 
 
 
@@ -32520,7 +65037,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -32528,7 +65053,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -32536,7 +65069,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       runEditCommand("selectAll");
+
+
+
+
 
 
 
@@ -32544,7 +65085,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -32556,7 +65105,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const bindMonacoShortcuts = useCallback(
+
+
+
+
 
 
 
@@ -32564,19 +65125,39 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const monaco = monacoRef.current as any;
+
+
+
+
 
 
 
       if (!monaco || !ed?.addCommand) {
 
+
+
         console.log("[bindMonacoShortcuts] ABORT: monaco:", !!monaco, "ed?.addCommand:", !!ed?.addCommand);
+
+
 
         return;
 
+
+
       }
 
+
+
       console.log("[bindMonacoShortcuts] Binding shortcuts...");
+
+
+
+
 
 
 
@@ -32584,7 +65165,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const km = monaco.KeyMod;
+
+
+
+
 
 
 
@@ -32592,9 +65181,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
         // Use explicit Ctrl (2048) instead of CtrlCmd for Linux compatibility
 
+
+
         const Ctrl = 2048;
+
+
+
+
 
 
 
@@ -32602,53 +65201,107 @@ export default function AppShell() {
 
 
 
+
+
+
+
         ed.addCommand(Ctrl | kc.KeyA, () => {
+
+
 
           console.log("[Monaco] Ctrl+A TRIGGERED");
 
+
+
           selectAllInEditor(ed);
 
+
+
         });
+
+
+
+
 
 
 
         ed.addCommand(Ctrl | kc.KeyC, () => {
 
+
+
           console.log("[Monaco] Ctrl+C TRIGGERED");
+
+
 
           void clipboardCopyFromEditor(ed);
 
+
+
         });
+
+
+
+
 
 
 
         ed.addCommand(Ctrl | kc.KeyV, () => {
 
+
+
           console.log("[Monaco] Ctrl+V TRIGGERED");
+
+
 
           void clipboardPasteIntoEditor(ed);
 
+
+
         });
+
+
+
+
 
 
 
         ed.addCommand(Ctrl | kc.KeyX, () => {
 
+
+
           console.log("[Monaco] Ctrl+X TRIGGERED");
+
+
 
           void clipboardCutFromEditor(ed);
 
+
+
         });
+
+
+
+
 
 
 
         ed.addCommand(Ctrl | kc.Slash, () => {
 
+
+
           console.log("[Monaco] Ctrl+/ TRIGGERED");
+
+
 
           if (!runEditorAction("editor.action.commentLine")) runEditorAction("editor.action.toggleComment");
 
+
+
         });
+
+
+
+
 
 
 
@@ -32656,11 +65309,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } catch (e) {
+
+
 
         console.error("[bindMonacoShortcuts] ERROR:", e);
 
+
+
       }
+
+
+
+
 
 
 
@@ -32668,11 +65333,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     [clipboardCopyFromEditor, clipboardCutFromEditor, clipboardPasteIntoEditor, runEditorAction, selectAllInEditor]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -32684,7 +65365,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setPanelTab("terminal");
+
+
+
+
 
 
 
@@ -32692,7 +65381,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     window.setTimeout(() => {
+
+
+
+
 
 
 
@@ -32700,7 +65397,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         resizeTerminal();
+
+
+
+
 
 
 
@@ -32708,7 +65413,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }, 0);
+
+
+
+
 
 
 
@@ -32720,7 +65433,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const focusProblemsPanel = useCallback(() => {
+
+
+
+
 
 
 
@@ -32728,11 +65453,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsTerminalOpen(true);
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -32744,7 +65485,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setPanelTab("output");
+
+
+
+
 
 
 
@@ -32752,7 +65501,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
+
+
+
+
 
 
 
@@ -32764,7 +65525,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setPanelTab("debug");
+
+
+
+
 
 
 
@@ -32772,7 +65541,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, []);
+
+
+
+
 
 
 
@@ -32780,7 +65557,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setIsPrimarySidebarOpen((v) => {
+
+
+
+
 
 
 
@@ -32788,7 +65573,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!next) {
+
+
+
+
 
 
 
@@ -32796,7 +65589,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       } else {
+
+
+
+
 
 
 
@@ -32804,7 +65605,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (typeof w === "number" && Number.isFinite(w) && w >= 220) setExplorerWidth(w);
+
+
+
+
 
 
 
@@ -32812,11 +65621,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return next;
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -32828,7 +65649,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const handleAppKeyDown = useCallback(
+
+
+
+
 
 
 
@@ -32836,7 +65669,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if ((window as any).__pomporaCapturingShortcut) {
+
+
+
+
 
 
 
@@ -32844,7 +65685,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (!captureActive) (window as any).__pomporaCapturingShortcut = false;
+
+
+
+
 
 
 
@@ -32852,7 +65701,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -32864,7 +65725,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (e.ctrlKey && e.shiftKey && !e.altKey && (e.code === "KeyP" || e.key.toLowerCase() === "p")) {
+
+
+
+
 
 
 
@@ -32872,7 +65741,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setIsPaletteOpen(true);
+
+
+
+
 
 
 
@@ -32880,15 +65757,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
       // When Monaco is focused, handle important Edit shortcuts using physical key codes.
 
+
+
       // This avoids layout issues and avoids being blocked by __eventToShortcut().
 
+
+
       const fromMonacoDom =
+
+
+
+
 
 
 
@@ -32896,7 +65789,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const fromMonaco = fromMonacoDom || !!editorRef.current?.hasTextFocus?.();
+
+
+
+
 
 
 
@@ -32904,7 +65805,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const mod = e.ctrlKey;
+
+
+
+
 
 
 
@@ -32912,7 +65821,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           if (!e.shiftKey && e.code === "KeyX") {
+
+
+
+
 
 
 
@@ -32920,7 +65837,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             e.stopPropagation();
+
+
+
+
 
 
 
@@ -32928,11 +65853,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             return true;
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -32940,11 +65877,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             e.preventDefault();
 
 
 
+
+
+
+
             e.stopPropagation();
+
+
+
+
 
 
 
@@ -32952,11 +65901,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             return true;
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -32964,11 +65925,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             e.preventDefault();
 
 
 
+
+
+
+
             e.stopPropagation();
+
+
+
+
 
 
 
@@ -32976,11 +65949,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             return true;
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -32988,11 +65973,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             e.preventDefault();
 
 
 
+
+
+
+
             e.stopPropagation();
+
+
+
+
 
 
 
@@ -33000,7 +65997,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             return true;
+
+
+
+
 
 
 
@@ -33008,11 +66013,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           // Toggle line comment (Ctrl+/). Prefer physical key code, but also accept literal '/'
+
+
 
           // because some environments report non-standard codes.
 
+
+
           if (!e.shiftKey && (e.code === "Slash" || e.code === "NumpadDivide" || e.key === "/")) {
+
+
+
+
 
 
 
@@ -33020,7 +66037,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             e.stopPropagation();
+
+
+
+
 
 
 
@@ -33028,9 +66053,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
             // If Monaco doesn't have the action for some reason, let it handle the key.
 
+
+
             return false;
+
+
+
+
 
 
 
@@ -33038,13 +66073,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
         // Toggle block comment (Shift+Alt+A)
 
+
+
         if (!mod && e.shiftKey && e.altKey && e.code === "KeyA") {
+
+
+
+
 
 
 
@@ -33052,7 +66101,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           e.stopPropagation();
+
+
+
+
 
 
 
@@ -33060,7 +66117,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             runEditorAction("editor.action.commentBlock");
+
+
+
+
 
 
 
@@ -33068,7 +66133,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return true;
+
+
+
+
 
 
 
@@ -33076,7 +66149,17 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
 
 
 
@@ -33086,7 +66169,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!evRaw) return false;
+
+
+
+
 
 
 
@@ -33094,17 +66185,35 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!ev) return false;
+
+
+
+
 
 
 
       // When Monaco is focused, it installs its own keydown handlers. Since this app listens
 
+
+
       // on window in capture phase, we'd otherwise handle shortcuts twice (window first,
+
+
 
       // then Monaco), which makes toggles look like no-ops.
 
+
+
       if (fromMonaco) {
+
+
+
+
 
 
 
@@ -33112,7 +66221,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           kbNorm("chat.toggle"),
+
+
+
+
 
 
 
@@ -33120,7 +66237,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           kbNorm("edit.redo"),
+
+
+
+
 
 
 
@@ -33128,7 +66253,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           kbNorm("view.navigateForward"),
+
+
+
+
 
 
 
@@ -33136,11 +66269,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (editorOwned.has(ev)) return false;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33148,7 +66293,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (chordState && Date.now() - chordState.started < 1500) {
+
+
+
+
 
 
 
@@ -33156,7 +66309,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (seq === kbNorm("file.openFolder")) {
+
+
+
+
 
 
 
@@ -33164,7 +66325,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           (window as any).__pomporaChordSeq = null;
+
+
+
+
 
 
 
@@ -33172,11 +66341,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return true;
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -33184,11 +66365,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           e.preventDefault();
 
 
 
+
+
+
+
           (window as any).__pomporaChordSeq = null;
+
+
+
+
 
 
 
@@ -33196,11 +66389,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return true;
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -33208,11 +66413,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           e.preventDefault();
 
 
 
+
+
+
+
           (window as any).__pomporaChordSeq = null;
+
+
+
+
 
 
 
@@ -33220,11 +66437,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return true;
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -33232,11 +66461,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           e.preventDefault();
 
 
 
+
+
+
+
           (window as any).__pomporaChordSeq = null;
+
+
+
+
 
 
 
@@ -33244,11 +66485,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return true;
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -33256,7 +66509,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           e.preventDefault();
+
+
+
+
 
 
 
@@ -33264,7 +66525,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           toggleZenMode();
+
+
+
+
 
 
 
@@ -33272,11 +66541,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33288,7 +66569,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
       const chordCandidates = [
+
+
+
+
 
 
 
@@ -33296,7 +66589,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         kbNorm("file.saveAll"),
+
+
+
+
 
 
 
@@ -33304,7 +66605,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         kbNorm("view.splitEditorInGroup"),
+
+
+
+
 
 
 
@@ -33312,7 +66621,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       ].filter((x) => x.includes(" "));
+
+
+
+
 
 
 
@@ -33320,7 +66637,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         const first = ch.split(" ")[0] ?? "";
+
+
+
+
 
 
 
@@ -33328,7 +66653,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           e.preventDefault();
+
+
+
+
 
 
 
@@ -33336,7 +66669,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           return true;
+
+
+
+
 
 
 
@@ -33344,7 +66685,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -33356,7 +66709,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33364,11 +66725,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33376,7 +66749,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33384,11 +66765,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33396,7 +66789,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33404,11 +66805,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33416,7 +66829,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33424,11 +66845,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -33440,7 +66877,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33448,11 +66893,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33460,7 +66917,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33468,11 +66933,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33480,7 +66957,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33488,11 +66973,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33500,7 +66997,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33508,11 +67013,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33520,7 +67037,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33528,11 +67053,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33540,7 +67077,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33548,11 +67093,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33560,11 +67117,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
 
 
 
+
+
+
+
         setActivity("search");
+
+
+
+
 
 
 
@@ -33572,11 +67141,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33584,7 +67165,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33592,11 +67181,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33604,7 +67205,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33612,11 +67221,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33624,7 +67245,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33632,11 +67261,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33644,7 +67285,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33652,11 +67301,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33664,7 +67325,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33672,11 +67341,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33684,7 +67365,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33692,11 +67381,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33704,7 +67405,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33712,11 +67421,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33724,7 +67445,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33732,11 +67461,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33744,7 +67485,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33752,7 +67501,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (ev === kbNorm("terminal.newWindow")) {
+
+
+
+
 
 
 
@@ -33760,7 +67517,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -33768,7 +67533,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33776,7 +67549,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33784,11 +67565,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33796,7 +67589,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33804,11 +67605,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33816,7 +67629,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33824,11 +67645,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33836,7 +67669,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33844,11 +67685,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33856,7 +67709,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33864,11 +67725,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33876,7 +67749,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33884,11 +67765,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33896,7 +67789,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33904,11 +67805,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33916,7 +67829,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33924,11 +67845,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33936,7 +67869,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33944,11 +67885,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33956,7 +67909,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33964,11 +67925,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33976,7 +67949,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -33984,11 +67965,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -33996,7 +67989,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34004,11 +68005,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34016,7 +68029,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34024,11 +68045,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34036,7 +68069,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         if (activeTab) {
+
+
+
+
 
 
 
@@ -34044,7 +68085,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           closeTab(activeTab.path);
+
+
+
+
 
 
 
@@ -34052,7 +68101,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         }
+
+
+
+
 
 
 
@@ -34060,7 +68117,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34068,7 +68133,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34076,11 +68149,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34088,7 +68173,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34096,11 +68189,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34108,7 +68213,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34116,11 +68229,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34128,7 +68253,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34136,11 +68269,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34148,7 +68293,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34156,11 +68309,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34168,7 +68333,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34176,11 +68349,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34188,7 +68373,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34196,11 +68389,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34208,7 +68413,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34216,11 +68429,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34228,7 +68453,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34236,11 +68469,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34248,7 +68493,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34256,11 +68509,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34268,7 +68533,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34276,11 +68549,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34288,7 +68573,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34296,11 +68589,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34308,7 +68613,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34316,11 +68629,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34328,7 +68653,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34336,11 +68669,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34348,7 +68693,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34356,11 +68709,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34368,7 +68733,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34376,11 +68749,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34388,7 +68773,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34396,11 +68789,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34408,7 +68813,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34416,11 +68829,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34428,7 +68853,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34436,11 +68869,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34448,7 +68893,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34456,11 +68909,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34468,7 +68933,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34476,11 +68949,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34488,7 +68973,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34496,11 +68989,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34508,7 +69013,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         // Let Tab behave normally for editor/inputs.
+
+
+
+
 
 
 
@@ -34516,7 +69029,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34524,7 +69045,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34532,11 +69061,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -34544,7 +69085,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -34552,11 +69101,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -34568,7 +69133,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setIsPaletteOpen(false);
+
+
+
+
 
 
 
@@ -34576,7 +69149,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setIsGoToLineOpen(false);
+
+
+
+
 
 
 
@@ -34584,7 +69165,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         setIsFileMenuOpen(false);
+
+
+
+
 
 
 
@@ -34592,11 +69181,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         return true;
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -34608,7 +69213,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
+
+
+
+
 
 
 
@@ -34616,7 +69229,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       activeTab,
+
+
+
+
 
 
 
@@ -34624,7 +69245,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       closeTab,
+
+
+
+
 
 
 
@@ -34632,7 +69261,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       kbNorm,
+
+
+
+
 
 
 
@@ -34640,7 +69277,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       openGoToLine,
+
+
+
+
 
 
 
@@ -34648,7 +69293,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       openQuickOpen,
+
+
+
+
 
 
 
@@ -34656,7 +69309,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       openStandaloneFile,
+
+
+
+
 
 
 
@@ -34664,7 +69325,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       focusOutputPanel,
+
+
+
+
 
 
 
@@ -34672,7 +69341,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       focusTerminalPanel,
+
+
+
+
 
 
 
@@ -34680,7 +69357,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       resizeTerminal,
+
+
+
+
 
 
 
@@ -34688,7 +69373,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       saveActiveFile,
+
+
+
+
 
 
 
@@ -34696,7 +69389,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       saveAs,
+
+
+
+
 
 
 
@@ -34704,7 +69405,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setIsChatDockOpen,
+
+
+
+
 
 
 
@@ -34712,7 +69421,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       toggleFullscreenApp,
+
+
+
+
 
 
 
@@ -34720,11 +69437,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
     ]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -34736,7 +69469,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const c: Command[] = [
+
+
+
+
 
 
 
@@ -34744,7 +69485,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       { id: "file.openFile", label: "File: Open File...", shortcut: "Ctrl+O", run: () => void openStandaloneFile() },
+
+
+
+
 
 
 
@@ -34752,7 +69501,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       { id: "editor.gotoLine", label: "Go: Go to Line...", shortcut: kbRaw("editor.gotoLine"), run: () => openGoToLine() },
+
+
+
+
 
 
 
@@ -34760,7 +69517,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       { id: "file.rename", label: "File: Rename...", run: () => void renameSelected() },
+
+
+
+
 
 
 
@@ -34768,7 +69533,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       { id: "file.save", label: "File: Save", shortcut: kbRaw("file.save"), run: () => void saveActiveFile() },
+
+
+
+
 
 
 
@@ -34776,7 +69549,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       { id: "file.closeAll", label: "File: Close All Editors", shortcut: kbRaw("file.closeAll"), run: () => closeAllTabs() },
+
+
+
+
 
 
 
@@ -34784,7 +69565,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       { id: "workbench.findInFiles", label: "Search: Find in Files", shortcut: kbRaw("workbench.findInFiles"), run: () => setActivity("search") },
+
+
+
+
 
 
 
@@ -34792,11 +69581,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       { id: "view.settings", label: "Preferences: Open Settings", shortcut: kbRaw("view.settings"), run: () => openSettingsTab() },
 
 
 
+
+
+
+
       { id: "workbench.focusExplorer", label: "View: Focus Explorer", run: () => setActivity("explorer") },
+
+
+
+
 
 
 
@@ -34808,7 +69609,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (activeTab) {
+
+
+
+
 
 
 
@@ -34816,7 +69629,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         id: "file.closeActive",
+
+
+
+
 
 
 
@@ -34824,7 +69645,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         shortcut: "Ctrl+W",
+
+
+
+
 
 
 
@@ -34832,11 +69661,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       });
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -34848,7 +69693,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [activeTab, closeAllTabs, closeTab, createNewFolder, deleteSelected, kbRaw, openFolder, openGoToLine, openQuickOpen, openSettingsTab, openStandaloneFile, renameSelected, saveActiveFile, saveAll, setIsPaletteOpen, setActivity, toggleTheme]);
+
+
+
+
+
+
+
+
 
 
 
@@ -34860,7 +69717,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const q = paletteQuery.trim().toLowerCase();
+
+
+
+
 
 
 
@@ -34868,7 +69733,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return commands.filter((x) => x.label.toLowerCase().includes(q));
+
+
+
+
 
 
 
@@ -34880,7 +69753,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -34888,11 +69773,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       handleAppKeyDown(e);
 
 
 
+
+
+
+
     };
+
+
+
+
+
+
+
+
 
 
 
@@ -34904,7 +69805,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => window.removeEventListener("keydown", onKeyDown, true);
+
+
+
+
 
 
 
@@ -34916,7 +69825,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -34924,7 +69845,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const onMouseDown = () => setExplorerMenu(null);
+
+
+
+
 
 
 
@@ -34932,7 +69861,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => window.removeEventListener("mousedown", onMouseDown);
+
+
+
+
 
 
 
@@ -34944,7 +69881,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -34956,7 +69905,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const onMouseDown = (e: MouseEvent) => {
+
+
+
+
 
 
 
@@ -34964,7 +69925,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       if (!t) return;
+
+
+
+
 
 
 
@@ -34972,7 +69941,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         closeMenubarMenus();
+
+
+
+
 
 
 
@@ -34980,7 +69957,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     };
+
+
+
+
+
+
+
+
 
 
 
@@ -34992,7 +69981,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     return () => window.removeEventListener("mousedown", onMouseDown);
+
+
+
+
 
 
 
@@ -35004,7 +70001,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const copyText = useCallback(async (text: string) => {
+
+
+
+
 
 
 
@@ -35012,7 +70021,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await navigator.clipboard.writeText(text);
+
+
+
+
 
 
 
@@ -35020,11 +70037,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       await requestTextPrompt("Copy to clipboard", text, { readOnly: true, showCopy: true });
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -35036,7 +70065,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -35044,7 +70085,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setPaletteQuery("");
+
+
+
+
 
 
 
@@ -35052,7 +70101,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -35064,7 +70121,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -35072,7 +70141,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       setQuickOpenQuery("");
+
+
+
+
 
 
 
@@ -35080,7 +70157,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -35092,11 +70177,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     const nav = tabNavRef.current;
+
+
+
+
+
+
+
+
 
 
 
@@ -35108,7 +70213,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       const isOpen = (p: string) => tabs.some((t) => t.path === p);
+
+
+
+
 
 
 
@@ -35116,7 +70229,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       while (iBack >= 0 && !isOpen(nav.history[iBack]!)) iBack--;
+
+
+
+
 
 
 
@@ -35124,11 +70245,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
       while (iFwd < nav.history.length && !isOpen(nav.history[iFwd]!)) iFwd++;
 
 
 
+
+
+
+
       setTabNavAvail({ back: iBack >= 0, forward: iFwd < nav.history.length });
+
+
+
+
 
 
 
@@ -35140,7 +70273,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     if (!activeTabPath) {
+
+
+
+
 
 
 
@@ -35148,11 +70293,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -35164,7 +70325,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       nav.suppress = false;
+
+
+
+
 
 
 
@@ -35172,11 +70341,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -35188,7 +70373,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       computeAvail();
+
+
+
+
 
 
 
@@ -35196,7 +70389,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
     }
+
+
+
+
+
+
+
+
 
 
 
@@ -35208,7 +70413,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     nav.history.push(activeTabPath);
+
+
+
+
 
 
 
@@ -35216,7 +70429,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     computeAvail();
+
+
+
+
 
 
 
@@ -35228,7 +70449,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const goBack = useCallback(() => {
+
+
+
+
 
 
 
@@ -35236,7 +70469,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const isOpen = (p: string) => tabs.some((t) => t.path === p);
+
+
+
+
 
 
 
@@ -35244,7 +70485,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     while (i >= 0 && !isOpen(nav.history[i]!)) i--;
+
+
+
+
 
 
 
@@ -35252,7 +70501,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     nav.index = i;
+
+
+
+
 
 
 
@@ -35260,7 +70517,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setActiveTabPath(nav.history[i]!);
+
+
+
+
 
 
 
@@ -35268,7 +70533,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
   }, [tabs]);
+
+
+
+
+
+
+
+
 
 
 
@@ -35280,7 +70557,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const nav = tabNavRef.current;
+
+
+
+
 
 
 
@@ -35288,7 +70573,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     let i = nav.index + 1;
+
+
+
+
 
 
 
@@ -35296,7 +70589,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (i >= nav.history.length) return;
+
+
+
+
 
 
 
@@ -35304,7 +70605,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     nav.suppress = true;
+
+
+
+
 
 
 
@@ -35312,7 +70621,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     setTabNavAvail({ back: true, forward: i + 1 < nav.history.length });
+
+
+
+
 
 
 
@@ -35324,11 +70641,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     setPaletteIndex(0);
+
+
+
+
 
 
 
@@ -35340,7 +70673,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const applyMonacoThemes = useCallback((
+
+
+
+
 
 
 
@@ -35348,7 +70693,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     lineHighlightColor: string | null,
+
+
+
+
 
 
 
@@ -35356,7 +70709,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
   ) => {
+
+
+
+
 
 
 
@@ -35364,11 +70725,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const isLineHex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(rawLine);
 
 
 
+
+
+
+
     const darkLine = isLineHex ? rawLine : "#232228";
+
+
+
+
 
 
 
@@ -35380,7 +70753,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     const rawCursor = String(cursorColor ?? "").trim();
+
+
+
+
 
 
 
@@ -35388,7 +70773,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     const darkCursor = isCursorHex ? rawCursor : "#60D6AA";
+
+
+
+
 
 
 
@@ -35400,7 +70793,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
     monaco.editor.defineTheme("pompora-dark", {
+
+
+
+
 
 
 
@@ -35408,7 +70813,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       inherit: true,
+
+
+
+
 
 
 
@@ -35416,7 +70829,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { token: "comment", foreground: "565F89", fontStyle: "italic" },
+
+
+
+
 
 
 
@@ -35424,7 +70845,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { token: "number", foreground: "FF9E64" },
+
+
+
+
 
 
 
@@ -35432,7 +70861,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { token: "type", foreground: "2AC3DE" },
+
+
+
+
 
 
 
@@ -35440,7 +70877,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { token: "tag", foreground: "F7768E" },
+
+
+
+
 
 
 
@@ -35448,7 +70893,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       ],
+
+
+
+
 
 
 
@@ -35456,7 +70909,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editor.background": "#1E1D20",
+
+
+
+
 
 
 
@@ -35464,7 +70925,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorLineNumber.foreground": "#5B5863",
+
+
+
+
 
 
 
@@ -35472,7 +70941,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorCursor.foreground": darkCursor,
+
+
+
+
 
 
 
@@ -35480,7 +70957,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editor.inactiveSelectionBackground": "#242234",
+
+
+
+
 
 
 
@@ -35488,7 +70973,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorWhitespace.foreground": "#403E46",
+
+
+
+
 
 
 
@@ -35496,7 +70989,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorIndentGuide.activeBackground1": "#3B3A42",
+
+
+
+
 
 
 
@@ -35504,7 +71005,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorBracketMatch.border": "#60D6AA",
+
+
+
+
 
 
 
@@ -35512,7 +71021,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editor.findMatchHighlightBackground": "#2C261B",
+
+
+
+
 
 
 
@@ -35520,7 +71037,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorHoverWidget.border": "#2E2D31",
+
+
+
+
 
 
 
@@ -35528,7 +71053,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorSuggestWidget.border": "#2E2D31",
+
+
+
+
 
 
 
@@ -35536,7 +71069,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "scrollbarSlider.background": "#FFFFFF14",
+
+
+
+
 
 
 
@@ -35544,7 +71085,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "scrollbarSlider.activeBackground": "#FFFFFF2F",
+
+
+
+
 
 
 
@@ -35552,11 +71101,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
       },
 
 
 
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -35568,7 +71133,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       base: "vs",
+
+
+
+
 
 
 
@@ -35576,7 +71149,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       rules: [
+
+
+
+
 
 
 
@@ -35584,7 +71165,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { token: "keyword", foreground: "2563EB" },
+
+
+
+
 
 
 
@@ -35592,7 +71181,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { token: "string", foreground: "16A34A" },
+
+
+
+
 
 
 
@@ -35600,7 +71197,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { token: "function", foreground: "7C3AED" },
+
+
+
+
 
 
 
@@ -35608,7 +71213,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         { token: "attribute.name", foreground: "9A3412" },
+
+
+
+
 
 
 
@@ -35616,7 +71229,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       colors: {
+
+
+
+
 
 
 
@@ -35624,7 +71245,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editor.foreground": "#0F172A",
+
+
+
+
 
 
 
@@ -35632,7 +71261,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorLineNumber.activeForeground": "#0F172A",
+
+
+
+
 
 
 
@@ -35640,7 +71277,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editor.selectionBackground": "#BFDBFE",
+
+
+
+
 
 
 
@@ -35648,7 +71293,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editor.lineHighlightBackground": lightLine,
+
+
+
+
 
 
 
@@ -35656,7 +71309,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorIndentGuide.background1": "#E2E8F0",
+
+
+
+
 
 
 
@@ -35664,7 +71325,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorBracketMatch.background": "#DCFCE7",
+
+
+
+
 
 
 
@@ -35672,7 +71341,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editor.findMatchBackground": "#FDE68A",
+
+
+
+
 
 
 
@@ -35680,7 +71357,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorHoverWidget.background": "#FFFFFF",
+
+
+
+
 
 
 
@@ -35688,7 +71373,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorSuggestWidget.background": "#FFFFFF",
+
+
+
+
 
 
 
@@ -35696,7 +71389,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "editorSuggestWidget.selectedBackground": "#EFF6FF",
+
+
+
+
 
 
 
@@ -35704,7 +71405,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "scrollbarSlider.hoverBackground": "#0F172A22",
+
+
+
+
 
 
 
@@ -35712,7 +71421,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         "minimap.background": "#FFFFFF",
+
+
+
+
 
 
 
@@ -35720,7 +71437,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     });
+
+
+
+
 
 
 
@@ -35732,7 +71457,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const handleMonacoBeforeMount = useCallback(
+
+
+
+
 
 
 
@@ -35740,7 +71477,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
       monacoRef.current = monaco;
+
+
+
+
 
 
 
@@ -35748,11 +71493,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     },
 
 
 
+
+
+
+
     [applyMonacoThemes, settings.editor_cursor_color, settings.editor_line_highlight_color]
+
+
+
+
 
 
 
@@ -35764,7 +71521,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -35772,7 +71541,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     if (!monaco) return;
+
+
+
+
 
 
 
@@ -35780,7 +71557,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     try {
+
+
+
+
 
 
 
@@ -35788,11 +71573,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
     } catch {
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -35804,7 +71601,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   const themeName = settings.theme === "light" ? "pompora-light" : "pompora-dark";
+
+
+
+
 
 
 
@@ -35816,7 +71625,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -35824,10 +71645,21 @@ export default function AppShell() {
 
 
 
+
+
+
+
       <div
+
         className="grid h-full"
+
         style={{ gridTemplateRows: `48px 1fr ${isStatusBarVisible ? "32px" : "0px"}` }}
+
       >
+
+
+
+
 
 
 
@@ -35835,7 +71667,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           <div className="grid h-12 grid-cols-[1fr_auto_1fr] items-center px-2" data-menubar-root>
+
+
+
+
 
 
 
@@ -35843,7 +71683,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               {isMac ? (
+
+
+
+
 
 
 
@@ -35851,11 +71699,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <button
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -35863,7 +71723,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-400"
+
+
+
+
 
 
 
@@ -35871,7 +71739,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   />
+
+
+
+
 
 
 
@@ -35879,7 +71755,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -35887,7 +71771,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     className="h-3 w-3 rounded-full bg-yellow-500 hover:bg-yellow-400"
+
+
+
+
 
 
 
@@ -35895,7 +71787,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   />
+
+
+
+
 
 
 
@@ -35903,7 +71803,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -35911,7 +71819,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-400"
+
+
+
+
 
 
 
@@ -35919,7 +71835,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   />
+
+
+
+
 
 
 
@@ -35927,7 +71851,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
               ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -35943,7 +71879,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
               <div className="ws-titlebar-pill" data-no-drag="true">
+
+
+
+
 
 
 
@@ -35951,11 +71899,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   type="button"
 
 
 
+
+
+
+
                   className="ws-titlebar-icon-btn"
+
+
+
+
 
 
 
@@ -35963,7 +71923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   aria-label="Back"
+
+
+
+
 
 
 
@@ -35971,7 +71939,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 >
+
+
+
+
 
 
 
@@ -35979,7 +71955,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 </button>
+
+
+
+
 
 
 
@@ -35987,7 +71971,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   type="button"
+
+
+
+
 
 
 
@@ -35995,7 +71987,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   onClick={() => goForward()}
+
+
+
+
 
 
 
@@ -36003,7 +72003,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   disabled={!tabNavAvail.forward}
+
+
+
+
 
 
 
@@ -36011,7 +72019,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <ArrowRight className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -36019,11 +72035,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
               </div>
 
 
 
+
+
+
+
             </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -36035,7 +72067,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               {isMenuBarVisible ? (
+
+
+
+
 
 
 
@@ -36043,7 +72083,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 <div className="relative">
+
+
+
+
 
 
 
@@ -36051,7 +72099,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -36059,11 +72115,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onMouseEnter={(e) => {
 
 
 
+
+
+
+
                       if (!anyMenubarOpen) return;
+
+
+
+
 
 
 
@@ -36071,7 +72139,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setFileMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -36079,7 +72155,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsEditMenuOpen(false);
+
+
+
+
 
 
 
@@ -36087,7 +72171,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsViewMenuOpen(false);
+
+
+
+
 
 
 
@@ -36095,7 +72187,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -36103,7 +72203,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
+
+
+
+
 
 
 
@@ -36111,7 +72219,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onClick={(e) => {
+
+
+
+
 
 
 
@@ -36119,7 +72235,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setFileMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -36127,7 +72251,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsEditMenuOpen(false);
+
+
+
+
 
 
 
@@ -36135,7 +72267,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsViewMenuOpen(false);
+
+
+
+
 
 
 
@@ -36143,7 +72283,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -36151,7 +72299,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
+
+
+
+
 
 
 
@@ -36159,7 +72315,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -36167,7 +72331,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </button>
+
+
+
+
 
 
 
@@ -36175,9 +72347,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     fileMenuAnchor ? (
+
                       <MenubarRootPortal anchor={fileMenuAnchor}>
+
                         <div className={menuPanelClass("menubar", "w-max min-w-64 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}>
+
+
+
+
 
 
 
@@ -36185,7 +72367,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuSep />
+
+
+
+
 
 
 
@@ -36193,7 +72383,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuItem label="Open Folder" shortcut="Ctrl+K Ctrl+O" onClick={() => void openFolder()} />
+
+
+
+
 
 
 
@@ -36201,7 +72399,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <MenuItem
+
+
+
+
 
 
 
@@ -36209,7 +72415,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           right={<ChevronRight className="h-3.5 w-3.5" />}
+
+
+
+
 
 
 
@@ -36217,7 +72431,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           onMouseEnter={(e) => {
+
+
+
+
 
 
 
@@ -36225,7 +72447,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             setIsFileMenuRecentOpen(true);
+
+
+
+
 
 
 
@@ -36233,14 +72463,29 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           }}
+
+
+
+
 
 
 
                           onMouseLeave={() => scheduleFileRecentClose()}
 
 
+
+
+
                           onClick={() => setIsFileMenuRecentOpen((v) => !v)}
+
+
+
+
 
 
 
@@ -36248,38 +72493,77 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         {isFileMenuRecentOpen && fileRecentAnchor ? (
+
                           <MenuPortal anchor={fileRecentAnchor} approxWidth={320} forceRight>
+
                             <div
+
                               className={menuPanelClass("menubar", "w-max min-w-72 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")}
+
                               onMouseEnter={() => {
+
                                 clearFileRecentCloseTimer();
+
                                 setIsFileMenuRecentOpen(true);
+
                               }}
+
                               onMouseLeave={() => scheduleFileRecentClose()}
+
                             >
+
                               <div className="px-2 py-1 text-[11px] font-medium text-muted">Folders</div>
+
                               {(workspace.recent.length ? workspace.recent : settings.recent_workspaces).length ? (
+
                                 (workspace.recent.length ? workspace.recent : settings.recent_workspaces).map((p) => (
+
                                   <MenuItem key={p} label={p} onClick={() => void openRecent(p)} />
+
                                 ))
+
                               ) : (
+
                                 <div className="px-2 py-1 text-xs text-muted">No recent folders</div>
+
                               )}
 
+
+
                               <MenuSep />
+
                               <div className="px-2 py-1 text-[11px] font-medium text-muted">Files</div>
+
                               {recentFiles.length ? (
+
                                 recentFiles.map((p) => {
+
                                   const Icon = fileIconFor(p);
+
                                   return <MenuItem key={p} label={p} left={<Icon className="h-3.5 w-3.5" />} onClick={() => void openRecentFile(p)} />;
+
                                 })
+
                               ) : (
+
                                 <div className="px-2 py-1 text-xs text-muted">No recent files</div>
+
                               )}
+
                             </div>
+
                           </MenuPortal>
+
                         ) : null}
+
+
+
+
 
 
 
@@ -36287,7 +72571,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuSep />
+
+
+
+
 
 
 
@@ -36295,7 +72587,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuItem label="Open Saved Workspace" onClick={() => void openSavedWorkspace()} />
+
+
+
+
 
 
 
@@ -36303,11 +72603,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuItem label="Duplicate Workspace" onClick={() => void duplicateWorkspace()} />
 
 
 
+
+
+
+
                       <MenuSep />
+
+
+
+
 
 
 
@@ -36315,7 +72627,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuItem label="Save As" shortcut="Ctrl+Shift+S" onClick={() => void saveAs()} />
+
+
+
+
 
 
 
@@ -36323,11 +72643,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuSep />
 
 
 
+
+
+
+
                       <MenuItem
+
+
+
+
 
 
 
@@ -36335,7 +72667,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClick={() => setAutoSaveEnabled((v) => !v)}
+
+
+
+
 
 
 
@@ -36343,7 +72683,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuSep />
+
+
+
+
 
 
 
@@ -36351,7 +72699,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuItem
+
+
+
+
 
 
 
@@ -36359,7 +72715,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         shortcut="Ctrl+W"
+
+
+
+
 
 
 
@@ -36367,7 +72731,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       />
+
+
+
+
 
 
 
@@ -36375,7 +72747,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuItem label="Close Folder" onClick={() => void closeFolder()} />
+
+
+
+
 
 
 
@@ -36383,7 +72763,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuSep />
+
+
+
+
 
 
 
@@ -36391,13 +72779,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </div>
+
                       </MenubarRootPortal>
+
                     ) : null
 
 
 
+
+
+
+
                   ) : null}
+
+
+
+
 
 
 
@@ -36409,7 +72811,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                 <div className="relative">
+
+
+
+
 
 
 
@@ -36417,7 +72831,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -36425,11 +72847,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onMouseEnter={(e) => {
 
 
 
+
+
+
+
                       if (!anyMenubarOpen) return;
+
+
+
+
 
 
 
@@ -36437,7 +72871,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setEditMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -36445,7 +72887,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuRecentOpen(false);
+
+
+
+
 
 
 
@@ -36453,7 +72903,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsViewMenuOpen(false);
+
+
+
+
 
 
 
@@ -36461,7 +72919,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -36469,7 +72935,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
+
+
+
+
 
 
 
@@ -36477,7 +72951,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onClick={(e) => {
+
+
+
+
 
 
 
@@ -36485,7 +72967,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setEditMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -36493,7 +72983,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuRecentOpen(false);
+
+
+
+
 
 
 
@@ -36501,7 +72999,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsViewMenuOpen(false);
+
+
+
+
 
 
 
@@ -36509,7 +73015,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -36517,7 +73031,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
+
+
+
+
 
 
 
@@ -36525,7 +73047,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -36533,7 +73063,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </button>
+
+
+
+
 
 
 
@@ -36541,13 +73079,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     editMenuAnchor ? (
+
                       <MenubarRootPortal anchor={editMenuAnchor}>{renderEditMenuPanel("menubar")}</MenubarRootPortal>
+
                     ) : null
 
 
 
+
+
+
+
                   ) : null}
+
+
+
+
 
 
 
@@ -36559,7 +73111,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                 <div className="relative">
+
+
+
+
 
 
 
@@ -36567,7 +73131,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -36575,11 +73147,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onMouseEnter={(e) => {
 
 
 
+
+
+
+
                       if (!anyMenubarOpen) return;
+
+
+
+
 
 
 
@@ -36587,7 +73171,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setSelectionMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -36595,7 +73187,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuRecentOpen(false);
+
+
+
+
 
 
 
@@ -36603,7 +73203,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsViewMenuOpen(false);
+
+
+
+
 
 
 
@@ -36611,7 +73219,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -36619,7 +73235,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
+
+
+
+
 
 
 
@@ -36627,7 +73251,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onClick={(e) => {
+
+
+
+
 
 
 
@@ -36635,7 +73267,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setSelectionMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -36643,7 +73283,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuRecentOpen(false);
+
+
+
+
 
 
 
@@ -36651,7 +73299,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsViewMenuOpen(false);
+
+
+
+
 
 
 
@@ -36659,7 +73315,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -36667,7 +73331,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
+
+
+
+
 
 
 
@@ -36675,7 +73347,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -36683,7 +73363,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </button>
+
+
+
+
 
 
 
@@ -36691,15 +73379,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     selectionMenuAnchor ? (
+
                       <MenubarRootPortal anchor={selectionMenuAnchor}>
+
                         {renderSelectionMenuPanel("menubar")}
+
                       </MenubarRootPortal>
+
                     ) : null
 
 
 
+
+
+
+
                   ) : null}
+
+
+
+
 
 
 
@@ -36711,7 +73415,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                 <div className="relative">
+
+
+
+
 
 
 
@@ -36719,7 +73435,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -36727,11 +73451,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onMouseEnter={(e) => {
 
 
 
+
+
+
+
                       if (!anyMenubarOpen) return;
+
+
+
+
 
 
 
@@ -36739,7 +73475,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -36747,7 +73491,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
+
+
+
+
 
 
 
@@ -36755,7 +73507,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuRecentOpen(false);
+
+
+
+
 
 
 
@@ -36763,7 +73523,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsSelectionMenuOpen(false);
+
+
+
+
 
 
 
@@ -36771,7 +73539,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -36779,7 +73555,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onClick={(e) => {
+
+
+
+
 
 
 
@@ -36787,7 +73571,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -36795,7 +73587,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
+
+
+
+
 
 
 
@@ -36803,7 +73603,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuRecentOpen(false);
+
+
+
+
 
 
 
@@ -36811,7 +73619,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsSelectionMenuOpen(false);
+
+
+
+
 
 
 
@@ -36819,7 +73635,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -36827,7 +73651,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -36835,7 +73667,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </button>
+
+
+
+
 
 
 
@@ -36843,15 +73683,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     viewMenuAnchor ? (
+
                       <MenubarRootPortal anchor={viewMenuAnchor}>
+
                         {renderViewMenuPanel("menubar")}
+
                       </MenubarRootPortal>
+
                     ) : null
 
 
 
+
+
+
+
                   ) : null}
+
+
+
+
 
 
 
@@ -36863,7 +73719,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                 <div className="relative">
+
+
+
+
 
 
 
@@ -36871,7 +73739,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -36879,11 +73755,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onMouseEnter={(e) => {
 
 
 
+
+
+
+
                       if (!anyMenubarOpen) return;
+
+
+
+
 
 
 
@@ -36891,7 +73779,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setRunMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -36899,7 +73795,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuRecentOpen(false);
+
+
+
+
 
 
 
@@ -36907,7 +73811,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsSelectionMenuOpen(false);
+
+
+
+
 
 
 
@@ -36915,7 +73827,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen(false);
+
+
+
+
 
 
 
@@ -36923,11 +73843,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
 
 
 
+
+
+
+
                     }}
+
+
+
+
 
 
 
@@ -36935,7 +73867,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsRunMenuOpen((v) => !v);
+
+
+
+
 
 
 
@@ -36943,7 +73883,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuOpen(false);
+
+
+
+
 
 
 
@@ -36951,7 +73899,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsEditMenuOpen(false);
+
+
+
+
 
 
 
@@ -36959,7 +73915,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsViewMenuOpen(false);
+
+
+
+
 
 
 
@@ -36967,7 +73931,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewMenuSub(null);
+
+
+
+
 
 
 
@@ -36975,7 +73947,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     }}
+
+
+
+
 
 
 
@@ -36983,7 +73963,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     Run
+
+
+
+
 
 
 
@@ -36991,15 +73979,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   {isRunMenuOpen ? (
 
 
 
+
+
+
+
                     runMenuAnchor ? (
+
                       <MenubarRootPortal anchor={runMenuAnchor}>
+
                         {renderRunMenuPanel("menubar")}
+
                       </MenubarRootPortal>
+
                     ) : null
+
+
+
+
 
 
 
@@ -37007,7 +74011,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -37019,7 +74035,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <button
+
+
+
+
 
 
 
@@ -37027,7 +74051,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     className="ws-titlebar-menu-btn"
+
+
+
+
 
 
 
@@ -37035,7 +74067,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       if (!anyMenubarOpen) return;
+
+
+
+
 
 
 
@@ -37043,7 +74083,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setTerminalMenuAnchor(e.currentTarget.getBoundingClientRect());
+
+
+
+
 
 
 
@@ -37051,7 +74099,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuRecentOpen(false);
+
+
+
+
 
 
 
@@ -37059,7 +74115,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsSelectionMenuOpen(false);
+
+
+
+
 
 
 
@@ -37067,7 +74131,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsRunMenuOpen(false);
+
+
+
+
 
 
 
@@ -37075,11 +74147,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewAppearanceSub(null);
 
 
 
+
+
+
+
                     }}
+
+
+
+
 
 
 
@@ -37087,7 +74171,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsTerminalMenuOpen((v) => !v);
+
+
+
+
 
 
 
@@ -37095,7 +74187,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsFileMenuOpen(false);
+
+
+
+
 
 
 
@@ -37103,7 +74203,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsEditMenuOpen(false);
+
+
+
+
 
 
 
@@ -37111,7 +74219,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsViewMenuOpen(false);
+
+
+
+
 
 
 
@@ -37119,7 +74235,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setViewMenuSub(null);
+
+
+
+
 
 
 
@@ -37127,7 +74251,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     }}
+
+
+
+
 
 
 
@@ -37135,7 +74267,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     Terminal
+
+
+
+
 
 
 
@@ -37143,15 +74283,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   {isTerminalMenuOpen ? (
 
 
 
+
+
+
+
                     terminalMenuAnchor ? (
+
                       <MenubarRootPortal anchor={terminalMenuAnchor}>
+
                         {renderTerminalMenuPanel("menubar")}
+
                       </MenubarRootPortal>
+
                     ) : null
+
+
+
+
 
 
 
@@ -37159,7 +74315,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -37171,7 +74339,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               </div>
+
+
+
+
 
 
 
@@ -37179,7 +74355,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
             </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -37191,7 +74379,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               {authProfile ? (
+
+
+
+
 
 
 
@@ -37199,7 +74395,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <button
+
+
+
+
 
 
 
@@ -37207,7 +74411,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     className="ws-icon-btn h-8 w-8 p-0"
+
+
+
+
 
 
 
@@ -37215,7 +74427,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setIsAccountMenuOpen((v) => !v);
+
+
+
+
 
 
 
@@ -37223,7 +74443,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     disabled={isAuthBusy}
+
+
+
+
 
 
 
@@ -37231,7 +74459,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -37239,7 +74475,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="text-[11px] font-semibold leading-none text-text">{avatarLetter}</div>
+
+
+
+
 
 
 
@@ -37247,7 +74491,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <img
+
+
+
+
 
 
 
@@ -37255,7 +74507,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           className="absolute inset-0 block h-full w-full object-cover"
+
+
+
+
 
 
 
@@ -37263,7 +74523,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           onError={() => {
+
+
+
+
 
 
 
@@ -37271,7 +74539,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             setAvatarImgError(true);
+
+
+
+
 
 
 
@@ -37279,7 +74555,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         />
+
+
+
+
 
 
 
@@ -37287,11 +74571,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </div>
 
 
 
+
+
+
+
                   </button>
+
+
+
+
+
+
+
+
 
 
 
@@ -37303,7 +74603,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     <div className={["absolute right-0 top-full z-[9999] mt-1", menuPanelClass("compact", "w-72 max-w-[calc(100vw-16px)] max-h-[calc(100vh-80px)]")].join(" ")}>
+
+
+
+
 
 
 
@@ -37311,7 +74619,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <div className="text-xs font-semibold text-text">{authProfile.email || "Account"}</div>
+
+
+
+
 
 
 
@@ -37319,7 +74635,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         {authCredits ? (
+
+
+
+
 
 
 
@@ -37327,7 +74651,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             Slow credits: {authCredits.slow.remaining} / {authCredits.slow.limit}
+
+
+
+
 
 
 
@@ -37335,7 +74667,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         ) : null}
+
+
+
+
 
 
 
@@ -37343,11 +74683,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuSep />
 
 
 
+
+
+
+
                       <MenuItem
+
+
+
+
 
 
 
@@ -37355,11 +74707,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClick={() => {
 
 
 
+
+
+
+
                           setIsAccountMenuOpen(false);
+
+
+
+
 
 
 
@@ -37367,7 +74731,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         }}
+
+
+
+
 
 
 
@@ -37375,7 +74747,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuItem
+
+
+
+
 
 
 
@@ -37383,11 +74763,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClick={() => {
 
 
 
+
+
+
+
                           setIsAccountMenuOpen(false);
+
+
+
+
 
 
 
@@ -37395,11 +74787,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         }}
 
 
 
+
+
+
+
                       />
+
+
+
+
 
 
 
@@ -37407,7 +74811,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <MenuItem
+
+
+
+
 
 
 
@@ -37415,7 +74827,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClick={() => {
+
+
+
+
 
 
 
@@ -37423,7 +74843,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           void logoutDesktop();
+
+
+
+
 
 
 
@@ -37431,7 +74859,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       />
+
+
+
+
 
 
 
@@ -37439,7 +74875,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   ) : null}
+
+
+
+
 
 
 
@@ -37447,7 +74891,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               ) : (
+
+
+
+
 
 
 
@@ -37455,7 +74907,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   type="button"
+
+
+
+
 
 
 
@@ -37463,7 +74923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   disabled={isAuthBusy}
+
+
+
+
 
 
 
@@ -37471,7 +74939,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     setIsAccountMenuOpen(false);
+
+
+
+
 
 
 
@@ -37479,7 +74955,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   }}
+
+
+
+
 
 
 
@@ -37487,11 +74971,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   Log in
 
 
 
+
+
+
+
                 </button>
+
+
+
+
 
 
 
@@ -37503,11 +74999,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
               <button type="button" className="ws-titlebar-icon-btn" onClick={() => openSettingsTab()}>
 
 
 
+
+
+
+
                 <SettingsIcon className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -37519,7 +75031,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
               {!isMac ? (
+
+
+
+
 
 
 
@@ -37527,7 +75051,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <button
+
+
+
+
 
 
 
@@ -37535,7 +75067,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     className="ws-titlebar-window-btn"
+
+
+
+
 
 
 
@@ -37543,11 +75083,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onClick={() => minimizeApp()}
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -37555,7 +75107,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </button>
+
+
+
+
 
 
 
@@ -37563,7 +75123,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -37571,7 +75139,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     aria-label="Maximize"
+
+
+
+
 
 
 
@@ -37579,7 +75155,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -37587,7 +75171,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </button>
+
+
+
+
 
 
 
@@ -37595,7 +75187,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -37603,7 +75203,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     aria-label="Close"
+
+
+
+
 
 
 
@@ -37611,7 +75219,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -37619,7 +75235,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </button>
+
+
+
+
 
 
 
@@ -37627,7 +75251,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               ) : null}
+
+
+
+
 
 
 
@@ -37635,7 +75267,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           </div>
+
+
+
+
 
 
 
@@ -37647,7 +75287,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
         <div
+
+
+
+
 
 
 
@@ -37655,7 +75307,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           style={{ gridRow: 2, gridTemplateColumns: mainGridTemplateColumns }}
+
+
+
+
 
 
 
@@ -37663,7 +75323,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           {activityBarPosition === "default" ? (
+
+
+
+
 
 
 
@@ -37671,7 +75339,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             <div className="flex h-full flex-col items-center gap-2 py-2">
+
+
+
+
 
 
 
@@ -37679,7 +75355,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 <div className="relative" data-compact-menubar-root>
+
+
+
+
 
 
 
@@ -37687,7 +75371,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     type="button"
+
+
+
+
 
 
 
@@ -37695,7 +75387,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onClick={(e) => {
+
+
+
+
 
 
 
@@ -37703,7 +75403,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         closeCompactMenubar();
+
+
+
+
 
 
 
@@ -37711,7 +75419,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       }
+
+
+
+
 
 
 
@@ -37719,7 +75435,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setCompactMenubarAnchor((e.currentTarget as HTMLButtonElement).getBoundingClientRect());
+
+
+
+
 
 
 
@@ -37727,7 +75451,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       setCompactMenubarSubAnchor(null);
+
+
+
+
 
 
 
@@ -37735,7 +75467,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     aria-label="Menu"
+
+
+
+
 
 
 
@@ -37743,7 +75483,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     <MenuIcon className="h-5 w-5" />
+
+
+
+
 
 
 
@@ -37751,7 +75499,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   {isCompactMenubarOpen && compactMenubarAnchor ? (
+
+
+
+
 
 
 
@@ -37759,7 +75515,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       {renderCompactMenubarRootContent()}
+
+
+
+
 
 
 
@@ -37767,7 +75531,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
+
+
+
 
 
 
@@ -37775,11 +75547,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </MenuPortal>
 
 
 
+
+
+
+
                       ) : null}
+
+
+
+
 
 
 
@@ -37787,7 +75571,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+
+
+
+
 
 
 
@@ -37795,11 +75587,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </MenuPortal>
 
 
 
+
+
+
+
                       ) : null}
+
+
+
+
 
 
 
@@ -37807,7 +75611,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={260}>
+
+
+
+
 
 
 
@@ -37815,11 +75627,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </MenuPortal>
 
 
 
+
+
+
+
                       ) : null}
+
+
+
+
 
 
 
@@ -37827,7 +75651,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
+
+
+
 
 
 
@@ -37835,11 +75667,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </MenuPortal>
 
 
 
+
+
+
+
                       ) : null}
+
+
+
+
 
 
 
@@ -37847,7 +75691,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
+
+
+
 
 
 
@@ -37855,11 +75707,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </MenuPortal>
 
 
 
+
+
+
+
                       ) : null}
+
+
+
+
 
 
 
@@ -37867,7 +75731,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+
+
+
+
 
 
 
@@ -37875,7 +75747,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </MenuPortal>
+
+
+
+
 
 
 
@@ -37883,7 +75763,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </MenuPortal>
+
+
+
+
 
 
 
@@ -37891,7 +75779,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 </div>
+
+
+
+
 
 
 
@@ -37899,7 +75795,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               <ActivityButton id="explorer" active={activity === "explorer"} onClick={setActivity} Icon={FolderOpen} />
+
+
+
+
 
 
 
@@ -37907,7 +75811,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               <ActivityButton id="scm" active={activity === "scm"} onClick={setActivity} Icon={GitBranch} />
+
+
+
+
 
 
 
@@ -37915,11 +75827,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             </div>
 
 
 
+
+
+
+
             </aside>
+
+
+
+
 
 
 
@@ -37931,7 +75855,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
           <aside className="relative min-h-0 min-w-0 overflow-hidden rounded-2xl bg-panel" style={{ gridColumn: primarySidebarSide === "left" ? 2 : 3 }}>
+
+
+
+
 
 
 
@@ -37939,7 +75875,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               className={`absolute top-0 z-20 h-full w-1 cursor-col-resize ${primarySidebarSide === "left" ? "right-0" : "left-0"}`}
+
+
+
+
 
 
 
@@ -37947,7 +75891,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 explorerResizeStateRef.current = { startX: e.clientX, startW: explorerWidth };
+
+
+
+
 
 
 
@@ -37955,7 +75907,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   e.preventDefault();
+
+
+
+
 
 
 
@@ -37963,7 +75923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 } catch {
+
+
+
+
 
 
 
@@ -37971,11 +75939,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 beginResizeDrag("col-resize");
 
 
 
+
+
+
+
               }}
+
+
+
+
 
 
 
@@ -37987,76 +75967,157 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
             <div className="flex h-full min-h-0 flex-col">
 
 
 
+
+
+
+
               {activityBarPosition === "top" ? (
+
                 <div className="flex items-center gap-0.5 border-b border-border bg-panel px-1 py-1">
+
                   {!isMenuBarVisible ? (
+
                     <div className="relative" data-compact-menubar-root>
+
                       <button
+
                         type="button"
+
                         className="ws-icon-btn h-8 w-8"
+
                         onClick={(e) => {
+
                           if (isCompactMenubarOpen) {
+
                             closeCompactMenubar();
+
                             return;
+
                           }
+
                           setIsCompactMenubarOpen(true);
+
                           setCompactMenubarAnchor((e.currentTarget as HTMLButtonElement).getBoundingClientRect());
+
                           setCompactMenubarSub(null);
+
                           setCompactMenubarSubAnchor(null);
+
                         }}
+
                         aria-label="Menu"
+
                       >
+
                         <MenuIcon className="h-5 w-5" />
+
                       </button>
 
+
+
                       {isCompactMenubarOpen && compactMenubarAnchor ? (
+
                         <MenuPortal anchor={compactMenubarAnchor} approxWidth={240}>
+
                           {renderCompactMenubarRootContent()}
+
                           {compactMenubarSub === "file" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
                               {renderCompactMenubarFileContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "edit" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+
                               {renderCompactMenubarEditContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "selection" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={260}>
+
                               {renderCompactMenubarSelectionContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "view" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
                               {renderCompactMenubarViewContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "run" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
                               {renderCompactMenubarRunContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "terminal" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+
                               {renderCompactMenubarTerminalContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                         </MenuPortal>
+
                       ) : null}
+
                     </div>
+
                   ) : null}
 
+
+
                   <ActivityButtonInline id="explorer" active={activity === "explorer"} onClick={setActivity} Icon={FolderOpen} />
+
                   <ActivityButtonInline id="search" active={activity === "search"} onClick={setActivity} Icon={Search} />
+
                   <ActivityButtonInline id="scm" active={activity === "scm"} onClick={setActivity} Icon={GitBranch} />
+
                   <div className="flex-1" />
+
                 </div>
+
               ) : null}
+
+
+
+
 
 
 
@@ -38064,7 +76125,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             {activity === "explorer" ? (
+
+
+
+
 
 
 
@@ -38072,7 +76141,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 workspaceRoot={workspace.root}
+
+
+
+
 
 
 
@@ -38080,7 +76157,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 explorer={explorer}
+
+
+
+
 
 
 
@@ -38088,7 +76173,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 selectedPath={selectedPath}
+
+
+
+
 
 
 
@@ -38096,7 +76189,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 inlineRenameValue={inlineRenameValue}
+
+
+
+
 
 
 
@@ -38104,7 +76205,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 onInlineRenameCommit={() => void commitInlineRename({ openAfter: true })}
+
+
+
+
 
 
 
@@ -38112,7 +76221,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 onContextMenu={(info) => setExplorerMenu(info)}
+
+
+
+
 
 
 
@@ -38120,7 +76237,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 hideTooltip={hideTooltip}
+
+
+
+
 
 
 
@@ -38128,7 +76253,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 onOpenStandaloneFile={() => void openStandaloneFile()}
+
+
+
+
 
 
 
@@ -38136,7 +76269,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 onToggleDir={async (dir) => {
+
+
+
+
 
 
 
@@ -38144,7 +76285,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   if (next.has(dir)) {
+
+
+
+
 
 
 
@@ -38152,7 +76301,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     setExpandedDirs(next);
+
+
+
+
 
 
 
@@ -38160,7 +76317,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   }
+
+
+
+
+
+
+
+
 
 
 
@@ -38172,7 +76341,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   setExpandedDirs(next);
+
+
+
+
+
+
+
+
 
 
 
@@ -38184,7 +76365,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     await refreshDir(dir);
+
+
+
+
 
 
 
@@ -38192,7 +76381,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 }}
+
+
+
+
 
 
 
@@ -38200,7 +76397,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 onOpenFile={(p) => void openFile(p)}
+
+
+
+
 
 
 
@@ -38208,7 +76413,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 onCreateNewFolder={() => void createNewFolder()}
+
+
+
+
 
 
 
@@ -38216,7 +76429,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             ) : activity === "search" ? (
+
+
+
+
 
 
 
@@ -38224,7 +76445,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 {!workspace.root ? (
+
+
+
+
 
 
 
@@ -38232,7 +76461,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 ) : (
+
+
+
+
 
 
 
@@ -38240,7 +76477,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     <div className="relative">
+
+
+
+
 
 
 
@@ -38248,7 +76493,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <input
+
+
+
+
 
 
 
@@ -38256,7 +76509,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         className="w-full rounded-lg border border-border bg-bg py-2 pl-9 pr-9 text-sm text-text placeholder:text-muted shadow-sm outline-none focus:border-border focus:bg-panel focus:outline-none focus-visible:outline-none focus-visible:ring-0"
+
+
+
+
 
 
 
@@ -38264,7 +76525,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         value={searchQuery}
+
+
+
+
 
 
 
@@ -38272,7 +76541,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onKeyDown={(e) => {
+
+
+
+
 
 
 
@@ -38280,7 +76557,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         }}
+
+
+
+
 
 
 
@@ -38288,7 +76573,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       />
+
+
+
+
 
 
 
@@ -38296,7 +76589,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <button
+
+
+
+
 
 
 
@@ -38304,7 +76605,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted outline-none hover:bg-border hover:text-text focus:outline-none focus-visible:outline-none focus-visible:ring-0"
+
+
+
+
 
 
 
@@ -38312,7 +76621,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             setSearchQuery("");
+
+
+
+
 
 
 
@@ -38320,7 +76637,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           }}
+
+
+
+
 
 
 
@@ -38328,7 +76653,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         >
+
+
+
+
 
 
 
@@ -38336,7 +76669,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </button>
+
+
+
+
 
 
 
@@ -38344,7 +76685,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -38356,7 +76709,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       {isSearching
+
+
+
+
 
 
 
@@ -38364,7 +76725,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         : searchResults.length
+
+
+
+
 
 
 
@@ -38372,7 +76741,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           : "0 results"}
+
+
+
+
 
 
 
@@ -38380,7 +76757,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -38392,7 +76781,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       ref={searchResultsScrollRef}
+
+
+
+
 
 
 
@@ -38400,7 +76797,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     >
+
+
+
+
 
 
 
@@ -38408,11 +76813,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <div className="px-2 py-6 text-center text-sm text-muted">Type to search in files</div>
 
 
 
+
+
+
+
                       ) : null}
+
+
+
+
 
 
 
@@ -38420,11 +76837,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <div className="px-2 py-6 text-center text-sm text-muted">Searching...</div>
 
 
 
+
+
+
+
                       ) : null}
+
+
+
+
 
 
 
@@ -38432,7 +76861,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <button
+
+
+
+
 
 
 
@@ -38440,7 +76877,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           type="button"
+
+
+
+
 
 
 
@@ -38448,7 +76893,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           onClick={async () => {
+
+
+
+
 
 
 
@@ -38456,7 +76909,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             await openFile(m.path);
+
+
+
+
 
 
 
@@ -38464,7 +76925,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         >
+
+
+
+
 
 
 
@@ -38472,7 +76941,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             <span className="flex min-w-0 items-center gap-2 truncate text-text">
+
+
+
+
 
 
 
@@ -38480,7 +76957,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 const Icon = fileIconFor(m.path);
+
+
+
+
 
 
 
@@ -38488,7 +76973,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               })()}
+
+
+
+
 
 
 
@@ -38496,7 +76989,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </span>
+
+
+
+
 
 
 
@@ -38504,7 +77005,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           </div>
+
+
+
+
 
 
 
@@ -38512,7 +77021,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </button>
+
+
+
+
 
 
 
@@ -38520,11 +77037,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div ref={searchResultsSentinelRef} className="h-1" />
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -38532,11 +77061,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 )}
 
 
 
+
+
+
+
               </Panel>
+
+
+
+
 
 
 
@@ -38544,7 +77085,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               <Panel title="Source Control">
+
+
+
+
 
 
 
@@ -38552,7 +77101,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               </Panel>
+
+
+
+
 
 
 
@@ -38560,80 +77117,161 @@ export default function AppShell() {
 
 
 
+
+
+
+
               </div>
 
 
 
+
+
+
+
               {activityBarPosition === "bottom" ? (
+
                 <div className="flex items-center gap-0.5 border-t border-border bg-panel px-1 py-1">
+
                   {!isMenuBarVisible ? (
+
                     <div className="relative" data-compact-menubar-root>
+
                       <button
+
                         type="button"
+
                         className="ws-icon-btn h-8 w-8"
+
                         onClick={(e) => {
+
                           if (isCompactMenubarOpen) {
+
                             closeCompactMenubar();
+
                             return;
+
                           }
+
                           setIsCompactMenubarOpen(true);
+
                           setCompactMenubarAnchor((e.currentTarget as HTMLButtonElement).getBoundingClientRect());
+
                           setCompactMenubarSub(null);
+
                           setCompactMenubarSubAnchor(null);
+
                         }}
+
                         aria-label="Menu"
+
                       >
+
                         <MenuIcon className="h-5 w-5" />
+
                       </button>
 
+
+
                       {isCompactMenubarOpen && compactMenubarAnchor ? (
+
                         <MenuPortal anchor={compactMenubarAnchor} approxWidth={240}>
+
                           {renderCompactMenubarRootContent()}
+
                           {compactMenubarSub === "file" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
                               {renderCompactMenubarFileContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "edit" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+
                               {renderCompactMenubarEditContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "selection" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={260}>
+
                               {renderCompactMenubarSelectionContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "view" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
                               {renderCompactMenubarViewContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "run" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={320}>
+
                               {renderCompactMenubarRunContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                           {compactMenubarSub === "terminal" && compactMenubarSubAnchor ? (
+
                             <MenuPortal anchor={compactMenubarSubAnchor} approxWidth={360}>
+
                               {renderCompactMenubarTerminalContent()}
+
                             </MenuPortal>
+
                           ) : null}
+
                         </MenuPortal>
+
                       ) : null}
+
                     </div>
+
                   ) : null}
 
+
+
                   <ActivityButtonInline id="explorer" active={activity === "explorer"} onClick={setActivity} Icon={FolderOpen} />
+
                   <ActivityButtonInline id="search" active={activity === "search"} onClick={setActivity} Icon={Search} />
+
                   <ActivityButtonInline id="scm" active={activity === "scm"} onClick={setActivity} Icon={GitBranch} />
+
                   <div className="flex-1" />
+
                 </div>
+
               ) : null}
 
 
 
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -38645,18 +77283,41 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
           <main
+
             className={`min-h-0 min-w-0 overflow-hidden rounded-2xl ${isCoding ? "ws-editor-surface" : "bg-panel"}`}
+
             style={{ gridColumn: primarySidebarSide === "left" ? 3 : 2 }}
+
           >
 
 
 
+
+
+
+
             <div
+
               className={`flex h-full min-h-0 min-w-0 ${
+
                 panelPosition === "left" || panelPosition === "right" ? "flex-row" : "flex-col"
+
               }`}
+
             >
+
+
+
+
 
 
 
@@ -38664,7 +77325,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 (() => {
+
+
+
+
 
 
 
@@ -38672,7 +77341,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   const dockLeft = panelPosition === "left";
+
+
+
+
 
 
 
@@ -38680,7 +77357,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     <div
+
+
+
+
 
 
 
@@ -38688,7 +77373,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         panelPosition === "left" ? "order-first border-r border-border/70" : "order-last border-l border-border/70"
+
+
+
+
 
 
 
@@ -38696,7 +77389,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       style={{ width: terminalWidth }}
+
+
+
+
 
 
 
@@ -38704,7 +77405,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div
+
+
+
+
 
 
 
@@ -38712,7 +77421,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onMouseDown={(e) => {
+
+
+
+
 
 
 
@@ -38720,7 +77437,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             e.preventDefault();
+
+
+
+
 
 
 
@@ -38728,7 +77453,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           } catch {
+
+
+
+
 
 
 
@@ -38736,7 +77469,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           beginResizeDrag(dockLeft ? "e-resize" : "w-resize");
+
+
+
+
 
 
 
@@ -38744,7 +77485,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         }}
+
+
+
+
 
 
 
@@ -38752,7 +77501,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="flex h-full min-h-0 flex-col">
+
+
+
+
 
 
 
@@ -38760,7 +77517,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <div className="flex min-w-0 items-center gap-1">
+
+
+
+
 
 
 
@@ -38768,7 +77533,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               <>
+
+
+
+
 
 
 
@@ -38776,7 +77549,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   type="button"
+
+
+
+
 
 
 
@@ -38784,7 +77565,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   onClick={(e) => {
+
+
+
+
 
 
 
@@ -38792,7 +77581,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       e.preventDefault();
+
+
+
+
 
 
 
@@ -38800,7 +77597,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     } catch {
+
+
+
+
 
 
 
@@ -38808,7 +77613,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     const rect = (e.currentTarget as HTMLButtonElement).getBoundingClientRect();
+
+
+
+
 
 
 
@@ -38816,7 +77629,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     setIsPanelTabsMenuOpen((v) => !v);
+
+
+
+
 
 
 
@@ -38824,7 +77645,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 >
+
+
+
+
 
 
 
@@ -38835,7 +77664,18 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
                                 </button>
+
+
+
+
 
 
 
@@ -38843,7 +77683,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   <MenuPortal anchor={panelTabsMenuAnchor} approxWidth={180}>
+
+
+
+
 
 
 
@@ -38851,7 +77699,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       {([
+
+
+
+
 
 
 
@@ -38859,7 +77715,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         { id: "output", label: "Output" },
+
+
+
+
 
 
 
@@ -38867,7 +77731,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         { id: "terminal", label: "Terminal" },
+
+
+
+
 
 
 
@@ -38875,7 +77747,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       ] as const).map((t) => (
+
+
+
+
 
 
 
@@ -38883,7 +77763,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           key={t.id}
+
+
+
+
 
 
 
@@ -38891,7 +77779,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           right={<MenuCheck checked={panelTab === t.id} />}
+
+
+
+
 
 
 
@@ -38899,7 +77795,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                             setPanelTab(t.id);
+
+
+
+
 
 
 
@@ -38907,7 +77811,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                             if (t.id === "terminal") {
+
+
+
+
 
 
 
@@ -38915,7 +77827,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                                 void ensureTerminal().then(() => {
+
+
+
+
 
 
 
@@ -38923,7 +77843,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                                   termRef.current?.focus();
+
+
+
+
 
 
 
@@ -38931,7 +77859,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               }, 0);
+
+
+
+
 
 
 
@@ -38939,7 +77875,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           }}
+
+
+
+
 
 
 
@@ -38947,7 +77891,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       ))}
+
+
+
+
 
 
 
@@ -38955,7 +77907,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   </MenuPortal>
+
+
+
+
 
 
 
@@ -38963,7 +77923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               </>
+
+
+
+
 
 
 
@@ -38971,7 +77939,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               ([
+
+
+
+
 
 
 
@@ -38979,7 +77955,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 { id: "output", label: "Output" },
+
+
+
+
 
 
 
@@ -38987,7 +77971,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 { id: "terminal", label: "Terminal" },
+
+
+
+
 
 
 
@@ -38995,7 +77987,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               ] as const).map((t) => (
+
+
+
+
 
 
 
@@ -39003,7 +78003,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   key={t.id}
+
+
+
+
 
 
 
@@ -39011,7 +78019,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   className={`rounded-md px-2 py-1 text-[11px] ${
+
+
+
+
 
 
 
@@ -39019,7 +78035,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   }`}
+
+
+
+
 
 
 
@@ -39027,7 +78051,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     setPanelTab(t.id);
+
+
+
+
 
 
 
@@ -39035,7 +78067,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       window.setTimeout(() => {
+
+
+
+
 
 
 
@@ -39043,7 +78083,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           resizeTerminal();
+
+
+
+
 
 
 
@@ -39051,7 +78099,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         });
+
+
+
+
 
 
 
@@ -39059,7 +78115,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     }
+
+
+
+
 
 
 
@@ -39067,7 +78131,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 >
+
+
+
+
 
 
 
@@ -39075,7 +78147,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 </button>
+
+
+
+
 
 
 
@@ -39083,11 +78163,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             )}
 
 
 
+
+
+
+
                           </div>
+
+
+
+
 
 
 
@@ -39095,7 +78187,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             <button
+
+
+
+
 
 
 
@@ -39103,7 +78203,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               className="ws-icon-btn"
+
+
+
+
 
 
 
@@ -39111,7 +78219,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 setPanelTab("terminal");
+
+
+
+
 
 
 
@@ -39119,7 +78235,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   void ensureTerminal().then(() => {
+
+
+
+
 
 
 
@@ -39127,7 +78251,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     termRef.current?.focus();
+
+
+
+
 
 
 
@@ -39135,7 +78267,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }, 0);
+
+
+
+
 
 
 
@@ -39143,7 +78283,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             >
+
+
+
+
 
 
 
@@ -39151,7 +78299,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </button>
+
+
+
+
 
 
 
@@ -39159,7 +78315,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               <X className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -39167,11 +78331,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           </div>
 
 
 
+
+
+
+
                         </div>
+
+
+
+
 
 
 
@@ -39179,7 +78355,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <div className={panelTab === "terminal" ? "absolute inset-0" : "absolute inset-0 hidden"}>
+
+
+
+
 
 
 
@@ -39187,7 +78371,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           </div>
+
+
+
+
 
 
 
@@ -39195,11 +78387,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </div>
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -39207,7 +78411,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   );
+
+
+
+
 
 
 
@@ -39215,7 +78427,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               ) : null}
+
+
+
+
 
 
 
@@ -39223,7 +78443,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 {panelPosition === "top" ? (
+
+
+
+
 
 
 
@@ -39231,7 +78459,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     if (!isTerminalOpen) return null;
+
+
+
+
 
 
 
@@ -39239,7 +78475,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="relative bg-panel border-b border-border/70" style={{ height: terminalHeight }}>
+
+
+
+
 
 
 
@@ -39247,7 +78491,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           className="absolute left-0 bottom-0 z-20 h-1 w-full cursor-s-resize"
+
+
+
+
 
 
 
@@ -39255,7 +78507,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             try {
+
+
+
+
 
 
 
@@ -39263,7 +78523,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               e.stopPropagation();
+
+
+
+
 
 
 
@@ -39271,7 +78539,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             }
+
+
+
+
 
 
 
@@ -39279,7 +78555,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             terminalResizeStateRef.current = { startY: e.clientY, startH: terminalHeight, dock: "top" };
+
+
+
+
 
 
 
@@ -39287,7 +78571,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         />
+
+
+
+
 
 
 
@@ -39295,7 +78587,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <div className="flex items-center justify-between bg-panel px-2 py-1.5">
+
+
+
+
 
 
 
@@ -39303,7 +78603,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               {([
+
+
+
+
 
 
 
@@ -39311,7 +78619,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 { id: "output", label: "Output" },
+
+
+
+
 
 
 
@@ -39319,7 +78635,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 { id: "terminal", label: "Terminal" },
+
+
+
+
 
 
 
@@ -39327,7 +78651,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               ] as const).map((t) => (
+
+
+
+
 
 
 
@@ -39335,7 +78667,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   key={t.id}
+
+
+
+
 
 
 
@@ -39343,7 +78683,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   className={`rounded-md px-2 py-1 text-[11px] ${
+
+
+
+
 
 
 
@@ -39351,7 +78699,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   }`}
+
+
+
+
 
 
 
@@ -39359,7 +78715,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     setPanelTab(t.id);
+
+
+
+
 
 
 
@@ -39367,7 +78731,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       window.setTimeout(() => {
+
+
+
+
 
 
 
@@ -39375,7 +78747,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           resizeTerminal();
+
+
+
+
 
 
 
@@ -39383,7 +78763,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         });
+
+
+
+
 
 
 
@@ -39391,7 +78779,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     }
+
+
+
+
 
 
 
@@ -39399,7 +78795,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 >
+
+
+
+
 
 
 
@@ -39407,7 +78811,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 </button>
+
+
+
+
 
 
 
@@ -39415,7 +78827,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </div>
+
+
+
+
 
 
 
@@ -39423,7 +78843,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               <button
+
+
+
+
 
 
 
@@ -39431,7 +78859,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 className="ws-icon-btn"
+
+
+
+
 
 
 
@@ -39439,7 +78875,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   setPanelTab("terminal");
+
+
+
+
 
 
 
@@ -39447,7 +78891,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     void ensureTerminal().then(() => {
+
+
+
+
 
 
 
@@ -39455,7 +78907,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       termRef.current?.focus();
+
+
+
+
 
 
 
@@ -39463,7 +78923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   }, 0);
+
+
+
+
 
 
 
@@ -39471,7 +78939,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               >
+
+
+
+
 
 
 
@@ -39479,7 +78955,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               </button>
+
+
+
+
 
 
 
@@ -39487,7 +78971,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 <X className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -39495,11 +78987,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </div>
 
 
 
+
+
+
+
                           </div>
+
+
+
+
 
 
 
@@ -39507,7 +79011,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             <div className={panelTab === "terminal" ? "absolute inset-0" : "absolute inset-0 hidden"}>
+
+
+
+
 
 
 
@@ -39515,7 +79027,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </div>
+
+
+
+
 
 
 
@@ -39523,7 +79043,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           </div>
+
+
+
+
 
 
 
@@ -39531,7 +79059,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -39539,7 +79075,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   })()
+
+
+
+
 
 
 
@@ -39547,15 +79091,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
               {tabBarMode !== "hidden" ? (
 
 
 
+
+
+
+
                 <div
+
                   className={`flex h-14 min-w-0 items-center gap-1 px-2 ${
+
                     tabBarMode === "single" ? "bg-transparent" : isCoding ? "ws-editor-surface" : "bg-panel"
+
                   }`}
+
                 >
+
+
+
+
 
 
 
@@ -39563,7 +79123,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     <div
+
+
+
+
 
 
 
@@ -39571,7 +79139,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       className="ws-tabs-scroll flex min-w-0 items-center gap-1 overflow-auto"
+
+
+
+
 
 
 
@@ -39579,7 +79155,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       onWheel={(e) => {
+
+
+
+
 
 
 
@@ -39587,7 +79171,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         if (!el) return;
+
+
+
+
 
 
 
@@ -39595,7 +79187,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         if (!canScroll) return;
+
+
+
+
 
 
 
@@ -39603,7 +79203,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         const dx = e.deltaX;
+
+
+
+
 
 
 
@@ -39611,7 +79219,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         if (next !== el.scrollLeft) {
+
+
+
+
 
 
 
@@ -39619,7 +79235,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           el.scrollLeft = next;
+
+
+
+
 
 
 
@@ -39627,7 +79251,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         }
+
+
+
+
 
 
 
@@ -39635,7 +79267,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -39643,7 +79283,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <TabButton
+
+
+
+
 
 
 
@@ -39651,7 +79299,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         tab={t}
+
+
+
+
 
 
 
@@ -39659,7 +79315,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         active={t.path === activeTabPath}
+
+
+
+
 
 
 
@@ -39667,7 +79331,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClose={() => closeTab(t.path)}
+
+
+
+
 
 
 
@@ -39675,11 +79347,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     ))}
 
 
 
+
+
+
+
                   </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -39691,7 +79379,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     <div
+
+
+
+
 
 
 
@@ -39699,7 +79395,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       style={{ width: `${tabsIndicator.widthPx}px`, transform: `translateX(${tabsIndicator.leftPx}px)` }}
+
+
+
+
 
 
 
@@ -39707,11 +79411,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </div>
 
 
 
+
+
+
+
                   </div>
+
+
+
+
 
 
 
@@ -39719,7 +79435,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     <Plus className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -39727,7 +79451,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 </div>
+
+
+
+
 
 
 
@@ -39735,7 +79467,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               <div className="min-h-0 flex-1 flex flex-col">
+
+
+
+
 
 
 
@@ -39743,7 +79483,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <div className="min-h-0 flex-1 overflow-auto">
+
+
+
+
 
 
 
@@ -39751,7 +79499,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <SettingsScreen
+
+
+
+
 
 
 
@@ -39759,7 +79515,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         authProfile={authProfile}
+
+
+
+
 
 
 
@@ -39767,7 +79531,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         isAuthBusy={isAuthBusy}
+
+
+
+
 
 
 
@@ -39775,7 +79547,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         keyStatus={keyStatus}
+
+
+
+
 
 
 
@@ -39783,7 +79563,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         apiKeyDraft={apiKeyDraft}
+
+
+
+
 
 
 
@@ -39791,7 +79579,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         secretsError={secretsError}
+
+
+
+
 
 
 
@@ -39799,7 +79595,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         isTogglingOffline={isTogglingOffline}
+
+
+
+
 
 
 
@@ -39807,7 +79611,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         isSettingsLoaded={isSettingsLoaded}
+
+
+
+
 
 
 
@@ -39815,7 +79627,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         recentWorkspaces={workspace.recent}
+
+
+
+
 
 
 
@@ -39823,7 +79643,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onChangeCursorBlinking={(v) => void setCursorBlinking(v)}
+
+
+
+
 
 
 
@@ -39831,7 +79659,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onChangeCursorColor={(hex) => void setCursorColor(hex)}
+
+
+
+
 
 
 
@@ -39839,7 +79675,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onToggleOffline={toggleOfflineMode}
+
+
+
+
 
 
 
@@ -39847,7 +79691,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onChangePomporaThinking={(t) => void setPomporaThinking(t)}
+
+
+
+
 
 
 
@@ -39855,7 +79707,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onOpenRecent={(p) => void openRecent(p)}
+
+
+
+
 
 
 
@@ -39863,7 +79723,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onEncryptionPasswordDraft={setEncryptionPasswordDraft}
+
+
+
+
 
 
 
@@ -39871,7 +79739,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClearKey={clearProviderKey}
+
+
+
+
 
 
 
@@ -39879,7 +79755,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onSignupToPompora={() => void beginDesktopAuthWithMode("signup")}
+
+
+
+
 
 
 
@@ -39887,7 +79771,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         showKeySaved={showKeySaved}
+
+
+
+
 
 
 
@@ -39895,7 +79787,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onDebugGemini={handleDebugGemini}
+
+
+
+
 
 
 
@@ -39903,7 +79803,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         providerModels={providerModels}
+
+
+
+
 
 
 
@@ -39911,7 +79819,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         providerModelsError={providerModelsError}
+
+
+
+
 
 
 
@@ -39919,7 +79835,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onSelectModel={async (providerId, modelId) => {
+
+
+
+
 
 
 
@@ -39927,7 +79851,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           setSettingsState(next);
+
+
+
+
 
 
 
@@ -39935,7 +79867,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             await settingsSet(next);
+
+
+
+
 
 
 
@@ -39943,7 +79883,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           } catch (e) {
+
+
+
+
 
 
 
@@ -39951,7 +79899,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             setSettingsState(settings);
+
+
+
+
 
 
 
@@ -39959,7 +79915,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         }}
+
+
+
+
 
 
 
@@ -39967,7 +79931,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClearAllProviderKeys={() => void clearAllProviderKeysNow()}
+
+
+
+
 
 
 
@@ -39975,7 +79947,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClearSettingsFile={() => void clearSettingsFileNow()}
+
+
+
+
 
 
 
@@ -39983,7 +79963,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       />
+
+
+
+
 
 
 
@@ -39991,7 +79979,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </div>
+
+
+
+
 
 
 
@@ -39999,7 +79995,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <WelcomeScreen
+
+
+
+
 
 
 
@@ -40007,7 +80011,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     recentFiles={recentFiles}
+
+
+
+
 
 
 
@@ -40015,7 +80027,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onOpenFile={() => void openStandaloneFile()}
+
+
+
+
 
 
 
@@ -40023,7 +80043,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onOpenRecentFile={(p) => void openRecentFile(p)}
+
+
+
+
 
 
 
@@ -40031,7 +80059,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onOpenCommandPalette={undefined}
+
+
+
+
 
 
 
@@ -40039,7 +80075,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     shortcutOpenFile={__normShortcut(kbRaw("file.openFile")) || "Ctrl+O"}
+
+
+
+
 
 
 
@@ -40047,11 +80091,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     shortcutOpenCommandPalette={__normShortcut(kbRaw("view.commandPalette")) || "Ctrl+Shift+P"}
 
 
 
+
+
+
+
                   />
+
+
+
+
 
 
 
@@ -40059,7 +80115,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <WelcomeScreen
+
+
+
+
 
 
 
@@ -40067,7 +80131,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     recentFiles={recentFiles}
+
+
+
+
 
 
 
@@ -40075,7 +80147,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onOpenFile={() => void openStandaloneFile()}
+
+
+
+
 
 
 
@@ -40083,7 +80163,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onOpenRecentFile={(p) => void openRecentFile(p)}
+
+
+
+
 
 
 
@@ -40091,7 +80179,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onOpenCommandPalette={undefined}
+
+
+
+
 
 
 
@@ -40099,7 +80195,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     shortcutOpenFile={__normShortcut(kbRaw("file.openFile")) || "Ctrl+O"}
+
+
+
+
 
 
 
@@ -40107,7 +80211,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     shortcutOpenCommandPalette={__normShortcut(kbRaw("view.commandPalette")) || "Ctrl+Shift+P"}
+
+
+
+
 
 
 
@@ -40115,7 +80227,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     subtitle="Getting started with Pompora"
+
+
+
+
 
 
 
@@ -40123,7 +80243,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   />
+
+
+
+
 
 
 
@@ -40131,7 +80259,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <div className="relative min-h-0 flex-1 ws-editor-surface">
+
+
+
+
 
 
 
@@ -40139,7 +80275,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       tab={activeTab}
+
+
+
+
 
 
 
@@ -40147,7 +80291,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       transform={`translate(${imageOffset.x}px, ${imageOffset.y}px) scale(${imageScale})`}
+
+
+
+
 
 
 
@@ -40155,7 +80307,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       scale={imageScale}
+
+
+
+
 
 
 
@@ -40163,7 +80323,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       naturalSize={imageNaturalSize}
+
+
+
+
 
 
 
@@ -40171,7 +80339,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         const el = imageContainerRef.current;
+
+
+
+
 
 
 
@@ -40179,7 +80355,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           setImageScale(next);
+
+
+
+
 
 
 
@@ -40187,7 +80371,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         }
+
+
+
+
 
 
 
@@ -40195,7 +80387,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         const cx = rect.width / 2;
+
+
+
+
 
 
 
@@ -40203,7 +80403,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         setScaleAroundPoint(next, cx, cy);
+
+
+
+
 
 
 
@@ -40211,7 +80419,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       onFit={() => fitImageToView()}
+
+
+
+
 
 
 
@@ -40219,7 +80435,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       onZoomOut={() => zoomImage(1 / 1.2)}
+
+
+
+
 
 
 
@@ -40227,7 +80451,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       onRefresh={() => void refreshImageTab(activeTab.path)}
+
+
+
+
 
 
 
@@ -40235,7 +80467,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       onWheel={onImageWheel}
+
+
+
+
 
 
 
@@ -40243,7 +80483,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       onPointerMove={onImagePointerMove}
+
+
+
+
 
 
 
@@ -40251,7 +80499,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       onPointerCancel={onImagePointerUp}
+
+
+
+
 
 
 
@@ -40259,7 +80515,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </div>
+
+
+
+
 
 
 
@@ -40267,7 +80531,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <>
+
+
+
+
 
 
 
@@ -40275,7 +80547,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="relative min-h-0 flex-1 ws-editor-surface">
+
+
+
+
 
 
 
@@ -40283,7 +80563,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <DiffEditor
+
+
+
+
 
 
 
@@ -40291,7 +80579,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           theme={themeName}
+
+
+
+
 
 
 
@@ -40299,7 +80595,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           beforeMount={handleMonacoBeforeMount}
+
+
+
+
 
 
 
@@ -40307,11 +80611,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           modified={typedEditorText !== null ? typedEditorText : (activeTabChangeFile.after ?? activeTab.content)}
 
 
 
+
+
+
+
                           onMount={(ed) => {
+
+
+
+
 
 
 
@@ -40319,7 +80635,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             editorRef.current = mod;
+
+
+
+
 
 
 
@@ -40327,7 +80651,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             cursorListenerDisposeRef.current?.dispose();
+
+
+
+
 
 
 
@@ -40335,7 +80667,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               const p = ev.position;
+
+
+
+
 
 
 
@@ -40343,7 +80683,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             });
+
+
+
+
 
 
 
@@ -40351,6 +80699,10 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             if (p) setCursorPos({ line: p.lineNumber, col: p.column });
 
 
@@ -40359,7 +80711,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                             editorKeydownDisposeRef.current?.dispose();
+
+
+
+
 
 
 
@@ -40367,7 +80731,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               const be = (ev as any)?.browserEvent as KeyboardEvent | undefined;
+
+
+
+
 
 
 
@@ -40375,7 +80747,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               try {
+
+
+
+
 
 
 
@@ -40383,7 +80763,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   // eslint-disable-next-line no-console
+
+
+
+
 
 
 
@@ -40391,7 +80779,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -40399,7 +80795,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
+
+
+
+
 
 
 
@@ -40411,7 +80819,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               const evNorm = evRaw ? __normShortcut(evRaw) : "";
+
+
+
+
 
 
 
@@ -40419,7 +80835,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               if (localStorage.getItem("pompora.debug.shortcuts") === "1") {
+
+
+
+
 
 
 
@@ -40427,11 +80851,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 console.log("[monaco.chat]", { evNorm, chatToggleNorm });
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -40439,7 +80875,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 setIsChatDockOpen((v) => !v);
+
+
+
+
 
 
 
@@ -40447,7 +80891,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -40455,7 +80907,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -40463,7 +80923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -40471,7 +80939,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -40479,7 +80955,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
+
+
+
+
 
 
 
@@ -40491,7 +80979,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
+
+
+
+
 
 
 
@@ -40499,7 +80995,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -40507,7 +81011,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.stopPropagation();
+
+
+
+
 
 
 
@@ -40515,7 +81027,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -40523,7 +81043,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.preventDefault();
+
+
+
+
 
 
 
@@ -40531,11 +81059,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 return;
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -40543,7 +81083,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 goForward();
+
+
+
+
 
 
 
@@ -40551,7 +81099,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -40559,7 +81115,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -40567,7 +81131,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -40575,7 +81147,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -40583,7 +81163,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -40591,7 +81179,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -40599,7 +81195,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -40607,7 +81211,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -40615,7 +81227,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -40623,7 +81243,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -40631,7 +81259,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -40639,7 +81275,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -40647,7 +81291,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -40655,7 +81307,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -40663,7 +81323,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -40671,7 +81339,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -40679,7 +81355,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -40687,7 +81371,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -40695,7 +81387,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -40703,7 +81403,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -40711,7 +81419,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -40719,7 +81435,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -40727,7 +81451,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -40735,7 +81467,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -40743,7 +81483,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -40751,7 +81499,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -40759,7 +81515,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -40767,7 +81531,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -40775,7 +81547,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -40783,7 +81563,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -40791,7 +81579,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.stopPropagation();
+
+
+
+
 
 
 
@@ -40799,7 +81595,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -40807,7 +81611,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.preventDefault();
+
+
+
+
 
 
 
@@ -40815,11 +81627,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
 
 
 
+
+
+
+
                             });
+
+
+
+
 
 
 
@@ -40827,7 +81651,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           }}
+
+
+
+
 
 
 
@@ -40835,17 +81667,35 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             readOnly: true,
+
+
 
                             renderSideBySide: false,
 
+
+
                             fontSize: 14,
+
+
 
                             fontFamily:
 
+
+
                               '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
 
+
+
                             letterSpacing: 0.4,
+
+
+
+
 
 
 
@@ -40853,7 +81703,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             minimap: { enabled: isMinimapEnabled },
+
+
+
+
 
 
 
@@ -40861,7 +81719,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             wordWrap: "off",
+
+
+
+
 
 
 
@@ -40869,7 +81735,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             scrollbar: { horizontal: "auto", vertical: isMinimapEnabled ? "hidden" : "auto" },
+
+
+
+
 
 
 
@@ -40877,7 +81751,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             automaticLayout: true,
+
+
+
+
 
 
 
@@ -40885,15 +81767,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             cursorSmoothCaretAnimation: "off",
 
+
+
                             cursorBlinking: "expand",
+
+
 
                             padding: { top: 8, bottom: 8 },
 
 
 
+
+
+
+
                           }}
+
+
+
+
 
 
 
@@ -40901,7 +81799,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       ) : (
+
+
+
+
 
 
 
@@ -40909,7 +81815,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           height="100%"
+
+
+
+
 
 
 
@@ -40917,7 +81831,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           language={activeTab.language}
+
+
+
+
 
 
 
@@ -40925,7 +81847,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           value={activeTab.content}
+
+
+
+
 
 
 
@@ -40933,7 +81863,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             const next = v ?? "";
+
+
+
+
 
 
 
@@ -40941,7 +81879,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               prev.map((t) =>
+
+
+
+
 
 
 
@@ -40949,7 +81895,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   ? { ...t, content: next, isDirty: true }
+
+
+
+
 
 
 
@@ -40957,7 +81911,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               )
+
+
+
+
 
 
 
@@ -40965,7 +81927,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           }}
+
+
+
+
 
 
 
@@ -40973,7 +81943,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             editorRef.current = ed;
+
+
+
+
 
 
 
@@ -40981,7 +81959,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             cursorListenerDisposeRef.current?.dispose();
+
+
+
+
 
 
 
@@ -40989,7 +81975,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               const p = ev.position;
+
+
+
+
 
 
 
@@ -40997,11 +81991,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             });
 
 
 
+
+
+
+
                             const p = ed.getPosition();
+
+
+
+
 
 
 
@@ -41013,7 +82019,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                             editorKeydownDisposeRef.current?.dispose();
+
+
+
+
 
 
 
@@ -41021,7 +82039,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               const be = (ev as any)?.browserEvent as KeyboardEvent | undefined;
+
+
+
+
 
 
 
@@ -41029,7 +82055,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               try {
+
+
+
+
 
 
 
@@ -41037,7 +82071,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   // eslint-disable-next-line no-console
+
+
+
+
 
 
 
@@ -41045,7 +82087,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41053,7 +82103,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -41061,7 +82119,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               const evNorm = evRaw ? __normShortcut(evRaw) : "";
+
+
+
+
 
 
 
@@ -41069,7 +82135,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               if (localStorage.getItem("pompora.debug.shortcuts") === "1") {
+
+
+
+
 
 
 
@@ -41077,11 +82151,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 console.log("[monaco.chat]", { evNorm, chatToggleNorm });
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -41089,7 +82175,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 setIsChatDockOpen((v) => !v);
+
+
+
+
 
 
 
@@ -41097,7 +82191,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -41105,7 +82207,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -41113,7 +82223,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41121,7 +82239,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -41129,7 +82255,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
+
+
+
+
 
 
 
@@ -41141,7 +82279,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               if (be.altKey && !be.ctrlKey && !be.metaKey && (be.key === "ArrowLeft" || be.key === "Left")) {
+
+
+
+
 
 
 
@@ -41149,7 +82295,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -41157,7 +82311,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.stopPropagation();
+
+
+
+
 
 
 
@@ -41165,7 +82327,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -41173,7 +82343,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.preventDefault();
+
+
+
+
 
 
 
@@ -41181,11 +82359,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 return;
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -41193,7 +82383,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 goForward();
+
+
+
+
 
 
 
@@ -41201,7 +82399,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -41209,7 +82415,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -41217,7 +82431,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41225,7 +82447,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -41233,7 +82463,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -41241,7 +82479,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -41249,7 +82495,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -41257,7 +82511,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41265,7 +82527,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -41273,7 +82543,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -41281,7 +82559,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41289,7 +82575,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -41297,7 +82591,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -41305,7 +82607,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -41313,7 +82623,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -41321,7 +82639,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41329,7 +82655,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -41337,7 +82671,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -41345,7 +82687,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41353,7 +82703,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -41361,7 +82719,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -41369,7 +82735,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -41377,7 +82751,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -41385,7 +82767,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41393,7 +82783,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.preventDefault();
+
+
+
+
 
 
 
@@ -41401,7 +82799,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   (be as any).stopImmediatePropagation?.();
+
+
+
+
 
 
 
@@ -41409,7 +82815,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41417,7 +82831,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.stopPropagation();
+
+
+
+
 
 
 
@@ -41425,7 +82847,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -41433,7 +82863,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 try {
+
+
+
+
 
 
 
@@ -41441,7 +82879,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   be.stopPropagation();
+
+
+
+
 
 
 
@@ -41449,7 +82895,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 } catch {
+
+
+
+
 
 
 
@@ -41457,7 +82911,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ev.preventDefault();
+
+
+
+
 
 
 
@@ -41465,7 +82927,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }
+
+
+
+
 
 
 
@@ -41473,11 +82943,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             ed.focus();
 
 
 
+
+
+
+
                           }}
+
+
+
+
 
 
 
@@ -41485,7 +82967,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             fontSize: 14,
+
+
+
+
 
 
 
@@ -41493,7 +82983,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+
+
+
+
 
 
 
@@ -41501,7 +82999,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             fontLigatures: true,
+
+
+
+
 
 
 
@@ -41509,7 +83015,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             scrollBeyondLastLine: false,
+
+
+
+
 
 
 
@@ -41517,7 +83031,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             scrollBeyondLastColumn: 2,
+
+
+
+
 
 
 
@@ -41525,7 +83047,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             overviewRulerLanes: isMinimapEnabled ? 0 : 3,
+
+
+
+
 
 
 
@@ -41533,7 +83063,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             smoothScrolling: true,
+
+
+
+
 
 
 
@@ -41541,7 +83079,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             cursorBlinking: "expand",
+
+
+
+
 
 
 
@@ -41549,11 +83095,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           }}
 
 
 
+
+
+
+
                         />
+
+
+
+
 
 
 
@@ -41565,7 +83123,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                       {activeChat.changeSet && changeWriteFiles.length ? (
+
+
+
+
 
 
 
@@ -41573,7 +83143,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <div className="pointer-events-auto flex items-center gap-2 ws-change-bar min-w-[373px] min-h-[35px]">
+
+
+
+
 
 
 
@@ -41581,7 +83159,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               type="button"
+
+
+
+
 
 
 
@@ -41589,7 +83175,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               disabled={changeWriteFiles.findIndex((f) => f.path === (selectedChangePath ?? "")) <= 0}
+
+
+
+
 
 
 
@@ -41597,7 +83191,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 const idx = changeWriteFiles.findIndex((f) => f.path === (selectedChangePath ?? ""));
+
+
+
+
 
 
 
@@ -41605,7 +83207,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 if (prev?.kind === "write") {
+
+
+
+
 
 
 
@@ -41613,7 +83223,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   void openFile(prev.path);
+
+
+
+
 
 
 
@@ -41621,7 +83239,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }}
+
+
+
+
 
 
 
@@ -41629,11 +83255,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               <ChevronLeft className="h-4 w-4" />
 
 
 
+
+
+
+
                             </button>
+
+
+
+
+
+
+
+
 
 
 
@@ -41645,7 +83287,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               {(() => {
+
+
+
+
 
 
 
@@ -41653,7 +83303,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 const n = idx >= 0 ? idx + 1 : 1;
+
+
+
+
 
 
 
@@ -41661,7 +83319,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               })()}
+
+
+
+
 
 
 
@@ -41673,11 +83339,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                             <button
 
 
 
+
+
+
+
                               type="button"
+
+
+
+
 
 
 
@@ -41685,7 +83367,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               disabled={
+
+
+
+
 
 
 
@@ -41693,7 +83383,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 changeWriteFiles.length - 1
+
+
+
+
 
 
 
@@ -41701,7 +83399,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               onClick={() => {
+
+
+
+
 
 
 
@@ -41709,7 +83415,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 const next = idx >= 0 ? changeWriteFiles[idx + 1] : null;
+
+
+
+
 
 
 
@@ -41717,7 +83431,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   setSelectedChangePath(next.path);
+
+
+
+
 
 
 
@@ -41725,7 +83447,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }
+
+
+
+
 
 
 
@@ -41733,7 +83463,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             >
+
+
+
+
 
 
 
@@ -41741,7 +83479,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </button>
+
+
+
+
+
+
+
+
 
 
 
@@ -41753,11 +83503,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               type="button"
 
 
 
+
+
+
+
                               disabled={chatApplying || !selectedChangePath}
+
+
+
+
 
 
 
@@ -41765,11 +83527,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               onClick={() => {
 
 
 
+
+
+
+
                                 if (!selectedChangePath) return;
+
+
+
+
 
 
 
@@ -41777,11 +83551,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }}
 
 
 
+
+
+
+
                             >
+
+
+
+
 
 
 
@@ -41789,7 +83575,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </button>
+
+
+
+
 
 
 
@@ -41797,7 +83591,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               type="button"
+
+
+
+
 
 
 
@@ -41805,7 +83607,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               className="ws-btn ws-btn-secondary h-7 px-5 bg-accent hover:opacity-90"
+
+
+
+
 
 
 
@@ -41813,7 +83623,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 if (!selectedChangePath) return;
+
+
+
+
 
 
 
@@ -41821,7 +83639,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               }}
+
+
+
+
 
 
 
@@ -41829,7 +83655,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               Accept File
+
+
+
+
 
 
 
@@ -41837,7 +83671,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           </div>
+
+
+
+
 
 
 
@@ -41845,7 +83687,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       ) : null}
+
+
+
+
 
 
 
@@ -41853,7 +83703,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -41861,11 +83719,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 )}
 
 
 
+
+
+
+
               </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -41877,7 +83751,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 (() => {
+
+
+
+
 
 
 
@@ -41885,7 +83767,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   return (
+
+
+
+
 
 
 
@@ -41893,7 +83783,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div
+
+
+
+
 
 
 
@@ -41901,7 +83799,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onMouseDown={(e) => {
+
+
+
+
 
 
 
@@ -41909,7 +83815,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             e.preventDefault();
+
+
+
+
 
 
 
@@ -41917,7 +83831,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           } catch {
+
+
+
+
 
 
 
@@ -41925,7 +83847,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           beginResizeDrag("n-resize");
+
+
+
+
 
 
 
@@ -41933,7 +83863,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         }}
+
+
+
+
 
 
 
@@ -41941,7 +83879,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="flex h-full min-h-0 flex-col">
+
+
+
+
 
 
 
@@ -41949,7 +83895,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="flex min-w-0 items-center gap-1">
+
+
+
+
 
 
 
@@ -41957,7 +83911,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           { id: "problems", label: "Problems" },
+
+
+
+
 
 
 
@@ -41965,7 +83927,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           { id: "debug", label: "Debug Console" },
+
+
+
+
 
 
 
@@ -41973,7 +83943,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           { id: "ports", label: "Ports" },
+
+
+
+
 
 
 
@@ -41981,7 +83959,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <button
+
+
+
+
 
 
 
@@ -41989,7 +83975,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             type="button"
+
+
+
+
 
 
 
@@ -41997,7 +83991,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               panelTab === t.id ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+
+
+
+
 
 
 
@@ -42005,7 +84007,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             onClick={() => {
+
+
+
+
 
 
 
@@ -42013,7 +84023,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               if (t.id === "terminal") {
+
+
+
+
 
 
 
@@ -42021,7 +84039,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   void ensureTerminal().then(() => {
+
+
+
+
 
 
 
@@ -42029,7 +84055,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     termRef.current?.focus();
+
+
+
+
 
 
 
@@ -42037,7 +84071,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 }, 0);
+
+
+
+
 
 
 
@@ -42045,7 +84087,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             }}
+
+
+
+
 
 
 
@@ -42053,7 +84103,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             {t.label}
+
+
+
+
 
 
 
@@ -42061,11 +84119,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         ))}
 
 
 
+
+
+
+
                       </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -42077,7 +84151,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <button
+
+
+
+
 
 
 
@@ -42085,7 +84167,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           className="ws-icon-btn"
+
+
+
+
 
 
 
@@ -42093,7 +84183,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             setPanelTab("terminal");
+
+
+
+
 
 
 
@@ -42101,7 +84199,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               void ensureTerminal().then(() => {
+
+
+
+
 
 
 
@@ -42109,7 +84215,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 termRef.current?.focus();
+
+
+
+
 
 
 
@@ -42117,7 +84231,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             }, 0);
+
+
+
+
 
 
 
@@ -42125,7 +84247,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         >
+
+
+
+
 
 
 
@@ -42133,7 +84263,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </button>
+
+
+
+
 
 
 
@@ -42141,7 +84279,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <X className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -42149,11 +84295,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       </div>
 
 
 
+
+
+
+
                     </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -42165,7 +84327,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className={panelTab === "terminal" ? "absolute inset-0" : "absolute inset-0 hidden"}>
+
+
+
+
 
 
 
@@ -42173,7 +84343,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -42181,7 +84359,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <div className="absolute inset-0 p-3 text-xs text-muted">{panelTab} is coming next.</div>
+
+
+
+
 
 
 
@@ -42189,7 +84375,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -42197,7 +84391,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -42205,7 +84407,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 })()
+
+
+
+
 
 
 
@@ -42213,11 +84423,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               </div>
 
 
 
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -42229,7 +84451,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
           {isChatDockOpen ? (
+
+
+
+
 
 
 
@@ -42237,7 +84471,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               <div
+
+
+
+
 
 
 
@@ -42245,7 +84487,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 onMouseDown={(e) => {
+
+
+
+
 
 
 
@@ -42253,7 +84503,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   try {
+
+
+
+
 
 
 
@@ -42261,7 +84519,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     e.stopPropagation();
+
+
+
+
 
 
 
@@ -42269,7 +84535,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   }
+
+
+
+
 
 
 
@@ -42277,7 +84551,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 }}
+
+
+
+
 
 
 
@@ -42285,7 +84567,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               <div className="flex h-full min-h-0 flex-col">
+
+
+
+
 
 
 
@@ -42293,7 +84583,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <div className="px-3 pt-2">
+
+
+
+
 
 
 
@@ -42301,7 +84599,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="flex items-center justify-between gap-2">
+
+
+
+
 
 
 
@@ -42309,7 +84615,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           type="button"
+
+
+
+
 
 
 
@@ -42317,7 +84631,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           onClick={() => setIsChangeSummaryOpen((v) => !v)}
+
+
+
+
 
 
 
@@ -42325,7 +84647,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <ChevronDown className={`h-4 w-4 text-muted ${isChangeSummaryOpen ? "rotate-180" : ""}`} />
+
+
+
+
 
 
 
@@ -42333,7 +84663,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             <span className="text-text">{activeChat.changeSet.stats.files} files</span>
+
+
+
+
 
 
 
@@ -42341,7 +84679,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             <span className="ml-2 text-red-300">-{activeChat.changeSet.stats.removed}</span>
+
+
+
+
 
 
 
@@ -42349,7 +84695,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </button>
+
+
+
+
+
+
+
+
 
 
 
@@ -42361,7 +84719,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <button
+
+
+
+
 
 
 
@@ -42369,7 +84735,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             disabled={chatApplying}
+
+
+
+
 
 
 
@@ -42377,11 +84751,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             onClick={() => void rejectAllChanges()}
 
 
 
+
+
+
+
                           >
+
+
+
+
 
 
 
@@ -42389,7 +84775,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           </button>
+
+
+
+
 
 
 
@@ -42397,7 +84791,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             type="button"
+
+
+
+
 
 
 
@@ -42405,7 +84807,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             className="ws-btn h-7 border border-accent bg-accent px-2 text-white hover:opacity-90 disabled:opacity-50"
+
+
+
+
 
 
 
@@ -42413,7 +84823,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           >
+
+
+
+
 
 
 
@@ -42421,7 +84839,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           </button>
+
+
+
+
 
 
 
@@ -42429,7 +84855,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -42441,7 +84879,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <div className="mt-2">
+
+
+
+
 
 
 
@@ -42449,7 +84895,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             {activeChat.changeSet.files.map((f, idx) => {
+
+
+
+
 
 
 
@@ -42457,7 +84911,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               const isSelected = isWrite && selectedChangePath === f.path;
+
+
+
+
 
 
 
@@ -42465,7 +84927,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               const kindClass =
+
+
+
+
 
 
 
@@ -42473,7 +84943,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   ? "bg-emerald-500/15 text-emerald-300"
+
+
+
+
 
 
 
@@ -42481,7 +84959,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     ? "bg-red-500/15 text-red-300"
+
+
+
+
 
 
 
@@ -42489,7 +84975,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               return (
+
+
+
+
 
 
 
@@ -42497,7 +84991,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   key={`${f.kind}:${f.path}:${idx}`}
+
+
+
+
 
 
 
@@ -42505,7 +85007,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     isSelected ? "bg-[rgb(var(--p-panel))]" : "hover:bg-[rgb(var(--p-panel))]"
+
+
+
+
 
 
 
@@ -42513,7 +85023,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 >
+
+
+
+
 
 
 
@@ -42521,7 +85039,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     type="button"
+
+
+
+
 
 
 
@@ -42529,7 +85055,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     onClick={() => {
+
+
+
+
 
 
 
@@ -42537,7 +85071,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         setSelectedChangePath(f.path);
+
+
+
+
 
 
 
@@ -42545,7 +85087,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       }
+
+
+
+
 
 
 
@@ -42553,7 +85103,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   >
+
+
+
+
 
 
 
@@ -42561,7 +85119,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     <span className={`min-w-0 truncate text-[11px] ${isWrite ? "text-text" : "text-muted"}`}>{f.path}</span>
+
+
+
+
 
 
 
@@ -42573,7 +85139,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                                   {isWrite ? (
+
+
+
+
 
 
 
@@ -42581,7 +85159,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <button
+
+
+
+
 
 
 
@@ -42589,11 +85175,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         disabled={chatApplying}
 
 
 
+
+
+
+
                                         className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]"
+
+
+
+
 
 
 
@@ -42601,7 +85199,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       >
+
+
+
+
 
 
 
@@ -42609,7 +85215,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </button>
+
+
+
+
 
 
 
@@ -42617,7 +85231,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         type="button"
+
+
+
+
 
 
 
@@ -42625,7 +85247,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         className="ws-btn ws-btn-secondary h-6 px-2 text-[11px]"
+
+
+
+
 
 
 
@@ -42633,7 +85263,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       >
+
+
+
+
 
 
 
@@ -42641,7 +85279,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </button>
+
+
+
+
 
 
 
@@ -42649,7 +85295,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   ) : null}
+
+
+
+
 
 
 
@@ -42657,7 +85311,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               );
+
+
+
+
 
 
 
@@ -42665,7 +85327,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           </div>
+
+
+
+
 
 
 
@@ -42673,7 +85343,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       ) : null}
+
+
+
+
 
 
 
@@ -42681,7 +85359,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </div>
+
+
+
+
 
 
 
@@ -42693,7 +85379,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                 <div className="relative bg-panel px-3 py-2" ref={chatHistoryMenuRef}>
+
+
+
+
 
 
 
@@ -42701,7 +85399,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     <div className="min-w-0">
+
+
+
+
 
 
 
@@ -42709,7 +85415,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -42721,7 +85439,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <button
+
+
+
+
 
 
 
@@ -42729,7 +85455,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         type="button"
+
+
+
+
 
 
 
@@ -42737,7 +85471,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClick={() => {
+
+
+
+
 
 
 
@@ -42745,7 +85487,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             const next = !v;
+
+
+
+
 
 
 
@@ -42753,7 +85503,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               setChatHistoryQueryDraft("");
+
+
+
+
 
 
 
@@ -42761,7 +85519,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             }
+
+
+
+
 
 
 
@@ -42769,7 +85535,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           });
+
+
+
+
 
 
 
@@ -42777,7 +85551,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       >
+
+
+
+
 
 
 
@@ -42785,7 +85567,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       </button>
+
+
+
+
 
 
 
@@ -42793,7 +85583,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         type="button"
+
+
+
+
 
 
 
@@ -42801,7 +85599,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         onClick={() => {
+
+
+
+
 
 
 
@@ -42809,7 +85615,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           const id = `${now}-${Math.random().toString(16).slice(2)}`;
+
+
+
+
 
 
 
@@ -42817,7 +85631,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             ...prev,
+
+
+
+
 
 
 
@@ -42825,7 +85647,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           ]);
+
+
+
+
 
 
 
@@ -42833,7 +85663,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           setIsChatHistoryOpen(false);
+
+
+
+
 
 
 
@@ -42841,7 +85679,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       >
+
+
+
+
 
 
 
@@ -42849,7 +85695,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       </button>
+
+
+
+
 
 
 
@@ -42857,7 +85711,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <X className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -42865,7 +85727,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -42877,7 +85747,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                   {isChatHistoryOpen ? (
+
+
+
+
 
 
 
@@ -42885,7 +85767,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="flex w-full max-h-[min(520px,calc(100vh-220px))] flex-col overflow-hidden rounded-2xl border border-border/60 bg-panel shadow">
+
+
+
+
 
 
 
@@ -42893,7 +85783,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <div className="flex min-w-0 flex-1 items-center gap-2">
+
+
+
+
 
 
 
@@ -42901,7 +85799,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             <input
+
+
+
+
 
 
 
@@ -42909,7 +85815,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               placeholder="Search chats"
+
+
+
+
 
 
 
@@ -42917,7 +85831,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               onChange={(e) => setChatHistoryQueryDraft(e.currentTarget.value)}
+
+
+
+
 
 
 
@@ -42925,7 +85847,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             />
+
+
+
+
 
 
 
@@ -42933,7 +85863,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -42945,7 +85887,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           {chatHistorySessions.length ? (
+
+
+
+
 
 
 
@@ -42953,7 +85903,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               return (
+
+
+
+
 
 
 
@@ -42961,7 +85919,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   key={s.id}
+
+
+
+
 
 
 
@@ -42969,7 +85935,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   className={`group relative flex w-full items-center justify-between gap-2 rounded-xl px-2 py-2 text-left focus-visible:outline-none hover:bg-bg ${
+
+
+
+
 
 
 
@@ -42977,7 +85951,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   }`}
+
+
+
+
 
 
 
@@ -42985,7 +85967,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     setActiveChatId(s.id);
+
+
+
+
 
 
 
@@ -42993,7 +85983,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     window.setTimeout(() => chatComposerRef.current?.focus(), 0);
+
+
+
+
 
 
 
@@ -43001,7 +85999,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 >
+
+
+
+
 
 
 
@@ -43009,7 +86015,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     <div className="truncate text-[12px] text-text">{s.title}</div>
+
+
+
+
 
 
 
@@ -43017,7 +86031,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -43029,7 +86055,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     <button
+
+
+
+
 
 
 
@@ -43037,7 +86071,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       className="ws-icon-btn h-7 w-7 rounded-xl bg-panel2 active:bg-bg"
+
+
+
+
 
 
 
@@ -43045,7 +86087,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         e.stopPropagation();
+
+
+
+
 
 
 
@@ -43053,7 +86103,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       }}
+
+
+
+
 
 
 
@@ -43061,7 +86119,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     >
+
+
+
+
 
 
 
@@ -43069,7 +86135,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     </button>
+
+
+
+
 
 
 
@@ -43077,7 +86151,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       type="button"
+
+
+
+
 
 
 
@@ -43085,7 +86167,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       onClick={(e) => {
+
+
+
+
 
 
 
@@ -43093,7 +86183,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         deleteChatSession(s.id);
+
+
+
+
 
 
 
@@ -43101,7 +86199,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       aria-label="Delete chat"
+
+
+
+
 
 
 
@@ -43109,7 +86215,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <Trash2 className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -43117,7 +86231,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   </div>
+
+
+
+
 
 
 
@@ -43125,7 +86247,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               );
+
+
+
+
 
 
 
@@ -43133,7 +86263,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           ) : (
+
+
+
+
 
 
 
@@ -43141,7 +86279,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           )}
+
+
+
+
 
 
 
@@ -43149,7 +86295,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -43157,11 +86311,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   ) : null}
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -43173,7 +86343,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   {!activeChat.messages.length ? (
+
+
+
+
 
 
 
@@ -43181,7 +86359,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="ws-chat-bg-tint" />
+
+
+
+
 
 
 
@@ -43189,7 +86375,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <div className="ws-chat-bg-layer" />
+
+
+
+
 
 
 
@@ -43197,11 +86391,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     </div>
 
 
 
+
+
+
+
                   ) : null}
+
+
+
+
 
 
 
@@ -43209,7 +86415,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     ref={chatScrollRef}
+
+
+
+
 
 
 
@@ -43217,7 +86431,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       canUseAi && !activeChat.messages.length ? "flex items-center justify-center" : ""
+
+
+
+
 
 
 
@@ -43225,7 +86447,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     onScroll={(e) => {
+
+
+
+
 
 
 
@@ -43233,7 +86463,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     }}
+
+
+
+
 
 
 
@@ -43241,7 +86479,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   {aiBlockedReason && !(settings.active_provider === "pompora" && !authProfile) ? (
+
+
+
+
 
 
 
@@ -43249,7 +86495,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       {aiBlockedReason}
+
+
+
+
 
 
 
@@ -43257,7 +86511,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -43269,7 +86535,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       <div className="space-y-3">
+
+
+
+
 
 
 
@@ -43277,7 +86551,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           return (
+
+
+
+
 
 
 
@@ -43285,7 +86567,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               <div className="max-w-[92%]">
+
+
+
+
 
 
 
@@ -43293,7 +86583,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   <EventStreamCard
+
+
+
+
 
 
 
@@ -43301,7 +86599,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     onOpenFileDiff={(path) => {
+
+
+
+
 
 
 
@@ -43309,7 +86615,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       if (cs && cs.files.some((f) => f.kind === "write" && f.path === path)) {
+
+
+
+
 
 
 
@@ -43317,7 +86631,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         setSelectedChangePath(path);
+
+
+
+
 
 
 
@@ -43325,7 +86647,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       void openFile(path);
+
+
+
+
 
 
 
@@ -43333,7 +86663,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   />
+
+
+
+
 
 
 
@@ -43341,7 +86679,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   <div className="ws-msg ws-msg-anim ws-msg-assistant">
+
+
+
+
 
 
 
@@ -43349,7 +86695,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <div className="min-w-0">
+
+
+
+
 
 
 
@@ -43357,11 +86711,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         <div className="mt-1 text-[13px] text-text">{m.activity.title}</div>
 
 
 
+
+
+
+
                                       </div>
+
+
+
+
 
 
 
@@ -43369,7 +86735,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         <div className="flex items-center justify-end gap-2">
+
+
+
+
 
 
 
@@ -43377,7 +86751,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                             <RotateCw className="h-3.5 w-3.5 text-muted animate-spin" />
+
+
+
+
 
 
 
@@ -43385,7 +86767,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                             <Check className="h-3.5 w-3.5 text-emerald-300" />
+
+
+
+
 
 
 
@@ -43393,7 +86783,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                             <AlertTriangle className="h-3.5 w-3.5 text-red-300" />
+
+
+
+
 
 
 
@@ -43401,7 +86799,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           <span
+
+
+
+
 
 
 
@@ -43409,7 +86815,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               m.activity.status
+
+
+
+
 
 
 
@@ -43417,7 +86831,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           >
+
+
+
+
 
 
 
@@ -43425,7 +86847,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           </span>
+
+
+
+
 
 
 
@@ -43433,11 +86863,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </div>
 
 
 
+
+
+
+
                                     </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -43449,7 +86895,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <div className="mt-2">
+
+
+
+
 
 
 
@@ -43457,7 +86911,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           <span className="truncate">
+
+
+
+
 
 
 
@@ -43465,7 +86927,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           </span>
+
+
+
+
 
 
 
@@ -43473,7 +86943,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                             {m.activity.progress.done}/{m.activity.progress.total}
+
+
+
+
 
 
 
@@ -43481,7 +86959,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         </div>
+
+
+
+
 
 
 
@@ -43489,7 +86975,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           <div
+
+
+
+
 
 
 
@@ -43497,7 +86991,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                             style={{
+
+
+
+
 
 
 
@@ -43505,7 +87007,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                                 0,
+
+
+
+
 
 
 
@@ -43513,7 +87023,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                                   100,
+
+
+
+
 
 
 
@@ -43521,7 +87039,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                                     (100 * (m.activity.progress.total ? m.activity.progress.done : 0)) /
+
+
+
+
 
 
 
@@ -43529,7 +87055,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                                   )
+
+
+
+
 
 
 
@@ -43537,7 +87071,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               )}%`,
+
+
+
+
 
 
 
@@ -43545,7 +87087,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           />
+
+
+
+
 
 
 
@@ -43553,11 +87103,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </div>
 
 
 
+
+
+
+
                                     ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -43569,7 +87135,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <div className="mt-2 space-y-1">
+
+
+
+
 
 
 
@@ -43577,7 +87151,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           <div key={idx} className="text-[11px] text-muted whitespace-pre-wrap break-words">
+
+
+
+
 
 
 
@@ -43585,7 +87167,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           </div>
+
+
+
+
 
 
 
@@ -43593,11 +87183,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </div>
 
 
 
+
+
+
+
                                     ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -43609,7 +87215,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <div className="mt-2">
+
+
+
+
 
 
 
@@ -43617,7 +87231,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           type="button"
+
+
+
+
 
 
 
@@ -43625,7 +87247,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           onClick={() => toggleActivityCollapsed(m.id ?? "")}
+
+
+
+
 
 
 
@@ -43633,11 +87263,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           {m.activity.collapsed ? "Show details" : "Hide details"}
 
 
 
+
+
+
+
                                         </button>
+
+
+
+
+
+
+
+
 
 
 
@@ -43649,7 +87295,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           <div className="mt-2 max-h-44 overflow-auto rounded-lg border border-border bg-bg p-2 font-mono text-[11px] text-muted">
+
+
+
+
 
 
 
@@ -43657,7 +87311,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               <div key={idx} className="whitespace-pre-wrap break-words">
+
+
+
+
 
 
 
@@ -43665,7 +87327,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               </div>
+
+
+
+
 
 
 
@@ -43673,7 +87343,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           </div>
+
+
+
+
 
 
 
@@ -43681,7 +87359,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </div>
+
+
+
+
 
 
 
@@ -43689,7 +87375,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   </div>
+
+
+
+
 
 
 
@@ -43697,7 +87391,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   <div className="ws-msg ws-msg-anim ws-msg-assistant" data-run-menu-root>
+
+
+
+
 
 
 
@@ -43705,7 +87407,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <div className="min-w-0">
+
+
+
+
 
 
 
@@ -43713,7 +87423,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         <div className="mt-1 font-mono text-[12px] text-text">
+
+
+
+
 
 
 
@@ -43721,7 +87439,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         </div>
+
+
+
+
 
 
 
@@ -43729,7 +87455,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           <div className="mt-2 rounded border border-red-500/30 bg-bg px-2 py-1 text-[11px] text-muted">
+
+
+
+
 
 
 
@@ -43737,7 +87471,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           </div>
+
+
+
+
 
 
 
@@ -43745,7 +87487,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </div>
+
+
+
+
 
 
 
@@ -43753,7 +87503,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         <div className="text-[10px] text-muted">Status</div>
+
+
+
+
 
 
 
@@ -43761,11 +87519,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </div>
 
 
 
+
+
+
+
                                     </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -43777,7 +87551,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <button
+
+
+
+
 
 
 
@@ -43785,7 +87567,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         className="ws-btn ws-btn-secondary h-7 px-2"
+
+
+
+
 
 
 
@@ -43793,7 +87583,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         onClick={() => cancelRunCard(m.id ?? "")}
+
+
+
+
 
 
 
@@ -43801,7 +87599,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         Cancel
+
+
+
+
 
 
 
@@ -43813,7 +87619,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                                       {m.run.status === "done" && m.run.error ? (
+
+
+
+
 
 
 
@@ -43821,7 +87639,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           type="button"
+
+
+
+
 
 
 
@@ -43829,7 +87655,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           onClick={() => void askAiToFixRunError(m.id ?? "")}
+
+
+
+
 
 
 
@@ -43837,11 +87671,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           Fix
 
 
 
+
+
+
+
                                         </button>
+
+
+
+
 
 
 
@@ -43853,7 +87699,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                                       <div className="relative">
+
+
+
+
 
 
 
@@ -43861,7 +87719,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           type="button"
+
+
+
+
 
 
 
@@ -43869,7 +87735,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           disabled={m.run.status !== "pending"}
+
+
+
+
 
 
 
@@ -43877,7 +87751,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         >
+
+
+
+
 
 
 
@@ -43885,7 +87767,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         </button>
+
+
+
+
 
 
 
@@ -43893,7 +87783,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           type="button"
+
+
+
+
 
 
 
@@ -43901,7 +87799,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           disabled={m.run.status !== "pending"}
+
+
+
+
 
 
 
@@ -43909,7 +87815,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         >
+
+
+
+
 
 
 
@@ -43917,7 +87831,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         </button>
+
+
+
+
+
+
+
+
 
 
 
@@ -43929,11 +87855,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           <div className="absolute right-0 top-full z-[9999] mt-1 w-56 overflow-hidden rounded-xl border border-border bg-panel p-1 shadow">
 
 
 
+
+
+
+
                                             <MenuItem
+
+
+
+
 
 
 
@@ -43941,11 +87879,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               onClick={() => {
 
 
 
+
+
+
+
                                                 setRunMenuOpenId(null);
+
+
+
+
 
 
 
@@ -43953,11 +87903,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               }}
 
 
 
+
+
+
+
                                             />
+
+
+
+
 
 
 
@@ -43965,7 +87927,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               label="Always allow & run"
+
+
+
+
 
 
 
@@ -43973,7 +87943,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                                 setRunMenuOpenId(null);
+
+
+
+
 
 
 
@@ -43981,7 +87959,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               }}
+
+
+
+
 
 
 
@@ -43989,7 +87975,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           </div>
+
+
+
+
 
 
 
@@ -43997,7 +87991,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </div>
+
+
+
+
 
 
 
@@ -44009,7 +88011,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                                     {Array.isArray(m.run.remaining) && m.run.remaining.length ? (
+
+
+
+
 
 
 
@@ -44017,7 +88031,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         Next: <span className="font-mono">{m.run.remaining[0]}</span>
+
+
+
+
 
 
 
@@ -44025,11 +88047,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     ) : null}
 
 
 
+
+
+
+
                                   </div>
+
+
+
+
 
 
 
@@ -44037,7 +88071,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   <div className={`ws-msg ws-msg-anim ${m.role === "user" ? "ws-msg-user" : "ws-msg-assistant"}`}>
+
+
+
+
 
 
 
@@ -44045,7 +88087,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   </div>
+
+
+
+
 
 
 
@@ -44057,7 +88107,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                                 {m.role === "assistant" ? (
+
+
+
+
 
 
 
@@ -44065,11 +88127,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     <button
 
 
 
+
+
+
+
                                       type="button"
+
+
+
+
 
 
 
@@ -44077,11 +88151,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       onClick={() => {
 
 
 
+
+
+
+
                                         const idx = activeChat.messages.findIndex((x) => x === m);
+
+
+
+
 
 
 
@@ -44089,11 +88175,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       }}
 
 
 
+
+
+
+
                                     >
+
+
+
+
 
 
 
@@ -44101,7 +88199,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     </button>
+
+
+
+
 
 
 
@@ -44109,7 +88215,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       type="button"
+
+
+
+
 
 
 
@@ -44117,7 +88231,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       onClick={() => {
+
+
+
+
 
 
 
@@ -44125,7 +88247,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         if (idx >= 0) setMessageRating(idx, "down");
+
+
+
+
 
 
 
@@ -44133,7 +88263,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     >
+
+
+
+
 
 
 
@@ -44141,7 +88279,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     </button>
+
+
+
+
 
 
 
@@ -44149,7 +88295,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 ) : null}
+
+
+
+
 
 
 
@@ -44157,7 +88311,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </div>
+
+
+
+
 
 
 
@@ -44165,7 +88327,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         })}
+
+
+
+
 
 
 
@@ -44173,7 +88343,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                     ) : (
+
+
+
+
 
 
 
@@ -44181,7 +88359,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <div className="mt-2 text-[22px] font-semibold tracking-tight text-text">
+
+
+
+
 
 
 
@@ -44189,7 +88375,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             const rawName = (authProfile?.first_name || authProfile?.email || "").trim();
+
+
+
+
 
 
 
@@ -44197,7 +88391,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             const variants = [
+
+
+
+
 
 
 
@@ -44205,7 +88407,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               `Good to see you, ${name}`,
+
+
+
+
 
 
 
@@ -44213,7 +88423,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               `Let’s ship, ${name}`,
+
+
+
+
 
 
 
@@ -44221,7 +88439,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             const idx = __stableHash(`${activeChat.id}:${name}`) % variants.length;
+
+
+
+
 
 
 
@@ -44229,11 +88455,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           })()}
 
 
 
+
+
+
+
                         </div>
+
+
+
+
 
 
 
@@ -44245,7 +88483,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                         {!authProfile ? (
+
+
+
+
 
 
 
@@ -44253,7 +88503,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             <div className="pointer-events-none absolute inset-0 -z-10 rounded-[28px] bg-[radial-gradient(120%_80%_at_50%_0%,rgba(30,144,255,0.22)_0%,rgba(30,144,255,0)_58%)]" />
+
+
+
+
 
 
 
@@ -44261,7 +88519,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               <div className="flex flex-col items-center gap-3 text-center">
+
+
+
+
 
 
 
@@ -44269,7 +88535,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 <div className="min-w-0">
+
+
+
+
 
 
 
@@ -44277,7 +88551,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   <div className="mt-1 text-[12px] leading-relaxed text-muted">
+
+
+
+
 
 
 
@@ -44285,7 +88567,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   </div>
+
+
+
+
 
 
 
@@ -44293,7 +88583,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -44305,11 +88607,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 <button
 
 
 
+
+
+
+
                                   type="button"
+
+
+
+
 
 
 
@@ -44317,7 +88631,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   disabled={isAuthBusy}
+
+
+
+
 
 
 
@@ -44325,7 +88647,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 >
+
+
+
+
 
 
 
@@ -44333,7 +88663,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   <ChevronRight className="h-4 w-4 opacity-85" />
+
+
+
+
 
 
 
@@ -44341,11 +88679,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 <button
 
 
 
+
+
+
+
                                   type="button"
+
+
+
+
 
 
 
@@ -44353,7 +88703,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   disabled={isAuthBusy}
+
+
+
+
 
 
 
@@ -44361,7 +88719,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 >
+
+
+
+
 
 
 
@@ -44369,17 +88735,35 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 </button>
+
+
+
+
 
 
 
                               </div>
 
+
+
                             </div>
 
 
 
+
+
+
+
                           </div>
+
+
+
+
 
 
 
@@ -44387,7 +88771,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <div className="mt-5 w-full max-w-[420px]">
+
+
+
+
 
 
 
@@ -44395,11 +88787,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               {[
 
 
 
+
+
+
+
                                 {
+
+
+
+
 
 
 
@@ -44407,7 +88811,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   Icon: FileText,
+
+
+
+
 
 
 
@@ -44415,11 +88827,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 },
 
 
 
+
+
+
+
                                 {
+
+
+
+
 
 
 
@@ -44427,7 +88851,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   Icon: AlertTriangle,
+
+
+
+
 
 
 
@@ -44435,11 +88867,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 },
 
 
 
+
+
+
+
                                 {
+
+
+
+
 
 
 
@@ -44447,7 +88891,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   Icon: Wand2,
+
+
+
+
 
 
 
@@ -44455,7 +88907,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 },
+
+
+
+
 
 
 
@@ -44463,7 +88923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   label: "Add a feature",
+
+
+
+
 
 
 
@@ -44471,7 +88939,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   prompt: "Help me add a small feature to the current file. Ask 2-3 clarifying questions first, then propose an implementation plan.",
+
+
+
+
 
 
 
@@ -44479,7 +88955,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               ].map((s) => (
+
+
+
+
 
 
 
@@ -44487,7 +88971,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   key={s.label}
+
+
+
+
 
 
 
@@ -44495,7 +88987,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   className={`group flex w-full items-center justify-between gap-3 rounded-2xl border border-border/60 bg-bg/30 px-3 py-2 text-left transition-all hover:border-border/90 hover:bg-panel/40 active:border-border outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border/60 focus-visible:ring-offset-0 ${
+
+
+
+
 
 
 
@@ -44503,7 +89003,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   }`}
+
+
+
+
 
 
 
@@ -44511,7 +89019,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     if (!canUseAi) {
+
+
+
+
 
 
 
@@ -44519,7 +89035,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       return;
+
+
+
+
 
 
 
@@ -44527,7 +89051,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     setActiveChatDraft(s.prompt);
+
+
+
+
 
 
 
@@ -44535,7 +89067,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       void sendChatRef.current?.();
+
+
+
+
 
 
 
@@ -44543,7 +89083,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   }}
+
+
+
+
 
 
 
@@ -44551,7 +89099,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   <div className="flex min-w-0 items-center gap-2">
+
+
+
+
 
 
 
@@ -44559,7 +89115,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <s.Icon className="h-4 w-4 text-text" />
+
+
+
+
 
 
 
@@ -44567,7 +89131,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     <span className="truncate text-[13px] font-medium text-text">{s.label}</span>
+
+
+
+
 
 
 
@@ -44575,7 +89147,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   <ChevronRight className="h-4 w-4 text-muted transition-transform group-hover:translate-x-0.5" />
+
+
+
+
 
 
 
@@ -44583,7 +89163,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               ))}
+
+
+
+
 
 
 
@@ -44591,7 +89179,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           </div>
+
+
+
+
 
 
 
@@ -44599,7 +89195,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -44607,11 +89211,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 </div>
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -44623,7 +89243,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   <div className="ws-panel2 rounded-md p-2">
+
+
+
+
 
 
 
@@ -44631,7 +89259,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       ref={chatComposerRef}
+
+
+
+
 
 
 
@@ -44639,7 +89275,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       placeholder="Ask anything (Ctrl+L)"
+
+
+
+
 
 
 
@@ -44647,7 +89291,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       onChange={(e) => setActiveChatDraft(e.currentTarget.value)}
+
+
+
+
 
 
 
@@ -44655,7 +89307,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         if (e.key === "Enter" && !e.shiftKey) {
+
+
+
+
 
 
 
@@ -44663,7 +89323,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           void sendChat();
+
+
+
+
 
 
 
@@ -44671,7 +89339,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       }}
+
+
+
+
 
 
 
@@ -44683,7 +89359,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                     <div className="mt-2 flex items-center justify-between gap-2 px-1">
+
+
+
+
 
 
 
@@ -44691,7 +89379,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <button
+
+
+
+
 
 
 
@@ -44699,7 +89395,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           className="ws-icon-btn"
+
+
+
+
 
 
 
@@ -44707,11 +89411,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         >
 
 
 
+
+
+
+
                           <Plus className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -44723,7 +89439,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                         <div className="relative" data-model-picker-root>
+
+
+
+
 
 
 
@@ -44731,7 +89459,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             type="button"
+
+
+
+
 
 
 
@@ -44739,7 +89475,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             onClick={() => {
+
+
+
+
 
 
 
@@ -44747,11 +89491,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               setIsModelPickerOpen((v) => !v);
 
 
 
+
+
+
+
                             }}
+
+
+
+
 
 
 
@@ -44759,7 +89515,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               if (aiBlockedReason) showTooltipForEl(e.currentTarget, aiBlockedReason, "tr");
+
+
+
+
 
 
 
@@ -44767,7 +89531,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             onMouseLeave={hideTooltip}
+
+
+
+
 
 
 
@@ -44775,7 +89547,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             <span
+
+
+
+
 
 
 
@@ -44783,7 +89563,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 settings.active_provider === "pompora"
+
+
+
+
 
 
 
@@ -44791,7 +89579,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   : activeProviderMissingKey
+
+
+
+
 
 
 
@@ -44799,7 +89595,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     : providerNeedsKey
+
+
+
+
 
 
 
@@ -44807,7 +89611,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       : "text-muted"
+
+
+
+
 
 
 
@@ -44815,7 +89627,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             >
+
+
+
+
 
 
 
@@ -44823,11 +89643,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </span>
 
 
 
+
+
+
+
                             <ChevronDown className={`h-4 w-4 text-muted ${isModelPickerOpen ? "rotate-180" : ""}`} />
+
+
+
+
 
 
 
@@ -44839,7 +89671,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                           {isModelPickerOpen ? (
+
+
+
+
 
 
 
@@ -44847,7 +89691,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               <div className="sticky top-0 z-10 border-b border-border bg-panel px-3 py-1.5">
+
+
+
+
 
 
 
@@ -44855,7 +89707,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               </div>
+
+
+
+
 
 
 
@@ -44867,7 +89727,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                               {(["slow", "fast", "reasoning"] as const).map((mode) => {
+
+
+
+
 
 
 
@@ -44875,7 +89747,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 const effectiveMode = String(settings.pompora_thinking ?? uiPomporaThinking ?? "slow").toLowerCase();
+
+
+
+
 
 
 
@@ -44883,7 +89763,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 const lockedByAuth = !authProfile;
+
+
+
+
 
 
 
@@ -44891,7 +89779,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 const lockedByLink = authProfile ? pomporaSt?.is_configured !== true : true;
+
+
+
+
 
 
 
@@ -44903,11 +89799,31 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                                 const rightLabel =
 
 
 
+
+
+
+
                                   lockedByAuth ? "Log in" : mode === "reasoning" ? "Pro" : mode === "fast" ? "Plus" : "Starter";
+
+
+
+
+
+
+
+
 
 
 
@@ -44923,7 +89839,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                                 return (
+
+
+
+
 
 
 
@@ -44931,7 +89859,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     key={`pompora-${mode}`}
+
+
+
+
 
 
 
@@ -44939,7 +89875,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[rgb(var(--p-panel2))] ${
+
+
+
+
 
 
 
@@ -44947,7 +89891,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     } ${disabled ? "text-muted opacity-60" : "text-text"}`}
+
+
+
+
 
 
 
@@ -44955,7 +89907,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       if (disabled) {
+
+
+
+
 
 
 
@@ -44963,7 +89923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         setIsModelPickerOpen(false);
+
+
+
+
 
 
 
@@ -44971,7 +89939,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       }
+
+
+
+
 
 
 
@@ -44979,11 +89955,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       setIsModelPickerOpen(false);
 
 
 
+
+
+
+
                                     }}
+
+
+
+
 
 
 
@@ -44991,7 +89979,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       if (disabled) {
+
+
+
+
 
 
 
@@ -44999,7 +89995,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           e.currentTarget,
+
+
+
+
 
 
 
@@ -45007,7 +90011,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                             ? "Sign in to unlock Pompora AI"
+
+
+
+
 
 
 
@@ -45015,7 +90027,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                               ? "Finish signing in to Pompora"
+
+
+
+
 
 
 
@@ -45023,7 +90043,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           "tr"
+
+
+
+
 
 
 
@@ -45031,7 +90059,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       }
+
+
+
+
 
 
 
@@ -45039,7 +90075,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     onMouseLeave={hideTooltip}
+
+
+
+
 
 
 
@@ -45047,7 +90091,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     <span>{label}</span>
+
+
+
+
 
 
 
@@ -45055,7 +90107,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   </button>
+
+
+
+
 
 
 
@@ -45063,11 +90123,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               })}
 
 
 
+
+
+
+
                               </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -45079,7 +90155,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 <div className="text-[10px] font-semibold uppercase tracking-wider text-muted">Bring Your Own Key</div>
+
+
+
+
 
 
 
@@ -45087,7 +90171,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               <div className="max-h-[240px] overflow-y-auto">
+
+
+
+
 
 
 
@@ -45095,7 +90187,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 .filter((p) => p.id !== "pompora")
+
+
+
+
 
 
 
@@ -45103,7 +90203,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   const st = providerKeyStatuses[p.id];
+
+
+
+
 
 
 
@@ -45111,7 +90219,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                   const isActive = (settings.active_provider ?? "") === p.id;
+
+
+
+
 
 
 
@@ -45123,7 +90239,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
+
+
+
+
                                   return (
+
+
+
+
 
 
 
@@ -45131,7 +90259,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       key={p.id}
+
+
+
+
 
 
 
@@ -45139,7 +90275,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       className={`flex w-full items-center justify-between px-2.5 py-1.5 text-left text-xs transition-colors border-b border-border/30 last:border-0 ${
+
+
+
+
 
 
 
@@ -45147,7 +90291,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       } ${missingKey ? "opacity-60" : ""}`}
+
+
+
+
 
 
 
@@ -45155,7 +90307,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         if (missingKey) {
+
+
+
+
 
 
 
@@ -45163,7 +90323,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           openSettingsTab();
+
+
+
+
 
 
 
@@ -45171,7 +90339,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           return;
+
+
+
+
 
 
 
@@ -45179,7 +90355,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         
+
+
+
+
 
 
 
@@ -45187,7 +90371,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         if (!isActive) {
+
+
+
+
 
 
 
@@ -45195,11 +90387,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         }
 
 
 
+
+
+
+
                                         
+
+
+
+
 
 
 
@@ -45207,7 +90411,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         if (!providerModels[p.id] && !loadingModels[p.id]) {
+
+
+
+
 
 
 
@@ -45215,7 +90427,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         }
+
+
+
+
 
 
 
@@ -45223,11 +90443,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         setIsModelPickerOpen(false);
 
 
 
+
+
+
+
                                       }}
+
+
+
+
 
 
 
@@ -45235,7 +90467,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         if (missingKey) {
+
+
+
+
 
 
 
@@ -45243,7 +90483,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         }
+
+
+
+
 
 
 
@@ -45251,7 +90499,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       onMouseLeave={hideTooltip}
+
+
+
+
 
 
 
@@ -45259,7 +90515,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       <div className="flex min-w-0 flex-1 items-center gap-1.5">
+
+
+
+
 
 
 
@@ -45267,7 +90531,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         {activeModel && (
+
+
+
+
 
 
 
@@ -45275,7 +90547,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                         )}
+
+
+
+
 
 
 
@@ -45283,7 +90563,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                           <span className="text-[10px] text-danger/70">(key)</span>
+
+
+
+
 
 
 
@@ -45291,7 +90579,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                       </div>
+
+
+
+
 
 
 
@@ -45299,7 +90595,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                     </button>
+
+
+
+
 
 
 
@@ -45307,7 +90611,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                                 })}
+
+
+
+
 
 
 
@@ -45315,7 +90627,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             </div>
+
+
+
+
 
 
 
@@ -45323,11 +90643,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </div>
 
 
 
+
+
+
+
                       </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -45339,11 +90675,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         <button
 
 
 
+
+
+
+
                           type="button"
+
+
+
+
 
 
 
@@ -45351,7 +90699,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           onMouseEnter={(e) =>
+
+
+
+
 
 
 
@@ -45359,7 +90715,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               e.currentTarget,
+
+
+
+
 
 
 
@@ -45367,7 +90731,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               "tr"
+
+
+
+
 
 
 
@@ -45375,11 +90747,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           }
 
 
 
+
+
+
+
                           onMouseLeave={hideTooltip}
+
+
+
+
 
 
 
@@ -45387,7 +90771,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             background: `conic-gradient(rgb(var(--p-muted)) ${Math.round(chatContextUsage.pct * 360)}deg, rgb(var(--p-panel2)) 0deg)`,
+
+
+
+
 
 
 
@@ -45395,7 +90787,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         >
+
+
+
+
 
 
 
@@ -45403,7 +90803,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             className="absolute inset-[2px] rounded-full bg-panel"
+
+
+
+
 
 
 
@@ -45411,7 +90819,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         </button>
+
+
+
+
 
 
 
@@ -45419,7 +90835,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           type="button"
+
+
+
+
 
 
 
@@ -45427,7 +90851,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           className={`ws-icon-btn ${!canUseAi ? "cursor-not-allowed opacity-50" : ""}`}
+
+
+
+
 
 
 
@@ -45435,7 +90867,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             if (!canUseAi) {
+
+
+
+
 
 
 
@@ -45443,7 +90883,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                               return;
+
+
+
+
 
 
 
@@ -45451,11 +90899,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             void sendChat();
 
 
 
+
+
+
+
                           }}
+
+
+
+
 
 
 
@@ -45463,7 +90923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             if (!canUseAi && aiBlockedReason) showTooltipForEl(e.currentTarget, aiBlockedReason, "tr");
+
+
+
+
 
 
 
@@ -45471,7 +90939,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           onMouseLeave={hideTooltip}
+
+
+
+
 
 
 
@@ -45479,7 +90955,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           <ArrowUp className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -45487,7 +90971,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -45495,7 +90987,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   </div>
+
+
+
+
 
 
 
@@ -45503,7 +91003,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               </div>
+
+
+
+
 
 
 
@@ -45511,11 +91019,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
           ) : null}
 
 
 
+
+
+
+
         </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -45527,7 +91051,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           className="flex h-[32px] -translate-y-[1px] items-center justify-between gap-3 bg-bg px-3 pb-px text-[12px] leading-none text-muted"
+
+
+
+
 
 
 
@@ -45535,7 +91067,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         >
+
+
+
+
 
 
 
@@ -45543,7 +91083,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             {isBreadcrumbsEnabled && workspace.root && footerRelPath ? (
+
+
+
+
 
 
 
@@ -45551,7 +91099,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 workspaceLabel={workspaceLabel}
+
+
+
+
 
 
 
@@ -45559,7 +91115,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 fileIconPath={footerFileIconPath}
+
+
+
+
 
 
 
@@ -45567,7 +91131,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 onToggleExpanded={() => setFooterPathExpanded((v) => !v)}
+
+
+
+
 
 
 
@@ -45575,11 +91147,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
             ) : null}
 
 
 
+
+
+
+
           </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -45591,11 +91179,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             {activeTab ? (
 
 
 
+
+
+
+
               <button type="button" className="ws-footer-btn" onClick={() => {}}>
+
+
+
+
 
 
 
@@ -45603,11 +91203,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               </button>
 
 
 
+
+
+
+
             ) : null}
+
+
+
+
 
 
 
@@ -45615,7 +91227,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               <button type="button" className="ws-footer-btn" onClick={() => {}}>
+
+
+
+
 
 
 
@@ -45623,7 +91243,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               </button>
+
+
+
+
 
 
 
@@ -45631,7 +91259,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             {authProfile ? (
+
+
+
+
 
 
 
@@ -45639,11 +91275,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 {pomporaPlan === "pro" ? "Pro" : pomporaPlan === "plus" ? "Plus" : "Starter"} plan
 
 
 
+
+
+
+
               </button>
+
+
+
+
 
 
 
@@ -45651,7 +91299,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               <button type="button" className="ws-footer-btn" onClick={() => void beginDesktopAuthWithMode("login")}>
+
+
+
+
 
 
 
@@ -45659,7 +91315,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               </button>
+
+
+
+
 
 
 
@@ -45667,7 +91331,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             <button type="button" className="ws-footer-btn" onClick={() => {}} aria-label="Notifications">
+
+
+
+
 
 
 
@@ -45675,7 +91347,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               {notifications.length ? <span className="text-[11px]">{notifications.length}</span> : null}
+
+
+
+
 
 
 
@@ -45683,7 +91363,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           </div>
+
+
+
+
 
 
 
@@ -45691,7 +91379,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -45703,7 +91403,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <CommandPalette
+
+
+
+
 
 
 
@@ -45711,7 +91419,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setQuery={setPaletteQuery}
+
+
+
+
 
 
 
@@ -45719,7 +91435,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           index={paletteIndex}
+
+
+
+
 
 
 
@@ -45727,7 +91451,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onClose={() => setIsPaletteOpen(false)}
+
+
+
+
 
 
 
@@ -45735,7 +91467,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             cmd.run();
+
+
+
+
 
 
 
@@ -45743,7 +91483,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }}
+
+
+
+
 
 
 
@@ -45751,7 +91499,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -45763,7 +91523,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <TextPromptDialog
+
+
+
+
 
 
 
@@ -45771,7 +91539,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           subtitle={textPromptDialog.subtitle}
+
+
+
+
 
 
 
@@ -45779,7 +91555,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           value={textPromptDialog.value}
+
+
+
+
 
 
 
@@ -45787,7 +91571,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           password={textPromptDialog.password}
+
+
+
+
 
 
 
@@ -45795,7 +91587,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           showCopy={textPromptDialog.showCopy}
+
+
+
+
 
 
 
@@ -45803,11 +91603,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const r = textPromptDialog.resolve;
 
 
 
+
+
+
+
             setTextPromptDialog(null);
+
+
+
+
 
 
 
@@ -45815,7 +91627,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }}
+
+
+
+
 
 
 
@@ -45823,7 +91643,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const r = textPromptDialog.resolve;
+
+
+
+
 
 
 
@@ -45831,7 +91659,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             r(value);
+
+
+
+
 
 
 
@@ -45839,11 +91675,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         />
 
 
 
+
+
+
+
       ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -45855,7 +91707,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <ConfirmDialog
+
+
+
+
 
 
 
@@ -45863,7 +91723,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           message={confirmDialog.message}
+
+
+
+
 
 
 
@@ -45871,7 +91739,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           danger={confirmDialog.danger}
+
+
+
+
 
 
 
@@ -45879,11 +91755,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const r = confirmDialog.resolve;
 
 
 
+
+
+
+
             setConfirmDialog(null);
+
+
+
+
 
 
 
@@ -45891,7 +91779,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }}
+
+
+
+
 
 
 
@@ -45899,7 +91795,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const r = confirmDialog.resolve;
+
+
+
+
 
 
 
@@ -45907,7 +91811,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             r(true);
+
+
+
+
 
 
 
@@ -45915,11 +91827,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         />
 
 
 
+
+
+
+
       ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -45931,7 +91859,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <QuickOpen
+
+
+
+
 
 
 
@@ -45939,7 +91875,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setQuery={setQuickOpenQuery}
+
+
+
+
 
 
 
@@ -45947,7 +91891,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           index={quickOpenIndex}
+
+
+
+
 
 
 
@@ -45955,7 +91907,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           isLoading={isFileIndexLoading}
+
+
+
+
 
 
 
@@ -45963,7 +91923,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onPick={(p) => {
+
+
+
+
 
 
 
@@ -45971,7 +91939,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setIsQuickOpenOpen(false);
+
+
+
+
 
 
 
@@ -45979,11 +91955,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         />
 
 
 
+
+
+
+
       ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -45995,7 +91987,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <GoToLine
+
+
+
+
 
 
 
@@ -46003,7 +92003,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setValue={setGoToLineValue}
+
+
+
+
 
 
 
@@ -46011,7 +92019,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onGo={(n) => {
+
+
+
+
 
 
 
@@ -46019,7 +92035,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setIsGoToLineOpen(false);
+
+
+
+
 
 
 
@@ -46027,11 +92051,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         />
 
 
 
+
+
+
+
       ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -46043,7 +92083,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <SavedWorkspacesDialog
+
+
+
+
 
 
 
@@ -46051,7 +92099,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onClose={() => setIsSavedWorkspacesOpen(false)}
+
+
+
+
 
 
 
@@ -46059,11 +92115,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
             void openSavedWorkspaceByName(name);
 
 
 
+
+
+
+
           }}
+
+
+
+
 
 
 
@@ -46071,7 +92139,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             void (async () => {
+
+
+
+
 
 
 
@@ -46079,11 +92155,23 @@ export default function AppShell() {
 
 
 
+
+
+
+
               const ws = existing.find((x) => x.name.trim().toLowerCase() === String(name || "").trim().toLowerCase());
 
 
 
+
+
+
+
               if (!ws) return;
+
+
+
+
 
 
 
@@ -46091,7 +92179,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               if (!nextName) return;
+
+
+
+
 
 
 
@@ -46099,7 +92195,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               if (!trimmed) return;
+
+
+
+
 
 
 
@@ -46107,7 +92211,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 const collision = existing.find((x) => x.name.trim().toLowerCase() === trimmed.toLowerCase());
+
+
+
+
 
 
 
@@ -46115,7 +92227,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   notify({ kind: "error", title: "Workspace", message: "A workspace with that name already exists." });
+
+
+
+
 
 
 
@@ -46123,7 +92243,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 }
+
+
+
+
 
 
 
@@ -46131,7 +92259,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               const now = Date.now();
+
+
+
+
 
 
 
@@ -46139,7 +92275,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 x.name.trim().toLowerCase() === ws.name.trim().toLowerCase() ? { ...x, name: trimmed, updated_at: now } : x
+
+
+
+
 
 
 
@@ -46147,7 +92291,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               await persistSavedWorkspaces(nextItems);
+
+
+
+
 
 
 
@@ -46155,7 +92307,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }}
+
+
+
+
 
 
 
@@ -46163,7 +92323,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             void (async () => {
+
+
+
+
 
 
 
@@ -46171,7 +92339,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               const ws = existing.find((x) => x.name.trim().toLowerCase() === String(name || "").trim().toLowerCase());
+
+
+
+
 
 
 
@@ -46179,7 +92355,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               const ok = await requestConfirm("Delete workspace", `Delete \"${ws.name}\"?`, { danger: true, confirmLabel: "Delete" });
+
+
+
+
 
 
 
@@ -46187,7 +92371,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               const nextItems = existing.filter((x) => x.name.trim().toLowerCase() !== ws.name.trim().toLowerCase());
+
+
+
+
 
 
 
@@ -46195,7 +92387,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             })();
+
+
+
+
 
 
 
@@ -46203,11 +92403,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         />
 
 
 
+
+
+
+
       ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -46219,7 +92435,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <SavePathDialog
+
+
+
+
 
 
 
@@ -46227,7 +92451,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           subtitle={savePathDialog.subtitle}
+
+
+
+
 
 
 
@@ -46235,7 +92467,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           placeholder={savePathDialog.placeholder}
+
+
+
+
 
 
 
@@ -46243,7 +92483,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           setValue={(v) => setSavePathDialog((prev) => (prev ? { ...prev, value: v } : prev))}
+
+
+
+
 
 
 
@@ -46251,7 +92499,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           defaultExtension={savePathDialog.defaultExtension}
+
+
+
+
 
 
 
@@ -46259,7 +92515,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           onClose={() => {
+
+
+
+
 
 
 
@@ -46267,7 +92531,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             setSavePathDialog(null);
+
+
+
+
 
 
 
@@ -46275,7 +92547,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           }}
+
+
+
+
 
 
 
@@ -46283,7 +92563,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             const r = savePathDialog.resolve;
+
+
+
+
 
 
 
@@ -46291,7 +92579,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             r(value);
+
+
+
+
 
 
 
@@ -46299,11 +92595,27 @@ export default function AppShell() {
 
 
 
+
+
+
+
         />
 
 
 
+
+
+
+
       ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -46315,7 +92627,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <ContextMenu
+
+
+
+
 
 
 
@@ -46323,7 +92643,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           y={explorerMenu.y}
+
+
+
+
 
 
 
@@ -46331,7 +92659,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           items={([
+
+
+
+
 
 
 
@@ -46339,7 +92675,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             { id: "sep-create", kind: "sep" as const },
+
+
+
+
 
 
 
@@ -46347,7 +92691,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               ? ([
+
+
+
+
 
 
 
@@ -46355,7 +92707,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   ...(explorerMenu.path.startsWith("__wsroot__/")
+
+
+
+
 
 
 
@@ -46363,7 +92723,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         {
+
+
+
+
 
 
 
@@ -46371,7 +92739,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           label: "Remove Folder from Workspace",
+
+
+
+
 
 
 
@@ -46379,7 +92755,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           kind: "danger" as const,
+
+
+
+
 
 
 
@@ -46387,7 +92771,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                             const abs = resolveAbsPathFromExplorerPath(explorerMenu.path);
+
+
+
+
 
 
 
@@ -46395,7 +92787,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                           },
+
+
+
+
 
 
 
@@ -46403,7 +92803,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                       ] as ContextMenuItem[])
+
+
+
+
 
 
 
@@ -46411,7 +92819,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                         { id: "closeFolder", label: "Close Folder", icon: <X className="h-4 w-4" />, onClick: () => void closeFolder() },
+
+
+
+
 
 
 
@@ -46419,7 +92835,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 ] as ContextMenuItem[])
+
+
+
+
 
 
 
@@ -46427,7 +92851,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   { id: "rename", label: "Rename...", icon: <Pencil className="h-4 w-4" />, onClick: () => void renameSelected() },
+
+
+
+
 
 
 
@@ -46435,7 +92867,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   { id: "sep-actions", kind: "sep" as const },
+
+
+
+
 
 
 
@@ -46443,7 +92883,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 ] as ContextMenuItem[])),
+
+
+
+
 
 
 
@@ -46451,7 +92899,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               id: "copyFullPath",
+
+
+
+
 
 
 
@@ -46459,7 +92915,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               icon: <Clipboard className="h-4 w-4" />,
+
+
+
+
 
 
 
@@ -46467,7 +92931,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 const abs = resolveAbsPathFromExplorerPath(explorerMenu.path);
+
+
+
+
 
 
 
@@ -46475,7 +92947,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               },
+
+
+
+
 
 
 
@@ -46483,7 +92963,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           ] as ContextMenuItem[])}
+
+
+
+
 
 
 
@@ -46491,7 +92979,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
       ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -46503,7 +93003,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         <div
+
+
+
+
 
 
 
@@ -46511,7 +93019,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
           style={{
+
+
+
+
 
 
 
@@ -46519,7 +93035,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
             top: wsTooltip.y,
+
+
+
+
 
 
 
@@ -46527,7 +93051,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
               wsTooltip.placement === "above"
+
+
+
+
 
 
 
@@ -46535,7 +93067,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   ? "translate(-100%, -110%)"
+
+
+
+
 
 
 
@@ -46543,7 +93083,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                 : wsTooltip.align === "tr"
+
+
+
+
 
 
 
@@ -46551,7 +93099,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
                   : "translate(0, 10%)",
+
+
+
+
 
 
 
@@ -46559,7 +93115,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         >
+
+
+
+
 
 
 
@@ -46567,7 +93131,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -46575,7 +93147,15 @@ export default function AppShell() {
 
 
 
+
+
+
+
     </div>
+
+
+
+
 
 
 
@@ -46583,7 +93163,19 @@ export default function AppShell() {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -46595,7 +93187,15 @@ function isSubsequence(needle: string, haystack: string): boolean {
 
 
 
+
+
+
+
   let i = 0;
+
+
+
+
 
 
 
@@ -46603,7 +93203,15 @@ function isSubsequence(needle: string, haystack: string): boolean {
 
 
 
+
+
+
+
     if (haystack[j] === needle[i]) i++;
+
+
+
+
 
 
 
@@ -46611,11 +93219,27 @@ function isSubsequence(needle: string, haystack: string): boolean {
 
 
 
+
+
+
+
   return i === needle.length;
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -46627,7 +93251,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
   query: string;
+
+
+
+
 
 
 
@@ -46635,7 +93267,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
   files: string[];
+
+
+
+
 
 
 
@@ -46643,7 +93283,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
   setIndex: (v: number) => void;
+
+
+
+
 
 
 
@@ -46651,7 +93299,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
   onClose: () => void;
+
+
+
+
 
 
 
@@ -46659,7 +93315,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
 }) {
+
+
+
+
 
 
 
@@ -46671,11 +93335,27 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
+
+
+
+
   const list = useMemo(() => {
 
 
 
+
+
+
+
     if (!props.files.length) return [] as string[];
+
+
+
+
 
 
 
@@ -46687,7 +93367,19 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
+
+
+
+
     const out: string[] = [];
+
+
+
+
 
 
 
@@ -46695,7 +93387,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
       const lf = f.toLowerCase();
+
+
+
+
 
 
 
@@ -46703,7 +93403,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
         out.push(f);
+
+
+
+
 
 
 
@@ -46711,7 +93419,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -46719,7 +93435,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
     return out;
+
+
+
+
 
 
 
@@ -46731,7 +93455,19 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -46739,11 +93475,23 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
       if (e.key === "ArrowDown") {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -46751,7 +93499,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -46759,7 +93515,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -46767,7 +93531,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -46775,7 +93547,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -46783,7 +93563,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
         if (p) props.onPick(p);
+
+
+
+
 
 
 
@@ -46791,7 +93579,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -46799,7 +93595,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
     return () => window.removeEventListener("keydown", onKeyDown);
+
+
+
+
 
 
 
@@ -46811,7 +93615,19 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -46819,7 +93635,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
       <div
+
+
+
+
 
 
 
@@ -46827,7 +93651,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
         onMouseDown={(e) => e.stopPropagation()}
+
+
+
+
 
 
 
@@ -46835,7 +93667,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
         <div className="border-b border-border p-3">
+
+
+
+
 
 
 
@@ -46843,7 +93683,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
             className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted"
+
+
+
+
 
 
 
@@ -46851,7 +93699,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
             autoFocus
+
+
+
+
 
 
 
@@ -46859,7 +93715,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
             onChange={(e) => props.setQuery(e.currentTarget.value)}
+
+
+
+
 
 
 
@@ -46867,7 +93731,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
           <div className="mt-2 text-xs text-muted">
+
+
+
+
 
 
 
@@ -46875,11 +93747,23 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
           </div>
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -46887,7 +93771,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
           {list.length ? (
+
+
+
+
 
 
 
@@ -46895,7 +93787,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
               <button
+
+
+
+
 
 
 
@@ -46903,7 +93803,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
                 type="button"
+
+
+
+
 
 
 
@@ -46911,7 +93819,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
                   i === props.index ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+
+
+
+
 
 
 
@@ -46919,7 +93835,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
                 onMouseEnter={() => props.setIndex(i)}
+
+
+
+
 
 
 
@@ -46927,7 +93851,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
               >
+
+
+
+
 
 
 
@@ -46935,7 +93867,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
                   {(() => {
+
+
+
+
 
 
 
@@ -46943,7 +93883,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
                     return <Icon className="h-4 w-4 shrink-0" />;
+
+
+
+
 
 
 
@@ -46951,7 +93899,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
                   <span className="min-w-0 flex-1 truncate">{p}</span>
+
+
+
+
 
 
 
@@ -46959,7 +93915,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
               </button>
+
+
+
+
 
 
 
@@ -46967,7 +93931,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
           ) : (
+
+
+
+
 
 
 
@@ -46975,7 +93947,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
           )}
+
+
+
+
 
 
 
@@ -46983,7 +93963,15 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
       </div>
+
+
+
+
 
 
 
@@ -46991,11 +93979,27 @@ function QuickOpen(props: {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -47007,7 +94011,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
   value: string;
+
+
+
+
 
 
 
@@ -47015,7 +94027,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
   onClose: () => void;
+
+
+
+
 
 
 
@@ -47023,7 +94043,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
 }) {
+
+
+
+
 
 
 
@@ -47031,7 +94059,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
     const onKeyDown = (e: KeyboardEvent) => {
+
+
+
+
 
 
 
@@ -47039,7 +94075,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -47047,7 +94091,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
         if (Number.isFinite(n) && n > 0) props.onGo(n);
+
+
+
+
 
 
 
@@ -47055,7 +94107,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -47063,7 +94123,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
     return () => window.removeEventListener("keydown", onKeyDown);
+
+
+
+
 
 
 
@@ -47075,7 +94143,19 @@ function GoToLine(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -47083,7 +94163,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
       <div
+
+
+
+
 
 
 
@@ -47091,7 +94179,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
         onMouseDown={(e) => e.stopPropagation()}
+
+
+
+
 
 
 
@@ -47099,7 +94195,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
         <div className="border-b border-border p-3">
+
+
+
+
 
 
 
@@ -47107,7 +94211,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
           <input
+
+
+
+
 
 
 
@@ -47115,7 +94227,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
             placeholder="Line number"
+
+
+
+
 
 
 
@@ -47123,7 +94243,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
             value={props.value}
+
+
+
+
 
 
 
@@ -47131,11 +94259,23 @@ function GoToLine(props: {
 
 
 
+
+
+
+
           />
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -47143,7 +94283,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
           <button
+
+
+
+
 
 
 
@@ -47151,7 +94299,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
             className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-muted hover:border-accent hover:text-text"
+
+
+
+
 
 
 
@@ -47159,7 +94315,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
               const n = Number.parseInt(props.value.trim(), 10);
+
+
+
+
 
 
 
@@ -47167,7 +94331,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
             }}
+
+
+
+
 
 
 
@@ -47175,7 +94347,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
             Go
+
+
+
+
 
 
 
@@ -47183,7 +94363,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -47191,7 +94379,15 @@ function GoToLine(props: {
 
 
 
+
+
+
+
     </div>
+
+
+
+
 
 
 
@@ -47199,7 +94395,19 @@ function GoToLine(props: {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -47211,7 +94419,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
   title: string;
+
+
+
+
 
 
 
@@ -47219,7 +94435,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
   inputLabel?: string;
+
+
+
+
 
 
 
@@ -47227,7 +94451,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
   value: string;
+
+
+
+
 
 
 
@@ -47235,7 +94467,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
   extensions?: string[];
+
+
+
+
 
 
 
@@ -47243,7 +94483,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
   enforceExtension?: boolean;
+
+
+
+
 
 
 
@@ -47251,7 +94499,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
   onSubmit: (value: string) => void;
+
+
+
+
 
 
 
@@ -47259,7 +94515,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
   const extensions = useMemo(() => {
+
+
+
+
 
 
 
@@ -47267,7 +94531,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     return Array.from(new Set(exts));
+
+
+
+
 
 
 
@@ -47279,7 +94551,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
   const inferExtFromValue = useCallback(
+
+
+
+
 
 
 
@@ -47287,7 +94571,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       const val = String(v || "").trim();
+
+
+
+
 
 
 
@@ -47295,7 +94587,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       const m = base.match(/\.([a-zA-Z0-9]+)$/);
+
+
+
+
 
 
 
@@ -47303,7 +94603,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       const ext = m[1].toLowerCase();
+
+
+
+
 
 
 
@@ -47311,7 +94619,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       return ext;
+
+
+
+
 
 
 
@@ -47319,11 +94635,27 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     [extensions]
 
 
 
+
+
+
+
   );
+
+
+
+
+
+
+
+
 
 
 
@@ -47335,7 +94667,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     const fromValue = inferExtFromValue(props.value);
+
+
+
+
 
 
 
@@ -47343,7 +94683,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     const def = String(props.defaultExtension || "").trim().replace(/^\./, "").toLowerCase();
+
+
+
+
 
 
 
@@ -47351,7 +94699,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     return extensions[0] ?? "";
+
+
+
+
 
 
 
@@ -47363,7 +94719,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -47371,7 +94739,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     if (fromValue) {
+
+
+
+
 
 
 
@@ -47379,11 +94755,23 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       return;
 
 
 
+
+
+
+
     }
+
+
+
+
 
 
 
@@ -47391,7 +94779,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     if (def && (!extensions.length || extensions.includes(def))) {
+
+
+
+
 
 
 
@@ -47399,7 +94795,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       return;
+
+
+
+
 
 
 
@@ -47407,7 +94811,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     if (extensions.length && !selectedExt) setSelectedExt(extensions[0]!);
+
+
+
+
 
 
 
@@ -47419,7 +94831,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
   const normalize = useCallback(
+
+
+
+
 
 
 
@@ -47427,7 +94851,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       const trimmed = String(raw || "").trim();
+
+
+
+
 
 
 
@@ -47439,7 +94871,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
       const norm = trimmed.replace(/\\/g, "/");
+
+
+
+
 
 
 
@@ -47451,11 +94895,27 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
       const base = norm.split("/").pop() ?? "";
 
 
 
+
+
+
+
       const hasExt = /\.[a-zA-Z0-9]+$/.test(base);
+
+
+
+
 
 
 
@@ -47467,7 +94927,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
       if (props.enforceExtension) {
+
+
+
+
 
 
 
@@ -47475,7 +94947,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
+
+
+
+
 
 
 
@@ -47487,11 +94971,23 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     },
 
 
 
+
+
+
+
     [extensions.length, props.enforceExtension, selectedExt]
+
+
+
+
 
 
 
@@ -47503,7 +94999,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -47511,11 +95019,23 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       if (e.key === "Escape") {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -47523,7 +95043,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -47531,7 +95059,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -47539,7 +95075,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
         if (v) props.onSubmit(v);
+
+
+
+
 
 
 
@@ -47547,7 +95091,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -47555,7 +95107,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
     return () => window.removeEventListener("keydown", onKeyDown);
+
+
+
+
 
 
 
@@ -47567,7 +95127,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
   const normalizedPreview = normalize(props.value);
+
+
+
+
 
 
 
@@ -47579,7 +95151,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -47587,7 +95171,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       <div
+
+
+
+
 
 
 
@@ -47595,7 +95187,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
         onMouseDown={(e) => e.stopPropagation()}
+
+
+
+
 
 
 
@@ -47603,7 +95203,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
         <div className="border-b border-border p-4">
+
+
+
+
 
 
 
@@ -47611,7 +95219,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             <div className="min-w-0">
+
+
+
+
 
 
 
@@ -47619,7 +95235,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
               {props.subtitle ? <div className="mt-0.5 text-xs text-muted">{props.subtitle}</div> : null}
+
+
+
+
 
 
 
@@ -47627,7 +95251,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             <button type="button" className="ws-icon-btn" onClick={props.onClose} aria-label="Close">
+
+
+
+
 
 
 
@@ -47635,7 +95267,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             </button>
+
+
+
+
 
 
 
@@ -47643,7 +95283,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -47655,7 +95307,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
           <div className="text-xs font-medium text-muted">{props.inputLabel ?? "File name (relative)"}</div>
+
+
+
+
 
 
 
@@ -47663,7 +95323,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             <input
+
+
+
+
 
 
 
@@ -47671,7 +95339,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
               placeholder={props.placeholder ?? "folder/file"}
+
+
+
+
 
 
 
@@ -47679,7 +95355,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
               value={props.value}
+
+
+
+
 
 
 
@@ -47687,7 +95371,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             />
+
+
+
+
 
 
 
@@ -47695,7 +95387,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
               <div className="flex h-10 items-center gap-2 rounded-xl border border-border bg-bg px-3">
+
+
+
+
 
 
 
@@ -47703,7 +95403,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
                 <select
+
+
+
+
 
 
 
@@ -47711,7 +95419,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
                   value={selectedExt}
+
+
+
+
 
 
 
@@ -47719,7 +95435,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
                 >
+
+
+
+
 
 
 
@@ -47727,7 +95451,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
                     <option key={ext} value={ext}>
+
+
+
+
 
 
 
@@ -47735,7 +95467,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
                     </option>
+
+
+
+
 
 
 
@@ -47743,7 +95483,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
                 </select>
+
+
+
+
 
 
 
@@ -47751,11 +95499,27 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             ) : null}
 
 
 
+
+
+
+
           </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -47767,7 +95531,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             {isValid ? (
+
+
+
+
 
 
 
@@ -47775,7 +95547,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
                 Will save as <span className="text-text">{normalizedPreview}</span>
+
+
+
+
 
 
 
@@ -47783,7 +95563,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             ) : (
+
+
+
+
 
 
 
@@ -47791,7 +95579,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             )}
+
+
+
+
 
 
 
@@ -47799,7 +95595,19 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -47811,7 +95619,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
           <div className="text-xs text-muted">Enter to confirm • Esc to cancel</div>
+
+
+
+
 
 
 
@@ -47819,11 +95635,23 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
           <button
 
 
 
+
+
+
+
             type="button"
+
+
+
+
 
 
 
@@ -47831,11 +95659,23 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             onClick={props.onClose}
 
 
 
+
+
+
+
           >
+
+
+
+
 
 
 
@@ -47843,7 +95683,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
           </button>
+
+
+
+
 
 
 
@@ -47851,7 +95699,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             type="button"
+
+
+
+
 
 
 
@@ -47859,7 +95715,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             className="ws-btn h-9 border border-accent bg-accent px-4 text-white hover:opacity-90 disabled:opacity-50"
+
+
+
+
 
 
 
@@ -47867,7 +95731,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
               const v = normalize(props.value);
+
+
+
+
 
 
 
@@ -47875,7 +95747,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             }}
+
+
+
+
 
 
 
@@ -47883,7 +95763,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
             OK
+
+
+
+
 
 
 
@@ -47891,7 +95779,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
           </div>
+
+
+
+
 
 
 
@@ -47899,7 +95795,15 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
       </div>
+
+
+
+
 
 
 
@@ -47907,11 +95811,27 @@ function SavePathDialog(props: {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -47923,7 +95843,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
   id: ActivityId;
+
+
+
+
 
 
 
@@ -47931,7 +95859,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
   onClick: (id: ActivityId) => void;
+
+
+
+
 
 
 
@@ -47939,7 +95875,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
 }) {
+
+
+
+
 
 
 
@@ -47947,7 +95891,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -47955,7 +95907,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
       type="button"
+
+
+
+
 
 
 
@@ -47963,7 +95923,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
         active ? "bg-panel2 text-text" : "bg-panel text-muted hover:bg-panel2 hover:text-text"
+
+
+
+
 
 
 
@@ -47971,7 +95939,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
       onClick={() => onClick(id)}
+
+
+
+
 
 
 
@@ -47979,7 +95955,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
     >
+
+
+
+
 
 
 
@@ -47987,7 +95971,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
         aria-hidden
+
+
+
+
 
 
 
@@ -47995,7 +95987,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
           active ? "opacity-100" : "opacity-0"
+
+
+
+
 
 
 
@@ -48003,7 +96003,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
       />
+
+
+
+
 
 
 
@@ -48011,7 +96019,15 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
     </button>
+
+
+
+
 
 
 
@@ -48019,7 +96035,19 @@ function ActivityButton(props: {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -48031,7 +96059,15 @@ function Panel(props: { title: string; children: React.ReactNode }) {
 
 
 
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -48039,7 +96075,15 @@ function Panel(props: { title: string; children: React.ReactNode }) {
 
 
 
+
+
+
+
       <div className="bg-panel px-3 py-2 text-xs font-normal text-muted">
+
+
+
+
 
 
 
@@ -48047,7 +96091,15 @@ function Panel(props: { title: string; children: React.ReactNode }) {
 
 
 
+
+
+
+
       </div>
+
+
+
+
 
 
 
@@ -48055,7 +96107,15 @@ function Panel(props: { title: string; children: React.ReactNode }) {
 
 
 
+
+
+
+
     </div>
+
+
+
+
 
 
 
@@ -48063,7 +96123,19 @@ function Panel(props: { title: string; children: React.ReactNode }) {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -48075,7 +96147,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   workspaceRoot: string | null;
+
+
+
+
 
 
 
@@ -48083,7 +96163,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   explorer: Record<string, DirEntryInfo[]>;
+
+
+
+
 
 
 
@@ -48091,7 +96179,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   selectedPath: string | null;
+
+
+
+
 
 
 
@@ -48099,7 +96195,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   inlineRenameValue: string;
+
+
+
+
 
 
 
@@ -48107,7 +96211,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   onInlineRenameCommit: () => void;
+
+
+
+
 
 
 
@@ -48115,7 +96227,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   onContextMenu: (info: { x: number; y: number; path: string; isDir: boolean }) => void;
+
+
+
+
 
 
 
@@ -48123,7 +96243,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   hideTooltip: () => void;
+
+
+
+
 
 
 
@@ -48131,7 +96259,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   onOpenStandaloneFile: () => void;
+
+
+
+
 
 
 
@@ -48139,7 +96275,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   onToggleDir: (dir: string) => void;
+
+
+
+
 
 
 
@@ -48147,7 +96291,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   onOpenFile: (p: string) => void;
+
+
+
+
 
 
 
@@ -48155,7 +96307,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   onCreateNewFolder: () => void;
+
+
+
+
 
 
 
@@ -48163,7 +96323,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   if (!props.workspaceRoot) {
+
+
+
+
 
 
 
@@ -48171,7 +96339,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
       <Panel title="Explorer">
+
+
+
+
 
 
 
@@ -48179,7 +96355,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           title="No folder open"
+
+
+
+
 
 
 
@@ -48187,7 +96371,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           onOpenFolder={props.onOpenFolder}
+
+
+
+
 
 
 
@@ -48195,7 +96387,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           recentWorkspaces={props.recent}
+
+
+
+
 
 
 
@@ -48203,7 +96403,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           onOpenRecentWorkspace={props.onOpenRecent}
+
+
+
+
 
 
 
@@ -48211,7 +96419,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           onOpenChat={undefined}
+
+
+
+
 
 
 
@@ -48219,7 +96435,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           onCreateNewFile={undefined}
+
+
+
+
 
 
 
@@ -48227,7 +96451,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           compact
+
+
+
+
 
 
 
@@ -48235,7 +96467,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
       </Panel>
+
+
+
+
 
 
 
@@ -48243,7 +96483,19 @@ function Explorer(props: {
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -48255,7 +96507,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
   const isMultiRoot = rootEntries.some((e) => String(e.path || "").startsWith("__wsroot__/"));
+
+
+
+
 
 
 
@@ -48263,7 +96523,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
     path: "",
+
+
+
+
 
 
 
@@ -48271,7 +96539,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
     is_dir: true,
+
+
+
+
 
 
 
@@ -48283,7 +96559,19 @@ function Explorer(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -48291,7 +96579,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
       <div className="flex items-center justify-between border-border bg-panel px-3 py-2">
+
+
+
+
 
 
 
@@ -48299,7 +96595,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
         <div className="flex items-center gap-1">
+
+
+
+
 
 
 
@@ -48307,11 +96611,23 @@ function Explorer(props: {
 
 
 
+
+
+
+
             type="button"
 
 
 
+
+
+
+
             className="ws-icon-btn"
+
+
+
+
 
 
 
@@ -48319,7 +96635,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           >
+
+
+
+
 
 
 
@@ -48327,7 +96651,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           </button>
+
+
+
+
 
 
 
@@ -48335,7 +96667,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
             type="button"
+
+
+
+
 
 
 
@@ -48343,7 +96683,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
             onClick={props.onRefresh}
+
+
+
+
 
 
 
@@ -48351,7 +96699,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
             <RotateCw className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -48359,11 +96715,27 @@ function Explorer(props: {
 
 
 
+
+
+
+
         </div>
 
 
 
+
+
+
+
       </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -48375,7 +96747,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
         <Tree
+
+
+
+
 
 
 
@@ -48383,7 +96763,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           depth={0}
+
+
+
+
 
 
 
@@ -48391,7 +96779,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           explorer={props.explorer}
+
+
+
+
 
 
 
@@ -48399,7 +96795,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           selectedPath={props.selectedPath}
+
+
+
+
 
 
 
@@ -48407,7 +96811,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           inlineRenameValue={props.inlineRenameValue}
+
+
+
+
 
 
 
@@ -48415,7 +96827,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           onInlineRenameCommit={props.onInlineRenameCommit}
+
+
+
+
 
 
 
@@ -48423,7 +96843,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           onContextMenu={props.onContextMenu}
+
+
+
+
 
 
 
@@ -48431,7 +96859,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           showTooltipForEl={props.showTooltipForEl}
+
+
+
+
 
 
 
@@ -48439,7 +96875,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           onToggleDir={props.onToggleDir}
+
+
+
+
 
 
 
@@ -48447,7 +96891,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
           onOpenFile={props.onOpenFile}
+
+
+
+
 
 
 
@@ -48455,7 +96907,15 @@ function Explorer(props: {
 
 
 
+
+
+
+
       </div>
+
+
+
+
 
 
 
@@ -48463,11 +96923,27 @@ function Explorer(props: {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -48479,7 +96955,15 @@ function Tree(props: {
 
 
 
+
+
+
+
   prefix: string;
+
+
+
+
 
 
 
@@ -48487,7 +96971,15 @@ function Tree(props: {
 
 
 
+
+
+
+
   entries: DirEntryInfo[];
+
+
+
+
 
 
 
@@ -48495,7 +96987,15 @@ function Tree(props: {
 
 
 
+
+
+
+
   expandedDirs: Set<string>;
+
+
+
+
 
 
 
@@ -48503,7 +97003,15 @@ function Tree(props: {
 
 
 
+
+
+
+
   inlineRenamePath: string | null;
+
+
+
+
 
 
 
@@ -48511,7 +97019,15 @@ function Tree(props: {
 
 
 
+
+
+
+
   onInlineRenameValue: (v: string) => void;
+
+
+
+
 
 
 
@@ -48519,7 +97035,15 @@ function Tree(props: {
 
 
 
+
+
+
+
   onInlineRenameCancel: () => void;
+
+
+
+
 
 
 
@@ -48527,7 +97051,15 @@ function Tree(props: {
 
 
 
+
+
+
+
   workspaceRoot: string | null;
+
+
+
+
 
 
 
@@ -48535,7 +97067,15 @@ function Tree(props: {
 
 
 
+
+
+
+
   hideTooltip: () => void;
+
+
+
+
 
 
 
@@ -48543,7 +97083,15 @@ function Tree(props: {
 
 
 
+
+
+
+
   onSelect: (p: string) => void;
+
+
+
+
 
 
 
@@ -48551,7 +97099,15 @@ function Tree(props: {
 
 
 
+
+
+
+
 }) {
+
+
+
+
 
 
 
@@ -48563,7 +97119,19 @@ function Tree(props: {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -48571,7 +97139,15 @@ function Tree(props: {
 
 
 
+
+
+
+
       if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+
+
+
+
 
 
 
@@ -48579,7 +97155,15 @@ function Tree(props: {
 
 
 
+
+
+
+
     };
+
+
+
+
 
 
 
@@ -48591,7 +97175,19 @@ function Tree(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -48599,7 +97195,15 @@ function Tree(props: {
 
 
 
+
+
+
+
       {props.entries.map((e) => {
+
+
+
+
 
 
 
@@ -48607,7 +97211,15 @@ function Tree(props: {
 
 
 
+
+
+
+
         const isSelected = props.selectedPath === e.path;
+
+
+
+
 
 
 
@@ -48615,7 +97227,15 @@ function Tree(props: {
 
 
 
+
+
+
+
           ? "bg-[rgb(var(--p-panel2))] text-text shadow-sm"
+
+
+
+
 
 
 
@@ -48623,7 +97243,15 @@ function Tree(props: {
 
 
 
+
+
+
+
         if (e.is_dir) {
+
+
+
+
 
 
 
@@ -48631,7 +97259,15 @@ function Tree(props: {
 
 
 
+
+
+
+
           const children = props.explorer[e.path] ?? [];
+
+
+
+
 
 
 
@@ -48639,7 +97275,15 @@ function Tree(props: {
 
 
 
+
+
+
+
           return (
+
+
+
+
 
 
 
@@ -48647,7 +97291,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               <button
+
+
+
+
 
 
 
@@ -48655,7 +97307,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 className={`group relative flex w-full items-center gap-2 rounded-none pr-2 py-1 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
+
+
+
+
 
 
 
@@ -48663,11 +97323,23 @@ function Tree(props: {
 
 
 
+
+
+
+
                 onClick={() => {
 
 
 
+
+
+
+
                   props.onSelect(e.path);
+
+
+
+
 
 
 
@@ -48675,7 +97347,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 }}
+
+
+
+
 
 
 
@@ -48683,7 +97363,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   ev.preventDefault();
+
+
+
+
 
 
 
@@ -48691,7 +97379,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   props.onContextMenu({ x: ev.clientX, y: ev.clientY, path: e.path, isDir: true });
+
+
+
+
 
 
 
@@ -48699,7 +97395,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               >
+
+
+
+
 
 
 
@@ -48707,11 +97411,23 @@ function Tree(props: {
 
 
 
+
+
+
+
                   className={`h-4 w-4 shrink-0 text-muted transition-transform duration-150 group-hover:text-text ${isExpanded ? "rotate-90" : ""}`}
 
 
 
+
+
+
+
                 />
+
+
+
+
 
 
 
@@ -48719,7 +97435,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   <FolderOpen className="h-4 w-4 shrink-0 text-muted group-hover:text-text" />
+
+
+
+
 
 
 
@@ -48727,7 +97451,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   <Folder className="h-4 w-4 shrink-0 text-muted group-hover:text-text" />
+
+
+
+
 
 
 
@@ -48735,7 +97467,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 <span className={`relative top-[0.5px] truncate ${isRoot ? "font-medium text-text" : ""}`}>{e.name}</span>
+
+
+
+
 
 
 
@@ -48743,7 +97483,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               {isExpanded ? (
+
+
+
+
 
 
 
@@ -48751,7 +97499,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   prefix={e.path}
+
+
+
+
 
 
 
@@ -48759,7 +97515,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   entries={children}
+
+
+
+
 
 
 
@@ -48767,7 +97531,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   expandedDirs={props.expandedDirs}
+
+
+
+
 
 
 
@@ -48775,7 +97547,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   inlineRenamePath={props.inlineRenamePath}
+
+
+
+
 
 
 
@@ -48783,7 +97563,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   onInlineRenameValue={props.onInlineRenameValue}
+
+
+
+
 
 
 
@@ -48791,7 +97579,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   onInlineRenameCancel={props.onInlineRenameCancel}
+
+
+
+
 
 
 
@@ -48799,7 +97595,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   workspaceRoot={props.workspaceRoot}
+
+
+
+
 
 
 
@@ -48807,7 +97611,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   hideTooltip={props.hideTooltip}
+
+
+
+
 
 
 
@@ -48815,7 +97627,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   onSelect={props.onSelect}
+
+
+
+
 
 
 
@@ -48823,7 +97643,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 />
+
+
+
+
 
 
 
@@ -48831,7 +97659,15 @@ function Tree(props: {
 
 
 
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -48839,7 +97675,19 @@ function Tree(props: {
 
 
 
+
+
+
+
         }
+
+
+
+
+
+
+
+
 
 
 
@@ -48851,7 +97699,15 @@ function Tree(props: {
 
 
 
+
+
+
+
         if (props.inlineRenamePath === e.path) {
+
+
+
+
 
 
 
@@ -48859,7 +97715,15 @@ function Tree(props: {
 
 
 
+
+
+
+
             <div
+
+
+
+
 
 
 
@@ -48867,7 +97731,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               className={`group relative flex w-full items-center gap-2 rounded-none pr-2 py-1 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
+
+
+
+
 
 
 
@@ -48875,7 +97747,15 @@ function Tree(props: {
 
 
 
+
+
+
+
             >
+
+
+
+
 
 
 
@@ -48883,7 +97763,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               <Icon className="h-[18px] w-[18px] shrink-0 text-muted" />
+
+
+
+
 
 
 
@@ -48891,7 +97779,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 className="min-w-0 flex-1 rounded border border-border bg-bg px-1 py-0.5 text-[13px] text-text outline-none focus-visible:border-accent"
+
+
+
+
 
 
 
@@ -48899,7 +97795,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 value={props.inlineRenameValue}
+
+
+
+
 
 
 
@@ -48907,7 +97811,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 onFocus={(ev) => {
+
+
+
+
 
 
 
@@ -48915,7 +97827,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                   const dot = v.lastIndexOf(".");
+
+
+
+
 
 
 
@@ -48923,7 +97843,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                     ev.currentTarget.setSelectionRange(0, dot);
+
+
+
+
 
 
 
@@ -48931,7 +97859,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                     ev.currentTarget.select();
+
+
+
+
 
 
 
@@ -48939,7 +97875,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 }}
+
+
+
+
 
 
 
@@ -48947,11 +97891,23 @@ function Tree(props: {
 
 
 
+
+
+
+
                   if (ev.key === "Enter") {
 
 
 
+
+
+
+
                     ev.preventDefault();
+
+
+
+
 
 
 
@@ -48959,11 +97915,23 @@ function Tree(props: {
 
 
 
+
+
+
+
                     return;
 
 
 
+
+
+
+
                   }
+
+
+
+
 
 
 
@@ -48971,7 +97939,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                     ev.preventDefault();
+
+
+
+
 
 
 
@@ -48979,7 +97955,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                     return;
+
+
+
+
 
 
 
@@ -48987,7 +97971,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 }}
+
+
+
+
 
 
 
@@ -48995,7 +97987,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               />
+
+
+
+
 
 
 
@@ -49003,7 +98003,15 @@ function Tree(props: {
 
 
 
+
+
+
+
           );
+
+
+
+
 
 
 
@@ -49011,7 +98019,15 @@ function Tree(props: {
 
 
 
+
+
+
+
         return (
+
+
+
+
 
 
 
@@ -49019,7 +98035,15 @@ function Tree(props: {
 
 
 
+
+
+
+
             key={e.path}
+
+
+
+
 
 
 
@@ -49027,7 +98051,15 @@ function Tree(props: {
 
 
 
+
+
+
+
             className={`group relative flex w-full items-center gap-2 rounded-none pr-2 py-1 text-left text-[13px] leading-4 transition-all duration-150 ${rowCls}`}
+
+
+
+
 
 
 
@@ -49035,11 +98067,23 @@ function Tree(props: {
 
 
 
+
+
+
+
             onMouseEnter={(ev) => {
 
 
 
+
+
+
+
               if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+
+
+
+
 
 
 
@@ -49047,7 +98091,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 hoverTimerRef.current = null;
+
+
+
+
 
 
 
@@ -49055,7 +98107,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 const root = props.workspaceRoot.replace(/\\/g, "/").replace(/\/$/, "");
+
+
+
+
 
 
 
@@ -49063,7 +98123,15 @@ function Tree(props: {
 
 
 
+
+
+
+
                 props.showTooltipForEl(ev.currentTarget, `${root}/${rel}`, "tl");
+
+
+
+
 
 
 
@@ -49071,7 +98139,15 @@ function Tree(props: {
 
 
 
+
+
+
+
             }}
+
+
+
+
 
 
 
@@ -49079,7 +98155,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+
+
+
+
 
 
 
@@ -49087,11 +98171,23 @@ function Tree(props: {
 
 
 
+
+
+
+
               props.hideTooltip();
 
 
 
+
+
+
+
             }}
+
+
+
+
 
 
 
@@ -49099,7 +98195,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+
+
+
+
 
 
 
@@ -49107,11 +98211,23 @@ function Tree(props: {
 
 
 
+
+
+
+
               props.hideTooltip();
 
 
 
+
+
+
+
             }}
+
+
+
+
 
 
 
@@ -49119,7 +98235,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               props.onSelect(e.path);
+
+
+
+
 
 
 
@@ -49127,7 +98251,15 @@ function Tree(props: {
 
 
 
+
+
+
+
             }}
+
+
+
+
 
 
 
@@ -49135,7 +98267,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               ev.preventDefault();
+
+
+
+
 
 
 
@@ -49143,7 +98283,15 @@ function Tree(props: {
 
 
 
+
+
+
+
               props.onContextMenu({ x: ev.clientX, y: ev.clientY, path: e.path, isDir: false });
+
+
+
+
 
 
 
@@ -49151,7 +98299,15 @@ function Tree(props: {
 
 
 
+
+
+
+
           >
+
+
+
+
 
 
 
@@ -49159,7 +98315,15 @@ function Tree(props: {
 
 
 
+
+
+
+
             <Icon className="h-[18px] w-[18px] shrink-0 text-muted group-hover:text-text" />
+
+
+
+
 
 
 
@@ -49167,7 +98331,15 @@ function Tree(props: {
 
 
 
+
+
+
+
           </button>
+
+
+
+
 
 
 
@@ -49175,7 +98347,15 @@ function Tree(props: {
 
 
 
+
+
+
+
       })}
+
+
+
+
 
 
 
@@ -49183,11 +98363,27 @@ function Tree(props: {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -49199,7 +98395,15 @@ type ContextMenuItem =
 
 
 
+
+
+
+
   | { id: string; kind?: "normal" | "danger"; label: string; icon?: React.ReactNode; onClick: () => void }
+
+
+
+
 
 
 
@@ -49211,7 +98415,19 @@ type ContextMenuItem =
 
 
 
+
+
+
+
+
+
+
+
 function ContextMenu(props: {
+
+
+
+
 
 
 
@@ -49219,7 +98435,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
   y: number;
+
+
+
+
 
 
 
@@ -49227,7 +98451,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
   items: ContextMenuItem[];
+
+
+
+
 
 
 
@@ -49235,7 +98467,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
   const rootRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -49247,11 +98487,27 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
 
 
 
+
+
+
+
     setPos({ x: props.x, y: props.y });
+
+
+
+
 
 
 
@@ -49263,7 +98519,19 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -49271,7 +98539,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
     if (!el) return;
+
+
+
+
 
 
 
@@ -49279,7 +98555,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
       const rect = el.getBoundingClientRect();
+
+
+
+
 
 
 
@@ -49287,7 +98571,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
       if (next.x !== pos.x || next.y !== pos.y) {
+
+
+
+
 
 
 
@@ -49295,7 +98587,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -49303,7 +98603,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
     return () => window.cancelAnimationFrame(raf);
+
+
+
+
 
 
 
@@ -49315,7 +98623,19 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -49323,7 +98643,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
       <div
+
+
+
+
 
 
 
@@ -49331,7 +98659,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
         style={{ left: pos.x, top: pos.y }}
+
+
+
+
 
 
 
@@ -49339,7 +98675,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
         ref={rootRef}
+
+
+
+
 
 
 
@@ -49347,7 +98691,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
         {props.items.map((it) => {
+
+
+
+
 
 
 
@@ -49355,7 +98707,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
             return <div key={it.id} className="my-1 h-px bg-border/70" />;
+
+
+
+
 
 
 
@@ -49363,7 +98723,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
           const item = it as { id: string; kind?: "normal" | "danger"; label: string; icon?: React.ReactNode; onClick: () => void };
+
+
+
+
 
 
 
@@ -49371,7 +98739,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
           return (
+
+
+
+
 
 
 
@@ -49379,7 +98755,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
               key={item.id}
+
+
+
+
 
 
 
@@ -49387,7 +98771,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
               className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-[13px] leading-4 ${
+
+
+
+
 
 
 
@@ -49395,7 +98787,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
                   ? "text-red-300 hover:bg-bg hover:text-red-200"
+
+
+
+
 
 
 
@@ -49403,7 +98803,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
               }`}
+
+
+
+
 
 
 
@@ -49411,7 +98819,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
                 item.onClick();
+
+
+
+
 
 
 
@@ -49419,7 +98835,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
               }}
+
+
+
+
 
 
 
@@ -49427,7 +98851,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
               <span className="flex min-w-0 items-center gap-2">
+
+
+
+
 
 
 
@@ -49435,7 +98867,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
                 <span className="truncate">{item.label}</span>
+
+
+
+
 
 
 
@@ -49443,7 +98883,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
             </button>
+
+
+
+
 
 
 
@@ -49451,7 +98899,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
         })}
+
+
+
+
 
 
 
@@ -49459,7 +98915,15 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
     </div>
+
+
+
+
 
 
 
@@ -49467,7 +98931,19 @@ function ContextMenu(props: {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -49479,7 +98955,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
   tab: EditorTab;
+
+
+
+
 
 
 
@@ -49487,7 +98971,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
   active: boolean;
+
+
+
+
 
 
 
@@ -49495,7 +98987,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
   onClose: () => void;
+
+
+
+
 
 
 
@@ -49503,7 +99003,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
   const Icon = fileIconFor(props.tab.path);
+
+
+
+
 
 
 
@@ -49511,11 +99019,23 @@ function TabButton(props: {
 
 
 
+
+
+
+
     <div className="relative">
 
 
 
+
+
+
+
       <div
+
+
+
+
 
 
 
@@ -49524,19 +99044,40 @@ function TabButton(props: {
 
 
 
+
+
+
+
+
           props.singleMode
+
+
 
             ? props.active
 
+
+
               ? "bg-transparent text-text"
+
+
 
               : "text-muted hover:bg-transparent hover:text-text"
 
+
+
             : props.active
+
+
 
               ? "bg-bg text-text"
 
+
+
               : "text-muted hover:bg-bg hover:text-text"
+
+
+
+
 
 
 
@@ -49544,7 +99085,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
         onClick={props.onActivate}
+
+
+
+
 
 
 
@@ -49552,7 +99101,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
         tabIndex={0}
+
+
+
+
 
 
 
@@ -49560,7 +99117,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
           if (e.key === "Enter") props.onActivate();
+
+
+
+
 
 
 
@@ -49568,7 +99133,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
       >
+
+
+
+
 
 
 
@@ -49576,7 +99149,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
         <span className="min-w-0 flex-1 truncate">{props.tab.name}</span>
+
+
+
+
 
 
 
@@ -49584,7 +99165,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
         <button
+
+
+
+
 
 
 
@@ -49592,7 +99181,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
           className="ml-1 rounded p-0.5 text-muted opacity-0 hover:bg-panel hover:text-text group-hover:opacity-100"
+
+
+
+
 
 
 
@@ -49600,7 +99197,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
             e.stopPropagation();
+
+
+
+
 
 
 
@@ -49608,7 +99213,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
           }}
+
+
+
+
 
 
 
@@ -49616,7 +99229,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
           <X className="h-3.5 w-3.5" />
+
+
+
+
 
 
 
@@ -49624,7 +99245,15 @@ function TabButton(props: {
 
 
 
+
+
+
+
       </div>
+
+
+
+
 
 
 
@@ -49632,11 +99261,27 @@ function TabButton(props: {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -49648,7 +99293,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   recentWorkspaces: string[];
+
+
+
+
 
 
 
@@ -49656,7 +99309,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   onOpenFolder: () => void;
+
+
+
+
 
 
 
@@ -49664,7 +99325,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   onCreateNewFile?: () => void;
+
+
+
+
 
 
 
@@ -49672,7 +99341,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   onOpenRecentFile?: (p: string) => void;
+
+
+
+
 
 
 
@@ -49680,7 +99357,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   onOpenCommandPalette?: () => void;
+
+
+
+
 
 
 
@@ -49688,7 +99373,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   shortcutOpenFile?: string;
+
+
+
+
 
 
 
@@ -49696,7 +99389,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   shortcutOpenCommandPalette?: string;
+
+
+
+
 
 
 
@@ -49704,7 +99405,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   subtitle?: string;
+
+
+
+
 
 
 
@@ -49712,7 +99421,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   compact?: boolean;
+
+
+
+
 
 
 
@@ -49720,11 +99437,23 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
 }) {
 
 
 
+
+
+
+
   const isCompact = !!props.compact;
+
+
+
+
 
 
 
@@ -49736,11 +99465,27 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
   const title = props.title ?? "POMPORA";
 
 
 
+
+
+
+
   const subtitle = props.subtitle ?? "Getting started with Pompora";
+
+
+
+
 
 
 
@@ -49752,7 +99497,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
   const recentFiles = (props.recentFiles ?? []).filter((x) => typeof x === "string");
+
+
+
+
 
 
 
@@ -49764,7 +99521,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
   const renderFileLabel = (p: string): { name: string; detail: string } => {
+
+
+
+
 
 
 
@@ -49772,11 +99541,23 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
     const name = basename(norm);
 
 
 
+
+
+
+
     return { name, detail: norm };
+
+
+
+
 
 
 
@@ -49788,7 +99569,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -49796,7 +99589,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
       {!isCompact ? (
+
+
+
+
 
 
 
@@ -49804,7 +99605,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
           className="pointer-events-none absolute inset-0 h-full w-full"
+
+
+
+
 
 
 
@@ -49812,7 +99621,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
           preserveAspectRatio="none"
+
+
+
+
 
 
 
@@ -49820,7 +99637,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
         >
+
+
+
+
 
 
 
@@ -49828,7 +99653,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
             <radialGradient id="pomporaDotsFade" cx="62%" cy="46%" r="78%">
+
+
+
+
 
 
 
@@ -49836,11 +99669,23 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
               <stop offset="55%" stopColor="white" stopOpacity="0.35" />
 
 
 
+
+
+
+
               <stop offset="100%" stopColor="white" stopOpacity="0" />
+
+
+
+
 
 
 
@@ -49852,11 +99697,27 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
             <mask id="pomporaDotsMask">
 
 
 
+
+
+
+
               <rect width="1200" height="720" fill="url(#pomporaDotsFade)" />
+
+
+
+
 
 
 
@@ -49868,7 +99729,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
             <pattern id="pomporaDots" width="180" height="180" patternUnits="userSpaceOnUse">
+
+
+
+
 
 
 
@@ -49876,7 +99749,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
               <circle cx="86" cy="62" r="1.6" fill="rgb(var(--p-muted))" fillOpacity="0.16" />
+
+
+
+
 
 
 
@@ -49884,11 +99765,23 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
               <circle cx="58" cy="134" r="1" fill="rgb(var(--p-muted))" fillOpacity="0.12" />
 
 
 
+
+
+
+
               <circle cx="132" cy="128" r="1.8" fill="rgb(var(--p-muted))" fillOpacity="0.18" />
+
+
+
+
 
 
 
@@ -49900,7 +99793,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
               <circle cx="40" cy="92" r="0.9" fill="rgb(var(--p-muted))" fillOpacity="0.1" />
+
+
+
+
 
 
 
@@ -49908,11 +99813,23 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
               <circle cx="164" cy="84" r="0.9" fill="rgb(var(--p-muted))" fillOpacity="0.1" />
 
 
 
+
+
+
+
             </pattern>
+
+
+
+
 
 
 
@@ -49924,7 +99841,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
           <g mask="url(#pomporaDotsMask)">
+
+
+
+
 
 
 
@@ -49932,11 +99861,23 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
           </g>
 
 
 
+
+
+
+
         </svg>
+
+
+
+
 
 
 
@@ -49948,7 +99889,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
       <div className={`relative z-10 flex h-full w-full flex-col items-center justify-center`}>
+
+
+
+
 
 
 
@@ -49956,7 +99909,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
           <div className={`mx-auto w-full ${isCompact ? "max-w-none" : "max-w-[760px]"}`}>
+
+
+
+
 
 
 
@@ -49964,7 +99925,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
               <div
+
+
+
+
 
 
 
@@ -49972,7 +99941,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   isCompact
+
+
+
+
 
 
 
@@ -49980,7 +99957,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     : `${useBrandFont ? "ws-brand-title" : ""} text-5xl md:text-6xl`.trim()
+
+
+
+
 
 
 
@@ -49988,7 +99973,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
               >
+
+
+
+
 
 
 
@@ -49996,7 +99989,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   <img
+
+
+
+
 
 
 
@@ -50004,7 +100005,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     alt="Pompora"
+
+
+
+
 
 
 
@@ -50012,7 +100021,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     draggable={false}
+
+
+
+
 
 
 
@@ -50020,7 +100037,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                 ) : (
+
+
+
+
 
 
 
@@ -50028,7 +100053,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                 )}
+
+
+
+
 
 
 
@@ -50036,7 +100069,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
               <div className={`${isCompact ? "mt-1 text-[11px]" : "mt-2 text-sm"} text-muted`}>{subtitle}</div>
+
+
+
+
 
 
 
@@ -50044,7 +100085,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
             </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -50056,7 +100109,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
               <div className="mt-4 flex flex-col items-center gap-2">
+
+
+
+
 
 
 
@@ -50064,7 +100125,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   <button type="button" className="ws-welcome-row" onClick={props.onOpenFolder}>
+
+
+
+
 
 
 
@@ -50072,7 +100141,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     <span className="ws-kbd">{props.shortcutOpenFolder ?? "Ctrl+K Ctrl+O"}</span>
+
+
+
+
 
 
 
@@ -50080,7 +100157,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   {props.onOpenFile ? (
+
+
+
+
 
 
 
@@ -50088,7 +100173,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                       <span className="truncate">Open File</span>
+
+
+
+
 
 
 
@@ -50096,7 +100189,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     </button>
+
+
+
+
 
 
 
@@ -50104,7 +100205,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -50116,7 +100229,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   <button
+
+
+
+
 
 
 
@@ -50124,7 +100245,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     className="mt-2 text-[12px] text-muted underline-offset-4 hover:underline hover:text-text"
+
+
+
+
 
 
 
@@ -50132,7 +100261,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   >
+
+
+
+
 
 
 
@@ -50140,7 +100277,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   </button>
+
+
+
+
 
 
 
@@ -50148,11 +100293,27 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
               </div>
 
 
 
+
+
+
+
             ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -50164,7 +100325,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
             <div className={`${isCompact ? "mt-4" : "mt-7"} space-y-6`}>
+
+
+
+
 
 
 
@@ -50172,7 +100341,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                 <div className="ws-welcome-section-title">Quick actions</div>
+
+
+
+
 
 
 
@@ -50180,7 +100357,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   <button
+
+
+
+
 
 
 
@@ -50188,7 +100373,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     className="ws-welcome-row"
+
+
+
+
 
 
 
@@ -50196,7 +100389,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     disabled={!props.onOpenChat}
+
+
+
+
 
 
 
@@ -50204,7 +100405,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     <span className="truncate">Open Chat</span>
+
+
+
+
 
 
 
@@ -50212,11 +100421,23 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   </button>
 
 
 
+
+
+
+
                 </div>
+
+
+
+
 
 
 
@@ -50228,11 +100449,27 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
               {recentWorkspaces.length > 0 || (recentFiles.length > 0 && !!props.onOpenRecentFile) ? (
 
 
 
+
+
+
+
                 <section className="text-left">
+
+
+
+
 
 
 
@@ -50244,7 +100481,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
                   {recentWorkspaces.length ? (
+
+
+
+
 
 
 
@@ -50252,7 +100501,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                       <div className="ws-welcome-subtitle">Workspaces</div>
+
+
+
+
 
 
 
@@ -50260,7 +100517,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                         {recentWorkspaces.slice(0, 1).map((p) => (
+
+
+
+
 
 
 
@@ -50268,7 +100533,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                             <span className="truncate">{p}</span>
+
+
+
+
 
 
 
@@ -50276,7 +100549,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                           </button>
+
+
+
+
 
 
 
@@ -50284,7 +100565,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -50292,7 +100581,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   ) : null}
+
+
+
+
+
+
+
+
 
 
 
@@ -50304,7 +100605,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                     <div className={`${recentWorkspaces.length ? "mt-6" : "mt-3"}`}>
+
+
+
+
 
 
 
@@ -50312,7 +100621,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                       <div className="mt-2 space-y-2">
+
+
+
+
 
 
 
@@ -50320,7 +100637,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                           const r = renderFileLabel(p);
+
+
+
+
 
 
 
@@ -50328,7 +100653,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                           return (
+
+
+
+
 
 
 
@@ -50336,7 +100669,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                               <span className="flex min-w-0 flex-1 items-center gap-2 truncate">
+
+
+
+
 
 
 
@@ -50344,7 +100685,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                                 <span className="min-w-0 flex-1 truncate">{r.name}</span>
+
+
+
+
 
 
 
@@ -50352,7 +100701,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                               <span className="ml-3 max-w-[56%] truncate text-[11px] text-muted">{r.detail}</span>
+
+
+
+
 
 
 
@@ -50360,7 +100717,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                           );
+
+
+
+
 
 
 
@@ -50368,7 +100733,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                       </div>
+
+
+
+
 
 
 
@@ -50376,11 +100749,23 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
                   ) : null}
 
 
 
+
+
+
+
                 </section>
+
+
+
+
 
 
 
@@ -50392,7 +100777,19 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
+
+
+
+
             </div>
+
+
+
+
 
 
 
@@ -50400,7 +100797,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
           </div>
+
+
+
+
 
 
 
@@ -50408,7 +100813,15 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
       </div>
+
+
+
+
 
 
 
@@ -50416,11 +100829,27 @@ function WelcomeScreen(props: {
 
 
 
+
+
+
+
   );
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -50432,7 +100861,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
   query: string;
+
+
+
+
 
 
 
@@ -50440,7 +100877,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
   commands: Command[];
+
+
+
+
 
 
 
@@ -50448,7 +100893,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
   setIndex: (v: number) => void;
+
+
+
+
 
 
 
@@ -50456,11 +100909,23 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
   onRun: (cmd: Command) => void;
 
 
 
+
+
+
+
 }) {
+
+
+
+
 
 
 
@@ -50472,7 +100937,19 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -50480,11 +100957,23 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
       if (e.key === "ArrowDown") {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -50492,7 +100981,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -50500,7 +100997,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -50508,7 +101013,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -50516,7 +101029,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -50524,7 +101045,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
         if (cmd) props.onRun(cmd);
+
+
+
+
 
 
 
@@ -50532,7 +101061,19 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
     };
+
+
+
+
+
+
+
+
 
 
 
@@ -50544,7 +101085,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
     return () => window.removeEventListener("keydown", onKeyDown);
+
+
+
+
 
 
 
@@ -50556,7 +101105,19 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
+
+
+
+
   return (
+
+
+
+
 
 
 
@@ -50564,7 +101125,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
       <div
+
+
+
+
 
 
 
@@ -50572,7 +101141,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
         onMouseDown={(e) => e.stopPropagation()}
+
+
+
+
 
 
 
@@ -50580,7 +101157,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
         <div className="border-b border-border p-3">
+
+
+
+
 
 
 
@@ -50588,7 +101173,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
             className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-text placeholder:text-muted"
+
+
+
+
 
 
 
@@ -50596,7 +101189,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
             autoFocus
+
+
+
+
 
 
 
@@ -50604,7 +101205,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
             onChange={(e) => props.setQuery(e.currentTarget.value)}
+
+
+
+
 
 
 
@@ -50612,7 +101221,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -50620,7 +101237,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
           {list.length ? (
+
+
+
+
 
 
 
@@ -50628,7 +101253,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
               <button
+
+
+
+
 
 
 
@@ -50636,7 +101269,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
                 type="button"
+
+
+
+
 
 
 
@@ -50644,7 +101285,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
                   i === props.index ? "bg-bg text-text" : "text-muted hover:bg-bg hover:text-text"
+
+
+
+
 
 
 
@@ -50652,7 +101301,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
                 onMouseEnter={() => props.setIndex(i)}
+
+
+
+
 
 
 
@@ -50660,7 +101317,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
               >
+
+
+
+
 
 
 
@@ -50668,7 +101333,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
                 <span className="text-xs text-muted">{c.shortcut ?? ""}</span>
+
+
+
+
 
 
 
@@ -50676,7 +101349,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
             ))
+
+
+
+
 
 
 
@@ -50684,7 +101365,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
             <div className="p-3 text-sm text-muted">No commands</div>
+
+
+
+
 
 
 
@@ -50692,7 +101381,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -50700,7 +101397,15 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
     </div>
+
+
+
+
 
 
 
@@ -50708,7 +101413,19 @@ function CommandPalette(props: {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -50720,7 +101437,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   settings: AppSettings;
+
+
+
+
 
 
 
@@ -50728,7 +101453,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   authCredits: CreditsResponse | null;
+
+
+
+
 
 
 
@@ -50736,7 +101469,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   providerLabel: string;
+
+
+
+
 
 
 
@@ -50744,7 +101485,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   providerChoices: ReadonlyArray<{ id: string; label: string; api: boolean }>;
+
+
+
+
 
 
 
@@ -50752,7 +101501,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   encryptionPasswordDraft: string;
+
+
+
+
 
 
 
@@ -50760,7 +101517,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   isSavingSettings: boolean;
+
+
+
+
 
 
 
@@ -50768,7 +101533,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   isKeyOperationInProgress: boolean;
+
+
+
+
 
 
 
@@ -50776,7 +101549,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   workspaceLabel: string;
+
+
+
+
 
 
 
@@ -50784,7 +101565,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onChangeTheme: (t: Theme) => void;
+
+
+
+
 
 
 
@@ -50792,7 +101581,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onChangeLineHighlightColor: (hex: string | null) => void;
+
+
+
+
 
 
 
@@ -50800,7 +101597,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onChangeKeybindings: (next: Record<string, string>) => void;
+
+
+
+
 
 
 
@@ -50808,7 +101613,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onChangeProvider: (p: string | null) => void;
+
+
+
+
 
 
 
@@ -50816,7 +101629,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onPickFolder: () => void;
+
+
+
+
 
 
 
@@ -50824,7 +101645,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onApiKeyDraft: (v: string) => void;
+
+
+
+
 
 
 
@@ -50832,7 +101661,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onStoreKey: () => void;
+
+
+
+
 
 
 
@@ -50840,7 +101677,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onLoginToPompora: () => void;
+
+
+
+
 
 
 
@@ -50848,7 +101693,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onSaveSettings: () => void;
+
+
+
+
 
 
 
@@ -50856,7 +101709,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   showKeyCleared: boolean;
+
+
+
+
 
 
 
@@ -50864,7 +101725,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   debugResult: string | null;
+
+
+
+
 
 
 
@@ -50872,7 +101741,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   loadingModels: Record<string, boolean>;
+
+
+
+
 
 
 
@@ -50880,7 +101757,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onLoadModels: (providerId: string) => void;
+
+
+
+
 
 
 
@@ -50892,7 +101777,19 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
+
+
+
+
   onClearChatHistory: () => void;
+
+
+
+
 
 
 
@@ -50900,7 +101797,15 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onClearAuth: () => void;
+
+
+
+
 
 
 
@@ -50908,11 +101813,27 @@ interface SettingsScreenProps {
 
 
 
+
+
+
+
   onWipeAll: () => void;
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -50924,7 +101845,15 @@ function __clampInt(n: number, min: number, max: number): number {
 
 
 
+
+
+
+
   if (!Number.isFinite(n)) return min;
+
+
+
+
 
 
 
@@ -50932,7 +101861,19 @@ function __clampInt(n: number, min: number, max: number): number {
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -50944,11 +101885,27 @@ function __toHexByte(n: number): string {
 
 
 
+
+
+
+
   return __clampInt(n, 0, 255).toString(16).padStart(2, "0").toUpperCase();
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -50960,7 +101917,15 @@ function __parseHexColor(raw: string): { hex: string; r: number; g: number; b: n
 
 
 
+
+
+
+
   const s = String(raw || "").trim();
+
+
+
+
 
 
 
@@ -50968,7 +101933,15 @@ function __parseHexColor(raw: string): { hex: string; r: number; g: number; b: n
 
 
 
+
+
+
+
   if (!m?.[1]) return null;
+
+
+
+
 
 
 
@@ -50976,7 +101949,15 @@ function __parseHexColor(raw: string): { hex: string; r: number; g: number; b: n
 
 
 
+
+
+
+
   const r = Number.parseInt(h.slice(0, 2), 16);
+
+
+
+
 
 
 
@@ -50984,7 +101965,15 @@ function __parseHexColor(raw: string): { hex: string; r: number; g: number; b: n
 
 
 
+
+
+
+
   const b = Number.parseInt(h.slice(4, 6), 16);
+
+
+
+
 
 
 
@@ -50992,7 +101981,15 @@ function __parseHexColor(raw: string): { hex: string; r: number; g: number; b: n
 
 
 
+
+
+
+
   const hex = `#${h.length === 6 ? h : h}`;
+
+
+
+
 
 
 
@@ -51000,7 +101997,19 @@ function __parseHexColor(raw: string): { hex: string; r: number; g: number; b: n
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -51012,7 +102021,15 @@ function __rgbaToHex(r: number, g: number, b: number, a?: number): string {
 
 
 
+
+
+
+
   const aa = a === undefined ? 255 : __clampInt(a, 0, 255);
+
+
+
+
 
 
 
@@ -51020,11 +102037,27 @@ function __rgbaToHex(r: number, g: number, b: number, a?: number): string {
 
 
 
+
+
+
+
   return aa === 255 ? base : `${base}${__toHexByte(aa)}`;
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -51036,7 +102069,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
   const s = String(raw || "").trim();
+
+
+
+
 
 
 
@@ -51044,7 +102085,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
   const m = s.match(/^rgba?\(([^)]+)\)$/i);
+
+
+
+
 
 
 
@@ -51052,7 +102101,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
   const parts = inner
+
+
+
+
 
 
 
@@ -51060,7 +102117,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
     .map((x) => x.trim())
+
+
+
+
 
 
 
@@ -51068,7 +102133,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
   if (parts.length < 3) return null;
+
+
+
+
 
 
 
@@ -51076,7 +102149,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
   const g = Number(parts[1]);
+
+
+
+
 
 
 
@@ -51084,7 +102165,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
   if (!Number.isFinite(r) || !Number.isFinite(g) || !Number.isFinite(b)) return null;
+
+
+
+
 
 
 
@@ -51092,7 +102181,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
     const aRaw = parts[3] ?? "";
+
+
+
+
 
 
 
@@ -51100,7 +102197,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
     if (Number.isFinite(aNum)) {
+
+
+
+
 
 
 
@@ -51108,7 +102213,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
       return { r: __clampInt(r, 0, 255), g: __clampInt(g, 0, 255), b: __clampInt(b, 0, 255), a };
+
+
+
+
 
 
 
@@ -51116,7 +102229,15 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -51124,7 +102245,19 @@ function __parseRgbLike(raw: string): { r: number; g: number; b: number; a?: num
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -51136,11 +102269,23 @@ function __rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v:
 
 
 
+
+
+
+
   const rr = __clampInt(r, 0, 255) / 255;
 
 
 
+
+
+
+
   const gg = __clampInt(g, 0, 255) / 255;
+
+
+
+
 
 
 
@@ -51152,11 +102297,27 @@ function __rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v:
 
 
 
+
+
+
+
+
+
+
+
   const max = Math.max(rr, gg, bb);
 
 
 
+
+
+
+
   const min = Math.min(rr, gg, bb);
+
+
+
+
 
 
 
@@ -51168,7 +102329,19 @@ function __rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v:
 
 
 
+
+
+
+
+
+
+
+
   let h = 0;
+
+
+
+
 
 
 
@@ -51176,7 +102349,15 @@ function __rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v:
 
 
 
+
+
+
+
     if (max === rr) h = ((gg - bb) / d) % 6;
+
+
+
+
 
 
 
@@ -51184,7 +102365,15 @@ function __rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v:
 
 
 
+
+
+
+
     else h = (rr - gg) / d + 4;
+
+
+
+
 
 
 
@@ -51192,11 +102381,27 @@ function __rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v:
 
 
 
+
+
+
+
     if (h < 0) h += 360;
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -51208,7 +102413,15 @@ function __rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v:
 
 
 
+
+
+
+
   const v = max;
+
+
+
+
 
 
 
@@ -51216,7 +102429,19 @@ function __rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v:
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -51228,11 +102453,23 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
   const hh = ((Number.isFinite(h) ? h : 0) % 360 + 360) % 360;
 
 
 
+
+
+
+
   const ss = Math.max(0, Math.min(1, Number.isFinite(s) ? s : 0));
+
+
+
+
 
 
 
@@ -51244,11 +102481,27 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
+
+
+
+
   const c = vv * ss;
 
 
 
+
+
+
+
   const x = c * (1 - Math.abs(((hh / 60) % 2) - 1));
+
+
+
+
 
 
 
@@ -51260,7 +102513,19 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
+
+
+
+
   let r1 = 0;
+
+
+
+
 
 
 
@@ -51268,7 +102533,15 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
   let b1 = 0;
+
+
+
+
 
 
 
@@ -51276,11 +102549,23 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
     r1 = c;
 
 
 
+
+
+
+
     g1 = x;
+
+
+
+
 
 
 
@@ -51288,11 +102573,23 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
     r1 = x;
 
 
 
+
+
+
+
     g1 = c;
+
+
+
+
 
 
 
@@ -51300,11 +102597,23 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
     g1 = c;
 
 
 
+
+
+
+
     b1 = x;
+
+
+
+
 
 
 
@@ -51312,11 +102621,23 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
     g1 = x;
 
 
 
+
+
+
+
     b1 = c;
+
+
+
+
 
 
 
@@ -51324,7 +102645,15 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
     r1 = x;
+
+
+
+
 
 
 
@@ -51332,7 +102661,15 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
   } else {
+
+
+
+
 
 
 
@@ -51340,11 +102677,27 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
     b1 = x;
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -51356,7 +102709,15 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
     r: __clampInt((r1 + m) * 255, 0, 255),
+
+
+
+
 
 
 
@@ -51364,7 +102725,15 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
     b: __clampInt((b1 + m) * 255, 0, 255),
+
+
+
+
 
 
 
@@ -51372,7 +102741,19 @@ function __hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b:
 
 
 
+
+
+
+
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -51384,7 +102765,15 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
   { children: React.ReactNode },
+
+
+
+
 
 
 
@@ -51392,7 +102781,15 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
 > {
+
+
+
+
 
 
 
@@ -51400,7 +102797,15 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
     super(props);
+
+
+
+
 
 
 
@@ -51408,7 +102813,19 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -51420,11 +102837,27 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
     return { hasError: true, error };
 
 
 
+
+
+
+
   }
+
+
+
+
+
+
+
+
 
 
 
@@ -51436,7 +102869,15 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
     if (this.state.hasError) {
+
+
+
+
 
 
 
@@ -51444,7 +102885,15 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
       return (
+
+
+
+
 
 
 
@@ -51452,7 +102901,15 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
           <div className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+
+
+
+
 
 
 
@@ -51460,7 +102917,15 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
           </div>
+
+
+
+
 
 
 
@@ -51468,7 +102933,15 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
       );
+
+
+
+
 
 
 
@@ -51476,11 +102949,23 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
     return this.props.children;
 
 
 
+
+
+
+
   }
+
+
+
+
 
 
 
@@ -51492,7 +102977,19 @@ class SettingsErrorBoundary extends Component<
 
 
 
+
+
+
+
+
+
+
+
 const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
+
+
+
+
 
 
 
@@ -51504,7 +103001,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   const avatarLetter = useMemo(() => {
+
+
+
+
 
 
 
@@ -51512,7 +103021,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const last = (props.authProfile?.last_name ?? "").trim();
+
+
+
+
 
 
 
@@ -51520,7 +103037,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     if (first) return first[0]!.toUpperCase();
+
+
+
+
 
 
 
@@ -51528,11 +103053,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     if (email) return email[0]!.toUpperCase();
 
 
 
+
+
+
+
     return "U";
+
+
+
+
 
 
 
@@ -51544,7 +103081,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   const [avatarImgError, setAvatarImgError] = useState(false);
+
+
+
+
 
 
 
@@ -51556,7 +103105,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -51564,11 +103125,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     setAvatarDataUrl(null);
 
 
 
+
+
+
+
   }, [props.authProfile?.avatar_url]);
+
+
+
+
+
+
+
+
 
 
 
@@ -51580,7 +103157,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const url = (props.authProfile?.avatar_url ?? "").trim();
+
+
+
+
 
 
 
@@ -51588,7 +103173,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     let cancelled = false;
+
+
+
+
 
 
 
@@ -51596,11 +103189,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       .then((d: string) => {
 
 
 
+
+
+
+
         if (cancelled) return;
+
+
+
+
 
 
 
@@ -51608,7 +103213,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         if (next) setAvatarDataUrl(next);
+
+
+
+
 
 
 
@@ -51616,7 +103229,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       .catch((e: unknown) => {
+
+
+
+
 
 
 
@@ -51624,7 +103245,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         console.error("authAvatarDataUrl failed (settings)", e);
+
+
+
+
 
 
 
@@ -51632,7 +103261,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     return () => {
+
+
+
+
 
 
 
@@ -51640,11 +103277,31 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     };
 
 
 
+
+
+
+
   }, [props.authProfile?.avatar_url]);
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -51660,7 +103317,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     commandId: string;
+
+
+
+
 
 
 
@@ -51668,7 +103333,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     defaultValue: string;
+
+
+
+
 
 
 
@@ -51676,7 +103349,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const [isCapturing, setIsCapturing] = useState(false);
+
+
+
+
 
 
 
@@ -51688,11 +103369,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     useEffect(() => {
 
 
 
+
+
+
+
       if (!isCapturing) return;
+
+
+
+
 
 
 
@@ -51704,11 +103401,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
       const onKeyDown = (e: KeyboardEvent) => {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -51720,7 +103433,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         if (e.key === "Escape") {
+
+
+
+
 
 
 
@@ -51728,7 +103453,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           return;
+
+
+
+
 
 
 
@@ -51740,7 +103473,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         const raw = __eventToShortcut(e);
+
+
+
+
 
 
 
@@ -51748,7 +103493,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         const next = __normShortcut(raw);
+
+
+
+
 
 
 
@@ -51760,11 +103513,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         const all = { ...DEFAULT_KEYBINDINGS, ...(props.settings.keybindings ?? {}) };
 
 
 
+
+
+
+
         const found = Object.entries(all).find(([id, v]) => id !== p.commandId && __normShortcut(v) === next);
+
+
+
+
 
 
 
@@ -51776,7 +103545,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         props.onChangeKeybindings({
+
+
+
+
 
 
 
@@ -51784,7 +103565,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           [p.commandId]: next,
+
+
+
+
 
 
 
@@ -51792,11 +103581,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setIsCapturing(false);
 
 
 
+
+
+
+
       };
+
+
+
+
+
+
+
+
 
 
 
@@ -51808,7 +103613,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       return () => {
+
+
+
+
 
 
 
@@ -51816,11 +103629,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         (window as any).__pomporaCapturingShortcut = false;
 
 
 
+
+
+
+
       };
+
+
+
+
 
 
 
@@ -51832,7 +103657,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     const remove = () => {
+
+
+
+
 
 
 
@@ -51840,7 +103677,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       delete next[p.commandId];
+
+
+
+
 
 
 
@@ -51848,11 +103693,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       setConflict(null);
 
 
 
+
+
+
+
     };
+
+
+
+
+
+
+
+
 
 
 
@@ -51864,7 +103725,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       props.onChangeKeybindings({
+
+
+
+
 
 
 
@@ -51872,7 +103741,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         [p.commandId]: __normShortcut(p.defaultValue),
+
+
+
+
 
 
 
@@ -51880,7 +103757,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       setConflict(null);
+
+
+
+
 
 
 
@@ -51892,7 +103777,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     return (
+
+
+
+
 
 
 
@@ -51900,7 +103797,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         <div className="flex w-full items-center justify-end gap-2">
+
+
+
+
 
 
 
@@ -51908,7 +103813,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             type="button"
+
+
+
+
 
 
 
@@ -51916,7 +103829,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
               isCapturing ? "ring-2 ring-accent/40" : ""
+
+
+
+
 
 
 
@@ -51924,7 +103845,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             data-shortcut-capturing={isCapturing ? "true" : "false"}
+
+
+
+
 
 
 
@@ -51932,7 +103861,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
               setConflict(null);
+
+
+
+
 
 
 
@@ -51940,7 +103877,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             }}
+
+
+
+
 
 
 
@@ -51948,7 +103893,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           >
+
+
+
+
 
 
 
@@ -51956,7 +103909,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           </button>
+
+
+
+
 
 
 
@@ -51964,11 +103925,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             <Trash2 className="h-4 w-4" />
 
 
 
+
+
+
+
           </button>
+
+
+
+
 
 
 
@@ -51976,7 +103949,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             <RotateCw className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -51984,7 +103965,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         </div>
+
+
+
+
 
 
 
@@ -51992,7 +103981,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           <div className="mt-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+
+
+
+
 
 
 
@@ -52000,7 +103997,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           </div>
+
+
+
+
 
 
 
@@ -52008,11 +104013,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       </div>
 
 
 
+
+
+
+
     );
+
+
+
+
 
 
 
@@ -52024,7 +104041,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   const ColorPicker = (p: {
+
+
+
+
 
 
 
@@ -52032,7 +104061,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     value: string | null | undefined;
+
+
+
+
 
 
 
@@ -52040,7 +104077,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     defaultSwatch: string;
+
+
+
+
 
 
 
@@ -52048,7 +104093,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
   }) => {
+
+
+
+
 
 
 
@@ -52056,7 +104109,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const wrapRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -52064,7 +104125,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const popoverRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
 
 
 
@@ -52072,11 +104141,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const activeHex = parsed?.hex ?? null;
 
 
 
+
+
+
+
     const swatch = activeHex ? (activeHex.length === 9 ? activeHex.slice(0, 7) : activeHex) : p.defaultSwatch;
+
+
+
+
+
+
+
+
 
 
 
@@ -52092,7 +104177,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     // Preview state for temporary changes while dragging
+
+
+
+
 
 
 
@@ -52100,7 +104197,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const [hexDraft, setHexDraft] = useState<string>(String(p.value ?? "").trim());
+
+
+
+
 
 
 
@@ -52108,7 +104213,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       if (!parsed) return "";
+
+
+
+
 
 
 
@@ -52116,11 +104229,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       return a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 100) / 100})`;
 
 
 
+
+
+
+
     });
+
+
+
+
+
+
+
+
 
 
 
@@ -52132,11 +104261,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       if (!parsed) return { h: 150, s: 0.56, v: 0.84 };
 
 
 
+
+
+
+
       return __rgbToHsv(parsed.r, parsed.g, parsed.b);
+
+
+
+
 
 
 
@@ -52148,7 +104289,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     // Get current parsed color (from preview if open, otherwise from actual value)
+
+
+
+
 
 
 
@@ -52156,11 +104309,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const currentHex = currentParsed?.hex ?? null;
 
 
 
+
+
+
+
     const currentSwatch = currentHex ? (currentHex.length === 9 ? currentHex.slice(0, 7) : currentHex) : p.defaultSwatch;
+
+
+
+
 
 
 
@@ -52172,7 +104337,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     useEffect(() => {
+
+
+
+
 
 
 
@@ -52180,7 +104357,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       setHexDraft(next);
+
+
+
+
 
 
 
@@ -52188,7 +104373,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       const px = __parseHexColor(next);
+
+
+
+
 
 
 
@@ -52196,7 +104389,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setRgbDraft("");
+
+
+
+
 
 
 
@@ -52204,7 +104405,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -52212,11 +104421,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       setRgbDraft(a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 100) / 100})`);
 
 
 
+
+
+
+
       setHsv(__rgbToHsv(r, g, b));
+
+
+
+
 
 
 
@@ -52228,11 +104449,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     // Apply preview changes when closing (only if not cancelled)
 
 
 
+
+
+
+
     useEffect(() => {
+
+
+
+
 
 
 
@@ -52240,7 +104477,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         // Reset preview to current value when opening
+
+
+
+
 
 
 
@@ -52248,7 +104493,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       }
+
+
+
+
 
 
 
@@ -52260,11 +104513,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     useEffect(() => {
 
 
 
+
+
+
+
       if (!open) return;
+
+
+
+
 
 
 
@@ -52272,7 +104541,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         const t = e.target as Node | null;
+
+
+
+
 
 
 
@@ -52280,7 +104557,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         if (wrapRef.current?.contains(t)) return;
+
+
+
+
 
 
 
@@ -52288,7 +104573,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       };
+
+
+
+
 
 
 
@@ -52296,7 +104589,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         window.addEventListener("mousedown", onDown);
+
+
+
+
 
 
 
@@ -52304,7 +104605,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       return () => window.removeEventListener("mousedown", onDown);
+
+
+
+
 
 
 
@@ -52316,7 +104625,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     useEffect(() => {
+
+
+
+
 
 
 
@@ -52324,7 +104645,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       let raf = 0;
+
+
+
+
 
 
 
@@ -52332,11 +104661,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         const trig = triggerRef.current;
 
 
 
+
+
+
+
         const pop = popoverRef.current;
+
+
+
+
 
 
 
@@ -52348,7 +104689,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         const t = trig.getBoundingClientRect();
+
+
+
+
 
 
 
@@ -52356,11 +104709,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         const vw = window.innerWidth;
 
 
 
+
+
+
+
         const vh = window.innerHeight;
+
+
+
+
 
 
 
@@ -52372,7 +104737,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         const candidates = [
+
+
+
+
 
 
 
@@ -52380,7 +104757,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           { left: t.right - pRect.width, top: t.bottom + 8 },
+
+
+
+
 
 
 
@@ -52388,7 +104773,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           { left: t.right - pRect.width, top: t.top - pRect.height - 8 },
+
+
+
+
 
 
 
@@ -52396,7 +104789,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           { left: t.left - pRect.width - 8, top: t.top },
+
+
+
+
 
 
 
@@ -52408,7 +104809,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         const score = (pos: { left: number; top: number }) => {
+
+
+
+
 
 
 
@@ -52416,7 +104829,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           const ct = Math.max(pad, Math.min(vh - pad - pRect.height, pos.top));
+
+
+
+
 
 
 
@@ -52424,7 +104845,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           const visibleH = Math.max(0, Math.min(vh - pad, ct + pRect.height) - Math.max(pad, ct));
+
+
+
+
 
 
 
@@ -52432,7 +104861,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           const dy = Math.abs((ct + pRect.height / 2) - (t.top + t.height / 2));
+
+
+
+
 
 
 
@@ -52440,7 +104877,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           return area - (dx + dy) * 0.1;
+
+
+
+
 
 
 
@@ -52452,7 +104897,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         let best = candidates[0]!;
+
+
+
+
 
 
 
@@ -52460,7 +104917,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         for (const c of candidates.slice(1)) {
+
+
+
+
 
 
 
@@ -52468,7 +104933,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           if (s > bestScore) {
+
+
+
+
 
 
 
@@ -52476,11 +104949,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             bestScore = s;
 
 
 
+
+
+
+
           }
+
+
+
+
 
 
 
@@ -52492,7 +104977,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         const left = Math.max(pad, Math.min(vw - pad - pRect.width, best.left));
+
+
+
+
 
 
 
@@ -52500,11 +104997,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setPopoverPos({ left, top });
 
 
 
+
+
+
+
       };
+
+
+
+
+
+
+
+
 
 
 
@@ -52516,7 +105029,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       window.addEventListener("resize", place);
+
+
+
+
 
 
 
@@ -52524,7 +105045,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       return () => {
+
+
+
+
 
 
 
@@ -52532,7 +105061,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         window.removeEventListener("resize", place);
+
+
+
+
 
 
 
@@ -52540,7 +105077,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       };
+
+
+
+
 
 
 
@@ -52552,7 +105097,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     const commitHex = useCallback(
+
+
+
+
 
 
 
@@ -52560,7 +105117,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         const px = __parseHexColor(raw);
+
+
+
+
 
 
 
@@ -52568,7 +105133,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setPreviewHex(px.hex);
+
+
+
+
 
 
 
@@ -52576,7 +105149,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         const { r, g, b, a } = px;
+
+
+
+
 
 
 
@@ -52584,7 +105165,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setHsv(__rgbToHsv(r, g, b));
+
+
+
+
 
 
 
@@ -52592,11 +105181,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       []
 
 
 
+
+
+
+
     );
+
+
+
+
+
+
+
+
 
 
 
@@ -52608,7 +105213,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       (raw: string) => {
+
+
+
+
 
 
 
@@ -52616,7 +105229,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         if (!pr) return;
+
+
+
+
 
 
 
@@ -52624,7 +105245,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setPreviewHex(hex);
+
+
+
+
 
 
 
@@ -52632,7 +105261,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setRgbDraft(raw);
+
+
+
+
 
 
 
@@ -52640,7 +105277,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       },
+
+
+
+
 
 
 
@@ -52648,7 +105293,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     );
+
+
+
+
+
+
+
+
 
 
 
@@ -52660,7 +105317,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       (next: { h: number; s: number; v: number }) => {
+
+
+
+
 
 
 
@@ -52668,7 +105333,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         const hex = __rgbaToHex(rgb.r, rgb.g, rgb.b, currentAlpha);
+
+
+
+
 
 
 
@@ -52676,7 +105349,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setHexDraft(hex);
+
+
+
+
 
 
 
@@ -52684,7 +105365,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setRgbDraft(a === 255 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 100) / 100})`);
+
+
+
+
 
 
 
@@ -52692,11 +105381,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       [currentAlpha]
 
 
 
+
+
+
+
     );
+
+
+
+
+
+
+
+
 
 
 
@@ -52708,7 +105413,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const hueRef = useRef<HTMLInputElement | null>(null);
+
+
+
+
+
+
+
+
 
 
 
@@ -52720,7 +105437,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       (clientX: number, clientY: number) => {
+
+
+
+
 
 
 
@@ -52728,7 +105453,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         if (!el) return;
+
+
+
+
 
 
 
@@ -52736,7 +105469,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         const x = Math.max(0, Math.min(1, (clientX - r.left) / Math.max(1, r.width)));
+
+
+
+
 
 
 
@@ -52744,7 +105485,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         const next = { ...hsv, s: x, v: 1 - y };
+
+
+
+
 
 
 
@@ -52752,7 +105501,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         commitHsv(next);
+
+
+
+
 
 
 
@@ -52760,11 +105517,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       [commitHsv, hsv]
 
 
 
+
+
+
+
     );
+
+
+
+
+
+
+
+
 
 
 
@@ -52776,7 +105549,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       (e: React.PointerEvent) => {
+
+
+
+
 
 
 
@@ -52784,7 +105565,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+
+
+
+
 
 
 
@@ -52792,7 +105581,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       },
+
+
+
+
 
 
 
@@ -52800,7 +105597,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     );
+
+
+
+
+
+
+
+
 
 
 
@@ -52812,7 +105621,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       (e: React.PointerEvent) => {
+
+
+
+
 
 
 
@@ -52820,7 +105637,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         e.preventDefault();
+
+
+
+
 
 
 
@@ -52828,7 +105653,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       },
+
+
+
+
 
 
 
@@ -52836,7 +105669,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     );
+
+
+
+
+
+
+
+
 
 
 
@@ -52848,7 +105693,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       <div ref={wrapRef} className="relative flex items-center justify-end gap-2">
+
+
+
+
 
 
 
@@ -52856,7 +105709,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           type="button"
+
+
+
+
 
 
 
@@ -52864,7 +105725,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           onClick={() => setOpen((v) => !v)}
+
+
+
+
 
 
 
@@ -52872,7 +105741,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           ref={triggerRef}
+
+
+
+
 
 
 
@@ -52880,7 +105757,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           <span className="h-4 w-4 rounded border border-border" style={{ background: swatch }} />
+
+
+
+
 
 
 
@@ -52888,7 +105773,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         </button>
+
+
+
+
+
+
+
+
 
 
 
@@ -52900,7 +105797,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           Reset
+
+
+
+
 
 
 
@@ -52912,7 +105817,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         {open ? (
+
+
+
+
 
 
 
@@ -52920,7 +105837,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             ref={popoverRef}
+
+
+
+
 
 
 
@@ -52928,7 +105853,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             style={{ left: popoverPos?.left ?? -9999, top: popoverPos?.top ?? -9999 }}
+
+
+
+
 
 
 
@@ -52936,7 +105869,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             <div className="flex items-start justify-between gap-3 border-b border-border p-3">
+
+
+
+
 
 
 
@@ -52944,7 +105885,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 <div className="text-xs font-semibold text-text">{p.label}</div>
+
+
+
+
 
 
 
@@ -52952,7 +105901,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
               </div>
+
+
+
+
 
 
 
@@ -52960,7 +105917,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 <X className="h-4 w-4" />
+
+
+
+
 
 
 
@@ -52968,7 +105933,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -52980,7 +105957,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
               <div className="flex items-center justify-between gap-3">
+
+
+
+
 
 
 
@@ -52988,7 +105973,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   <div className="h-10 w-10 rounded-xl border border-border" style={{ background: currentSwatch }} />
+
+
+
+
 
 
 
@@ -52996,7 +105989,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     <div className="text-[11px] font-medium text-muted">Active</div>
+
+
+
+
 
 
 
@@ -53004,7 +106005,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   </div>
+
+
+
+
 
 
 
@@ -53012,7 +106021,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
               </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -53024,7 +106045,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 <div
+
+
+
+
 
 
 
@@ -53032,7 +106061,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   className="relative h-[180px] w-full overflow-hidden rounded-2xl border border-border"
+
+
+
+
 
 
 
@@ -53040,7 +106077,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   onPointerDown={onSVPointerDown}
+
+
+
+
 
 
 
@@ -53048,7 +106093,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 >
+
+
+
+
 
 
 
@@ -53056,7 +106109,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #000000, rgba(0,0,0,0))" }} />
+
+
+
+
 
 
 
@@ -53064,7 +106125,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     className="absolute h-4 w-4 -translate-x-2 -translate-y-2 rounded-full border border-white shadow-[0_0_0_2px_rgba(0,0,0,0.35)]"
+
+
+
+
 
 
 
@@ -53072,11 +106141,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   />
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -53088,7 +106173,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   <div className="text-[11px] font-medium text-muted">Hue</div>
+
+
+
+
 
 
 
@@ -53096,7 +106189,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     ref={hueRef}
+
+
+
+
 
 
 
@@ -53104,7 +106205,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     min={0}
+
+
+
+
 
 
 
@@ -53112,7 +106221,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     value={Math.round(hsv.h)}
+
+
+
+
 
 
 
@@ -53120,7 +106237,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       const h = Number(e.currentTarget.value);
+
+
+
+
 
 
 
@@ -53128,7 +106253,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       setHsv(next);
+
+
+
+
 
 
 
@@ -53136,7 +106269,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     }}
+
+
+
+
 
 
 
@@ -53144,7 +106285,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     style={{
+
+
+
+
 
 
 
@@ -53152,7 +106301,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         "linear-gradient(to right, #FF0000 0%, #FFFF00 16%, #00FF00 33%, #00FFFF 50%, #0000FF 66%, #FF00FF 83%, #FF0000 100%)",
+
+
+
+
 
 
 
@@ -53160,7 +106317,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   />
+
+
+
+
 
 
 
@@ -53168,7 +106333,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
               </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -53180,7 +106357,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 <div>
+
+
+
+
 
 
 
@@ -53188,11 +106373,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   <input
 
 
 
+
+
+
+
                     className="mt-1 w-full rounded-xl border border-border bg-bg px-3 py-2 text-xs text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+
+
+
+
 
 
 
@@ -53200,11 +106397,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     value={hexDraft}
 
 
 
+
+
+
+
                     spellCheck={false}
+
+
+
+
 
 
 
@@ -53212,7 +106421,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     onBlur={() => commitHex(hexDraft)}
+
+
+
+
 
 
 
@@ -53220,11 +106437,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       if (e.key === "Enter") {
 
 
 
+
+
+
+
                         e.preventDefault();
+
+
+
+
 
 
 
@@ -53232,7 +106461,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       }
+
+
+
+
 
 
 
@@ -53240,7 +106477,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   />
+
+
+
+
 
 
 
@@ -53252,7 +106497,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
                 <div>
+
+
+
+
 
 
 
@@ -53260,11 +106517,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   <div className="mt-1 grid grid-cols-3 gap-2">
 
 
 
+
+
+
+
                     <div>
+
+
+
+
 
 
 
@@ -53272,7 +106541,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       <input
+
+
+
+
 
 
 
@@ -53280,7 +106557,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         min="0"
+
+
+
+
 
 
 
@@ -53288,11 +106573,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         className="w-full rounded-xl border border-border bg-bg px-2 py-1.5 text-xs text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
 
 
 
+
+
+
+
                         placeholder="0-255"
+
+
+
+
 
 
 
@@ -53300,7 +106597,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         spellCheck={false}
+
+
+
+
 
 
 
@@ -53308,7 +106613,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           const val = parseInt(e.currentTarget.value) || 0;
+
+
+
+
 
 
 
@@ -53316,7 +106629,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           const g = currentParsed?.g ?? 0;
+
+
+
+
 
 
 
@@ -53324,7 +106645,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           const a = currentParsed?.a ?? 255;
+
+
+
+
 
 
 
@@ -53332,11 +106661,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           setPreviewHex(hex);
 
 
 
+
+
+
+
                           setHexDraft(hex);
+
+
+
+
 
 
 
@@ -53344,7 +106685,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           setHsv(__rgbToHsv(clamped, g, b));
+
+
+
+
 
 
 
@@ -53352,7 +106701,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       />
+
+
+
+
 
 
 
@@ -53360,7 +106717,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     <div>
+
+
+
+
 
 
 
@@ -53368,7 +106733,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       <input
+
+
+
+
 
 
 
@@ -53376,7 +106749,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         min="0"
+
+
+
+
 
 
 
@@ -53384,11 +106765,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         className="w-full rounded-xl border border-border bg-bg px-2 py-1.5 text-xs text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
 
 
 
+
+
+
+
                         placeholder="0-255"
+
+
+
+
 
 
 
@@ -53396,7 +106789,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         spellCheck={false}
+
+
+
+
 
 
 
@@ -53404,7 +106805,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           const val = parseInt(e.currentTarget.value) || 0;
+
+
+
+
 
 
 
@@ -53412,7 +106821,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           const clamped = Math.max(0, Math.min(255, val));
+
+
+
+
 
 
 
@@ -53420,7 +106837,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           const a = currentParsed?.a ?? 255;
+
+
+
+
 
 
 
@@ -53428,11 +106853,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           setPreviewHex(hex);
 
 
 
+
+
+
+
                           setHexDraft(hex);
+
+
+
+
 
 
 
@@ -53440,7 +106877,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           setHsv(__rgbToHsv(r, clamped, b));
+
+
+
+
 
 
 
@@ -53448,11 +106893,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       />
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -53460,7 +106917,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       <div className="text-[10px] text-muted mb-1">B</div>
+
+
+
+
 
 
 
@@ -53468,7 +106933,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         type="number"
+
+
+
+
 
 
 
@@ -53476,7 +106949,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         max="255"
+
+
+
+
 
 
 
@@ -53484,7 +106965,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         placeholder="0-255"
+
+
+
+
 
 
 
@@ -53492,7 +106981,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         spellCheck={false}
+
+
+
+
 
 
 
@@ -53500,7 +106997,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           const val = parseInt(e.currentTarget.value) || 0;
+
+
+
+
 
 
 
@@ -53508,7 +107013,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           const g = currentParsed?.g ?? 0;
+
+
+
+
 
 
 
@@ -53516,7 +107029,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           const a = currentParsed?.a ?? 255;
+
+
+
+
 
 
 
@@ -53524,7 +107045,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           setPreviewHex(hex);
+
+
+
+
 
 
 
@@ -53532,7 +107061,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                           setRgbDraft(a === 255 ? `rgb(${r}, ${g}, ${clamped})` : `rgba(${r}, ${g}, ${clamped}, ${Math.round((a / 255) * 100) / 100})`);
+
+
+
+
 
 
 
@@ -53540,7 +107077,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         }}
+
+
+
+
 
 
 
@@ -53548,7 +107093,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     </div>
+
+
+
+
 
 
 
@@ -53556,7 +107109,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -53568,7 +107133,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   <div className="text-[11px] font-medium text-muted">RGB / RGBA (legacy)</div>
+
+
+
+
 
 
 
@@ -53576,7 +107149,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     className="mt-1 w-full rounded-xl border border-border bg-bg px-3 py-2 text-xs text-text placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+
+
+
+
 
 
 
@@ -53584,7 +107165,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     value={rgbDraft}
+
+
+
+
 
 
 
@@ -53592,7 +107181,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     onChange={(e) => setRgbDraft(e.currentTarget.value)}
+
+
+
+
 
 
 
@@ -53600,7 +107197,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     onKeyDown={(e) => {
+
+
+
+
 
 
 
@@ -53608,7 +107213,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                         e.preventDefault();
+
+
+
+
 
 
 
@@ -53616,7 +107229,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                       }
+
+
+
+
 
 
 
@@ -53624,7 +107245,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   />
+
+
+
+
 
 
 
@@ -53632,7 +107261,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
               </div>
+
+
+
+
+
+
+
+
 
 
 
@@ -53644,7 +107285,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 <div className="text-[11px] text-muted">Tip: alpha can be `#RRGGBBAA` or `rgba(..., 0.5)`</div>
+
+
+
+
 
 
 
@@ -53652,7 +107301,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   type="button"
+
+
+
+
 
 
 
@@ -53660,7 +107317,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   onClick={() => {
+
+
+
+
 
 
 
@@ -53668,7 +107333,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     if (px) {
+
+
+
+
 
 
 
@@ -53676,7 +107349,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                     }
+
+
+
+
 
 
 
@@ -53684,7 +107365,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   }}
+
+
+
+
 
 
 
@@ -53692,7 +107381,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   Done
+
+
+
+
 
 
 
@@ -53700,7 +107397,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
               </div>
+
+
+
+
 
 
 
@@ -53708,7 +107413,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           </div>
+
+
+
+
 
 
 
@@ -53716,7 +107429,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       </div>
+
+
+
+
 
 
 
@@ -53724,7 +107445,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
   };
+
+
+
+
+
+
+
+
 
 
 
@@ -53736,7 +107469,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     () =>
+
+
+
+
 
 
 
@@ -53744,7 +107485,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         { id: "workspace", label: "Workspace" },
+
+
+
+
 
 
 
@@ -53752,7 +107501,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         { id: "shortcuts", label: "Shortcuts" },
+
+
+
+
 
 
 
@@ -53760,7 +107517,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         { id: "privacy", label: "Privacy" },
+
+
+
+
 
 
 
@@ -53768,7 +107533,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     []
+
+
+
+
 
 
 
@@ -53780,7 +107553,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   type SectionId = (typeof sectionList)[number]["id"];
+
+
+
+
 
 
 
@@ -53792,7 +107577,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   useEffect(() => {
+
+
+
+
 
 
 
@@ -53800,7 +107597,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     if (!allowed.has(activeSection)) setActiveSection("workspace");
+
+
+
+
 
 
 
@@ -53812,7 +107617,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   const sectionMeta = useMemo(() => {
+
+
+
+
 
 
 
@@ -53820,7 +107637,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       workspace: { title: "Workspace", description: "Workspace folder and recent workspaces" },
+
+
+
+
 
 
 
@@ -53828,7 +107653,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       shortcuts: { title: "Shortcuts", description: "Customize keyboard shortcuts" },
+
+
+
+
 
 
 
@@ -53836,7 +107669,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       privacy: { title: "Privacy", description: "Manage and delete locally stored data" },
+
+
+
+
 
 
 
@@ -53844,7 +107685,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     return map;
+
+
+
+
 
 
 
@@ -53856,7 +107705,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   type SettingItem = {
+
+
+
+
 
 
 
@@ -53864,7 +107725,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     section: SectionId;
+
+
+
+
 
 
 
@@ -53872,7 +107741,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     description: string;
+
+
+
+
 
 
 
@@ -53880,7 +107757,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     keywords?: string;
+
+
+
+
 
 
 
@@ -53892,7 +107777,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   const Dropdown = (p: {
+
+
+
+
 
 
 
@@ -53900,7 +107797,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     options: Array<{ value: string; label: string }>;
+
+
+
+
 
 
 
@@ -53908,7 +107813,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     widthClassName?: string;
+
+
+
+
 
 
 
@@ -53916,11 +107829,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     const [open, setOpen] = useState(false);
 
 
 
+
+
+
+
     const wrapRef = useRef<HTMLDivElement | null>(null);
+
+
+
+
+
+
+
+
 
 
 
@@ -53936,7 +107865,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     useEffect(() => {
+
+
+
+
 
 
 
@@ -53944,7 +107885,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         if (!open) return;
+
+
+
+
 
 
 
@@ -53952,7 +107901,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         if (!t) return;
+
+
+
+
 
 
 
@@ -53960,7 +107917,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         setOpen(false);
+
+
+
+
 
 
 
@@ -53968,11 +107933,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       window.addEventListener("mousedown", onDown);
 
 
 
+
+
+
+
       return () => window.removeEventListener("mousedown", onDown);
+
+
+
+
 
 
 
@@ -53984,7 +107961,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     if (!p.options.length) {
+
+
+
+
 
 
 
@@ -53992,7 +107981,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         <div ref={wrapRef} className={`relative ${p.widthClassName ?? ""}`.trim()}>
+
+
+
+
 
 
 
@@ -54000,7 +107997,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             <span className="truncate">No options</span>
+
+
+
+
 
 
 
@@ -54008,11 +108013,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         </div>
 
 
 
+
+
+
+
       );
+
+
+
+
 
 
 
@@ -54024,7 +108041,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
     return (
+
+
+
+
 
 
 
@@ -54032,7 +108061,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         <button
+
+
+
+
 
 
 
@@ -54040,7 +108077,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           className="ws-vscode-dropdown-btn"
+
+
+
+
 
 
 
@@ -54048,7 +108093,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           aria-expanded={open}
+
+
+
+
 
 
 
@@ -54056,7 +108109,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
           <span className="truncate">{active?.label ?? ""}</span>
+
+
+
+
 
 
 
@@ -54068,7 +108129,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         {open ? (
+
+
+
+
 
 
 
@@ -54076,7 +108149,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             {p.options.map((o) => (
+
+
+
+
 
 
 
@@ -54084,7 +108165,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 key={o.value}
+
+
+
+
 
 
 
@@ -54092,7 +108181,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 className={`ws-vscode-dropdown-item ${o.value === p.value ? "ws-vscode-dropdown-item-active" : ""}`}
+
+
+
+
 
 
 
@@ -54100,7 +108197,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                   p.onChange(o.value);
+
+
+
+
 
 
 
@@ -54108,7 +108213,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 }}
+
+
+
+
 
 
 
@@ -54116,7 +108229,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
                 {o.label}
+
+
+
+
 
 
 
@@ -54124,7 +108245,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
             ))}
+
+
+
+
 
 
 
@@ -54132,7 +108261,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         ) : null}
+
+
+
+
 
 
 
@@ -54140,7 +108277,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
     );
+
+
+
+
 
 
 
@@ -54152,7 +108297,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
   const settingsItems = useMemo<SettingItem[]>(
+
+
+
+
 
 
 
@@ -54160,11 +108317,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
       const shortcutDefs: Array<{ id: string; title: string; description: string; keywords: string }> = [
 
 
 
+
+
+
+
         { id: "chat.toggle", title: "Open/Close Chat", description: "Toggle chat dock", keywords: "shortcut chat" },
+
+
+
+
 
 
 
@@ -54176,7 +108345,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         { id: "view.navigateBack", title: "Navigate Back", description: "Go back", keywords: "shortcut back navigate" },
+
+
+
+
 
 
 
@@ -54188,11 +108369,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         { id: "file.newWindow", title: "New Window", description: "Open a new window", keywords: "shortcut new window" },
 
 
 
+
+
+
+
         { id: "file.openFile", title: "Open File", description: "Open a file", keywords: "shortcut open file" },
+
+
+
+
 
 
 
@@ -54204,11 +108401,27 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         { id: "file.save", title: "Save", description: "Save current file", keywords: "shortcut save" },
 
 
 
+
+
+
+
         { id: "file.saveAs", title: "Save As", description: "Save current file as…", keywords: "shortcut save as" },
+
+
+
+
 
 
 
@@ -54220,7 +108433,19 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
+
+
+
+
         { id: "file.close", title: "Close Editor", description: "Close the active editor", keywords: "shortcut close editor" },
+
+
+
+
 
 
 
@@ -54228,833 +108453,1667 @@ const SettingsScreen: React.FC<SettingsScreenProps> = (props) => {
 
 
 
+
+
+
+
         { id: "window.close", title: "Close Window", description: "Close the application window", keywords: "shortcut close window" },
 
+
+
       ];
+
+
+
+
 
 
 
       const shortcutItems: SettingItem[] = shortcutDefs.map((d) => ({
 
+
+
         id: `shortcuts.${d.id}`,
+
+
 
         section: "shortcuts",
 
+
+
         title: d.title,
+
+
 
         description: d.description,
 
+
+
         keywords: d.keywords,
+
+
 
         renderControl: () => (
 
+
+
           <ShortcutEditor
+
+
 
             commandId={d.id}
 
+
+
             value={String(props.settings.keybindings?.[d.id] ?? DEFAULT_KEYBINDINGS[d.id] ?? "")}
+
+
 
             defaultValue={DEFAULT_KEYBINDINGS[d.id] ?? ""}
 
+
+
           />
 
+
+
         ),
+
+
 
       }));
 
 
 
+
+
+
+
       const baseItems: SettingItem[] = [
 
+
+
         {
+
+
 
           id: "workspace.folder",
 
+
+
           section: "workspace",
+
+
 
           title: "Workspace Folder",
 
+
+
           description: "Choose the folder you want to work in.",
+
+
 
           keywords: "workspace folder open",
 
+
+
           renderControl: () => (
+
+
 
             <button type="button" className="ws-vscode-btn" onClick={props.onPickFolder}>
 
+
+
               Open Folder
+
+
 
             </button>
 
+
+
           ),
+
+
 
         },
 
+
+
         {
+
+
 
           id: "editor.cursorBlinking",
 
+
+
           section: "appearance",
+
+
 
           title: "Cursor Blinking",
 
+
+
           description: "Control the cursor animation style.",
+
+
 
           keywords: "cursor caret blinking animation",
 
+
+
           renderControl: () => (
 
+
+
             <Dropdown
+
+
 
               value={props.settings.editor_cursor_blinking ?? "expand"}
 
+
+
               options={[
+
+
 
                 { value: "blink", label: "Blink" },
 
+
+
                 { value: "smooth", label: "Smooth" },
+
+
 
                 { value: "phase", label: "Phase" },
 
+
+
                 { value: "expand", label: "Expand" },
+
+
 
                 { value: "solid", label: "Solid" },
 
+
+
               ]}
+
+
 
               onChange={(v) => props.onChangeCursorBlinking(v as CursorBlinking)}
 
+
+
             />
+
+
 
           ),
 
+
+
         },
 
+
+
         {
+
+
 
           id: "editor.lineHighlightColor",
 
+
+
           section: "appearance",
+
+
 
           title: "Line Highlight Color",
 
+
+
           description: "Customize the active line highlight in the editor.",
+
+
 
           keywords: "line highlight editor current line color",
 
+
+
           renderControl: () => (
 
+
+
             <ColorPicker
+
+
 
               label="Line highlight"
 
+
+
               value={props.settings.editor_line_highlight_color ?? null}
+
+
 
               placeholder="#232228"
 
+
+
               defaultSwatch="#232228"
+
+
 
               onChange={(hex) => props.onChangeLineHighlightColor(hex)}
 
+
+
             />
+
+
 
           ),
 
+
+
         },
 
+
+
         {
+
+
 
           id: "editor.cursorColor",
 
+
+
           section: "appearance",
+
+
 
           title: "Cursor Color",
 
+
+
           description: "Customize the editor caret (cursor) color.",
+
+
 
           keywords: "cursor caret color",
 
+
+
           renderControl: () => (
+
+
 
             <ColorPicker
 
+
+
               label="Cursor"
+
+
 
               value={props.settings.editor_cursor_color ?? null}
 
+
+
               placeholder="#60D6AA"
+
+
 
               defaultSwatch="#60D6AA"
 
+
+
               onChange={(hex) => props.onChangeCursorColor(hex)}
+
+
 
             />
 
+
+
           ),
+
+
 
         },
 
+
+
         {
+
+
 
           id: "appearance.theme",
 
+
+
           section: "appearance",
+
+
 
           title: "Theme",
 
+
+
           description: "Select a theme for the editor.",
+
+
 
           keywords: "theme editor",
 
+
+
           renderControl: () => (
 
+
+
             <Dropdown
+
+
 
               value={props.settings.theme ?? "vscode"}
 
+
+
               options={[
+
+
 
                 { value: "vscode", label: "VS Code" },
 
+
+
                 { value: "github", label: "GitHub" },
+
+
 
                 { value: "monokai", label: "Monokai" },
 
+
+
               ]}
+
+
 
               onChange={(v) => props.onChangeTheme(v as Theme)}
 
+
+
             />
+
+
 
           ),
 
+
+
         },
 
+
+
         {
+
+
 
           id: "ai.provider",
 
+
+
           section: "ai",
+
+
 
           title: "AI Provider",
 
+
+
           description: "Select which AI provider to use.",
+
+
 
           keywords: "ai provider model",
 
+
+
           renderControl: () => (
 
+
+
             <Dropdown
+
+
 
               value={props.settings.active_provider ?? "openai"}
 
+
+
               options={[
+
+
 
                 { value: "openai", label: "OpenAI" },
 
+
+
                 { value: "anthropic", label: "Anthropic" },
+
+
 
                 { value: "google", label: "Google" },
 
+
+
                 { value: "ollama", label: "Ollama" },
+
+
 
               ]}
 
+
+
               onChange={(v) => props.onChangeProvider(v)}
+
+
 
             />
 
+
+
           ),
+
+
 
         },
 
+
+
         {
+
+
 
           id: "ai.apiKey",
 
+
+
           section: "ai",
+
+
 
           title: "API Key",
 
+
+
           description: "Set your API key for the selected provider.",
+
+
 
           keywords: "api key secret",
 
+
+
           renderControl: () => (
+
+
 
             <input
 
+
+
               className="ws-vscode-input"
+
+
 
               type="password"
 
+
+
               placeholder="Enter API key"
+
+
 
               value={props.apiKeyDraft}
 
+
+
               onChange={(e) => props.onApiKeyDraft(e.target.value)}
+
+
 
             />
 
+
+
           ),
+
+
 
         },
 
+
+
         {
+
+
 
           id: "ai.model",
 
+
+
           section: "ai",
+
+
 
           title: "Active Model",
 
+
+
           description: "Select the active AI model.",
+
+
 
           keywords: "model selector",
 
+
+
           renderControl: () => (
+
+
 
             <Dropdown
 
+
+
               value={props.settings.active_model ?? ""}
+
+
 
               options={props.providerModels[props.settings.active_provider ?? "openai"]?.map((m) => ({ value: m.id, label: m.name ?? m.id })) ?? []}
 
+
+
               onChange={(v) => props.onSelectModel(props.settings.active_provider ?? "openai", v)}
+
+
 
             />
 
+
+
           ),
 
+
+
         },
+
+
 
         {
 
+
+
           id: "ai.encryption",
+
+
 
           section: "ai",
 
+
+
           title: "Encryption Password",
+
+
 
           description: "Optional extra protection for secrets storage.",
 
+
+
           keywords: "encryption password security",
+
+
 
           renderControl: () => (
 
+
+
             <input
+
+
 
               className="ws-vscode-input"
 
+
+
               placeholder="Optional encryption password"
+
+
 
               type={props.encryptionPasswordDraft ? "text" : "password"}
 
+
+
               value={props.encryptionPasswordDraft}
+
+
 
               autoComplete="off"
 
+
+
               spellCheck={false}
+
+
 
               onChange={(e) => props.onEncryptionPasswordDraft(e.target.value)}
 
+
+
             />
+
+
 
           ),
 
+
+
         },
+
+
 
       ];
 
 
 
+
+
+
+
       return baseItems.concat(shortcutItems);
+
+
 
     },
 
+
+
     [props]
 
+
+
   );
+
+
+
+
 
 
 
 const filteredItems = useMemo(() => {
 
+
+
   if (!query) {
+
+
 
     return settingsItems.filter((x) => x.section === activeSection);
 
+
+
   }
+
+
 
   const qq = query.toLowerCase();
 
+
+
   return settingsItems.filter((x) => `${x.title} ${x.description} ${x.keywords ?? ""}`.toLowerCase().includes(qq));
+
+
 
 }, [activeSection, query, settingsItems]);
 
 
 
+
+
+
+
 const activeSectionTitle = useMemo(() => {
+
+
 
   if (query) return "Search Results";
 
+
+
   return sectionMeta[activeSection]?.title ?? "Settings";
+
+
 
 }, [activeSection, query, sectionMeta]);
 
 
 
+
+
+
+
 const activeSectionDesc = useMemo(() => {
+
+
 
   if (query) return `Found ${filteredItems.length} matching settings`;
 
+
+
   return sectionMeta[activeSection]?.description ?? "";
+
+
 
 }, [activeSection, query, filteredItems.length, sectionMeta]);
 
 
 
+
+
+
+
 return (
+
+
 
   <div className="flex h-full flex-col md:flex-row bg-bg text-text selection:bg-accent/30 overflow-hidden font-sans">
 
+
+
     {/* Sidebar */}
+
+
 
     <aside className="w-full md:w-[280px] flex flex-col border-b md:border-b-0 md:border-r border-border/40 bg-panel shrink-0 overflow-hidden">
 
+
+
       {/* User Profile */}
+
+
 
       <div className="p-5 flex items-center gap-3">
 
+
+
         <div className="relative h-10 w-10 rounded-full bg-bg/40 border border-border/60 flex items-center justify-center text-sm font-medium text-muted shrink-0 shadow-inner overflow-hidden">
+
+
 
           {avatarLetter}
 
+
+
           {(avatarDataUrl || props.authProfile?.avatar_url) && !avatarImgError ? (
+
+
 
             <img
 
+
+
               src={avatarDataUrl || props.authProfile!.avatar_url}
+
+
 
               className="absolute inset-0 block h-full w-full object-cover"
 
+
+
               alt="Profile"
+
+
 
               onError={() => {
 
+
+
                 console.error("settings avatar image failed to load", { url: avatarDataUrl || props.authProfile?.avatar_url });
+
+
 
                 setAvatarImgError(true);
 
+
+
               }}
+
+
 
             />
 
+
+
           ) : null}
 
+
+
         </div>
+
+
 
         <div className="min-w-0 flex-1">
 
+
+
           <div className="text-[13px] font-medium truncate leading-tight text-text/90">
+
+
 
             {props.authProfile?.email ?? "refionx@gmail.com"}
 
+
+
           </div>
+
+
 
           <div className="text-[11px] text-muted leading-tight mt-0.5 font-normal">
 
+
+
             {props.authCredits?.plan ?? props.authProfile?.plan ?? "Free Plan"}
+
+
 
           </div>
 
+
+
         </div>
 
+
+
       </div>
+
+
+
+
 
 
 
       {/* Search */}
 
+
+
       <div className="px-4 pb-4">
+
+
 
         <div className="relative group">
 
+
+
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted/40 transition-colors group-focus-within:text-text" />
+
+
 
           <input
 
+
+
             className="w-full h-9 rounded-lg bg-bg border border-border/60 pl-9 pr-3 text-[12px] text-text outline-none transition-all placeholder:text-muted/60 focus:border-border focus:ring-1 focus:ring-border/20 shadow-sm"
+
+
 
             placeholder="Search settings"
 
+
+
             value={query}
+
+
 
             onChange={(e) => setQuery(e.currentTarget.value)}
 
+
+
           />
 
+
+
         </div>
+
+
 
       </div>
 
 
 
+
+
+
+
       {/* Nav Sections */}
+
+
 
       <nav className="flex-1 overflow-y-auto px-2 space-y-0.5 scrollbar-thin scrollbar-thumb-border/20 mb-4">
 
+
+
           {[
+
+
 
             { id: "workspace", label: "Workspace", icon: SettingsIcon },
 
+
+
             { id: "appearance", label: "Appearance", icon: ArrowRight },
+
+
 
             { id: "shortcuts", label: "Shortcuts", icon: FileText },
 
+
+
             { id: "ai", label: "AI", icon: GitBranch },
+
+
 
             { id: "privacy", label: "Privacy", icon: Trash2 },
 
+
+
           ].map((item) => {
+
+
 
             const Icon = item.icon;
 
+
+
             const isActive = activeSection === item.id;
+
+
 
             return (
 
+
+
               <button
+
+
 
                 key={item.id}
 
+
+
                 onPointerDown={(e) => {
+
+
 
                   e.preventDefault();
 
+
+
                   if (document.activeElement && document.activeElement instanceof HTMLElement) {
+
+
 
                     document.activeElement.blur();
 
+
+
                   }
+
+
 
                 }}
 
+
+
                 onClick={() => { setActiveSection(item.id as any); setQuery(""); }}
+
+
 
                 className={`ws-settings-section-nav-item w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-transparent text-[13px] transition-[background-color,color] group active:scale-[0.98] focus:outline-none ${
 
+
+
                   isActive
+
+
 
                     ? "bg-panel2 text-text border-border/60"
 
+
+
                     : "text-muted/70 hover:bg-panel2 hover:text-text"
+
+
 
                 }`}
 
+
+
               >
+
+
 
                 <Icon className={`h-4 w-4 transition-colors ${isActive ? "text-text" : "opacity-50 group-hover:opacity-100"}`} />
 
+
+
                 <span className="font-medium">{item.label}</span>
+
+
 
               </button>
 
+
+
             );
+
+
 
           })}
 
+
+
       </nav>
+
+
 
     </aside>
 
 
 
+
+
+
+
     {/* Main Content */}
+
+
 
     <main className="flex-1 overflow-y-auto bg-bg scroll-smooth">
 
+
+
       <div className="max-w-[800px] mx-auto py-10 px-4 md:px-8">
+
+
 
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
+
+
           <div>
+
+
 
             <h1 className="text-[15px] md:text-[18px] font-semibold text-text/90 tracking-tight">
 
+
+
               {activeSectionTitle}
+
+
 
             </h1>
 
+
+
             <p className="mt-1 text-[12px] md:text-[13px] text-muted font-normal">
+
+
 
               {activeSectionDesc}
 
+
+
             </p>
+
+
 
           </div>
 
+
+
         </div>
+
+
+
+
 
 
 
           {filteredItems.length > 0 && (
 
+
+
             <div className="bg-panel rounded-2xl border border-border/60 overflow-hidden shadow-2xl ring-1 ring-white/5">
+
+
 
               <div className="divide-y divide-border/10">
 
+
+
                 {filteredItems.map((it) => (
+
+
 
                   <div
 
+
+
                     key={it.id}
+
+
 
                     className="flex flex-col md:flex-row md:items-center justify-between p-5 gap-4 group hover:bg-panel2 transition-all duration-200"
 
+
+
                   >
+
+
 
                     <div className="min-w-0 max-w-xl">
 
+
+
                       <div className="text-[13.5px] font-semibold text-text/90 mb-1 group-hover:text-text transition-colors tracking-tight">{it.title}</div>
+
+
 
                       <div className="text-[11.5px] text-muted/70 leading-relaxed break-words font-medium">
 
+
+
                         {it.description}
+
+
 
                       </div>
 
+
+
                     </div>
+
+
 
                     <div className="shrink-0 flex justify-start md:justify-end min-w-0 md:min-w-[240px]">
 
+
+
                       {it.renderControl()}
+
+
 
                     </div>
 
+
+
                   </div>
+
+
 
                 ))}
 
+
+
               </div>
+
+
 
             </div>
 
+
+
           )}
+
+
+
+
 
 
 
           {query && filteredItems.length === 0 && (
 
+
+
             <div className="p-16 text-center">
+
+
 
               <Search className="h-10 w-10 text-muted/10 mx-auto mb-4" />
 
+
+
               <div className="text-muted text-[13px] font-normal">No settings found matching your search.</div>
+
+
 
             </div>
 
+
+
           )}
+
+
+
+
 
 
 
           {/* AI Section Footer Logic */}
 
+
+
           {activeSection === "ai" && !query && (
+
+
 
             <div className="mt-8 space-y-4">
 
+
+
               <div className="grid gap-4">
+
+
 
                 {props.secretsError && (
 
+
+
                   <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-[12px] animate-in fade-in slide-in-from-top-1">
+
+
 
                     {props.secretsError}
 
+
+
                   </div>
+
+
 
                 )}
 
 
 
+
+
+
+
                 <div className="flex gap-2">
+
+
 
                   <button
 
+
+
                     type="button"
 
+
+
                     className="ws-vscode-btn px-4 h-9 rounded-xl text-[12px] font-medium bg-panel border-border/60 hover:bg-panel2 active:scale-95 transition-all shadow-sm"
+
+
 
                     onClick={props.onStoreKey}
 
+
+
                     disabled={!props.apiKeyDraft.trim() || props.isKeyOperationInProgress}
 
+
+
                   >
+
+
 
                     Save API Key
 
+
+
                   </button>
+
+
 
                   <button
 
+
+
                     type="button"
+
+
 
                     className="ws-vscode-btn px-4 h-9 rounded-xl text-[12px] font-medium bg-panel border-border/60 hover:bg-panel2 active:scale-95 transition-all shadow-sm"
 
+
+
                     onClick={props.onClearKey}
+
+
 
                     disabled={props.isKeyOperationInProgress}
 
+
+
                   >
+
+
 
                     Clear Key
 
+
+
                   </button>
+
+
 
                 </div>
 
+
+
               </div>
+
+
 
             </div>
 
+
+
           )}
+
+
+
+
 
 
 
           {/* Privacy Section Logic */}
 
+
+
           {activeSection === "privacy" && !query && (
+
+
 
             <div className="mt-8 grid gap-3">
 
+
+
               <button
+
+
 
                 onClick={props.onClearChatHistory}
 
+
+
                 className="w-full flex items-center justify-between p-4 bg-panel rounded-xl border border-border/60 hover:bg-panel2 hover:border-border transition-all text-left shadow-sm group"
 
+
+
               >
+
+
 
                 <span className="text-[13px] text-text/90 group-hover:text-text">Clear Chat History</span>
 
+
+
                 <ChevronRight className="h-4 w-4 text-muted group-hover:text-text transition-all" />
+
+
 
               </button>
 
 
 
+
+
+
+
               <button
+
+
 
                 onClick={props.onClearAllProviderKeys}
 
+
+
                 className="w-full flex items-center justify-between p-4 bg-panel rounded-xl border border-border/60 hover:bg-panel2 hover:border-border transition-all text-left shadow-sm group"
 
+
+
               >
+
+
 
                 <span className="text-[13px] text-text/90 group-hover:text-text">Clear All API Keys</span>
 
+
+
                 <ChevronRight className="h-4 w-4 text-muted group-hover:text-text transition-all" />
+
+
 
               </button>
 
 
 
+
+
+
+
               <button
+
+
 
                 onClick={props.onClearAuth}
 
+
+
                 className="w-full flex items-center justify-between p-4 bg-panel rounded-xl border border-border/60 hover:bg-panel2 hover:border-border transition-all text-left shadow-sm group"
 
+
+
               >
+
+
 
                 <span className="text-[13px] text-text/90 group-hover:text-text">Sign Out & Remove Account Data</span>
 
+
+
                 <ChevronRight className="h-4 w-4 text-muted group-hover:text-text transition-all" />
+
+
 
               </button>
 
 
 
+
+
+
+
               <button
+
+
 
                 onClick={props.onClearSettingsFile}
 
+
+
                 className="w-full flex items-center justify-between p-4 bg-panel rounded-xl border border-border/60 hover:bg-panel2 hover:border-border transition-all text-left shadow-sm group"
+
+
 
               >
 
+
+
                 <span className="text-[13px] text-text/90 group-hover:text-text">Reset Settings File</span>
+
+
 
                 <ChevronRight className="h-4 w-4 text-muted group-hover:text-text transition-all" />
 
+
+
               </button>
+
+
+
+
 
 
 
               <button
 
+
+
                 onClick={props.onWipeAll}
+
+
 
                 className="w-full flex items-center justify-between p-4 bg-danger/10 rounded-xl border border-danger/30 hover:bg-danger/15 hover:border-danger/50 transition-all text-left shadow-sm group"
 
+
+
               >
+
+
 
                 <span className="text-[13px] text-danger">Wipe All Local Data</span>
 
+
+
                 <Trash2 className="h-4 w-4 text-danger/80 group-hover:text-danger transition-colors" />
+
+
 
               </button>
 
+
+
             </div>
 
+
+
           )}
+
+
+
+
 
 
 
           {/* Recent Workspaces Section */}
 
+
+
           {activeSection === "workspace" && !query && props.recentWorkspaces.length > 0 && (
+
+
 
             <div className="mt-12">
 
+
+
               <h3 className="text-[11px] font-semibold text-muted/80 mb-4 px-1 uppercase tracking-widest">Recent Workspaces</h3>
+
+
 
               <div className="grid gap-2">
 
+
+
                 {props.recentWorkspaces.slice(0, 5).map((p) => (
+
+
 
                   <button
 
+
+
                     key={p}
+
+
 
                     onClick={() => props.onOpenRecent(p)}
 
+
+
                     className="flex items-center gap-3 p-4 bg-panel rounded-xl border border-border/60 hover:border-border hover:bg-panel2 transition-all text-left group overflow-hidden shadow-sm"
+
+
 
                   >
 
+
+
                     <Folder className="h-4 w-4 text-muted group-hover:text-text transition-colors shrink-0" />
+
+
 
                     <span className="text-[13px] text-muted group-hover:text-text truncate font-normal">{p}</span>
 
+
+
                   </button>
+
+
 
                 ))}
 
+
+
               </div>
+
+
 
             </div>
 
+
+
           )}
+
+
 
         </div>
 
+
+
       </main>
+
+
 
     </div>
 
+
+
   );
 
+
+
 };
+
+
 
