@@ -19908,62 +19908,6 @@ export default function AppShell() {
 
 
 
-  const [isCenteredLayout, setIsCenteredLayout] = useState<boolean>(() => {
-
-
-
-
-
-
-
-    try {
-
-
-
-
-
-
-
-      return window.localStorage.getItem("pompora.view.centeredLayout") === "1";
-
-
-
-
-
-
-
-    } catch {
-
-
-
-
-
-
-
-      return false;
-
-
-
-
-
-
-
-    }
-
-
-
-
-
-
-
-  });
-
-
-
-
-
-
-
   const [isMenuBarVisible, setIsMenuBarVisible] = useState<boolean>(() => {
 
 
@@ -20493,54 +20437,6 @@ export default function AppShell() {
 
 
   }, [isZenMode]);
-
-
-
-
-
-
-
-  useEffect(() => {
-
-
-
-
-
-
-
-    try {
-
-
-
-
-
-
-
-      window.localStorage.setItem("pompora.view.centeredLayout", isCenteredLayout ? "1" : "0");
-
-
-
-
-
-
-
-    } catch {
-
-
-
-
-
-
-
-    }
-
-
-
-
-
-
-
-  }, [isCenteredLayout]);
 
 
 
@@ -23099,8 +22995,6 @@ export default function AppShell() {
               <MenuItem label="Full Screen" shortcut="F11" onClick={() => toggleFullscreenApp()} />
 
               <MenuItem label="Zen Mode" shortcut="Ctrl+K Z" right={<MenuCheck checked={isZenMode} />} onClick={() => toggleZenMode()} />
-
-              <MenuItem label="Centered Layout" right={<MenuCheck checked={isCenteredLayout} />} onClick={() => toggleCenteredLayout()} />
 
               <MenuSep />
 
@@ -26278,30 +26172,6 @@ export default function AppShell() {
 
 
   }, [activityBarPosition, isChatDockOpen, isPrimarySidebarOpen, isStatusBarVisible, isTerminalOpen]);
-
-
-
-
-
-
-
-  const toggleCenteredLayout = useCallback(() => {
-
-
-
-
-
-
-
-    setIsCenteredLayout((v) => !v);
-
-
-
-
-
-
-
-  }, []);
 
 
 
