@@ -1,0 +1,9 @@
+*:Zone.Identifier
+*.Zone.Identifier
+*Zone.Identifier*
+dist/
+node_modules/
+src-tauri/target/
+
+src-tauri/icons/android/
+src-tauri/icons/ios/

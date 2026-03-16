@@ -1,11 +1,18 @@
 /** @type {import('tailwindcss').Config} */
+const defaultTheme = require("tailwindcss/defaultTheme");
+
 module.exports = {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["\"Inter\"", ...defaultTheme.fontFamily.sans],
+        mono: ["\"JetBrains Mono\"", ...defaultTheme.fontFamily.mono],
+      },
       colors: {
         bg: "rgb(var(--p-bg) / <alpha-value>)",
         panel: "rgb(var(--p-panel) / <alpha-value>)",
+        panel2: "rgb(var(--p-panel2) / <alpha-value>)",
         text: "rgb(var(--p-text) / <alpha-value>)",
         muted: "rgb(var(--p-muted) / <alpha-value>)",
         border: "rgb(var(--p-border) / <alpha-value>)",

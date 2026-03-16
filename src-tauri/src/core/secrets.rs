@@ -276,3 +276,24 @@ pub fn provider_key_clear(provider: &str) -> Result<(), String> {
         Ok(())
     }
 }
+
+pub fn clear_all_provider_keys() -> Result<(), String> {
+    let base = dirs::config_dir().ok_or_else(|| "Missing config directory".to_string())?;
+    let dir = base.join("Pompora").join("secrets");
+    if !dir.exists() {
+        return Ok(());
+    }
+
+    let rd = fs::read_dir(&dir).map_err(|e| format!("Failed to read secrets directory {}: {e}", dir.display()))?;
+    for ent in rd {
+        let ent = ent.map_err(|e| e.to_string())?;
+        let path = ent.path();
+        if path.is_file() {
+            let _ = fs::remove_file(&path);
+        }
+    }
+
+    // Best-effort: remove directory if empty.
+    let _ = fs::remove_dir(&dir);
+    Ok(())
+}

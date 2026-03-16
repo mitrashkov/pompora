@@ -1,7 +1,7 @@
 {
   "name": "pompora",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.0.40",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,10 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.6",
+    "@fontsource/jetbrains-mono": "^5.0.0",
+    "@iconify/icons-simple-icons": "^1.2.74",
+    "@iconify/react": "^5.0.2",
     "@monaco-editor/react": "^4.7.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.4.2",

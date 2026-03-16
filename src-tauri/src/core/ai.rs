@@ -3,6 +3,56 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use super::{secrets, settings};
 
+fn normalize_model_id(id: &str) -> String {
+    id.trim().to_string()
+}
+
+fn is_likely_chat_model(provider: &str, model_id: &str) -> bool {
+    let id = model_id.trim().to_lowercase();
+    if id.is_empty() {
+        return false;
+    }
+
+    // Common non-chat model families (avoid listing models the app cannot use).
+    let blocked_substrings = [
+        "embedding",
+        "embeddings",
+        "moderation",
+        "omni-moderation",
+        "whisper",
+        "tts",
+        "transcribe",
+        "translation",
+        "realtime",
+        "audio",
+        "vision",
+        "dall-e",
+        "dalle",
+        "image",
+        "img",
+        "rerank",
+        "rank",
+    ];
+
+    if blocked_substrings.iter().any(|s| id.contains(s)) {
+        // Allow a few known chat models that happen to contain some substrings.
+        // (Currently none needed.)
+        return false;
+    }
+
+    match provider {
+        // OpenAI-compatible: keep only chat-capable families.
+        "openai" | "custom" => id.starts_with("gpt-") || id.starts_with("o1") || id.starts_with("o3"),
+        "openrouter" => {
+            // OpenRouter ids are like "openai/gpt-4o" or "anthropic/claude-3.5...".
+            // We already blocked obvious non-chat types above.
+            true
+        }
+        // Together/Groq/Mistral/DeepSeek/etc are almost exclusively chat/completions models.
+        _ => true,
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AiRunResult {
     pub output: String,
@@ -143,6 +193,392 @@ pub async fn openrouter_list_models() -> Result<Vec<OpenRouterModelInfo>> {
     Ok(parsed.data)
 }
 
+pub async fn provider_list_models(provider: &str, encryption_password: Option<&str>) -> Result<Vec<ProviderModelInfo>> {
+    // #region agent log
+    let log_msg = serde_json::json!({
+        "location": "ai.rs:146",
+        "message": "provider_list_models called",
+        "data": {
+            "provider": provider,
+            "has_encryption_password": encryption_password.is_some()
+        },
+        "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+        "sessionId": "debug-session",
+        "runId": "run1",
+        "hypothesisId": "E"
+    });
+    if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+        use std::io::Write;
+        let _ = writeln!(file, "{}", log_msg);
+    }
+    // #endregion
+    
+    let (base_url, _default_model, needs_auth) = get_provider_info(provider)?;
+    
+    let api_key = if needs_auth {
+        match secrets::provider_key_get(provider, encryption_password) {
+            Ok(key) => {
+                // #region agent log
+                let log_msg = serde_json::json!({
+                    "location": "ai.rs:152",
+                    "message": "API key retrieved",
+                    "data": {
+                        "provider": provider,
+                        "key_length": key.len()
+                    },
+                    "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E"
+                });
+                if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                    use std::io::Write;
+                    let _ = writeln!(file, "{}", log_msg);
+                }
+                // #endregion
+                key
+            },
+            Err(e) => {
+                // #region agent log
+                let log_msg = serde_json::json!({
+                    "location": "ai.rs:167",
+                    "message": "Failed to get API key",
+                    "data": {
+                        "provider": provider,
+                        "error": format!("{}", e)
+                    },
+                    "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E"
+                });
+                if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                    use std::io::Write;
+                    let _ = writeln!(file, "{}", log_msg);
+                }
+                // #endregion
+                return Err(anyhow!("API key not configured for provider: {provider}"));
+            },
+        }
+    } else {
+        String::new()
+    };
+
+    let client = reqwest::Client::new();
+
+    // Handle different provider APIs
+    match provider {
+        "openai" | "groq" | "deepseek" | "mistral" | "together" | "xai" | "cohere" | "custom" => {
+            // OpenAI-compatible API
+            let url = format!("{}/models", base_url.trim_end_matches('/'));
+            // #region agent log
+            let log_msg = serde_json::json!({
+                "location": "ai.rs:162",
+                "message": "Making OpenAI-compatible models request",
+                "data": {
+                    "provider": provider,
+                    "url": url,
+                    "needs_auth": needs_auth,
+                    "has_api_key": !api_key.is_empty()
+                },
+                "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E"
+            });
+            if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                use std::io::Write;
+                let _ = writeln!(file, "{}", log_msg);
+            }
+            // #endregion
+            let mut request = client.get(&url);
+            if needs_auth && !api_key.is_empty() {
+                request = request.bearer_auth(&api_key);
+            }
+            
+            let response = request
+                .send()
+                .await
+                .with_context(|| format!("Models request failed to: {url}"))?;
+
+            let status = response.status();
+            let body = response
+                .text()
+                .await
+                .with_context(|| "Failed to read models response")?;
+
+            // #region agent log
+            let log_msg = serde_json::json!({
+                "location": "ai.rs:185",
+                "message": "Models API response received",
+                "data": {
+                    "provider": provider,
+                    "status": status.as_u16(),
+                    "body_length": body.len(),
+                    "is_success": status.is_success()
+                },
+                "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E"
+            });
+            if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                use std::io::Write;
+                let _ = writeln!(file, "{}", log_msg);
+            }
+            // #endregion
+
+            if !status.is_success() {
+                // #region agent log
+                let log_msg = serde_json::json!({
+                    "location": "ai.rs:200",
+                    "message": "Models API request failed",
+                    "data": {
+                        "provider": provider,
+                        "status": status.as_u16(),
+                        "error_body": shorten_for_error(&body)
+                    },
+                    "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E"
+                });
+                if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                    use std::io::Write;
+                    let _ = writeln!(file, "{}", log_msg);
+                }
+                // #endregion
+                return Err(anyhow!("Models request failed (status {status}): {}", shorten_for_error(&body)));
+            }
+
+            let parsed: OpenAIModelsResponse = serde_json::from_str(&body)
+                .with_context(|| format!("Invalid models JSON response: {}", shorten_for_error(&body)))?;
+            
+            let mut models: Vec<ProviderModelInfo> = parsed
+                .data
+                .into_iter()
+                .map(|m| ProviderModelInfo {
+                    id: normalize_model_id(&m.id),
+                    name: m.owned_by,
+                })
+                .filter(|m| is_likely_chat_model(provider, &m.id))
+                .collect();
+
+            models.sort_by(|a, b| a.id.cmp(&b.id));
+            models.dedup_by(|a, b| a.id == b.id);
+            
+            // #region agent log
+            let log_msg = serde_json::json!({
+                "location": "ai.rs:215",
+                "message": "Models parsed successfully",
+                "data": {
+                    "provider": provider,
+                    "model_count": models.len(),
+                    "model_ids": models.iter().take(3).map(|m| &m.id).collect::<Vec<_>>()
+                },
+                "timestamp": std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis(),
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E"
+            });
+            if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open("/home/mitrashkov/pompora/.cursor/debug.log") {
+                use std::io::Write;
+                let _ = writeln!(file, "{}", log_msg);
+            }
+            // #endregion
+            
+            Ok(models)
+        }
+        "anthropic" => {
+            // Anthropic doesn't have a public models endpoint, return comprehensive model list
+            Ok(vec![
+                ProviderModelInfo { id: "claude-3-5-sonnet-20241022".to_string(), name: Some("Claude 3.5 Sonnet (Latest)".to_string()) },
+                ProviderModelInfo { id: "claude-3-5-sonnet-20240620".to_string(), name: Some("Claude 3.5 Sonnet".to_string()) },
+                ProviderModelInfo { id: "claude-3-opus-20240229".to_string(), name: Some("Claude 3 Opus".to_string()) },
+                ProviderModelInfo { id: "claude-3-sonnet-20240229".to_string(), name: Some("Claude 3 Sonnet".to_string()) },
+                ProviderModelInfo { id: "claude-3-haiku-20240307".to_string(), name: Some("Claude 3 Haiku".to_string()) },
+            ])
+        }
+        "openrouter" => {
+            // OpenRouter has its own endpoint
+            let url = "https://openrouter.ai/api/v1/models";
+            let mut request = client.get(url);
+            if !api_key.is_empty() {
+                request = request.bearer_auth(&api_key);
+            }
+            
+            let response = request
+                .send()
+                .await
+                .with_context(|| format!("OpenRouter models request failed"))?;
+
+            let status = response.status();
+            let body = response
+                .text()
+                .await
+                .with_context(|| "Failed to read OpenRouter models response")?;
+
+            if !status.is_success() {
+                return Err(anyhow!("OpenRouter models request failed (status {status}): {}", shorten_for_error(&body)));
+            }
+
+            let parsed: serde_json::Value = serde_json::from_str(&body)
+                .with_context(|| format!("Invalid OpenRouter models JSON response: {}", shorten_for_error(&body)))?;
+            
+            let mut models = Vec::new();
+            if let Some(data) = parsed.get("data").and_then(|d| d.as_array()) {
+                for model in data {
+                    if let Some(id) = model.get("id").and_then(|i| i.as_str()) {
+                        let name = model.get("name").and_then(|n| n.as_str()).map(|s| s.to_string());
+                        models.push(ProviderModelInfo {
+                            id: normalize_model_id(id),
+                            name,
+                        });
+                    }
+                }
+            }
+
+            let mut models = models
+                .into_iter()
+                .filter(|m| is_likely_chat_model(provider, &m.id))
+                .collect::<Vec<_>>();
+            models.sort_by(|a, b| a.id.cmp(&b.id));
+            models.dedup_by(|a, b| a.id == b.id);
+            Ok(models)
+        }
+        "perplexity" => {
+            // Perplexity uses OpenAI-compatible format but different endpoint
+            let url = format!("{}/models", base_url.trim_end_matches('/'));
+            let mut request = client.get(&url);
+            if needs_auth && !api_key.is_empty() {
+                request = request.bearer_auth(&api_key);
+            }
+            
+            let response = request
+                .send()
+                .await
+                .with_context(|| format!("Perplexity models request failed to: {url}"))?;
+
+            let status = response.status();
+            let body = response
+                .text()
+                .await
+                .with_context(|| "Failed to read Perplexity models response")?;
+
+            if !status.is_success() {
+                // Fallback to known models
+                return Ok(vec![
+                    ProviderModelInfo { id: "llama-3.1-sonar-large-128k-online".to_string(), name: Some("Sonar Large (Online)".to_string()) },
+                    ProviderModelInfo { id: "llama-3.1-sonar-small-128k-online".to_string(), name: Some("Sonar Small (Online)".to_string()) },
+                    ProviderModelInfo { id: "llama-3.1-sonar-huge-128k-online".to_string(), name: Some("Sonar Huge (Online)".to_string()) },
+                    ProviderModelInfo { id: "llama-3.1-sonar-large-128k-chat".to_string(), name: Some("Sonar Large (Chat)".to_string()) },
+                    ProviderModelInfo { id: "llama-3.1-sonar-small-128k-chat".to_string(), name: Some("Sonar Small (Chat)".to_string()) },
+                ]);
+            }
+
+            let parsed: OpenAIModelsResponse = serde_json::from_str(&body)
+                .with_context(|| format!("Invalid Perplexity models JSON response: {}", shorten_for_error(&body)))?;
+            
+            Ok(parsed.data.into_iter().map(|m| ProviderModelInfo {
+                id: m.id,
+                name: m.owned_by,
+            }).collect())
+        }
+        "gemini" => {
+            // Gemini models endpoint
+            let url = format!("{}/models?key={}", base_url.trim_end_matches('/'), api_key);
+            let response = client
+                .get(&url)
+                .send()
+                .await
+                .with_context(|| format!("Gemini models request failed to: {url}"))?;
+
+            let status = response.status();
+            let body = response
+                .text()
+                .await
+                .with_context(|| "Failed to read Gemini models response")?;
+
+            if !status.is_success() {
+                if status.as_u16() == 401 || status.as_u16() == 403 {
+                    return Err(anyhow!(
+                        "Gemini authorization failed: your API key is invalid, missing permissions, or the API is not enabled for your project. ({status}) {}",
+                        shorten_for_error(&body)
+                    ));
+                }
+                return Err(anyhow!("Gemini models request failed (status {status}): {}", shorten_for_error(&body)));
+            }
+
+            let parsed: serde_json::Value = serde_json::from_str(&body)
+                .with_context(|| format!("Invalid Gemini models JSON response: {}", shorten_for_error(&body)))?;
+            
+            let mut models = Vec::new();
+            if let Some(models_array) = parsed.get("models").and_then(|m| m.as_array()) {
+                for model in models_array {
+                    let supported = model
+                        .get("supportedGenerationMethods")
+                        .and_then(|m| m.as_array())
+                        .map(|arr| {
+                            arr.iter()
+                                .filter_map(|v| v.as_str())
+                                .any(|s| s.eq_ignore_ascii_case("generateContent"))
+                        })
+                        .unwrap_or(true);
+                    if !supported {
+                        continue;
+                    }
+
+                    if let Some(raw_name) = model.get("name").and_then(|n| n.as_str()) {
+                        let id = raw_name.strip_prefix("models/").unwrap_or(raw_name).to_string();
+                        let display_name = model.get("displayName").and_then(|n| n.as_str()).map(|s| s.to_string());
+                        models.push(ProviderModelInfo { id, name: display_name });
+                    }
+                }
+            }
+            Ok(models)
+        }
+        "ollama" | "lmstudio" => {
+            // Local providers - try to fetch models
+            let url = format!("{}/models", base_url.trim_end_matches('/'));
+            let response = client
+                .get(&url)
+                .send()
+                .await;
+
+            match response {
+                Ok(resp) if resp.status().is_success() => {
+                    let body = resp.text().await.unwrap_or_default();
+                    if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&body) {
+                        let mut models = Vec::new();
+                        if let Some(models_array) = parsed.get("data").or_else(|| parsed.get("models")).and_then(|m| m.as_array()) {
+                            for model in models_array {
+                                if let Some(id) = model.get("id").or_else(|| model.get("name")).and_then(|n| n.as_str()) {
+                                    models.push(ProviderModelInfo {
+                                        id: id.to_string(),
+                                        name: None,
+                                    });
+                                }
+                            }
+                        }
+                        if !models.is_empty() {
+                            return Ok(models);
+                        }
+                    }
+                }
+                _ => {}
+            }
+            
+            // Fallback to default models
+            Ok(vec![
+                ProviderModelInfo { id: "llama3.2".to_string(), name: Some("Llama 3.2".to_string()) },
+                ProviderModelInfo { id: "llama3".to_string(), name: Some("Llama 3".to_string()) },
+                ProviderModelInfo { id: "mistral".to_string(), name: Some("Mistral".to_string()) },
+            ])
+        }
+        _ => Err(anyhow!("Provider not supported for model listing: {provider}")),
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMessage {
     pub role: String,
@@ -181,6 +617,29 @@ struct OpenRouterModelsResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProviderModelInfo {
+    pub id: String,
+    pub name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct OpenAIModelsResponse {
+    #[serde(default)]
+    data: Vec<OpenAIModelData>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct OpenAIModelData {
+    pub id: String,
+    #[serde(default)]
+    pub object: Option<String>,
+    #[serde(default)]
+    pub created: Option<u64>,
+    #[serde(default)]
+    pub owned_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct StructuredOut {
     #[serde(default)]
     updated_content: Option<String>,
@@ -204,7 +663,13 @@ fn get_provider_info(provider: &str) -> Result<(String, String, bool)> {
         "anthropic" => Ok(("https://api.anthropic.com/v1".to_string(), "claude-3-5-sonnet-20241022".to_string(), true)),
         "groq" => Ok(("https://api.groq.com/openai/v1".to_string(), "llama-3.1-70b-versatile".to_string(), true)),
         "deepseek" => Ok(("https://api.deepseek.com/v1".to_string(), "deepseek-chat".to_string(), true)),
-        "gemini" => Ok(("https://generativelanguage.googleapis.com/v1beta".to_string(), "gemini-flash-latest".to_string(), true)),
+        "gemini" => Ok(("https://generativelanguage.googleapis.com/v1beta".to_string(), "gemini-1.5-flash".to_string(), true)),
+        "mistral" => Ok(("https://api.mistral.ai/v1".to_string(), "mistral-medium".to_string(), true)),
+        "together" => Ok(("https://api.together.xyz/v1".to_string(), "meta-llama/Llama-3-70b-chat-hf".to_string(), true)),
+        "perplexity" => Ok(("https://api.perplexity.ai".to_string(), "llama-3.1-sonar-small-128k-online".to_string(), true)),
+        "openrouter" => Ok(("https://openrouter.ai/api/v1".to_string(), "openai/gpt-4o-mini".to_string(), true)),
+        "xai" => Ok(("https://api.x.ai/v1".to_string(), "grok-beta".to_string(), true)),
+        "cohere" => Ok(("https://api.cohere.ai/v1".to_string(), "command-r-plus".to_string(), true)),
         "pompora" => Ok(("https://ai.pompora.dev/v1".to_string(), "pompora".to_string(), true)),
         "ollama" => Ok(("http://127.0.0.1:11434/v1".to_string(), "llama3.2".to_string(), false)),
         "lmstudio" => Ok(("http://127.0.0.1:1234/v1".to_string(), "local-model".to_string(), false)),
@@ -336,10 +801,27 @@ async fn request_chat_completion(
     thinking: Option<&str>,
 ) -> Result<String> {
     let (base_url, mut model, needs_auth) = get_provider_info(provider)?;
+    
+    // Use model_override if provided, otherwise check settings for active_model
     if let Some(m) = model_override {
         let t = m.trim();
         if !t.is_empty() {
             model = t.to_string();
+        }
+    } else {
+        // Check settings for active_model
+        let s = settings::load().ok();
+        if let Some(settings) = s {
+            if let Some(active_prov) = &settings.active_provider {
+                if active_prov == provider {
+                    if let Some(active_mod) = &settings.active_model {
+                        let t = active_mod.trim();
+                        if !t.is_empty() {
+                            model = t.to_string();
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -424,7 +906,9 @@ async fn request_chat_completion(
 
     let response_text = if provider == "gemini" {
         // Gemini uses different API format
-        let url = format!("{}/models/{}:generateContent?key={}", base_url, model, api_key);
+        let model_path = model.trim();
+        let model_path = model_path.strip_prefix("models/").unwrap_or(model_path);
+        let url = format!("{}/models/{}:generateContent?key={}", base_url.trim_end_matches('/'), model_path, api_key);
         
         let gemini_messages: Vec<serde_json::Value> = messages.iter().map(|msg| {
             json!({
@@ -474,8 +958,13 @@ async fn request_chat_completion(
         
         let mut request = client.post(&url).json(&request_body);
         
-        if needs_auth && !api_key.is_empty() {
-            request = request.bearer_auth(api_key);
+        if provider == "anthropic" {
+            // Anthropic uses different header format
+            request = request
+                .header("anthropic-version", "2023-06-01")
+                .header("x-api-key", &api_key);
+        } else if needs_auth && !api_key.is_empty() {
+            request = request.bearer_auth(&api_key);
         }
 
         if provider == "openrouter" {
@@ -491,13 +980,66 @@ async fn request_chat_completion(
             .with_context(|| format!("API request failed to: {url}"))?;
 
         let status = response.status();
+        let retry_after = response
+            .headers()
+            .get("retry-after")
+            .and_then(|v| v.to_str().ok())
+            .map(|s| s.to_string());
         let body = response
             .text()
             .await
             .with_context(|| "Failed to read response text")?;
 
         if !status.is_success() {
-            return Err(anyhow!("API request failed (status {status}): {url}\n{body}"));
+            // OpenAI returns 429 both for real rate limits and for "insufficient_quota".
+            if provider == "openai" || provider == "custom" {
+                if status.as_u16() == 429 {
+                    // Try to parse the error payload.
+                    if let Ok(v) = serde_json::from_str::<serde_json::Value>(&body) {
+                        let code = v
+                            .get("error")
+                            .and_then(|e| e.get("code"))
+                            .and_then(|c| c.as_str())
+                            .unwrap_or("");
+                        let err_type = v
+                            .get("error")
+                            .and_then(|e| e.get("type"))
+                            .and_then(|c| c.as_str())
+                            .unwrap_or("");
+                        let msg = v
+                            .get("error")
+                            .and_then(|e| e.get("message"))
+                            .and_then(|m| m.as_str())
+                            .unwrap_or("");
+
+                        if code.eq_ignore_ascii_case("insufficient_quota") {
+                            return Err(anyhow!(
+                                "OpenAI quota exhausted: your API key has no available credits / billing is not enabled. OpenAI returned 429 insufficient_quota. {}",
+                                shorten_for_error(msg)
+                            ));
+                        }
+
+                        if err_type.eq_ignore_ascii_case("rate_limit_exceeded") || msg.to_lowercase().contains("rate limit") {
+                            if let Some(ra) = retry_after {
+                                return Err(anyhow!(
+                                    "OpenAI rate limited: wait {ra}s and try again. {}",
+                                    shorten_for_error(msg)
+                                ));
+                            }
+                            return Err(anyhow!("OpenAI rate limited: {}", shorten_for_error(msg)));
+                        }
+                    }
+
+                    if let Some(ra) = retry_after {
+                        return Err(anyhow!(
+                            "OpenAI returned 429: you may be rate limited. Retry after {ra}s. {}",
+                            shorten_for_error(&body)
+                        ));
+                    }
+                }
+            }
+
+            return Err(anyhow!("API request failed (status {status}): {url}\n{}", shorten_for_error(&body)));
         }
 
         body
@@ -588,6 +1130,7 @@ pub async fn ai_chat(
     thinking: Option<&str>,
 ) -> Result<AiChatResult> {
     let s = settings::load()?;
+    #[cfg(debug_assertions)]
     println!("DEBUG: ai_chat loaded settings - offline_mode: {}, active_provider: {:?}", s.offline_mode, s.active_provider);
     
     if s.offline_mode {

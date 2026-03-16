@@ -9,6 +9,31 @@ description = "Allows writing application settings."
 commands.allow = ["settings_set"]
 
 [[permission]]
+identifier = "allow-settings-clear"
+description = "Allows resetting application settings (deletes local settings file)."
+commands.allow = ["settings_clear"]
+
+[[permission]]
+identifier = "allow-history-get-raw"
+description = "Allows reading locally stored chat history."
+commands.allow = ["history_get_raw"]
+
+[[permission]]
+identifier = "allow-history-set-raw"
+description = "Allows writing locally stored chat history."
+commands.allow = ["history_set_raw"]
+
+[[permission]]
+identifier = "allow-history-clear"
+description = "Allows deleting locally stored chat history."
+commands.allow = ["history_clear"]
+
+[[permission]]
+identifier = "allow-history-path"
+description = "Allows reading the resolved on-disk path for chat history (for diagnostics/UI)."
+commands.allow = ["history_path"]
+
+[[permission]]
 identifier = "allow-provider-key-status"
 description = "Allows checking whether an AI provider key is configured."
 commands.allow = ["provider_key_status"]
@@ -22,6 +47,11 @@ commands.allow = ["provider_key_set"]
 identifier = "allow-provider-key-clear"
 description = "Allows removing an AI provider key."
 commands.allow = ["provider_key_clear"]
+
+[[permission]]
+identifier = "allow-provider-keys-clear-all"
+description = "Allows deleting all stored provider API keys (local)."
+commands.allow = ["provider_keys_clear_all"]
 
 [[permission]]
 identifier = "allow-auth-begin-login"
@@ -44,9 +74,19 @@ description = "Allows logging out of the desktop account (clears stored API key 
 commands.allow = ["auth_logout"]
 
 [[permission]]
+identifier = "allow-auth-clear"
+description = "Allows deleting locally stored auth profile (local)."
+commands.allow = ["auth_clear"]
+
+[[permission]]
 identifier = "allow-auth-get-credits"
 description = "Allows fetching plan/credits for the signed-in desktop account."
 commands.allow = ["auth_get_credits"]
+
+[[permission]]
+identifier = "allow-auth-avatar-data-url"
+description = "Allows fetching the signed-in account avatar and returning it as a data URL (image base64) for reliable rendering."
+commands.allow = ["auth_avatar_data_url"]
 
 [[permission]]
 identifier = "allow-workspace-get"
@@ -57,6 +97,16 @@ commands.allow = ["workspace_get"]
 identifier = "allow-workspace-set"
 description = "Allows setting the current workspace root (must be a directory)."
 commands.allow = ["workspace_set"]
+
+[[permission]]
+identifier = "allow-workspace-add-root"
+description = "Allows adding a folder to the current workspace (multi-root)."
+commands.allow = ["workspace_add_root"]
+
+[[permission]]
+identifier = "allow-workspace-remove-root"
+description = "Allows removing a folder from the current workspace (multi-root)."
+commands.allow = ["workspace_remove_root"]
 
 [[permission]]
 identifier = "allow-workspace-pick-folder"
@@ -84,9 +134,49 @@ description = "Allows reading a file within the current workspace."
 commands.allow = ["workspace_read_file"]
 
 [[permission]]
+identifier = "allow-workspace-read-file-base64"
+description = "Allows reading a file within the current workspace as base64 (binary-safe)."
+commands.allow = ["workspace_read_file_base64"]
+
+[[permission]]
+identifier = "allow-fs-read-file-abs"
+description = "Allows reading an absolute file path (used for Open File without switching workspace)."
+commands.allow = ["fs_read_file_abs"]
+
+[[permission]]
+identifier = "allow-fs-read-file-abs-base64"
+description = "Allows reading an absolute file path as base64 (used for Open File without switching workspace)."
+commands.allow = ["fs_read_file_abs_base64"]
+
+[[permission]]
+identifier = "allow-clipboard-write-text"
+description = "Allows writing text to the OS clipboard."
+commands.allow = ["clipboard_write_text"]
+
+[[permission]]
+identifier = "allow-clipboard-read-text"
+description = "Allows reading text from the OS clipboard."
+commands.allow = ["clipboard_read_text"]
+
+[[permission]]
+identifier = "allow-wsl-clipboard-write-text"
+description = "Allows writing text to Windows clipboard from WSL."
+commands.allow = ["wsl_clipboard_write_text"]
+
+[[permission]]
+identifier = "allow-wsl-clipboard-read-text"
+description = "Allows reading text from Windows clipboard in WSL."
+commands.allow = ["wsl_clipboard_read_text"]
+
+[[permission]]
 identifier = "allow-workspace-write-file"
 description = "Allows writing a file within the current workspace."
 commands.allow = ["workspace_write_file"]
+
+[[permission]]
+identifier = "allow-workspace-write-file-base64"
+description = "Allows writing a file within the current workspace from base64 data (binary-safe)."
+commands.allow = ["workspace_write_file_base64"]
 
 [[permission]]
 identifier = "allow-workspace-create-dir"
@@ -129,6 +219,11 @@ description = "Allows listing OpenRouter models (used for the free model picker 
 commands.allow = ["openrouter_list_models"]
 
 [[permission]]
+identifier = "allow-provider-list-models"
+description = "Allows listing models for a provider (used for the model picker UI)."
+commands.allow = ["provider_list_models"]
+
+[[permission]]
 identifier = "allow-terminal-start"
 description = "Allows starting a PTY-backed terminal session."
 commands.allow = ["terminal_start"]
@@ -148,28 +243,50 @@ identifier = "allow-terminal-kill"
 description = "Allows terminating the active terminal session."
 commands.allow = ["terminal_kill"]
 
+[[permission]]
+identifier = "allow-app-wipe-all"
+description = "Allows wiping all locally stored application data (config + data dirs)."
+commands.allow = ["app_wipe_all"]
+
 [[set]]
 identifier = "pompora-default"
 description = "Default Pompora application command set."
 permissions = [
   "allow-settings-get",
   "allow-settings-set",
+  "allow-history-get-raw",
+  "allow-history-set-raw",
+  "allow-history-clear",
+  "allow-history-path",
   "allow-provider-key-status",
   "allow-provider-key-set",
   "allow-provider-key-clear",
+  "allow-provider-keys-clear-all",
   "allow-auth-begin-login",
   "allow-auth-wait-login",
   "allow-auth-get-profile",
   "allow-auth-logout",
+  "allow-auth-clear",
   "allow-auth-get-credits",
+  "allow-auth-avatar-data-url",
   "allow-workspace-get",
   "allow-workspace-set",
+  "allow-workspace-add-root",
+  "allow-workspace-remove-root",
   "allow-workspace-pick-folder",
   "allow-workspace-pick-file",
   "allow-workspace-list-dir",
   "allow-workspace-list-files",
   "allow-workspace-read-file",
+  "allow-workspace-read-file-base64",
+  "allow-fs-read-file-abs",
+  "allow-fs-read-file-abs-base64",
+  "allow-clipboard-write-text",
+  "allow-clipboard-read-text",
+  "allow-wsl-clipboard-write-text",
+  "allow-wsl-clipboard-read-text",
   "allow-workspace-write-file",
+  "allow-workspace-write-file-base64",
   "allow-workspace-create-dir",
   "allow-workspace-delete",
   "allow-workspace-rename",
@@ -178,8 +295,10 @@ permissions = [
   "allow-ai-chat",
   "allow-ai-chat-with-model",
   "allow-openrouter-list-models",
+  "allow-provider-list-models",
   "allow-terminal-start",
   "allow-terminal-write",
   "allow-terminal-resize",
-  "allow-terminal-kill"
+  "allow-terminal-kill",
+  "allow-app-wipe-all"
 ]

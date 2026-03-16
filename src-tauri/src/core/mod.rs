@@ -6,3 +6,7 @@ pub mod search;
 pub mod ai;
 pub mod terminal;
 pub mod auth;
+pub mod history;
+pub mod wipe;
+
+pub use wipe::wipe_all;

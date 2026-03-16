@@ -1,214 +1,634 @@
 import { invoke } from "@tauri-apps/api/core";
+
 import type { AppSettings, AuthProfile, CreditsResponse, DirEntryInfo, KeyStatus, WorkspaceInfo } from "./types";
 
-export async function settingsGet(): Promise<AppSettings> {
-  return invoke<AppSettings>("settings_get");
+
+
+function __invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+
+  try {
+
+    return invoke<T>(cmd, args);
+
+  } catch (e) {
+
+    const msg = e instanceof Error ? e.message : String(e);
+
+    return Promise.reject(new Error(`Tauri IPC failed. Command: ${cmd}. Error: ${msg}`));
+
+  }
+
 }
+
+
+export async function fsReadFileAbs(absPath: string): Promise<string> {
+
+  return __invoke<string>("fs_read_file_abs", { absPath });
+
+}
+
+export async function fsReadFileAbsBase64(absPath: string): Promise<FileBase64> {
+
+  return __invoke<FileBase64>("fs_read_file_abs_base64", { absPath });
+
+}
+
+
+
+export async function clipboardWriteText(text: string): Promise<void> {
+
+  await __invoke<void>("clipboard_write_text", { text });
+
+}
+
+
+
+export async function clipboardReadText(): Promise<string> {
+
+  return __invoke<string>("clipboard_read_text", {});
+
+}
+
+
+export async function wslClipboardWriteText(text: string): Promise<void> {
+
+  await __invoke<void>("wsl_clipboard_write_text", { text });
+
+}
+
+
+export async function wslClipboardReadText(): Promise<string> {
+
+  return __invoke<string>("wsl_clipboard_read_text", {});
+
+}
+
+
+export async function settingsGet(): Promise<AppSettings> {
+
+  return __invoke<AppSettings>("settings_get");
+
+}
+
+
 
 export async function settingsSet(next: AppSettings): Promise<void> {
-  await invoke("settings_set", { next });
+
+  await __invoke<void>("settings_set", { next });
+
 }
+
+
+
+export async function historyGetRaw(): Promise<string | null> {
+
+  const v = await __invoke<string | null>("history_get_raw");
+
+  return v;
+
+}
+
+
+
+export async function historySetRaw(raw: string): Promise<void> {
+
+  await __invoke<void>("history_set_raw", { raw });
+
+}
+
+
+
+export async function historyClear(): Promise<void> {
+
+  await __invoke<void>("history_clear");
+
+}
+
+
+
+export async function historyPath(): Promise<string> {
+
+  return __invoke<string>("history_path", {});
+
+}
+
+
 
 export async function providerKeyStatus(provider: string): Promise<KeyStatus> {
-  return invoke<KeyStatus>("provider_key_status", { provider });
+
+  return __invoke<KeyStatus>("provider_key_status", { provider });
+
 }
+
+
 
 export async function providerKeySet(args: {
+
   provider: string;
+
   apiKey: string;
+
   encryptionPassword?: string;
+
 }): Promise<void> {
-  await invoke("provider_key_set", {
+
+  await __invoke<void>("provider_key_set", {
+
     provider: args.provider,
+
     apiKey: args.apiKey,
+
     encryptionPassword: args.encryptionPassword ?? null,
+
   });
+
 }
+
+
 
 export async function aiChat(args: {
+
   messages: AiChatMessage[];
+
   encryptionPassword?: string;
+
   thinking?: string | null;
+
 }): Promise<AiChatResult> {
-  return invoke<AiChatResult>("ai_chat", {
+
+  return __invoke<AiChatResult>("ai_chat", {
+
     messages: args.messages,
+
     encryptionPassword: args.encryptionPassword ?? null,
+
     thinking: args.thinking ?? null,
+
   });
+
 }
+
+
 
 export async function aiChatWithModel(args: {
+
   messages: AiChatMessage[];
+
   model?: string | null;
+
   encryptionPassword?: string;
+
   thinking?: string | null;
+
 }): Promise<AiChatResult> {
-  return invoke<AiChatResult>("ai_chat_with_model", {
+
+  return __invoke<AiChatResult>("ai_chat_with_model", {
+
     messages: args.messages,
+
     model: args.model ?? null,
+
     encryptionPassword: args.encryptionPassword ?? null,
+
     thinking: args.thinking ?? null,
+
   });
+
 }
+
+
 
 export type OpenRouterModelInfo = {
+
   id: string;
+
 };
+
+
+
+export type ProviderModelInfo = {
+
+  id: string;
+
+  name?: string | null;
+
+};
+
+
 
 export async function openrouterListModels(): Promise<OpenRouterModelInfo[]> {
-  return invoke<OpenRouterModelInfo[]>("openrouter_list_models", {});
+
+  return __invoke<OpenRouterModelInfo[]>("openrouter_list_models", {});
+
 }
+
+
+
+export async function providerListModels(args: {
+
+  provider: string;
+
+  encryptionPassword?: string;
+
+}): Promise<ProviderModelInfo[]> {
+
+  return __invoke<ProviderModelInfo[]>("provider_list_models", {
+
+    provider: args.provider,
+
+    encryptionPassword: args.encryptionPassword ?? null,
+
+  });
+
+}
+
+
 
 export async function providerKeyClear(provider: string): Promise<void> {
-  return invoke<void>("provider_key_clear", { provider });
+
+  return __invoke<void>("provider_key_clear", { provider });
+
 }
+
+
+
+export async function providerKeysClearAll(): Promise<void> {
+
+  return __invoke<void>("provider_keys_clear_all", {});
+
+}
+
+
+
+export async function settingsClear(): Promise<void> {
+
+  return __invoke<void>("settings_clear", {});
+
+}
+
+
+
+export async function authClear(): Promise<void> {
+
+  return __invoke<void>("auth_clear", {});
+
+}
+
+
+
+export async function appWipeAll(): Promise<void> {
+
+  return __invoke<void>("app_wipe_all", {});
+
+}
+
+
 
 export async function authBeginLogin(): Promise<[string, string]> {
-  return invoke<[string, string]>("auth_begin_login");
+
+  return __invoke<[string, string]>("auth_begin_login");
+
 }
+
+
 
 export async function authWaitLogin(state: string): Promise<AuthProfile> {
-  return invoke<AuthProfile>("auth_wait_login", { state });
+
+  return __invoke<AuthProfile>("auth_wait_login", { state });
+
 }
+
+
 
 export async function authGetProfile(): Promise<AuthProfile | null> {
-  return invoke<AuthProfile | null>("auth_get_profile");
+
+  return __invoke<AuthProfile | null>("auth_get_profile");
+
 }
+
+
 
 export async function authLogout(): Promise<void> {
-  return invoke<void>("auth_logout");
+
+  return __invoke<void>("auth_logout");
+
 }
+
+
 
 export async function authGetCredits(): Promise<CreditsResponse> {
-  return invoke<CreditsResponse>("auth_get_credits");
+
+  return __invoke<CreditsResponse>("auth_get_credits");
+
 }
+
+
+
+export async function authAvatarDataUrl(url: string): Promise<string> {
+
+  return __invoke<string>("auth_avatar_data_url", { url });
+
+}
+
+
 
 export async function debugGeminiEndToEnd(apiKey: string): Promise<string> {
-  return invoke<string>("debug_gemini_end_to_end", { apiKey });
+
+  return __invoke<string>("debug_gemini_end_to_end", { apiKey });
+
 }
+
+
 
 export async function testGeminiApi(): Promise<string> {
-  return invoke<string>("test_gemini_api", {});
+
+  return __invoke<string>("test_gemini_api", {});
+
 }
+
+
 
 export async function workspaceGet(): Promise<WorkspaceInfo> {
-  return invoke<WorkspaceInfo>("workspace_get");
+
+  return __invoke<WorkspaceInfo>("workspace_get");
+
 }
+
+
 
 export async function workspacePickFolder(): Promise<string | null> {
-  return invoke<string | null>("workspace_pick_folder");
+
+  return __invoke<string | null>("workspace_pick_folder");
+
 }
+
+
 
 export async function workspacePickFile(): Promise<string | null> {
-  return invoke<string | null>("workspace_pick_file");
+
+  return __invoke<string | null>("workspace_pick_file");
+
 }
+
+
 
 export async function workspaceSet(root: string | null): Promise<WorkspaceInfo> {
-  return invoke<WorkspaceInfo>("workspace_set", { root });
+
+  return __invoke<WorkspaceInfo>("workspace_set", { root });
+
 }
+
+
+
+export async function workspaceAddRoot(root: string): Promise<WorkspaceInfo> {
+
+  return __invoke<WorkspaceInfo>("workspace_add_root", { root });
+
+}
+
+
+
+export async function workspaceRemoveRoot(root: string): Promise<WorkspaceInfo> {
+
+  return __invoke<WorkspaceInfo>("workspace_remove_root", { root });
+
+}
+
+
 
 export async function workspaceListDir(relDir?: string): Promise<DirEntryInfo[]> {
-  return invoke<DirEntryInfo[]>("workspace_list_dir", {
+
+  return __invoke<DirEntryInfo[]>("workspace_list_dir", {
+
     relDir: relDir ?? null,
+
   });
+
 }
+
+
 
 export async function workspaceListFiles(maxFiles?: number): Promise<string[]> {
-  return invoke<string[]>("workspace_list_files", {
+
+  return __invoke<string[]>("workspace_list_files", {
+
     maxFiles: maxFiles ?? null,
+
   });
+
 }
+
+
 
 export async function workspaceReadFile(relPath: string): Promise<string> {
-  return invoke<string>("workspace_read_file", { relPath });
+
+  return __invoke<string>("workspace_read_file", { relPath });
+
 }
+
+
+
+export type FileBase64 = {
+
+  mime: string;
+
+  base64: string;
+
+};
+
+
+
+export async function workspaceReadFileBase64(relPath: string): Promise<FileBase64> {
+
+  return __invoke<FileBase64>("workspace_read_file_base64", { relPath });
+
+}
+
+
 
 export async function workspaceWriteFile(relPath: string, contents: string): Promise<void> {
-  await invoke("workspace_write_file", { relPath, contents });
+
+  await __invoke<void>("workspace_write_file", { relPath, contents });
+
 }
+
+
+
+export async function workspaceWriteFileBase64(relPath: string, base64: string): Promise<void> {
+
+  await __invoke<void>("workspace_write_file_base64", { relPath, base64 });
+
+}
+
+
 
 export async function workspaceCreateDir(relPath: string): Promise<void> {
-  await invoke("workspace_create_dir", { relPath });
+
+  return __invoke<void>("workspace_create_dir", { relPath });
+
 }
+
+
 
 export async function workspaceDelete(relPath: string): Promise<void> {
-  await invoke("workspace_delete", { relPath });
+
+  return __invoke<void>("workspace_delete", { relPath });
+
 }
+
+
 
 export async function workspaceRename(fromRel: string, toRel: string): Promise<void> {
-  await invoke("workspace_rename", { fromRel, toRel });
+
+  return __invoke<void>("workspace_rename", { fromRel, toRel });
+
 }
+
+
 
 export type WorkspaceSearchMatch = {
+
   path: string;
+
   line: number;
+
   text: string;
+
 };
+
+
 
 export async function workspaceSearch(query: string, maxResults?: number): Promise<WorkspaceSearchMatch[]> {
-  return invoke<WorkspaceSearchMatch[]>("workspace_search", {
+
+  return __invoke<WorkspaceSearchMatch[]>("workspace_search", {
+
     query,
+
     maxResults: maxResults ?? null,
+
   });
+
 }
+
+
 
 export async function terminalStart(args: { cols: number; rows: number; cwd?: string | null }): Promise<string> {
-  return invoke<string>("terminal_start", {
+
+  return __invoke<string>("terminal_start", {
+
     cols: args.cols,
+
     rows: args.rows,
+
     cwd: args.cwd ?? null,
+
   });
+
 }
+
+
 
 export async function terminalWrite(args: { id: string; data: string }): Promise<void> {
-  await invoke("terminal_write", { id: args.id, data: args.data });
+
+  await __invoke<void>("terminal_write", { id: args.id, data: args.data });
+
 }
+
+
 
 export async function terminalResize(args: { id: string; cols: number; rows: number }): Promise<void> {
-  await invoke("terminal_resize", { id: args.id, cols: args.cols, rows: args.rows });
+
+  return __invoke<void>("terminal_resize", { id: args.id, cols: args.cols, rows: args.rows });
+
 }
+
+
 
 export async function terminalKill(args: { id: string }): Promise<void> {
-  await invoke("terminal_kill", { id: args.id });
+
+  return __invoke<void>("terminal_kill", { id: args.id });
+
 }
+
+
 
 export type AiRunResult = {
+
   output: string;
+
   updated_content: string | null;
+
 };
+
+
 
 export type AiChatMessage = {
+
   role: "system" | "user" | "assistant";
+
   content: string;
+
 };
+
+
 
 export type AiEditOp = {
+
   op: "write" | "delete" | "rename" | string;
+
   path?: string;
+
   content?: string;
+
   from?: string;
+
   to?: string;
+
 };
+
+
 
 export type AiChatResult = {
+
   output: string;
+
   edits?: AiEditOp[] | null;
+
 };
 
+
+
 export async function aiRunAction(args: {
+
   action: "explain" | "fix" | "refactor" | "tests" | "docs" | "commit";
+
   relPath?: string;
+
   content: string;
+
   selection?: string;
+
   encryptionPassword?: string;
+
   thinking?: string | null;
+
 }): Promise<AiRunResult> {
-  return invoke<AiRunResult>("ai_run_action", {
+
+  return __invoke<AiRunResult>("ai_run_action", {
+
     action: args.action,
+
     relPath: args.relPath ?? null,
+
     content: args.content,
+
     selection: args.selection ?? null,
+
     encryptionPassword: args.encryptionPassword ?? null,
+
     thinking: args.thinking ?? null,
+
   });
+
 }
+
